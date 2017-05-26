@@ -1,4 +1,8 @@
 numpy
+scipy
 tensorflow >= 1.0.0
 matplotlib
 gtimer
+path
+joblib
+

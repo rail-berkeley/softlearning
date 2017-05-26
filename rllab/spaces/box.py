@@ -2,7 +2,7 @@ from rllab.core.serializable import Serializable
 from .base import Space
 import numpy as np
 from rllab.misc import ext
-import theano
+# import theano
 
 
 class Box(Space):
@@ -68,10 +68,10 @@ class Box(Space):
     def __hash__(self):
         return hash((self.low, self.high))
 
-    def new_tensor_variable(self, name, extra_dims):
-        return ext.new_tensor(
-            name=name,
-            ndim=extra_dims+1,
-            dtype=theano.config.floatX
-        )
+    # def new_tensor_variable(self, name, extra_dims):
+    #     return ext.new_tensor(
+    #         name=name,
+    #         ndim=extra_dims+1,
+    #         dtype=theano.config.floatX
+    #     )
 

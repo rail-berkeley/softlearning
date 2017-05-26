@@ -1,9 +1,9 @@
 import numpy as np
 import scipy
 import scipy.signal
-import theano.tensor.nnet
-import theano.tensor as TT
-import theano.tensor.extra_ops
+# import theano.tensor.nnet
+# import theano.tensor as TT
+# import theano.tensor.extra_ops
 from collections import OrderedDict
 
 
@@ -34,8 +34,8 @@ def softmax(x):
     return expx / np.sum(expx, axis=-1, keepdims=True)
 
 
-def softmax_sym(x):
-    return theano.tensor.nnet.softmax(x)
+# def softmax_sym(x):
+#     return theano.tensor.nnet.softmax(x)
 
 
 # compute entropy for each row
@@ -71,9 +71,9 @@ def to_onehot_n(inds, dim):
     return ret
 
 
-def to_onehot_sym(ind, dim):
-    assert ind.ndim == 1
-    return theano.tensor.extra_ops.to_one_hot(ind, dim)
+# def to_onehot_sym(ind, dim):
+#     assert ind.ndim == 1
+#     return theano.tensor.extra_ops.to_one_hot(ind, dim)
 
 
 def from_onehot(v):
