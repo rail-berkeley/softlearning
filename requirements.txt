@@ -1,0 +1,4 @@
+numpy
+tensorflow >= 1.0.0
+matplotlib
+gtimer
