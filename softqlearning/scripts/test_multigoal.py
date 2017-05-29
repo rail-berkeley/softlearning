@@ -45,6 +45,9 @@ def test():
     env_plot_settings = dict(
         xlim=(-7, 7),
         ylim=(-7, 7),
+        title="paths",
+        xlabel="x",
+        ylabel="y",
     )
 
     qf_kwargs = dict(

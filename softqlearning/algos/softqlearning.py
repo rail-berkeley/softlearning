@@ -404,6 +404,14 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             self._ax_env.set_xlim(self._env_plot_settings['xlim'])
             self._ax_env.set_ylim(self._env_plot_settings['ylim'])
 
+            # labelling
+            if "title" in self._env_plot_settings:
+                self._ax_env.set_title(self._env_plot_settings["title"])
+            if "xlabel" in self._env_plot_settings:
+                self._ax_env.set_xlabel(self._env_plot_settings["xlabel"])
+            if "ylabel" in self._env_plot_settings:
+                self._ax_env.set_ylabel(self._env_plot_settings["ylabel"])
+
         # Init a figure for the Q-function and action samples.
         if self._q_plot_settings is not None:
             self._q_plot_settings['obs_lst'] = (
