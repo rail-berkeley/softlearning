@@ -2,44 +2,12 @@ import numpy as np
 import tensorflow as tf
 
 from rllab.core.serializable import Serializable
-from rllab.misc.overrides import overrides
-from rllab.tf.core.parameterized import Parameterized
+
 from softqlearning.misc.mlp import mlp
+from softqlearning.misc.tf_proxy import SerializableTensor
 
 
-class ComputationGraph(Parameterized, Serializable):
-    """ A wrapper for a tensorflow graph. """
-
-    def __init__(self, scope_name, inputs, output):
-        Serializable.quick_init(self, locals())
-        super().__init__()
-
-        self._inputs = inputs
-        self._output = output
-        self._scope_name = scope_name
-
-    @property
-    def output(self):
-        return self._output
-
-    @property
-    def input(self):
-        assert len(self._inputs) == 1
-        return self._inputs[0]
-
-    @property
-    def inputs(self):
-        return self._inputs
-
-    @overrides
-    def get_params_internal(self, **tags):
-        if len(tags) > 0:
-            raise NotImplementedError
-        return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
-                                 self._scope_name + '/')
-
-
-class InputBounds(ComputationGraph):
+class InputBounds(SerializableTensor):
     """
     Modifies the gradient of the given graph ('output') with respect to the
     input so that it always points towards the domain of the input.
@@ -57,7 +25,6 @@ class InputBounds(ComputationGraph):
         :param inp: Input tensor with a constrained domain.
         :param output: Output tensor, whose gradient will be modified.
         """
-        scope_name = tf.get_variable_scope().name
         Serializable.quick_init(self, locals())
 
         violation = tf.maximum(tf.abs(inp) - 1, 0)
@@ -70,48 +37,34 @@ class InputBounds(ComputationGraph):
         bounded_output = tf.where(tf.greater(expanded_total_violation, 0),
                                   - self.SLOPE * expanded_total_violation,
                                   output)
-        super().__init__(scope_name, [inp], bounded_output)
+        super().__init__(bounded_output)
 
 
-class NeuralNetwork(ComputationGraph):
+class NeuralNetwork(SerializableTensor):
     """ Multilayer Perceptron that support broadcasting.
 
-    Supports inputs tensors of rank 2 and rank 3. It is assumed that all but the
-    last axis are independent samples, and the last axis is considered as a
-    input vector (rank 1 tensor). If multiple inputs are provided, then the
-    corresponding vectors are concatenated. Broadcasting is supported for the
-    leading dimensions. The leading dimensions of the network output are equal
-    to the 'outer product' of the inputs shapes. For example
-
-    input 1 shape: N x K x D1
-    input 2 shape: N x 1 x D2
-
-    output shape: N x K x (number of output units))
+    See documentation of 'mlp' for information in regards to broadcasting.
     """
 
-    def __init__(self, scope_name, layer_sizes, inputs,
-                 nonlinearity=tf.nn.relu, output_nonlinearity=None,
-                 reuse=False):
+    def __init__(self, layer_sizes, inputs,
+                 nonlinearity=tf.nn.relu, output_nonlinearity=None):
         """
-        :param scope_name: Variable scope name.
         :param layer_sizes: List of # of units at each layer, including output
            layer.
         :param inputs: List of input tensors. See note of broadcasting.
         :param nonlinearity: Nonlinearity operation for hidden layers.
         :param output_nonlinearity: Nonlinearity operation for output layer.
-        :param reuse: If True, will reuse the parameters in the same name scope.
         """
         Serializable.quick_init(self, locals())
 
-        with tf.variable_scope(scope_name, reuse=reuse):
+        n_outputs = layer_sizes[-1]
 
-            n_outputs = layer_sizes[-1]
-            graph = mlp(inputs,
-                        layer_sizes,
-                        nonlinearity=nonlinearity,
-                        output_nonlinearity=output_nonlinearity)
+        graph = mlp(inputs,
+                    layer_sizes,
+                    nonlinearity=nonlinearity,
+                    output_nonlinearity=output_nonlinearity)
 
-        super().__init__(scope_name, inputs, graph)
+        super().__init__(graph)
 
 
 class StochasticNeuralNetwork(NeuralNetwork):
@@ -129,9 +82,8 @@ class StochasticNeuralNetwork(NeuralNetwork):
     where K is the number of samples.
     """
 
-    def __init__(self, scope_name, layer_sizes, inputs, K, **kwargs):
+    def __init__(self, layer_sizes, inputs, K, **kwargs):
         """
-        :param scope_name: Variable scope name.
         :param layer_sizes: List of # of units at each layer, including output
            layer.
         :param inputs: List of input tensors. See note of broadcasting.
@@ -150,7 +102,7 @@ class StochasticNeuralNetwork(NeuralNetwork):
         xi = tf.random_normal(sample_shape)  # 1 x ... x 1 x K x Do
         expanded_inputs.append(xi)
 
-        super().__init__(scope_name, layer_sizes, expanded_inputs, **kwargs)
+        super().__init__(layer_sizes, expanded_inputs, **kwargs)
 
         self._inputs = inputs  # This will hide the random tensor from inputs.
         self._xi = xi  # For debugging

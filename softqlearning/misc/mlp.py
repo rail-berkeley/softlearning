@@ -1,48 +1,20 @@
-import numpy as np
 import tensorflow as tf
 
 WEIGHT_DEFAULT_NAME = "weights"
 BIAS_DEFAULT_NAME = "bias"
 
 
-def weight_variable_triu_exp(
-        dim,
-        initializer,
-        name=WEIGHT_DEFAULT_NAME,
-        eps=1-5,
-):
-    """
-    Construct lower triangular matrix with exponentiated diagonal
-    of dimension DIM.
-    """
-
-    if initializer is None:
-        initializer = tf.contrib.layers.xavier_initializer()
-
-    inds = np.stack(np.triu_indices(dim, k=1)).T
-    n_vars = int((dim + 1) / 2 * dim)
-    var = tf.get_variable(name, (n_vars,), initializer=initializer)
-
-    W = tf.sparse_tensor_to_dense(
-            tf.SparseTensor(indices=inds, values=var[dim:],
-                            dense_shape=[dim, dim])
-        ) + tf.diag(tf.exp(var[:dim]) + eps)
-
-    return W
-
-
 def weight_variable(
         shape,
-        initializer,
+        initializer=None,
         name=WEIGHT_DEFAULT_NAME,
 ):
     """
     Return a variable with the given shape.
 
-    :param initializer: TensorFlow initializer
-    :param reuse_variables:
-    :param name:
-    :param shape:
+    :param initializer: TensorFlow initializer. Default Xavier.
+    :param name: Variable name.
+    :param shape: Variable shape.
     """
     if initializer is None:
         initializer = tf.contrib.layers.xavier_initializer()
@@ -59,10 +31,9 @@ def bias_variable(
     """
     Return a bias variable with the given shape.
 
-    :param initializer: TensorFlow initializer
-    :param reuse_variables:
-    :param name:
-    :param shape:
+    :param initializer: TensorFlow initializer. Default zero.
+    :param name: Variable name.
+    :param shape: Variable shape.
     """
     if initializer is None:
         initializer = tf.constant_initializer(0.)
@@ -73,69 +44,63 @@ def bias_variable(
 
 
 def batch_matmul(a, b):
+    """ Batch matrix multiplication.
+
+    Second argument, 'b', should be a rank-2 tensor. Performs a vector-matrix
+    multiplication along the last axis of 'a' for each leading dimension of 'a'.
+    Supports maximum of 2 leading axis.
+
+    :param a: Tensor of shape ... x N
+    :param b: Rank-2 tensor of shape N x M
+    :return: Tensor of shape ... x M
+    """
     assert b.get_shape().ndims == 2
 
-    a_ndims = a.get_shape().ndims
-    b_ndims = b.get_shape().ndims
-    assert b_ndims == 2
+    a_n_dims = a.get_shape().ndims
+    b_n_dims = b.get_shape().ndims
+    assert b_n_dims == 2
 
-    if a_ndims == 2:
+    if a_n_dims == 2:
         return tf.matmul(a, b)
-    if a_ndims == 3:
+    if a_n_dims == 3:
         return tf.einsum('aij,jk->aik', a, b)
     else:
         raise ValueError
 
 
 def affine(
-        input,
+        inp,
         units,
         bias=True,
         W_initializer=None,
         b_initializer=None,
         W_name=WEIGHT_DEFAULT_NAME,
         bias_name=BIAS_DEFAULT_NAME,
-        full_rank=False,
 ):
+    """ Create an affine layer.
+
+    :param inp: Input tensor.
+    :param units: Number of units.
+    :param bias: Include bias term.
+    :param W_initializer: Initializer for the multiplicative weight.
+    :param b_initializer: Initializer for the bias term.
+    :param W_name: Name of the weight.
+    :param bias_name: Name of the bias.
+    :return: Tensor defined as input.dot(weight) + bias
     """
-    Create a linear layer.
+    input_size = inp.get_shape()[-1].value
+    W = weight_variable([input_size, units],
+                        initializer=W_initializer,
+                        name=W_name)
 
-    :param W_initializer:
-    :param b_initializer:
-    :param reuse_variables:
-    :param bias_name: String for the bias variables names
-    :param W_name: String for the weight matrix variables names
-    :param last_layer: Input tensor
-    :param last_size: Size of the input tensor
-    :param new_size: Size of the output tensor
-    :return:
-    """
-    input_size = input.get_shape()[-1].value
-    if full_rank:
-        if input_size == units:
-            W = weight_variable_triu_exp(units, W_initializer, W_name)
-        else:
-            # First take random projection into output space
-            proj = np.random.randn(input_size, units) / np.sqrt(input_size)
-            proj = tf.constant(proj, dtype=tf.float32)
-
-            # Then multiply by an invertible weight matrix
-            triu = weight_variable_triu_exp(units, W_initializer, W_name)
-            # import ipdb; ipdb.set_trace()
-            W = tf.matmul(proj, triu)
-    else:
-        W = weight_variable([input_size, units],
-                            initializer=W_initializer,
-                            name=W_name)
-
-    output = batch_matmul(input, W)
+    output = batch_matmul(inp, W)
 
     if bias:
         b = bias_variable((units, ),
                           initializer=b_initializer,
                           name=bias_name)
 
-        output += tf.expand_dims(b, 0)
+        output += b
 
     return output
 
@@ -145,24 +110,31 @@ def mlp(inputs,
         nonlinearity=tf.nn.relu,
         output_nonlinearity=tf.nn.tanh,
         W_initializer=None,
-        b_initializer=None,
-        full_rank=False):
+        b_initializer=None):
     """
     Create a multi-layer perceptron with the given hidden sizes. The
     nonlinearity is applied after every hidden layer.
 
-    :param b_initializer:
-    :param W_initializer:
-    :param reuse_variables:
-    :param input: tf.Tensor, or placeholder, input to mlp
-    :param hidden_sizes: int iterable of the hidden sizes
-    :param nonlinearity: the initialization function for the nonlinearity
-    :return: Output of MLP.
-    :type: tf.Tensor
-    """
-    # TODO: test if works as expected
+    Supports input tensors of rank 2 and rank 3. All inputs should have the same
+    tensor rank. It is assumed that the vectors along the last axis form the
+    samples, and the mlp is applied independently to each leading dimension.
+    If multiple inputs are provided, then the corresponding rank-1 vectors
+    are concatenated. The leading dimensions of the network output are equal
+    to the 'outer product' of the inputs' shapes. For example
 
-    # TODO: comment: if given list of inputs, performs fancy broadcasting thing.
+    input 1 shape: N x K x D1
+    input 2 shape: N x 1 x D2
+
+    output shape: N x K x (number of output units))
+
+    :param inputs: List of input tensors.
+    :param layer_sizes: List of layers sizes, including the output layer.
+    :param nonlinearity: Hidden layer nonlinearity.
+    :param output_nonlinearity: Output layer nonlinearity.
+    :param W_initializer: Weight initializer.
+    :param b_initializer: Bias initializer.
+    :return:
+    """
     if type(inputs) is tf.Tensor:
         inputs = [inputs]
 
@@ -170,22 +142,24 @@ def mlp(inputs,
     # the case of several inputs
     with tf.variable_scope('layer0'):
         layer = bias_variable(layer_sizes[0], b_initializer)
-        for i, input in enumerate(inputs):
+        for i, inp in enumerate(inputs):
             with tf.variable_scope('input' + str(i)):
-                layer += affine(input, layer_sizes[0],
-                                W_initializer, b_initializer, False,
-                                full_rank=full_rank)
+                layer += affine(
+                    inp=inp,
+                    units=layer_sizes[0],
+                    bias=False,
+                    W_initializer=W_initializer,
+                    b_initializer=b_initializer
+                )
 
         layer = nonlinearity(layer)
 
-    for i_layer, size in enumerate(layer_sizes[1:]):
-        with tf.variable_scope('layer{0}'.format(i_layer + 1)):
-            layer = affine(layer,
-                           size,
+    for i_layer, size in enumerate(layer_sizes[1:], 1):
+        with tf.variable_scope('layer{0}'.format(i_layer)):
+            layer = affine(layer, size,
                            W_initializer=W_initializer,
-                           b_initializer=b_initializer,
-                           full_rank=full_rank)
-            if i_layer < len(layer_sizes) - 2:
+                           b_initializer=b_initializer)
+            if i_layer < len(layer_sizes) - 1:
                 layer = nonlinearity(layer)
 
     if output_nonlinearity is not None:

@@ -5,6 +5,7 @@ from rllab.spaces.box import Box
 from rllab.envs.base import Env
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class MultiGoalEnv(Env, Serializable):
@@ -38,8 +39,12 @@ class MultiGoalEnv(Env, Serializable):
         self.ylim = (-7, 7)
         self.vel_bound = 1.
         self.reset()
-        self.dynamic_plots = []
         self.observation = None
+
+        self.fig = None
+        self.ax = None
+        self.fixed_plots = None
+        self.dynamic_plots = []
 
     @overrides
     def reset(self):
@@ -180,6 +185,28 @@ class MultiGoalEnv(Env, Serializable):
 
     def horizon(self):
         return None
+
+    @overrides
+    def render(self, close=False):
+        if self.fig is None:
+            self.fig = plt.figure()
+            self.ax = self.fig.add_subplot(111)
+            plt.axis('equal')
+
+        if self.fixed_plots is None:
+            self.fixed_plots = self.plot_position_cost(self.ax)
+
+        [o.remove() for o in self.dynamic_plots]
+
+        x, y = self.observation
+        point = self.ax.plot(x, y, 'b*')
+        self.dynamic_plots = point
+
+        if close:
+            self.fixed_plots = None
+
+        plt.pause(0.001)
+        plt.draw()
 
 
 class PointDynamics(object):

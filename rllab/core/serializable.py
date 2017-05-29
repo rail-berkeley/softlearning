@@ -29,21 +29,18 @@ class Serializable(object):
         else:
             varargs = tuple()
         in_order_args = [locals_[arg] for arg in spec.args][1:]
+
         self.__args = tuple(in_order_args) + varargs
         self.__kwargs = kwargs
+
         setattr(self, "_serializable_initialized", True)
 
     def __getstate__(self):
-        return {"__args": self.__args, "__kwargs": self.__kwargs}
+        return {"__args": self.__args,
+                "__kwargs": self.__kwargs}
 
     def __setstate__(self, d):
-        # convert all __args to keyword-based arguments
-        if sys.version_info >= (3, 0):
-            spec = inspect.getfullargspec(self.__init__)
-        else:
-            spec = inspect.getargspec(self.__init__)
-        in_order_args = spec.args[1:]
-        out = type(self)(**dict(zip(in_order_args, d["__args"]), **d["__kwargs"]))
+        out = type(self)(*d["__args"], **d["__kwargs"])
         self.__dict__.update(out.__dict__)
 
     @classmethod

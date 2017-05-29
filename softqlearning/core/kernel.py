@@ -3,10 +3,10 @@ import numpy as np
 import unittest
 
 from rllab.core.serializable import Serializable
-from softqlearning.core.nn import ComputationGraph
+from softqlearning.misc.tf_proxy import SerializableTensor
 
 
-class Kernel(ComputationGraph):
+class Kernel(SerializableTensor):
     """ Kernel tensor.
 
     The output is a tensor of shape ... x Kx x Ky, where the
@@ -34,9 +34,7 @@ class Kernel(ComputationGraph):
         self._ys = ys  # ... x Ky x D
         self._grad_x = grad_x  # ... x Kx x Ky x D
 
-        scope_name = tf.get_variable_scope().name
-
-        super().__init__(scope_name, [self._xs, self._ys], self._kappa)
+        super().__init__(kappa)
 
     @property
     def grad(self):

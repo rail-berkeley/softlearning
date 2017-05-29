@@ -5,6 +5,7 @@ from collections import OrderedDict
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+import softqlearning.misc.tf_proxy as tp
 
 from rllab.core.serializable import Serializable
 from rllab.misc import logger
@@ -105,8 +106,8 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         self._create_qf(qf_class, qf_kwargs)
         self._create_kernel(kernel_class)
 
-        self._policy_params = self._policy_net.get_params_internal()
-        self._qf_params = self._qf.get_params_internal()
+        self._policy_params = self._training_policy.get_params_internal()
+        self._qf_params = self._qf_eval.get_params_internal()
         self._target_qf_params = self._qf_td_target.get_params_internal()
 
         self._training_ops = []
@@ -122,6 +123,16 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         self._eval_policy = self._training_policy
         self._n_eval_episodes = n_eval_episodes
 
+        self._sess.run(tf.global_variables_initializer())
+
+    @property
+    def policy(self):
+        return self._training_policy
+
+    @property
+    def env(self):
+        return self._env
+
     @overrides
     def train(self):
         """ Starts the Soft Q-Learning algorithm. """
@@ -129,7 +140,8 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
     def _create_placeholders(self):
         """ Creates all necessary placeholders. """
-        self._obs_pl = tf.placeholder(
+        # We use tf_proxy for the observation to make it Serializable.
+        self._obs_pl = tp.placeholder(
             tf.float32,
             shape=[None, self._Do],
             name='observation',
@@ -171,34 +183,42 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         dimensions.
         """
 
-        self._policy_net = policy_class(
-            inputs=(self._obs_pl,),
-            K=self._kernel_K,
-            scope_name='policy',
-            **policy_kwargs
-        )  # N x K x Da
+        with tf.variable_scope('policy') as scope:
+            self._policy_out = policy_class(
+                inputs=(self._obs_pl,),
+                K=self._kernel_K,
+                **policy_kwargs
+            )  # N x K x Da
 
-        self._actions_fixed, self._actions_updated = tf.split(
-            self._policy_net.output,
-            [self._kernel_K_fixed, self._kernel_K_updated],
-            axis=1
-        )  # N x (K_fix / K_upd) x Da
+            self._actions_fixed, self._actions_updated = tf.split(
+                self._policy_out,
+                [self._kernel_K_fixed, self._kernel_K_updated],
+                axis=1
+            )  # N x (K_fix / K_upd) x Da
 
-        # The gradients should not be back-propagated into the inner empirical
-        # expectation.
-        self._actions_fixed = tf.stop_gradient(self._actions_fixed)
+            # The gradients should not be back-propagated into the inner
+            # empirical expectation.
+            self._actions_fixed = tf.stop_gradient(self._actions_fixed)
 
-        # The policy network for rollouts and visualizing the action samples.
-        training_net = policy_class(
-            inputs=(self._obs_pl,),
-            K=1,
-            scope_name='policy',
-            reuse=True,
-            **policy_kwargs
-        )  # N x Da
+            scope.reuse_variables()
 
-        self._training_policy = NNPolicy(self._env.spec, training_net)
-        self._visualization_policy = NNPolicy(self._env.spec, self._policy_net)
+            # The policy network for rollouts and visualizing the action
+            # samples.
+            training_policy_out = policy_class(
+                inputs=(self._obs_pl,),
+                K=1,
+                **policy_kwargs
+            )  # N x Da
+
+            self._training_policy = NNPolicy(
+                self._env.spec, self._obs_pl,
+                training_policy_out,
+            )
+
+            self._visualization_policy = NNPolicy(
+                self._env.spec, self._obs_pl,
+                self._policy_out,
+            )
 
     def _create_qf(self, qf_class, qf_kwargs):
         """
@@ -208,61 +228,65 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         separate network (not sharing weights) that serves as the target network
         for the TD update.
         """
-        # Actions are normalized, and should reside between -1 and 1. The
-        # environment will clip the actions, so we'll encode that as a prior
-        # also directly into the Q-function.
-        clipped_actions = tf.clip_by_value(self._actions_pl, -1, 1)
-        self._qf = qf_class(
-            inputs=(self._obs_pl, clipped_actions),
-            scope_name='qf',
-            **qf_kwargs
-        )  # N x 1
 
-        # SVGD target Q-function. Expand the dimensions to make use of
-        # broadcasting (see documentation of NeuralNetwork). This will evaluate
-        # the Q-function for each state-action input pair.
-        obs_expanded = tf.expand_dims(self._obs_pl, axis=1)  # N x 1 x Do
-        qf_unbounded_net = qf_class(
-            inputs=(obs_expanded, self._actions_fixed),
-            scope_name='qf',
-            reuse=True,
-            **qf_kwargs,
-        )  # N x K_fix x 1
+        with tf.variable_scope('qf') as scope:
+            # Actions are normalized, and should reside between -1 and 1. The
+            # environment will clip the actions, so we'll encode that as a prior
+            # also directly into the Q-function.
+            clipped_actions = tf.clip_by_value(self._actions_pl, -1, 1)
+            self._qf = qf_class(
+                inputs=(self._obs_pl, clipped_actions),
+                **qf_kwargs
+            )  # N x 1
 
-        # InputBounds modifies the gradient outside the action boundaries to
-        # point back into the action domain. This is needed since SVGD assumes
-        # unconstrained target domain.
-        self._qf_svgd_target = InputBounds(self._actions_fixed,
-                                           qf_unbounded_net.output)
+            scope.reuse_variables()
 
-        # Create TD target network. Value of the next state is approximated
-        # with uniform samples.
-        obs_next_expanded = tf.expand_dims(self._obs_next_pl, axis=1)
-        # N x 1 x Do
-        target_actions = tf.random_uniform((1, self._qf_target_K, self._Da),
-                                           -1, 1)  # 1 x K x Da
-        self._qf_td_target = qf_class(
-            inputs=(obs_next_expanded, target_actions),
-            scope_name='qf_td_target',
-            **qf_kwargs
-        )  # N x 1 x 1
+            # SVGD target Q-function. Expand the dimensions to make use of
+            # broadcasting (see documentation of NeuralNetwork). This will
+            # evaluate the Q-function for each state-action input pair.
+            obs_expanded = tf.expand_dims(self._obs_pl, axis=1)  # N x 1 x Do
+            qf_unbounded_net = qf_class(
+                inputs=(obs_expanded, self._actions_fixed),
+                **qf_kwargs,
+            )  # N x K_fix x 1
 
-        # Q function for evaluation purposes.
-        obs_expanded = tf.expand_dims(self._obs_pl, axis=1)
-        actions_expanded = tf.expand_dims(self._actions_pl, axis=0)
-        qf_eval_net = qf_class(
-            inputs=(obs_expanded, actions_expanded),
-            scope_name='qf',
-            reuse=True,
-            **qf_kwargs
-        )
+            # InputBounds modifies the gradient outside the action boundaries to
+            # point back into the action domain. This is needed since SVGD
+            # assumes unconstrained target domain.
+            self._qf_svgd_target = InputBounds(self._actions_fixed,
+                                               qf_unbounded_net)
 
-        self._qf_eval = NNQFunction(
-            obs_pl=self._obs_pl,
-            actions_pl=self._actions_pl,
-            output=qf_eval_net.output,
-            net=qf_eval_net
-        )
+            # Q function for evaluation purposes.
+            obs_expanded = tf.expand_dims(self._obs_pl, axis=1)
+            actions_expanded = tf.expand_dims(self._actions_pl, axis=0)
+            qf_eval_net = qf_class(
+                inputs=(obs_expanded, actions_expanded),
+                **qf_kwargs
+            )
+
+            self._qf_eval = NNQFunction(
+                obs_pl=self._obs_pl,
+                actions_pl=self._actions_pl,
+                q_value=qf_eval_net,
+            )
+
+        with tf.variable_scope('qf_td_target'):
+            # Create TD target network. Value of the next state is approximated
+            # with uniform samples.
+            obs_next_expanded = tf.expand_dims(self._obs_next_pl, axis=1)
+            # N x 1 x Do
+            target_actions = tf.random_uniform((1, self._qf_target_K, self._Da),
+                                               -1, 1)  # 1 x K x Da
+            self._q_value_td_target = qf_class(
+                inputs=(obs_next_expanded, target_actions),
+                **qf_kwargs
+            )  # N x 1 x 1
+
+            self._qf_td_target = NNQFunction(
+                obs_pl=self._obs_next_pl,
+                actions_pl=target_actions,
+                q_value=self._q_value_td_target,
+            )
 
     def _create_kernel(self, kernel_class):
         self._kernel = kernel_class(
@@ -274,14 +298,14 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         """ Creates a TF operation for the SVGD update. """
 
         # Target log-density.
-        log_p = self._qf_svgd_target.output  # N x K_fix x 1
+        log_p = self._qf_svgd_target  # N x K_fix x 1
 
         grad_log_p = tf.gradients(log_p, self._actions_fixed)[0]
         grad_log_p = tf.expand_dims(grad_log_p, axis=2)  # N x K_fix x 1 x Da
         grad_log_p = tf.stop_gradient(grad_log_p)
 
         kappa = tf.expand_dims(
-            self._kernel.output,
+            self._kernel,
             dim=3,
         )  # N x K_fix x K_upd x 1
 
@@ -311,13 +335,12 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
     def _init_td_update(self):
         """ Creates a TF operation for the TD update. """
-        qf_params = self._qf.get_params_internal()
-        if len(qf_params) == 0:
+        if len(self._qf_params) == 0:
             return
 
-        q_curr = self._qf.output  # N x 1
+        q_curr = self._qf  # N x 1
         q_curr = tf.squeeze(q_curr)  # N
-        q_next = self._qf_td_target.output  # N x K_td x 1
+        q_next = self._q_value_td_target  # N x K_td x 1
         n_target_particles = tf.cast(tf.shape(q_next)[1], tf.float32)
         # = self._qf_target_K
 
@@ -336,7 +359,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
         td_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
             loss=td_loss,
-            var_list=qf_params,
+            var_list=self._qf_params,
         )
 
         self._training_ops.append(td_train_op)
@@ -354,7 +377,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
     @overrides
     def _init_training(self, env, policy):
         super()._init_training(env, policy)
-        self._qf_td_target.set_param_values(self._qf.get_param_values())
+        self._qf_td_target.set_param_values(self._qf_eval.get_param_values())
 
     @overrides
     def _get_training_ops(self, itr):
@@ -500,18 +523,20 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
     def get_epoch_snapshot(self, epoch):
         return dict(
             epoch=epoch,
-            algo=self,
+            policy=self._training_policy,
+            env=self._env,
+            # algo=self,
         )
 
     def __getstate__(self):
         d = Serializable.__getstate__(self)
         d.update({
             "policy_params": self._training_policy.get_param_values(),
-            "qf_params": self._qf.get_param_values(),
+            "qf_params": self._qf_eval.get_param_values(),
         })
         return d
 
     def __setstate__(self, d):
         Serializable.__setstate__(self, d)
-        self._qf.set_param_values(d["qf_params"])
+        self._qf_eval.set_param_values(d["qf_params"])
         self._training_policy.set_param_values(d["policy_params"])

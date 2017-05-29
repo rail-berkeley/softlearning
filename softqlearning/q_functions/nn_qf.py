@@ -5,12 +5,12 @@ from rllab.misc.overrides import overrides
 
 
 class NNQFunction(QFunction):
-    def __init__(self, obs_pl, actions_pl, output, net):
+    def __init__(self, obs_pl, actions_pl, q_value):
         super().__init__()
         self._obs_pl = obs_pl
         self._actions_pl = actions_pl
-        self._output = output
-        self._net = net
+        self._q_value = q_value
+        self._scope_name = tf.get_variable_scope().name
 
     def plot_level_curves(self, ax_lst, observations, action_dims, xlim, ylim):
         """ Plots level curves of critic output.
@@ -24,13 +24,6 @@ class NNQFunction(QFunction):
             (x_min, x_max).
         :param ylim: Minimum and maximum values along the second action
             dimensions (y_min, y_max).
-        :return:
-        """
-        """
-
-        :param ax_lst: List of plt Axes instances.
-        :param obs_lst: List of input observations at which the critic is
-            evaluated.
         :return:
         """
         assert len(action_dims) == 2
@@ -47,7 +40,7 @@ class NNQFunction(QFunction):
         feed = {self._obs_pl: observations,
                 self._actions_pl: actions}
 
-        Q = tf.get_default_session().run(self._output, feed)
+        Q = tf.get_default_session().run(self._q_value, feed)
         Q = Q.reshape((-1,) + X.shape)
 
         for ax, qs in zip(ax_lst, Q):
@@ -57,4 +50,7 @@ class NNQFunction(QFunction):
 
     @overrides
     def get_params_internal(self, **tags):
-        return self._net.get_params_internal(**tags)
+        if len(tags) > 0:
+            raise NotImplementedError
+        return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
+                                 self._scope_name + '/')

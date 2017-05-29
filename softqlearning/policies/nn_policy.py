@@ -16,6 +16,16 @@ class NNPolicy(Policy, Serializable):
         super(NNPolicy, self).__init__(env_spec)
 
     @overrides
+    def get_params_internal(self, **tags):
+        if len(tags) > 0:
+            raise NotImplementedError
+        scope = self._scope_name
+        # Add "/" if 'scope' unless it's empty (otherwise get_collection will
+        # return all parameters that start with 'scope'.
+        scope = scope if scope == '' else scope + '/'
+        return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope)
+
+    @overrides
     def get_action(self, observation):
         return self.get_actions(observation[None])[0], None
 

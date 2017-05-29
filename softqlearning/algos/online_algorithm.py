@@ -2,7 +2,6 @@ import abc
 import gtimer as gt
 
 import numpy as np
-import tensorflow as tf
 
 from softqlearning.misc.replay_pool import SimpleReplayPool
 from softqlearning.misc import tf_utils
@@ -48,8 +47,9 @@ class OnlineAlgorithm(RLAlgorithm):
         self._scale_reward = scale_reward
         self._render = render
 
-    def _train(self, env, policy):
         self._sess = tf_utils.create_session()
+
+    def _train(self, env, policy):
         self._init_training(env, policy)
 
         with self._sess.as_default():
@@ -183,7 +183,6 @@ class OnlineAlgorithm(RLAlgorithm):
         :param policy:  Policy instance.
         :return: None
         """
-        self._sess.run(tf.global_variables_initializer())
         observation_dim = env.observation_space.flat_dim
         action_dim = env.action_space.flat_dim
         self._pool = SimpleReplayPool(self._replay_pool_size,

@@ -1,10 +1,10 @@
 import argparse
-
 import joblib
-import tensorflow as tf
 
-from rllab.sampler.utils import rollout
-from rllab.misc.ext import set_seed
+import tensorflow as tf
+import numpy as np
+
+from softqlearning.misc.sampler import rollout
 
 if __name__ == "__main__":
 
@@ -25,26 +25,12 @@ if __name__ == "__main__":
     policy = None
     env = None
 
-    # If the snapshot file use tensorflow, do:
-    # import tensorflow as tf
-    # with tf.Session():
-    #     [rest of the code]
-    # while True:
-    if args.seed >= 0:
-        set_seed(args.seed)
     with tf.Session() as sess:
         data = joblib.load(args.file)
-        if "algo" in data:
-            policy = data["algo"].policy
-            env = data["algo"].env
-        else:
-            policy = data['policy']
-            env = data['env']
-        # while True:
-        for i in range(8):
-            path = rollout(env, policy, max_path_length=args.max_path_length,
-                           animated=args.render, speedup=args.speedup, itr=i)
-            print("latent " + str(i) + ":",
-                  path["rewards"][-1],
-                  path["mean_velocity"],
-                  path["successful"])
+        policy = data['policy']
+        env = data['env']
+
+        while True:
+            path = rollout(env, policy, path_length=args.max_path_length,
+                           render=args.render, speedup=args.speedup)
+            print('Total reward:', np.sum(path["rewards"]))
