@@ -13,7 +13,7 @@ if __name__ == "__main__":
                         help='path to the snapshot file')
     parser.add_argument('--max_path_length', type=int, default=500,
                         help='Max length of rollout')
-    parser.add_argument('--speedup', type=float, default=1,
+    parser.add_argument('--speedup', type=float, default=10,
                         help='Speedup')
     parser.add_argument('--seed', type=int, default=-1,
                         help='Fixed random seed')

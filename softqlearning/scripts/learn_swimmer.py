@@ -29,7 +29,7 @@ def test():
     base_kwargs = dict(
         epoch_length=10000,
         min_pool_size=10000,
-        n_epochs=400,
+        n_epochs=200,
         max_path_length=500,
         batch_size=64,
         scale_reward=30,
