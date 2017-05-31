@@ -13,9 +13,8 @@ from softqlearning.core.kernel import AdaptiveIsotropicGaussianKernel
 from softqlearning.core.nn import NeuralNetwork, StochasticNeuralNetwork
 from softqlearning.envs.multi_goal_env import MultiGoalEnv
 
-tabular_log_file = os.path.join(config.LOG_DIR, 'tests', 'multigoal',
-                                'eval.log')
-snapshot_dir = os.path.join(config.LOG_DIR, 'tests', 'multigoal')
+snapshot_dir = os.path.join(config.LOG_DIR, 'multigoal')
+tabular_log_file = os.path.join(snapshot_dir, 'eval.log')
 logger.add_tabular_output(tabular_log_file)
 logger.set_snapshot_dir(snapshot_dir)
 
