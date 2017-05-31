@@ -48,8 +48,8 @@ class _MetaClass(type):
 class SerializableTensor(Serializable, tf.Tensor, metaclass=_MetaClass):
     """ Proxy class that makes tf.Tensor Serializable. """
     def __init__(self, tensor_to_wrap):
-        Serializable.quick_init(self, locals())
-
+        # Only inherited classes should be instantiated.
+        assert type(self) is not SerializableTensor
         assert isinstance(tensor_to_wrap, tf.Tensor)
 
         self._wrapped_tensor = tensor_to_wrap
