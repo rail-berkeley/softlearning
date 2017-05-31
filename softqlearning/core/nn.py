@@ -9,14 +9,14 @@ from softqlearning.misc.tf_proxy import SerializableTensor
 
 class InputBounds(SerializableTensor):
     """
-    Modifies the gradient of the given graph ('output') with respect to the
+    Modifies the gradient of a given graph ('output') with respect to its
     input so that it always points towards the domain of the input.
-    It is assumed that the input domain is equal to the L_\infty unit ball.
+    It is assumed that the input domain is L_\infty unit ball.
 
     'InputBounds' can be used to implement the SVGD algorithm, which assumes a
     target distribution with infinite action support: 'InputBounds' allows
     actions to temporally violate the boundaries, but the modified gradient will
-    eventually bring them back and to satisfy the constraints.
+    eventually bring them back within boundaries.
     """
     SLOPE = 10  # This is the new gradient outside the input domain.
 
@@ -71,7 +71,7 @@ class StochasticNeuralNetwork(NeuralNetwork):
     """
     StochasticNeuralNetwork is like NeuralNetwork, but is inject a random
     input vector with the same dimension as the output to the bottom layer.
-    This network can produce multiple random samples at the time, conditioned
+    This network can produce multiple random samples at a time, conditioned
     on the other inputs.
 
     Example:

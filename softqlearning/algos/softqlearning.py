@@ -52,7 +52,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             env_plot_settings=None,
     ):
         """
-        :param base_kwargs: Keyword arguments for the base class.
+        :param base_kwargs: Keyword arguments for OnlineAlgorithm.
         :param policy_kwargs: Keyword arguments for the policy class.
         :param qf_kwargs: Keyword arguments for the Q-function class.
         :param env: Environment object.
@@ -140,7 +140,8 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
     def _create_placeholders(self):
         """ Creates all necessary placeholders. """
-        # We use tf_proxy for the observation to make it Serializable.
+        # We use tf_proxy for the observation placeholder to make it and the
+        # policy serializable.
         self._obs_pl = tp.placeholder(
             tf.float32,
             shape=[None, self._Do],
@@ -386,7 +387,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         return ops
 
     # It is significantly faster to run the training ops and target update
-    # ops in separate sess.run calls compares to running them in a single call.
+    # ops in separate sess.run calls compared to running them in a single call.
     # Reason unknown.
     def _get_target_ops(self, itr):
         if itr % self._qf_target_update_interval == 0:
@@ -525,6 +526,10 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             epoch=epoch,
             policy=self._training_policy,
             env=self._env,
+            # You can alternatively save the entire algorithm. If you do so,
+            # then you should comment out the policy line above. Otherwise
+            # there will be tensor name conflicts when the objects are being
+            # loaded.
             # algo=self,
         )
 

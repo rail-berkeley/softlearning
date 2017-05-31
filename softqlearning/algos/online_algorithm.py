@@ -29,7 +29,7 @@ class OnlineAlgorithm(RLAlgorithm):
         """
         :param batch_size: Minibatch size for training.
         :param n_epochs: Number of epochs.
-        :param epoch_length: Number of tie steps per epoch.
+        :param epoch_length: Number of time steps per epoch.
         :param min_pool_size: Minimum size of the pool to start training.
         :param replay_pool_size: Size of the replay pool.
         :param max_path_length: Maximum episode length.

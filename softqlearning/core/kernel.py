@@ -46,9 +46,6 @@ class Kernel(SerializableTensor):
 
 
 class AdaptiveIsotropicGaussianKernel(Kernel):
-    # TODO: make this to work for any number of leading axes.
-    """
-    """
     def __init__(self, xs, ys, h_min=1e-3):
         """
         Gaussian kernel with dynamics bandwidth equal to
