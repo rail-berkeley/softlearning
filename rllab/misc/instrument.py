@@ -699,8 +699,8 @@ def to_docker_command(params, docker_image, python_command="python", script='scr
         AWS_ACCESS_KEY_ID=config.AWS_ACCESS_KEY,
         AWS_SECRET_ACCESS_KEY=config.AWS_ACCESS_SECRET,
         # TODO: SET MUJOCO PATH FOR GYM:
-        MUJOCO_PY_MJKEY_PATH=os.path.join(config.MUJOCO_KEY_PATH, 'mjkey.txt'),
-        MUJOCO_PY_MJPRO_PATH=config.MUJOCO_KEY_PATH
+        MUJOCO_PY_MJKEY_PATH='/root/code/rllab/vendor/mjpro131/mjkey.txt',
+        MUJOCO_PY_MJPRO_PATH='/root/code/rllab/vendor/mjpro131'
     )
     if env is not None:
         for k, v in env.items():
