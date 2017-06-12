@@ -1,3 +1,4 @@
+gym
 numpy
 scipy
 tensorflow>=1.0.0
@@ -8,3 +9,4 @@ joblib
 python-dateutil
 cached-property
 mako
+mujoco-py
