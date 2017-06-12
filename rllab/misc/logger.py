@@ -28,7 +28,8 @@ _text_outputs = []
 _tabular_outputs = []
 
 _text_fds = {}
-_tabular_fds = {}
+_tabular_fds = {}  # key: file_name, value: open file
+_tabular_fds_hold = {}
 _tabular_header_written = set()
 
 _snapshot_dir = None
@@ -37,6 +38,33 @@ _snapshot_gap = 1
 
 _log_tabular_only = False
 _header_printed = False
+_disable_prefix = False
+
+_tf_summary_dir = None
+_tf_summary_writer = None
+
+_disabled = False
+_tabular_disabled = False
+
+
+def disable():
+    global _disabled
+    _disabled = True
+
+
+def disable_tabular():
+    global _tabular_disabled
+    _tabular_disabled = True
+
+
+def enable():
+    global _disabled
+    _disabled = False
+
+
+def enable_tabular():
+    global _tabular_disabled
+    _tabular_disabled = False
 
 
 def _add_output(file_name, arr, fds, mode='a'):
@@ -68,22 +96,52 @@ def remove_text_output(file_name):
 
 
 def add_tabular_output(file_name):
-    _add_output(file_name, _tabular_outputs, _tabular_fds, mode='w')
+    if file_name in _tabular_fds_hold.keys():
+        _tabular_outputs.append(file_name)
+        _tabular_fds[file_name] = _tabular_fds_hold[file_name]
+    else:
+        _add_output(file_name, _tabular_outputs, _tabular_fds, mode='w')
 
 
 def remove_tabular_output(file_name):
-    if _tabular_fds[file_name] in _tabular_header_written:
-        _tabular_header_written.remove(_tabular_fds[file_name])
+    if file_name in _tabular_header_written:
+        _tabular_header_written.remove(file_name)
     _remove_output(file_name, _tabular_outputs, _tabular_fds)
 
 
+def hold_tabular_output(file_name):
+    # what about _tabular_header_written?
+    if file_name in _tabular_outputs:
+        _tabular_outputs.remove(file_name)
+        _tabular_fds_hold[file_name] = _tabular_fds.pop(file_name)
+
+
 def set_snapshot_dir(dir_name):
+    os.system("mkdir -p %s" % dir_name)
     global _snapshot_dir
     _snapshot_dir = dir_name
 
 
 def get_snapshot_dir():
     return _snapshot_dir
+
+
+def set_tf_summary_dir(dir_name):
+    global _tf_summary_dir
+    _tf_summary_dir = dir_name
+
+
+def get_tf_summary_dir():
+    return _tf_summary_dir
+
+
+def set_tf_summary_writer(writer_name):
+    global _tf_summary_writer
+    _tf_summary_writer = writer_name
+
+
+def get_tf_summary_writer():
+    return _tf_summary_writer
 
 
 def get_snapshot_mode():
@@ -94,12 +152,15 @@ def set_snapshot_mode(mode):
     global _snapshot_mode
     _snapshot_mode = mode
 
+
 def get_snapshot_gap():
     return _snapshot_gap
+
 
 def set_snapshot_gap(gap):
     global _snapshot_gap
     _snapshot_gap = gap
+
 
 def set_log_tabular_only(log_tabular_only):
     global _log_tabular_only
@@ -109,27 +170,36 @@ def set_log_tabular_only(log_tabular_only):
 def get_log_tabular_only():
     return _log_tabular_only
 
+def set_disable_prefix(disable_prefix):
+    global _disable_prefix
+    _disable_prefix = disable_prefix
+
+def get_disable_prefix():
+    return _disable_prefix
+
 
 def log(s, with_prefix=True, with_timestamp=True, color=None):
-    out = s
-    if with_prefix:
-        out = _prefix_str + out
-    if with_timestamp:
-        now = datetime.datetime.now(dateutil.tz.tzlocal())
-        timestamp = now.strftime('%Y-%m-%d %H:%M:%S.%f %Z')
-        out = "%s | %s" % (timestamp, out)
-    if color is not None:
-        out = colorize(out, color)
-    if not _log_tabular_only:
-        # Also log to stdout
-        print(out)
-        for fd in list(_text_fds.values()):
-            fd.write(out + '\n')
-            fd.flush()
-        sys.stdout.flush()
+    if not _disabled:
+        out = s
+        if with_prefix and not _disable_prefix:
+            out = _prefix_str + out
+        if with_timestamp:
+            now = datetime.datetime.now(dateutil.tz.tzlocal())
+            timestamp = now.strftime('%Y-%m-%d %H:%M:%S.%f %Z')
+            out = "%s | %s" % (timestamp, out)
+        if color is not None:
+            out = colorize(out, color)
+        if not _log_tabular_only:
+            # Also log to stdout
+            print(out)
+            for fd in list(_text_fds.values()):
+                fd.write(out + '\n')
+                fd.flush()
+            sys.stdout.flush()
 
 
-def record_tabular(key, val):
+def record_tabular(key, val, *args, **kwargs):
+    # if not _disabled and not _tabular_disabled:
     _tabular.append((_tabular_prefix_str + str(key), str(val)))
 
 
@@ -185,26 +255,59 @@ class TerminalTablePrinter(object):
 
 table_printer = TerminalTablePrinter()
 
+_tabular_headers = dict()  # keys are file_names and values are the keys of the header of that tabular file
+
 
 def dump_tabular(*args, **kwargs):
-    wh = kwargs.pop("write_header", None)
-    if len(_tabular) > 0:
-        if _log_tabular_only:
-            table_printer.print_tabular(_tabular)
-        else:
-            for line in tabulate(_tabular).split('\n'):
-                log(line, *args, **kwargs)
-        tabular_dict = dict(_tabular)
-        # Also write to the csv files
-        # This assumes that the keys in each iteration won't change!
-        for tabular_fd in list(_tabular_fds.values()):
-            writer = csv.DictWriter(tabular_fd, fieldnames=list(tabular_dict.keys()))
-            if wh or (wh is None and tabular_fd not in _tabular_header_written):
-                writer.writeheader()
-                _tabular_header_written.add(tabular_fd)
-            writer.writerow(tabular_dict)
-            tabular_fd.flush()
-        del _tabular[:]
+    if not _disabled:  # and not _tabular_disabled:
+        wh = kwargs.pop("write_header", None)
+        if len(_tabular) > 0:
+            if _log_tabular_only:
+                table_printer.print_tabular(_tabular)
+            else:
+                for line in tabulate(_tabular).split('\n'):
+                    log(line, *args, **kwargs)
+            if not _tabular_disabled:
+                tabular_dict = dict(_tabular)
+                # Also write to the csv files
+                # This assumes that the keys in each iteration won't change!
+                for tabular_file_name, tabular_fd in list(_tabular_fds.items()):
+                    keys = tabular_dict.keys()
+                    if tabular_file_name in _tabular_headers:
+                        # check against existing keys: if new keys re-write Header and pad with NaNs
+                        existing_keys = _tabular_headers[tabular_file_name]
+                        if not set(existing_keys).issuperset(set(keys)):
+                            joint_keys = set(keys).union(set(existing_keys))
+                            tabular_fd.flush()
+                            read_fd = open(tabular_file_name, 'r')
+                            reader = csv.DictReader(read_fd)
+                            rows = list(reader)
+                            read_fd.close()
+                            tabular_fd.close()
+                            tabular_fd = _tabular_fds[tabular_file_name] = open(tabular_file_name, 'w')
+                            new_writer = csv.DictWriter(tabular_fd, fieldnames=list(joint_keys))
+                            new_writer.writeheader()
+                            for row in rows:
+                                for key in joint_keys:
+                                    if key not in row:
+                                        row[key] = np.nan
+                            new_writer.writerows(rows)
+                            _tabular_headers[tabular_file_name] = list(joint_keys)
+                    else:
+                        _tabular_headers[tabular_file_name] = keys
+
+                    writer = csv.DictWriter(tabular_fd, fieldnames=_tabular_headers[tabular_file_name])  # list(
+                    if wh or (wh is None and tabular_file_name not in _tabular_header_written):
+                        writer.writeheader()
+                        _tabular_header_written.add(tabular_file_name)
+                        _tabular_headers[tabular_file_name] = keys
+                    # add NaNs in all empty fields from the header
+                    for key in _tabular_headers[tabular_file_name]:
+                        if key not in tabular_dict:
+                            tabular_dict[key] = np.nan
+                    writer.writerow(tabular_dict)
+                    tabular_fd.flush()
+            del _tabular[:]
 
 
 def pop_prefix():
@@ -213,23 +316,28 @@ def pop_prefix():
     _prefix_str = ''.join(_prefixes)
 
 
-def save_itr_params(itr, params):
+def save_itr_params(itr, params, use_cloudpickle=False):
     if _snapshot_dir:
         if _snapshot_mode == 'all':
-            file_name = osp.join(_snapshot_dir, 'itr_%d.pkl' % itr)
-            joblib.dump(params, file_name, compress=3)
+            file_name = osp.join(get_snapshot_dir(), 'itr_%d.pkl' % itr)
         elif _snapshot_mode == 'last':
             # override previous params
-            file_name = osp.join(_snapshot_dir, 'params.pkl')
-            joblib.dump(params, file_name, compress=3)
+            file_name = osp.join(get_snapshot_dir(), 'params.pkl')
         elif _snapshot_mode == "gap":
-            if itr % _snapshot_gap == 0:
-                file_name = osp.join(_snapshot_dir, 'itr_%d.pkl' % itr)
-                joblib.dump(params, file_name, compress=3)
+            if itr == 0 or (itr + 1) % _snapshot_gap == 0:
+                file_name = osp.join(get_snapshot_dir(), 'itr_%d.pkl' % itr)
+            else:
+                return
         elif _snapshot_mode == 'none':
-            pass
+            return
         else:
             raise NotImplementedError
+        if use_cloudpickle:
+            import cloudpickle
+            with open(file_name, 'wb') as f:
+                cloudpickle.dump(params, f, protocol=3)
+        else:
+            joblib.dump(params, file_name, compress=3)
 
 
 def log_parameters(log_file, args, classes):
@@ -253,28 +361,29 @@ def log_parameters(log_file, args, classes):
 
 def stub_to_json(stub_sth):
     from rllab.misc import instrument
-    if isinstance(stub_sth, instrument.StubObject):
+    from rllab.misc import instrument2
+    if isinstance(stub_sth, instrument.StubObject) or isinstance(stub_sth, instrument2.StubObject):
         assert len(stub_sth.args) == 0
         data = dict()
         for k, v in stub_sth.kwargs.items():
             data[k] = stub_to_json(v)
         data["_name"] = stub_sth.proxy_class.__module__ + "." + stub_sth.proxy_class.__name__
         return data
-    elif isinstance(stub_sth, instrument.StubAttr):
+    elif isinstance(stub_sth, instrument.StubAttr) or isinstance(stub_sth, instrument2.StubAttr):
         return dict(
             obj=stub_to_json(stub_sth.obj),
             attr=stub_to_json(stub_sth.attr_name)
         )
-    elif isinstance(stub_sth, instrument.StubMethodCall):
+    elif isinstance(stub_sth, instrument.StubMethodCall) or isinstance(stub_sth, instrument2.StubMethodCall):
         return dict(
             obj=stub_to_json(stub_sth.obj),
             method_name=stub_to_json(stub_sth.method_name),
             args=stub_to_json(stub_sth.args),
             kwargs=stub_to_json(stub_sth.kwargs),
         )
-    elif isinstance(stub_sth, instrument.BinaryOp):
+    elif isinstance(stub_sth, instrument.BinaryOp) or isinstance(stub_sth, instrument2.BinaryOp):
         return "binary_op"
-    elif isinstance(stub_sth, instrument.StubClass):
+    elif isinstance(stub_sth, instrument.StubClass) or isinstance(stub_sth, instrument2.StubClass):
         return stub_sth.proxy_class.__module__ + "." + stub_sth.proxy_class.__name__
     elif isinstance(stub_sth, dict):
         return {stub_to_json(k): stub_to_json(v) for k, v in stub_sth.items()}
