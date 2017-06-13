@@ -1,44 +1,68 @@
 import numpy as np
-
-from gym.core import Wrapper
-from rllab.envs.gym_env import GymEnv
-
-
-def get_base_env(obj):
-    while isinstance(obj, Wrapper):
-            obj = obj.env
-
-    return obj
+from gym import utils
+from gym.envs.mujoco import mujoco_env
 
 
-class PusherEnv(GymEnv):
-    def __init__(self):
-        super().__init__(
-            env_name='Pusher-v0',
-            record_video=False,
-            video_schedule=None,
-            log_dir=None,
-            record_log=False,
-            force_reset=False,
+class PusherEnv(mujoco_env.MujocoEnv, utils.EzPickle):
+    def __init__(self, cylinder_pos=(0.0, 0.0), target_pos=(0.0, 0.0),
+                 tgt_cost_coeff=1.0, ctrl_cost_coeff=0.1, guide_cost_coeff=0.5):
+        utils.EzPickle.__init__(self)
+
+        self.tgt_cost_coeff = tgt_cost_coeff
+        self.ctrl_cost_coeff = ctrl_cost_coeff
+        self.guide_cost_coeff = guide_cost_coeff
+
+        self.cylinder_pos = np.array(cylinder_pos)
+        self.goal_pos = np.array(target_pos)
+
+        mujoco_env.MujocoEnv.__init__(self, 'pusher.xml', 5)
+
+    def _step(self, a):
+        vec_1 = self.get_body_com("object") - self.get_body_com("tips_arm")
+        vec_2 = self.get_body_com("object") - self.get_body_com("goal")
+
+        reward_near = - np.linalg.norm(vec_1)
+        reward_dist = - np.linalg.norm(vec_2)
+        reward_ctrl = - np.square(a).sum()
+        reward = (self.tgt_cost_coeff * reward_dist
+                  + self.ctrl_cost_coeff * reward_ctrl
+                  + self.guide_cost_coeff * reward_near)
+
+        self.do_simulation(a, self.frame_skip)
+        ob = self._get_obs()
+        done = False
+        return (ob, reward, done,
+                dict(reward_dist=reward_dist, reward_ctrl=reward_ctrl))
+
+    def viewer_setup(self):
+        self.viewer.cam.trackbodyid = -1
+        self.viewer.cam.distance = 4.0
+
+    def reset_model(self):
+        qpos = self.init_qpos
+
+        # self.goal_pos = np.asarray([0, 0])
+        # while True:
+        #     self.cylinder_pos = np.concatenate([
+        #             self.np_random.uniform(low=-0.3, high=0, size=1),
+        #             self.np_random.uniform(low=-0.2, high=0.2, size=1)])
+        #     if np.linalg.norm(self.cylinder_pos - self.goal_pos) > 0.17:
+        #         break
+
+        qpos[-4:-2] = self.cylinder_pos
+        qpos[-2:] = self.goal_pos
+        qvel = self.init_qvel + self.np_random.uniform(
+            low=-0.005, high=0.005, size=self.model.nv
         )
+        qvel[-4:] = 0
+        self.set_state(qpos, qvel)
+        return self._get_obs()
 
-        self._base_env = get_base_env(self.env)
-
-        self.cylinder_pos = np.array([-0.3, 0])
-        self.reset()
-
-    def reset(self):
-        obs = super().reset()
-        #obs = self._base_env._reset()
-
-        # Move cylinder back to fixed location.
-        self._base_env.init_qpos[-4:-2] = self.cylinder_pos
-
-        return obs
-
-
-
-# pp = PusherEnv()
-# pp.reset()
-# pp.render()
-# import ipdb; ipdb.set_trace()
+    def _get_obs(self):
+        return np.concatenate([
+            self.model.data.qpos.flat[:7],
+            self.model.data.qvel.flat[:7],
+            self.get_body_com("tips_arm"),
+            self.get_body_com("object"),
+            self.get_body_com("goal"),
+        ])

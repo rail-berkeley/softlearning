@@ -56,7 +56,7 @@ class NoVideoSchedule(object):
 
 
 class GymEnv(Env, Serializable):
-    def __init__(self, env_name, record_video=True, video_schedule=None, log_dir=None, record_log=True,
+    def __init__(self, env, record_video=True, video_schedule=None, log_dir=None, record_log=True,
                  force_reset=False):
         if log_dir is None:
             if logger.get_snapshot_dir() is None:
@@ -65,7 +65,11 @@ class GymEnv(Env, Serializable):
                 log_dir = os.path.join(logger.get_snapshot_dir(), "gym_log")
         Serializable.quick_init(self, locals())
 
-        env = gym.envs.make(env_name)
+        if type(env) == str:
+            env = gym.envs.make(env)
+        elif not isinstance(env, gym.Env):
+            raise ValueError
+
         self.env = env
         self.env_id = env.spec.id
 

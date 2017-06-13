@@ -15,7 +15,7 @@ from rllab.tf.envs.base import TfEnv
 from softqlearning.algos.softqlearning import SoftQLearning
 from softqlearning.core.kernel import AdaptiveIsotropicGaussianKernel
 from softqlearning.core.nn import NeuralNetwork, StochasticNeuralNetwork
-from softqlearning.envs.mujoco.gym_pusher import PusherEnv
+from softqlearning.envs.mujoco.pusher import PusherEnv
 
 snapshot_dir = os.path.join(config.LOG_DIR, 'pusher')
 tabular_log_file = os.path.join(snapshot_dir, 'eval.log')
