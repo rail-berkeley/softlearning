@@ -5,6 +5,7 @@ from rllab.misc import logger
 
 
 def rollout(env, policy, path_length, render=False, speedup=None):
+
     Da = env.action_space.flat_dim
     Do = env.observation_space.flat_dim
 
