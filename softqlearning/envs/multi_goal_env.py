@@ -10,11 +10,11 @@ import matplotlib.pyplot as plt
 
 class MultiGoalEnv(Env, Serializable):
     """
-    Moving a 2D point mass to one of the goal positions.
-    Cost is the distance to the closest goal.
+    Move a 2D point mass to one of the goal positions. Cost is the distance to
+    the closest goal.
 
-    state: position
-    action: velocity
+    State: position.
+    Action: velocity.
     """
     def __init__(self, goal_reward=10):
         super().__init__()
@@ -211,8 +211,8 @@ class MultiGoalEnv(Env, Serializable):
 
 class PointDynamics(object):
     """
-    state: position
-    action: velocity
+    State: position.
+    Action: velocity.
     """
     def __init__(self, dim, sigma):
         self.dim = dim

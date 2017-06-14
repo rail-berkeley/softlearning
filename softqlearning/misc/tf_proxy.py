@@ -8,7 +8,7 @@ class _Wrap:
     """ Wrapper class that wraps tf.Tensor instances returned by tensorflow
     functions in a SerializableTensor instance that inherits both tf.Tensor and
     Serializable. This is useful if we need to serialize a tensorflow graph
-    (e.g. save it to file) or pass it to a parallel process.
+    to save it to a file or pass it to a parallel process.
     """
     def __getattr__(self, attr):
         # Make these classes visible to everyone.
@@ -24,13 +24,15 @@ class _Wrap:
 
         return _wrap
 
-# Directs all module/function look-ups to the _Wrap.__getattr__()
+# Redirects all module/function look-ups to _Wrap.__getattr__().
 sys.modules[__name__] = _Wrap()
 
 
 class _MetaClass(type):
-    """ Modifies the arithmetic magic functions (__add__, __sub__, etc.) so that
-    the returned tensors are wrapped in SerializableTensor instances. """
+    """
+    Modifies the arithmetic magic functions (__add__, __sub__, etc.) so that
+    returned tensors are wrapped in SerializableTensor instances.
+    """
     def __init__(cls, name, bases, dct):
         super(_MetaClass, cls).__init__(name, bases, dct)
 

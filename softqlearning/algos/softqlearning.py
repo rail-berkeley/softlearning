@@ -142,8 +142,8 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
     def _create_placeholders(self):
         """ Creates all necessary placeholders. """
-        # We use tf_proxy for the observation placeholder to make it and the
-        # policy serializable.
+        # We use tf_proxy for the observation placeholder to make it
+        # serializable. This is needed to make also the policy serializable.
         self._obs_pl = tp.placeholder(
             tf.float32,
             shape=[None, self._Do],
@@ -181,7 +181,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
     def _create_policy(self, policy_class, policy_kwargs):
         """
-        Creates two policies: one for TD learning and one for the SVGD update.
+        Creates two policies: one for the TD update and one for the SVGD update.
         They share the same parameters, but have different input/output
         dimensions.
         """
@@ -205,8 +205,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
             scope.reuse_variables()
 
-            # The policy network for rollouts and visualizing the action
-            # samples.
+            # A policy network for rollouts and visualization of action samples.
             training_policy_out = policy_class(
                 inputs=(self._obs_pl,),
                 K=1,
@@ -225,17 +224,17 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
     def _create_qf(self, qf_class, qf_kwargs):
         """
-        The method creates three Q-functions: one for TD learning, one for SVGD,
+        Creates three Q-functions: one for the TD update, one for SVGD,
         and one for visualization. They all share the same parameters, but have
         different input/output dimensions. Additionally, the method creates a
-        separate network (not sharing weights) that serves as the target network
-        for the TD update.
+        separate network (not sharing weights) that serves as a target network
+        for the TD updates.
         """
 
         with tf.variable_scope('qf') as scope:
             # Actions are normalized, and should reside between -1 and 1. The
             # environment will clip the actions, so we'll encode that as a prior
-            # also directly into the Q-function.
+            # directly into the Q-function.
             clipped_actions = tf.clip_by_value(self._actions_pl, -1, 1)
             self._qf = qf_class(
                 inputs=(self._obs_pl, clipped_actions),
@@ -245,7 +244,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             scope.reuse_variables()
 
             # SVGD target Q-function. Expand the dimensions to make use of
-            # broadcasting (see documentation of NeuralNetwork). This will
+            # broadcasting (see documentation for NeuralNetwork). This will
             # evaluate the Q-function for each state-action input pair.
             obs_expanded = tf.expand_dims(self._obs_pl, axis=1)  # N x 1 x Do
             qf_unbounded_net = qf_class(
@@ -255,7 +254,9 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
             # InputBounds modifies the gradient outside the action boundaries to
             # point back into the action domain. This is needed since SVGD
-            # assumes unconstrained target domain.
+            # assumes unconstrained target domain, so actions may "leave" their
+            # domain temporarily, but the modified gradient will eventually
+            # bring them back.
             self._qf_svgd_target = InputBounds(self._actions_fixed,
                                                qf_unbounded_net)
 
@@ -274,7 +275,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             )
 
         with tf.variable_scope('qf_td_target'):
-            # Create TD target network. Value of the next state is approximated
+            # Creates TD target network. Value of the next state is approximated
             # with uniform samples.
             obs_next_expanded = tf.expand_dims(self._obs_next_pl, axis=1)
             # N x 1 x Do
@@ -321,7 +322,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             reduction_indices=1,
         )  # N x K_upd x Da
 
-        # Propagate the gradients through the policy network.
+        # Propagate the gradient through the policy network.
         param_grads = tf.gradients(
             self._actions_updated,
             self._policy_params,
@@ -349,8 +350,8 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
         v_next = tf.squeeze(tf.reduce_logsumexp(q_next, axis=1))  # N
 
-        # Importance weights add just a constant, which is irrelevant
-        # in terms of the actual policy.
+        # Importance weights add just a constant to the value, which is
+        # irrelevant in terms of the actual policy.
         v_next -= tf.log(n_target_particles)
         v_next += self._Da * np.log(2)
 
@@ -388,7 +389,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
         return ops
 
-    # It is significantly faster to run the training ops and target update
+    # It is significantly faster to run the training ops and the target update
     # ops in separate sess.run calls compared to running them in a single call.
     # Reason unknown.
     def _get_target_ops(self, itr):
@@ -430,7 +431,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             self._ax_env.set_xlim(self._env_plot_settings['xlim'])
             self._ax_env.set_ylim(self._env_plot_settings['ylim'])
 
-            # labelling
+            # Labelling.
             if "title" in self._env_plot_settings:
                 self._ax_env.set_title(self._env_plot_settings["title"])
             if "xlabel" in self._env_plot_settings:
@@ -529,11 +530,10 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             epoch=epoch,
             policy=self._training_policy,
             env=self._env,
+            # algo=self
             # You can alternatively save the entire algorithm. If you do so,
             # then you should comment out the policy line above. Otherwise
-            # there will be tensor name conflicts when the objects are being
-            # loaded.
-            # algo=self,
+            # there will be tensor name conflicts when the objects are loaded
         )
 
     def __getstate__(self):

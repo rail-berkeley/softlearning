@@ -13,10 +13,10 @@ class NNQFunction(QFunction):
         self._scope_name = tf.get_variable_scope().name
 
     def plot_level_curves(self, ax_lst, observations, action_dims, xlim, ylim):
-        """ Plots level curves of critic output.
+        """ Plots level curves of the Q-function.
 
-        :param ax_lst: list of plt Axes instances.
-        :param observations: list of input observations at which the Q-function
+        :param ax_lst: List of plt Axes instances.
+        :param observations: List of input observations at which the Q-function
             is evaluated.
         :param action_dims: Which two action dimensions are varied (other
             dimensions are set to zero).

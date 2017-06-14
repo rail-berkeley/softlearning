@@ -48,7 +48,7 @@ class Kernel(SerializableTensor):
 class AdaptiveIsotropicGaussianKernel(Kernel):
     def __init__(self, xs, ys, h_min=1e-3):
         """
-        Gaussian kernel with dynamics bandwidth equal to
+        Gaussian kernel with dynamic bandwidth equal to
         median_distance / log(Kx).
 
         :param xs: Left particles.
@@ -65,13 +65,13 @@ class AdaptiveIsotropicGaussianKernel(Kernel):
 
         leading_shape = tf.shape(xs)[:-2]
 
-        # Compute the pairwise distances of left and right particles
+        # Compute the pairwise distances of left and right particles.
         diff = tf.expand_dims(xs, -2) - tf.expand_dims(ys, -3)
         # ... x Kx x Ky x D
         dist_sq = tf.reduce_sum(diff**2, axis=-1, keep_dims=False)
         # ... x Kx x Ky
 
-        # Get median
+        # Get median.
         input_shape = tf.concat((leading_shape, [Kx*Ky]), axis=0)
         values, _ = tf.nn.top_k(
             input=tf.reshape(dist_sq, input_shape),
@@ -83,7 +83,7 @@ class AdaptiveIsotropicGaussianKernel(Kernel):
 
         h = medians_sq / np.log(Kx)  # ... (shape)
         h = tf.maximum(h, self._h_min)
-        h = tf.stop_gradient(h)  # just in case
+        h = tf.stop_gradient(h)  # Just in case.
         h_expanded_twice = tf.expand_dims(tf.expand_dims(h, -1), -1)
         # ... x 1 x 1
 
@@ -131,7 +131,7 @@ class TestAdaptiveIsotropicGaussianKernel(unittest.TestCase):
             medians_sq = sess.run(kernel._db['medians_sq'], feeds)
             kappa, kappa_grad = sess.run([kernel.output, kernel.grad], feeds)
 
-            # Compute and test the median with numpy
+            # Compute and test the median with numpy.
             diff = x[..., None, :] - y[..., None, :, :]
 
             # noinspection PyTypeChecker
@@ -141,7 +141,7 @@ class TestAdaptiveIsotropicGaussianKernel(unittest.TestCase):
             np.testing.assert_almost_equal(medians_sq, medians_sq_np,
                                            decimal=5, err_msg='Wrong median.')
 
-            # Test the kernel matrix
+            # Test the kernel matrix.
             h = medians_sq_np / np.log(Kx)
             h = np.maximum(h, h_min)
 
@@ -150,7 +150,7 @@ class TestAdaptiveIsotropicGaussianKernel(unittest.TestCase):
             np.testing.assert_almost_equal(kappa, kappa_np,
                                            decimal=5, err_msg='Wrong kernel.')
 
-            # Test the gradient
+            # Test the gradient.
             grad_np = - 2*diff/h[..., None, None, None]*kappa_np[..., None]
 
             # noinspection PyTypeChecker

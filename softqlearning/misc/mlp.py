@@ -10,7 +10,7 @@ def weight_variable(
         name=WEIGHT_DEFAULT_NAME,
 ):
     """
-    Return a variable with the given shape.
+    Returns a variable with a given shape.
 
     :param initializer: TensorFlow initializer. Default Xavier.
     :param name: Variable name.
@@ -29,7 +29,7 @@ def bias_variable(
         name=BIAS_DEFAULT_NAME,
 ):
     """
-    Return a bias variable with the given shape.
+    Returns a bias variable with a given shape.
 
     :param initializer: TensorFlow initializer. Default zero.
     :param name: Variable name.
@@ -48,11 +48,11 @@ def batch_matmul(a, b):
 
     Second argument, 'b', should be a rank-2 tensor. Performs a vector-matrix
     multiplication along the last axis of 'a' for each leading dimension of 'a'.
-    Supports maximum of 2 leading axis.
+    Supports maximum of 2 leading axes.
 
-    :param a: Tensor of shape ... x N
-    :param b: Rank-2 tensor of shape N x M
-    :return: Tensor of shape ... x M
+    :param a: Tensor of shape ... x N.
+    :param b: Rank-2 tensor of shape N x M.
+    :return: Tensor of shape ... x M.
     """
     assert b.get_shape().ndims == 2
 
@@ -77,7 +77,7 @@ def affine(
         W_name=WEIGHT_DEFAULT_NAME,
         bias_name=BIAS_DEFAULT_NAME,
 ):
-    """ Create an affine layer.
+    """ Creates an affine layer.
 
     :param inp: Input tensor.
     :param units: Number of units.
@@ -86,7 +86,7 @@ def affine(
     :param b_initializer: Initializer for the bias term.
     :param W_name: Name of the weight.
     :param bias_name: Name of the bias.
-    :return: Tensor defined as input.dot(weight) + bias
+    :return: Tensor defined as input.dot(weight) + bias.
     """
     input_size = inp.get_shape()[-1].value
     W = weight_variable([input_size, units],
@@ -112,23 +112,25 @@ def mlp(inputs,
         W_initializer=None,
         b_initializer=None):
     """
-    Create a multi-layer perceptron with the given hidden sizes. The
-    nonlinearity is applied after every hidden layer.
+    Creates a multi-layer perceptron with given hidden sizes. A nonlinearity
+    is applied after every hidden layer.
 
     Supports input tensors of rank 2 and rank 3. All inputs should have the same
-    tensor rank. It is assumed that the vectors along the last axis form the
-    samples, and the mlp is applied independently to each leading dimension.
+    tensor rank. It is assumed that the vectors along the last axis are the
+    data points, and an mlp is applied independently to each leading dimension.
     If multiple inputs are provided, then the corresponding rank-1 vectors
-    are concatenated. The leading dimensions of the network output are equal
-    to the 'outer product' of the inputs' shapes. For example
+    are concatenated along the last axis. The leading dimensions of the network
+    output are equal to the 'outer product' of the inputs' shapes.
+
+    Example:
 
     input 1 shape: N x K x D1
     input 2 shape: N x 1 x D2
 
-    output shape: N x K x (number of output units))
+    output shape: N x K x (number of output units)
 
     :param inputs: List of input tensors.
-    :param layer_sizes: List of layers sizes, including the output layer.
+    :param layer_sizes: List of layers sizes, including output layer size.
     :param nonlinearity: Hidden layer nonlinearity.
     :param output_nonlinearity: Output layer nonlinearity.
     :param W_initializer: Weight initializer.
@@ -139,7 +141,7 @@ def mlp(inputs,
         inputs = [inputs]
 
     # Take care of the input layer separately to make use of broadcasting in
-    # the case of several inputs
+    # a case of several input tensors.
     with tf.variable_scope('layer0'):
         layer = bias_variable(layer_sizes[0], b_initializer)
         for i, inp in enumerate(inputs):

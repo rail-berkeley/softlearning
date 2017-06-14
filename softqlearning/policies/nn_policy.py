@@ -20,7 +20,7 @@ class NNPolicy(Policy, Serializable):
         if len(tags) > 0:
             raise NotImplementedError
         scope = self._scope_name
-        # Add "/" if 'scope' unless it's empty (otherwise get_collection will
+        # Add "/" to 'scope' unless it's empty (otherwise get_collection will
         # return all parameters that start with 'scope'.
         scope = scope if scope == '' else scope + '/'
         return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope)

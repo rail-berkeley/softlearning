@@ -10,7 +10,7 @@ from softqlearning.misc.tf_proxy import SerializableTensor
 class InputBounds(SerializableTensor):
     """
     Modifies the gradient of a given graph ('output') with respect to its
-    input so that it always points towards the domain of the input.
+    input so that the gradient always points towards the inputs domain.
     It is assumed that the input domain is L_\infty unit ball.
 
     'InputBounds' can be used to implement the SVGD algorithm, which assumes a
@@ -79,25 +79,29 @@ class NeuralNetwork(SerializableTensor):
 
 class StochasticNeuralNetwork(NeuralNetwork):
     """
-    StochasticNeuralNetwork is like NeuralNetwork, but is inject a random
-    input vector with the same dimension as the output to the bottom layer.
-    This network can produce multiple random samples at a time, conditioned
-    on the other inputs.
+    StochasticNeuralNetwork is like NeuralNetwork, but it feeds an additional
+    random vector to the network. The shape of this vector is
+
+    ... x K x (number of output units)
+
+    where ... denotes all leading dimensions of the inputs (all but the last
+    axis), and K is the number of outputs samples produced per data point.
 
     Example:
 
-    input 1 shape: N x D
-    output shape: N x K x (number of output units)
+    input 1 shape: ... x D1
+    input 2 shape: ... x D2
+    output shape: ... x K x (output shape)
 
-    where K is the number of samples.
+    If K == 1, the corresponding axis is dropped. Note that the leading
+    dimensions of the inputs should be consistent (supports broadcasting).
     """
-
     def __init__(self, layer_sizes, inputs, K, **kwargs):
         """
         :param layer_sizes: List of # of units at each layer, including output
            layer.
         :param inputs: List of input tensors. See note of broadcasting.
-        :param K: Number of samples to be generated in single forward pass.
+        :param K: Number of samples to be generated per data point.
         :param kwargs: Other kwargs to be passed to the parent class.
         """
         Serializable.quick_init(self, locals())
@@ -120,4 +124,4 @@ class StochasticNeuralNetwork(NeuralNetwork):
         super().__init__(layer_sizes, expanded_inputs, **kwargs)
 
         self._inputs = inputs  # This will hide the random tensor from inputs.
-        self._xi = xi  # For debugging
+        self._xi = xi  # For debugging.
