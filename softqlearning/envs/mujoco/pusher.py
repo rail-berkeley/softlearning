@@ -25,3 +25,6 @@ class PusherEnv(GymEnv):
         )
 
         self.reset()
+
+    def log_diagnostics(self, paths):
+        return self.env.log_diagnostics(paths)

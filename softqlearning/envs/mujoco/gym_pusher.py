@@ -1,6 +1,9 @@
 import numpy as np
+
 from gym import utils
 from gym.envs.mujoco import mujoco_env
+
+from rllab.misc import logger
 
 
 class PusherEnv(mujoco_env.MujocoEnv, utils.EzPickle):
@@ -32,7 +35,11 @@ class PusherEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         ob = self._get_obs()
         done = False
         return (ob, reward, done,
-                dict(reward_dist=reward_dist, reward_ctrl=reward_ctrl))
+                dict(reward_dist=reward_dist,
+                     reward_ctrl=reward_ctrl,
+                     reward_near=reward_near,
+                     com_object=self.get_body_com('object'),
+                     com_goal=self.get_body_com('goal')))
 
     def viewer_setup(self):
         self.viewer.cam.trackbodyid = -1
@@ -66,3 +73,27 @@ class PusherEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             self.get_body_com("object"),
             self.get_body_com("goal"),
         ])
+
+    @staticmethod
+    def log_diagnostics(paths):
+        dist = []
+        reward_dist = []
+        reward_ctrl = []
+        reward_near = []
+        for path in paths:
+            info = path['env_infos']
+            dist.append(np.linalg.norm(
+                info['com_object'][-1] - info['com_goal'][-1]
+            ))
+            reward_dist.append(info['reward_dist'])
+            reward_ctrl.append(info['reward_ctrl'])
+            reward_near.append(info['reward_near'])
+
+        logger.record_tabular('env:goal_final_distance_mean', np.mean(dist))
+        logger.record_tabular('env:goal_final_distance_std', np.std(dist))
+        logger.record_tabular('env:reward_dist_mean', np.mean(reward_dist))
+        logger.record_tabular('env:reward_dist_std', np.std(reward_dist))
+        logger.record_tabular('env:reward_ctrl_mean', np.mean(reward_ctrl))
+        logger.record_tabular('env:reward_ctrl_std', np.std(reward_ctrl))
+        logger.record_tabular('env:reward_near_mean', np.mean(reward_near))
+        logger.record_tabular('env:reward_near_std', np.std(reward_near))
