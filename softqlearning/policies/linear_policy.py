@@ -6,13 +6,13 @@ from rllab.core.serializable import Serializable
 
 
 class LinearPolicy(Policy, Serializable):
-    def __init__(self, env_spec, waypoints, time_inds):
+    def __init__(self, env_spec, instructions):
         Serializable.quick_init(self, locals())
         super().__init__(env_spec)
         self._counter = 0
 
-        self._waypoints = waypoints
-        self._time_inds = np.array(time_inds)
+        self._waypoints = instructions['waypoints']
+        self._times = instructions['times']
 
     @overrides
     def get_params_internal(self, **tags):
@@ -22,7 +22,7 @@ class LinearPolicy(Policy, Serializable):
     def get_action(self, observation):
         self._counter += 1
 
-        waypoint_index = np.where(self._counter <= self._time_inds)[0][0]
+        waypoint_index = np.where(self._counter <= self._times)[0][0]
         waypoint = self._waypoints[waypoint_index]
 
         qpos = observation[:7]

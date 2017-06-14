@@ -3,7 +3,7 @@ import gtimer as gt
 
 import numpy as np
 
-from softqlearning.misc.replay_pool import SimpleReplayPool
+from softqlearning.misc.replay_pool import SimpleReplayPool, DoublePool
 from softqlearning.misc import tf_utils
 
 from rllab.algos.base import RLAlgorithm
@@ -25,6 +25,8 @@ class OnlineAlgorithm(RLAlgorithm):
             max_path_length=1000,
             scale_reward=1.,
             render=False,
+            demo_pool=None,
+            demo_ratio=0.1
     ):
         """
         :param batch_size: Minibatch size for training.
@@ -46,6 +48,9 @@ class OnlineAlgorithm(RLAlgorithm):
         self._max_path_length = max_path_length
         self._scale_reward = scale_reward
         self._render = render
+        self._demo_pool = demo_pool
+        self._demo_ratio = demo_ratio
+        self._double_pool = None
 
         self._sess = tf_utils.create_session()
 
@@ -145,7 +150,10 @@ class OnlineAlgorithm(RLAlgorithm):
 
     @gt.wrap
     def _do_training(self, itr):
-        minibatch = self._pool.random_batch(self._batch_size)
+        if self._double_pool:
+            minibatch = self._double_pool.random_batch(self._batch_size)
+        else:
+            minibatch = self._pool.random_batch(self._batch_size)
         sampled_obs = minibatch['observations']
         sampled_terminals = minibatch['terminals']
         sampled_actions = minibatch['actions']
@@ -188,6 +196,11 @@ class OnlineAlgorithm(RLAlgorithm):
         self._pool = SimpleReplayPool(self._replay_pool_size,
                                       observation_dim,
                                       action_dim)
+
+        if self._demo_pool:
+            self._double_pool = DoublePool(
+                self._demo_pool, self._pool, self._demo_ratio
+            )
 
     @abc.abstractmethod
     def _get_training_ops(self, itr):
