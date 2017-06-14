@@ -46,23 +46,33 @@ class NeuralNetwork(SerializableTensor):
     See documentation of 'mlp' for information in regards to broadcasting.
     """
 
-    def __init__(self, layer_sizes, inputs,
+    def __init__(self, layer_sizes, inputs, n_heads=1,
                  nonlinearity=tf.nn.relu, output_nonlinearity=None):
         """
         :param layer_sizes: List of # of units at each layer, including output
            layer.
         :param inputs: List of input tensors. See note of broadcasting.
+        :param n_heads: Number of heads. The output shape is
+            (leading dimensions) x n_heads x (number of output units). If
+            n_heads == 1, then the corresponding dimensions is dropped.
         :param nonlinearity: Nonlinearity operation for hidden layers.
         :param output_nonlinearity: Nonlinearity operation for output layer.
         """
         Serializable.quick_init(self, locals())
 
-        n_outputs = layer_sizes[-1]
+        if n_heads > 1:
+            n_outputs = layer_sizes[-1]
+            layer_sizes[-1] *= n_heads
 
         graph = mlp(inputs,
                     layer_sizes,
                     nonlinearity=nonlinearity,
                     output_nonlinearity=output_nonlinearity)
+
+        if n_heads > 1:
+            leading_shape = tf.shape(graph)[:-1]
+            new_shape = tf.concat((leading_shape, (n_heads, n_outputs)), 0)
+            graph = tf.reshape(graph, new_shape)
 
         super().__init__(graph)
 
@@ -94,12 +104,17 @@ class StochasticNeuralNetwork(NeuralNetwork):
         self._K = K
 
         n_dims = inputs[0].get_shape().ndims
-        sample_shape = np.ones(n_dims + 1, dtype=np.int32)
-        sample_shape[n_dims-1:] = (self._K, layer_sizes[-1])
+
+        if K > 1:
+            xi_shape = np.ones(n_dims + 1, dtype=np.int32)
+            xi_shape[-2:] = (self._K, layer_sizes[-1])
+        else:
+            xi_shape = np.ones(n_dims, dtype=np.int32)
+            xi_shape[-1:] = layer_sizes[-1]
 
         expanded_inputs = [tf.expand_dims(t, n_dims-1) for t in inputs]
 
-        xi = tf.random_normal(sample_shape)  # 1 x ... x 1 x K x Do
+        xi = tf.random_normal(xi_shape)  # 1 x ... x 1 x K x (output shape)
         expanded_inputs.append(xi)
 
         super().__init__(layer_sizes, expanded_inputs, **kwargs)
