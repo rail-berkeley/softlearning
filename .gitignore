@@ -1,0 +1,5 @@
+*__pycache__*
+.idea
+rllab/config_personal.py
+data
+vendor/mujoco

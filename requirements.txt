@@ -1,0 +1,10 @@
+numpy
+scipy
+tensorflow>=1.0.0
+matplotlib
+gtimer
+path.py
+joblib
+python-dateutil
+cached-property
+mako
