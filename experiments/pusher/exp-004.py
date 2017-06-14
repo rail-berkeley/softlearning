@@ -100,8 +100,8 @@ for itr, v in enumerate(variants):
 
     # Construct objects.
     env_kwargs = dict(
-        cylinder_pos=(0.1, 0.1),
-        target_pos=(0.1, 0.1),
+        cylinder_pos=(-0.2, 0.2),
+        target_pos=(0.1, 0.0),
         guide_cost_coeff=0.0,
         ctrl_cost_coeff=0.1,
         tgt_cost_coeff=1.0
