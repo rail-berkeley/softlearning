@@ -80,7 +80,7 @@ def test():
         discount=0.99,
         alpha=1,
 
-        n_eval_episodes=10,
+        eval_n_episodes=10,
         q_plot_settings=q_plot_settings,
         env_plot_settings=env_plot_settings,
     )

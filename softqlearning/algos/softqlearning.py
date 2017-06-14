@@ -47,7 +47,8 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             discount=0.99,
             alpha=1,
 
-            n_eval_episodes=10,
+            eval_n_episodes=10,
+            eval_render=False,
             q_plot_settings=None,
             env_plot_settings=None,
     ):
@@ -71,7 +72,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             computation of the inner/outer empirical expectation.
         :param discount: Discount factor.
         :param alpha: SVGD alpha parameter (= temperature).
-        :param n_eval_episodes: Number of evaluation episodes.
+        :param eval_n_episodes: Number of evaluation episodes.
         :param q_plot_settings: Settings for Q-function plots.
         :param env_plot_settings: Settings for rollout plot.
         """
@@ -121,7 +122,8 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         self._init_figures()
 
         self._eval_policy = self._training_policy
-        self._n_eval_episodes = n_eval_episodes
+        self._eval_n_episodes = eval_n_episodes
+        self._eval_render = eval_render
 
         self._sess.run(tf.global_variables_initializer())
 
@@ -462,7 +464,8 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         snapshot_dir = logger.get_snapshot_dir()
 
         paths = rollouts(self._env, self._eval_policy,
-                         self._max_path_length, self._n_eval_episodes)
+                         self._max_path_length, self._eval_n_episodes,
+                         self._eval_render)
 
         average_discounted_return = np.mean(
             [special.discount_return(path["rewards"], self._discount)
