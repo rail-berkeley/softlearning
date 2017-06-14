@@ -134,7 +134,7 @@ for itr, v in enumerate(variants):
         max_path_length=v["max_path_length"],
         batch_size=64,
         scale_reward=v["scale_reward"],
-        demo_pool=PusherDemo(),
+        demo_pool=PusherDemo(env_kwargs),
         demo_ratio=v['demo_ratio']
     )
 

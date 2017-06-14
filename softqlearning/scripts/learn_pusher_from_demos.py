@@ -22,7 +22,15 @@ logger.set_snapshot_dir(snapshot_dir)
 
 def test():
 
-    env = TfEnv(normalize(PusherEnv()))
+    env_kwargs = dict(
+        cylinder_pos=(-0.2, 0.2),
+        target_pos=(0.1, 0.0),
+        guide_cost_coeff=0.0,
+        ctrl_cost_coeff=0.1,
+        tgt_cost_coeff=1.0
+    )
+
+    env = TfEnv(normalize(PusherEnv(**env_kwargs)))
 
     base_kwargs = dict(
         epoch_length=1000,
@@ -31,7 +39,7 @@ def test():
         max_path_length=100,
         batch_size=64,
         scale_reward=30,
-        demo_pool=PusherDemo(),
+        demo_pool=PusherDemo(env_kwargs, render=True),
         demo_ratio=0.1,
     )
 

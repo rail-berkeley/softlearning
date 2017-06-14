@@ -4,7 +4,7 @@ import time
 from rllab.misc import logger
 
 
-def rollout(env, policy, path_length, render=False, speedup=None):
+def rollout(env, policy, path_length, render=False, speedup=10):
 
     Da = env.action_space.flat_dim
     Do = env.observation_space.flat_dim
@@ -58,10 +58,10 @@ def rollout(env, policy, path_length, render=False, speedup=None):
     return path
 
 
-def rollouts(env, policy, path_length, n_paths):
+def rollouts(env, policy, path_length, n_paths, render=False):
     paths = list()
     for i in range(n_paths):
-        paths.append(rollout(env, policy, path_length))
+        paths.append(rollout(env, policy, path_length, render))
 
     return paths
 

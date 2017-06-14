@@ -10,21 +10,17 @@ from rllab.tf.envs.base import TfEnv
 
 class PusherDemo(SimpleReplayPool):
 
-    def __init__(self, render=False):
+    def __init__(self, env_kwargs, render=False):
         path_length = 100
-        object_pos = (-0.2, 0.2)
-        target_pos = (0.1, 0)
 
-        env = TfEnv(normalize(PusherEnv(cylinder_pos=object_pos,
-                                        target_pos=target_pos,
-                                        guide_cost_coeff=0.0,
-                                        ctrl_cost_coeff=0.1,
-                                        tgt_cost_coeff=1.0)))
+        env = TfEnv(normalize(PusherEnv(**env_kwargs)))
 
         super().__init__(path_length + 1,
                          observation_dim=env.observation_space.flat_dim,
                          action_dim=env.action_space.flat_dim)
 
+        # TODO: The instructions makes sense only for a particular set of
+        # env_kwargs.
         instructions = _get_pusher_instructions()
         policy = LinearPolicy(env.spec, instructions)
         path = rollout(env, policy, path_length=path_length,
