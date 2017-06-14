@@ -95,7 +95,7 @@ class DoublePool:
         batch2_size = batch_size - batch1_size
 
         b1 = self._pool1.random_batch(batch1_size)
-        b2 = self._pool1.random_batch(batch2_size)
+        b2 = self._pool2.random_batch(batch2_size)
 
         return {k: np.concatenate((b1[k], b2[k]), axis=0) for k in b1.keys()}
 
