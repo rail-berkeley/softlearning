@@ -8,6 +8,7 @@ from rllab.misc import logger
 
 class PusherEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self, cylinder_pos=(0.0, 0.0), target_pos=(0.0, 0.0),
+                 random_cylinder_pos=False,
                  tgt_cost_coeff=1.0, ctrl_cost_coeff=0.1, guide_cost_coeff=0.5):
         utils.EzPickle.__init__(self)
 
@@ -17,6 +18,7 @@ class PusherEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
         self.cylinder_pos = np.array(cylinder_pos)
         self.goal_pos = np.array(target_pos)
+        self.random_cylinder_pos = random_cylinder_pos
 
         mujoco_env.MujocoEnv.__init__(self, 'pusher.xml', 5)
 
@@ -48,13 +50,12 @@ class PusherEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def reset_model(self):
         qpos = self.init_qpos
 
-        # self.goal_pos = np.asarray([0, 0])
-        # while True:
-        #     self.cylinder_pos = np.concatenate([
-        #             self.np_random.uniform(low=-0.3, high=0, size=1),
-        #             self.np_random.uniform(low=-0.2, high=0.2, size=1)])
-        #     if np.linalg.norm(self.cylinder_pos - self.goal_pos) > 0.17:
-        #         break
+        while self.random_cylinder_pos:
+            self.cylinder_pos = np.concatenate([
+                    self.np_random.uniform(low=-0.3, high=0, size=1),
+                    self.np_random.uniform(low=-0.2, high=0.2, size=1)])
+            if np.linalg.norm(self.cylinder_pos - self.goal_pos) > 0.17:
+                break
 
         qpos[-4:-2] = self.cylinder_pos
         qpos[-2:] = self.goal_pos
