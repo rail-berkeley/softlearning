@@ -1,6 +1,5 @@
 """
-Change the task: Now there is no reward for reaching the cylinder, only for
-moving it to the target position.
+Fixed cylinder position, sweeping over the scale rewards.
 """
 import sys
 import os

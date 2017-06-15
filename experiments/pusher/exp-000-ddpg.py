@@ -1,6 +1,5 @@
 """
-Change the task: Now there is no reward for reaching the cylinder, only for
-moving it to the target position.
+Fixed cylinder position, sweeping over learning rates.
 """
 import sys
 import os
@@ -26,7 +25,7 @@ from rllab.misc.instrument import VariantGenerator, variant
 # exp setup --------------------------------------------------------
 exp_id = os.path.basename(__file__).split('.')[0]  # exp_xxx
 exp_prefix = "pusher/" + exp_id
-exp_name_prefix = 'pusher-ddpg' + exp_id
+exp_name_prefix = 'pusher-ddpg-' + exp_id
 mode = "ec2"
 # mode = "local_test"
 
