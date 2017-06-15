@@ -1,6 +1,9 @@
-from rllab.envs.gym_env import GymEnv
 from rllab.core.serializable import Serializable
+from rllab.core.parameterized import Parameterized
+from rllab.misc.overrides import overrides
+
 from softqlearning.envs.mujoco.gym_pusher import PusherEnv as GymPusherEnv
+from softqlearning.envs.gym_env import GymEnv
 
 
 class DummySpec:
@@ -8,8 +11,9 @@ class DummySpec:
     timestep_limit = 100
 
 
-class PusherEnv(GymEnv):
+class PusherEnv(GymEnv, Parameterized):
     def __init__(self, **kwargs):
+        Parameterized.__init__(self)
         Serializable.quick_init(self, locals())
 
         env = GymPusherEnv(**kwargs)
@@ -28,3 +32,7 @@ class PusherEnv(GymEnv):
 
     def log_diagnostics(self, paths):
         return self.env.log_diagnostics(paths)
+
+    @overrides
+    def get_params_internal(self, **tags):
+        return list()
