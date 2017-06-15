@@ -4,6 +4,8 @@ from rllab.core.serializable import Serializable
 from rllab.misc.overrides import overrides
 from sandbox.rocky.tf.policies.base import Policy
 
+from sandbox.rocky.tf.policies.base import Policy
+
 
 class NNPolicy(Policy, Serializable):
     def __init__(self, env_spec, obs_pl, action, scope_name=None):

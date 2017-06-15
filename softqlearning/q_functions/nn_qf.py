@@ -1,7 +1,9 @@
 import tensorflow as tf
 import numpy as np
-from rllab.q_functions.base import QFunction
+
 from rllab.misc.overrides import overrides
+
+from softqlearning.q_functions.base import QFunction
 
 
 class NNQFunction(QFunction):
