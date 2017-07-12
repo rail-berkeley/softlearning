@@ -24,6 +24,9 @@ from softqlearning.q_functions.nn_qf import NNQFunction
 class SoftQLearning(OnlineAlgorithm, Serializable):
     """
     The Soft Q-Learning algorithm.
+
+    Equations (eq. (X)) refer to the paper "Reinforcement Learning with Deep
+    Energy-Based Policies", arXiv v2.
     """
     def __init__(
             self,
@@ -299,28 +302,28 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
     def _init_svgd_update(self):
         """ Creates a TF operation for the SVGD update. """
 
-        # Target log-density.
+        # Target log-density. Q_soft in eq. (13):
         log_p = self._qf_svgd_target  # N x K_fix x 1
 
         grad_log_p = tf.gradients(log_p, self._actions_fixed)[0]
         grad_log_p = tf.expand_dims(grad_log_p, axis=2)  # N x K_fix x 1 x Da
         grad_log_p = tf.stop_gradient(grad_log_p)
 
-        kappa = tf.expand_dims(
+        kappa = tf.expand_dims(  # Kernel function in eq. (13).
             self._kernel,
             dim=3,
         )  # N x K_fix x K_upd x 1
 
         kappa_grads = self._kernel.grad  # N x K_fix x K_upd x Da
 
-        # Stein Variational Gradient!
+        # Stein Variational Gradient! Eq. (13):
         action_grads = tf.reduce_mean(
             kappa * grad_log_p  # N x K_fix x K_upd x Da
             + self._alpha * kappa_grads,
             reduction_indices=1,
         )  # N x K_upd x Da
 
-        # Propagate the gradient through the policy network.
+        # Propagate the gradient through the policy network. Eq. (14):
         param_grads = tf.gradients(
             self._actions_updated,
             self._policy_params,
@@ -346,6 +349,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         n_target_particles = tf.cast(tf.shape(q_next)[1], tf.float32)
         # = self._qf_target_K
 
+        # Eq. (10):
         v_next = tf.squeeze(tf.reduce_logsumexp(q_next, axis=1))  # N
 
         # Importance weights add just a constant to the value, which is
@@ -353,10 +357,12 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         v_next -= tf.log(n_target_particles)
         v_next += self._Da * np.log(2)
 
+        # Qhat_soft in Eq. (11):
         ys = (tf.squeeze(self._rewards_pl) +
               (1 - self._terminals_pl) * self._discount * v_next)  # N
         ys = tf.stop_gradient(ys)
 
+        # Eq (11):
         td_loss = tf.reduce_mean(tf.square(ys - q_curr))  # 1
 
         td_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
