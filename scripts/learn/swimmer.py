@@ -2,25 +2,19 @@
 Example script that applies soft Q-learning to the bi-directional swimmer
 environment.
 """
-import os
-
-from rllab import config
-from rllab.misc import logger
 from rllab.envs.normalized_env import normalize
-from rllab.tf.envs.base import TfEnv
+from softqlearning.misc.instrument import run_experiment_lite, stub
+
+from sandbox.rocky.tf.envs.base import TfEnv
 
 from softqlearning.algos.softqlearning import SoftQLearning
 from softqlearning.core.kernel import AdaptiveIsotropicGaussianKernel
 from softqlearning.core.nn import NeuralNetwork, StochasticNeuralNetwork
 from softqlearning.envs.mujoco.swimmer_env import SwimmerEnv
-
-snapshot_dir = os.path.join(config.LOG_DIR, 'swimmer')
-tabular_log_file = os.path.join(snapshot_dir, 'eval.log')
-logger.add_tabular_output(tabular_log_file)
-logger.set_snapshot_dir(snapshot_dir)
+from softqlearning.misc.utils import timestamp
 
 
-def test():
+def main():
 
     env = TfEnv(normalize(SwimmerEnv(
         undirected=True,
@@ -70,7 +64,20 @@ def test():
         q_plot_settings=None,
         env_plot_settings=None,
     )
-    algorithm.train()
+
+    exp_prefix = 'swimmer/swimmer-{0}'
+    exp_name = format(timestamp())
+
+    run_experiment_lite(
+        algorithm.train(),
+        exp_name=exp_name,
+        exp_prefix=exp_prefix,
+        n_parallel=1,
+        terminate_machine=False,
+        mode='local',
+        use_cloudpickle=False,
+    )
 
 if __name__ == "__main__":
-    test()
+    stub(globals())
+    main()
