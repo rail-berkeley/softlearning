@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import gc
 import os
 from collections import OrderedDict
@@ -77,7 +79,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         :param env_plot_settings: Settings for rollout plot.
         """
         Serializable.quick_init(self, locals())
-        super().__init__(**base_kwargs)
+        super(SoftQLearning, self).__init__(**base_kwargs)
 
         self._env = env
 
@@ -249,7 +251,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             obs_expanded = tf.expand_dims(self._obs_pl, axis=1)  # N x 1 x Do
             qf_unbounded_net = qf_class(
                 inputs=(obs_expanded, self._actions_fixed),
-                **qf_kwargs,
+                **qf_kwargs
             )  # N x K_fix x 1
 
             # InputBounds modifies the gradient outside the action boundaries to
@@ -271,7 +273,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             self._qf_eval = NNQFunction(
                 obs_pl=self._obs_pl,
                 actions_pl=self._actions_pl,
-                q_value=qf_eval_net,
+                q_value=qf_eval_net
             )
 
         with tf.variable_scope('qf_td_target'):
@@ -289,13 +291,13 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             self._qf_td_target = NNQFunction(
                 obs_pl=self._obs_next_pl,
                 actions_pl=target_actions,
-                q_value=self._q_value_td_target,
+                q_value=self._q_value_td_target
             )
 
     def _create_kernel(self, kernel_class):
         self._kernel = kernel_class(
             xs=self._actions_fixed,
-            ys=self._actions_updated,
+            ys=self._actions_updated
         )  # N x K_fix x K_upd
 
     def _init_svgd_update(self):
@@ -310,7 +312,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
         kappa = tf.expand_dims(
             self._kernel,
-            dim=3,
+            dim=3
         )  # N x K_fix x K_upd x 1
 
         kappa_grads = self._kernel.grad  # N x K_fix x K_upd x Da
@@ -319,14 +321,14 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         action_grads = tf.reduce_mean(
             kappa * grad_log_p  # N x K_fix x K_upd x Da
             + self._alpha * kappa_grads,
-            reduction_indices=1,
+            reduction_indices=1
         )  # N x K_upd x Da
 
         # Propagate the gradient through the policy network.
         param_grads = tf.gradients(
             self._actions_updated,
             self._policy_params,
-            grad_ys=action_grads,
+            grad_ys=action_grads
         )
 
         svgd_training_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
@@ -363,7 +365,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
         td_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
             loss=td_loss,
-            var_list=self._qf_params,
+            var_list=self._qf_params
         )
 
         self._training_ops.append(td_train_op)
@@ -380,7 +382,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
     @overrides
     def _init_training(self, env, policy):
-        super()._init_training(env, policy)
+        super(SoftQLearning, self)._init_training(env, policy)
         self._qf_td_target.set_param_values(self._qf_eval.get_param_values())
 
     @overrides
@@ -420,7 +422,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             else:
                 figsize = self._env_plot_settings['figsize']
             self._fig_env = plt.figure(
-                figsize=figsize,
+                figsize=figsize
             )
             self._ax_env = self._fig_env.add_subplot(111)
             if hasattr(self._env, 'init_plot'):
@@ -529,7 +531,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         return dict(
             epoch=epoch,
             policy=self._training_policy,
-            env=self._env,
+            env=self._env
             # algo=self
             # You can alternatively save the entire algorithm. If you do so,
             # then you should comment out the policy line above. Otherwise
@@ -540,7 +542,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         d = Serializable.__getstate__(self)
         d.update({
             "policy_params": self._training_policy.get_param_values(),
-            "qf_params": self._qf_eval.get_param_values(),
+            "qf_params": self._qf_eval.get_param_values()
         })
         return d
 

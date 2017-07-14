@@ -8,7 +8,7 @@ from softqlearning.q_functions.base import QFunction
 
 class NNQFunction(QFunction):
     def __init__(self, obs_pl, actions_pl, q_value):
-        super().__init__()
+        super(NNQFunction, self).__init__()
         self._obs_pl = obs_pl
         self._actions_pl = actions_pl
         self._q_value = q_value

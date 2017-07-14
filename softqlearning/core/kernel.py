@@ -34,7 +34,7 @@ class Kernel(SerializableTensor):
         self._ys = ys  # ... x Ky x D
         self._grad_x = grad_x  # ... x Kx x Ky x D
 
-        super().__init__(kappa)
+        super(Kernel, self).__init__(kappa)
 
     @property
     def grad(self):
@@ -97,7 +97,9 @@ class AdaptiveIsotropicGaussianKernel(Kernel):
         kappa_grad = - 2 * diff / h_expanded_thrice * kappa_expanded
         # ... x Kx x Ky x D
 
-        super().__init__(xs, ys, kappa, kappa_grad)
+        super(AdaptiveIsotropicGaussianKernel, self).__init__(
+            xs, ys, kappa, kappa_grad
+        )
 
         self._db = dict()
         self._db['medians_sq'] = medians_sq

@@ -37,7 +37,7 @@ class InputBounds(SerializableTensor):
         bounded_output = tf.where(tf.greater(expanded_total_violation, 0),
                                   - self.SLOPE * expanded_total_violation,
                                   output)
-        super().__init__(bounded_output)
+        super(InputBounds, self).__init__(bounded_output)
 
 
 class NeuralNetwork(SerializableTensor):
@@ -74,7 +74,7 @@ class NeuralNetwork(SerializableTensor):
             new_shape = tf.concat((leading_shape, (n_heads, n_outputs)), 0)
             graph = tf.reshape(graph, new_shape)
 
-        super().__init__(graph)
+        super(NeuralNetwork, self).__init__(graph)
 
 
 class StochasticNeuralNetwork(NeuralNetwork):
@@ -121,7 +121,9 @@ class StochasticNeuralNetwork(NeuralNetwork):
         xi = tf.random_normal(xi_shape)  # 1 x ... x 1 x K x (output shape)
         expanded_inputs.append(xi)
 
-        super().__init__(layer_sizes, expanded_inputs, **kwargs)
+        super(StochasticNeuralNetwork, self).__init__(
+            layer_sizes, expanded_inputs, **kwargs
+        )
 
         self._inputs = inputs  # This will hide the random tensor from inputs.
         self._xi = xi  # For debugging.

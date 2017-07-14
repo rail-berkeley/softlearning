@@ -1,10 +1,7 @@
 import sys
-import tensorflow as tf
-
-from rllab.core.serializable import Serializable
 
 
-class _Wrap:
+class _Wrap(object):
     """ Wrapper class that wraps tf.Tensor instances returned by tensorflow
     functions in a SerializableTensor instance that inherits both tf.Tensor and
     Serializable. This is useful if we need to serialize a tensorflow graph
@@ -27,6 +24,11 @@ class _Wrap:
 # Redirects all module/function look-ups to _Wrap.__getattr__().
 sys.modules[__name__] = _Wrap()
 
+# Need to do imports here since above line hides earlier imports in python2.
+import tensorflow as tf
+from future.utils import with_metaclass
+from rllab.core.serializable import Serializable
+
 
 class _MetaClass(type):
     """
@@ -47,7 +49,7 @@ class _MetaClass(type):
             setattr(cls, attr, make_tensor_proxy(attr))
 
 
-class SerializableTensor(Serializable, tf.Tensor, metaclass=_MetaClass):
+class SerializableTensor(with_metaclass(_MetaClass, Serializable, tf.Tensor)):
     """ Proxy class that makes tf.Tensor Serializable. """
     def __init__(self, tensor_to_wrap):
         # Only inherited classes should be instantiated.
@@ -64,4 +66,4 @@ class TensorProxy(SerializableTensor):
 
         # TODO: does not work if tf_func returns a list of tensors.
         tensor_to_wrap = tf_func(*args, **kwargs)
-        super().__init__(tensor_to_wrap)
+        super(TensorProxy, self).__init__(tensor_to_wrap)
