@@ -7,7 +7,7 @@ from softqlearning.misc.replay_pool import SimpleReplayPool, DoublePool
 from softqlearning.misc import tf_utils
 
 from rllab.algos.base import RLAlgorithm
-from rllab.misc import logger
+from softqlearning.misc import logger
 
 
 class OnlineAlgorithm(RLAlgorithm):

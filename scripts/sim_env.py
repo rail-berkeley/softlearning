@@ -69,7 +69,7 @@ def visualize_env(env, mode, max_steps=sys.maxsize, speedup=1):
                         env.reset()
                 return
 
-            from rllab.envs.mujoco.mujoco_env import MujocoEnv
+            from softqlearning.envs.mujoco.mujoco_env import MujocoEnv
             from rllab.envs.mujoco.maze.maze_env import MazeEnv
             if isinstance(env, (MujocoEnv, MazeEnv)):
                 trs = [tr]

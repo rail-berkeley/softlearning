@@ -8,7 +8,7 @@ import tensorflow as tf
 import softqlearning.misc.tf_proxy as tp
 
 from rllab.core.serializable import Serializable
-from rllab.misc import logger
+from softqlearning.misc import logger
 from rllab.misc.overrides import overrides
 from rllab.misc import special
 from softqlearning.misc.tensor_utils import flatten_tensor_variables

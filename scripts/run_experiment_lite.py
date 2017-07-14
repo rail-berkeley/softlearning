@@ -2,9 +2,9 @@ import sys
 sys.path.append(".")
 
 from rllab.misc.ext import is_iterable, set_seed
-from rllab.misc.instrument import concretize
+from softqlearning.misc.instrument import concretize
 from rllab import config
-import rllab.misc.logger as logger
+import softqlearning.misc.logger as logger
 import argparse
 import os.path as osp
 import datetime
@@ -69,7 +69,7 @@ def run_experiment(argv):
         set_seed(args.seed)
 
     if args.n_parallel > 0:
-        from rllab.sampler import parallel_sampler
+        from softqlearning.sampler import parallel_sampler
         parallel_sampler.initialize(n_parallel=args.n_parallel)
         if args.seed is not None:
             parallel_sampler.set_seed(args.seed)

@@ -3,7 +3,7 @@ import numpy as np
 from gym import utils
 from gym.envs.mujoco import mujoco_env
 
-from rllab.misc import logger
+from softqlearning.misc import logger
 
 
 class PusherEnv(mujoco_env.MujocoEnv, utils.EzPickle):
