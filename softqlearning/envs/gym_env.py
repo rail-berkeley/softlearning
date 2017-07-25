@@ -19,8 +19,8 @@ from rllab.core.serializable import Serializable
 from rllab.spaces.box import Box
 from rllab.spaces.discrete import Discrete
 from rllab.spaces.product import Product
-from rllab.misc import logger
 
+from softqlearning.misc import logger
 
 def convert_gym_space(space):
     if isinstance(space, gym.spaces.Box):
