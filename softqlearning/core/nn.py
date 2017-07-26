@@ -58,7 +58,7 @@ class NeuralNetwork(SerializableTensor):
         :param nonlinearity: Nonlinearity operation for hidden layers.
         :param output_nonlinearity: Nonlinearity operation for output layer.
         """
-        Serializable.quick_init(self, locals())
+        SerializableTensor.quick_init(self, locals())
 
         if n_heads > 1:
             n_outputs = layer_sizes[-1]

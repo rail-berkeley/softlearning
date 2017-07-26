@@ -157,7 +157,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             shape=[None, self._Do],
             name='next_observation',
         )
-        self._actions_pl = tf.placeholder(
+        self._actions_pl = tp.placeholder(
             tf.float32,
             shape=[None, self._Da],
             name='actions',
@@ -237,7 +237,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             # Actions are normalized, and should reside between -1 and 1. The
             # environment will clip the actions, so we'll encode that as a prior
             # directly into the Q-function.
-            clipped_actions = tf.clip_by_value(self._actions_pl, -1, 1)
+            clipped_actions = tp.clip_by_value(self._actions_pl, -1, 1)
             self._qf = qf_class(
                 inputs=(self._obs_pl, clipped_actions),
                 **qf_kwargs
@@ -531,11 +531,8 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         return dict(
             epoch=epoch,
             policy=self._training_policy,
-            env=self._env
-            # algo=self
-            # You can alternatively save the entire algorithm. If you do so,
-            # then you should comment out the policy line above. Otherwise
-            # there will be tensor name conflicts when the objects are loaded
+            qf=self._qf,
+            env=self._env,
         )
 
     def __getstate__(self):

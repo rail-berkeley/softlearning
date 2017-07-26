@@ -59,10 +59,23 @@ class SerializableTensor(with_metaclass(_MetaClass, Serializable, tf.Tensor)):
         self._wrapped_tensor = tensor_to_wrap
         self.__dict__.update(tensor_to_wrap.__dict__)
 
+    def quick_init(self, locals_):
+        self.__scope = tf.get_variable_scope().name
+        super(SerializableTensor, self).quick_init(locals_)
+
+    def __getstate__(self):
+        d = super(SerializableTensor, self).__getstate__()
+        d['scope'] = self.__scope
+        return d
+
+    def __setstate__(self, d):
+        with tf.variable_scope(d['scope']):
+            super(SerializableTensor, self).__setstate__(d)
+
 
 class TensorProxy(SerializableTensor):
     def __init__(self, tf_func, *args, **kwargs):
-        Serializable.quick_init(self, locals())
+        SerializableTensor.quick_init(self, locals())
 
         # TODO: does not work if tf_func returns a list of tensors.
         tensor_to_wrap = tf_func(*args, **kwargs)
