@@ -96,7 +96,7 @@ class StochasticNeuralNetwork(NeuralNetwork):
     If K == 1, the corresponding axis is dropped. Note that the leading
     dimensions of the inputs should be consistent (supports broadcasting).
     """
-    def __init__(self, layer_sizes, inputs, K, **kwargs):
+    def __init__(self, layer_sizes, inputs, K, Dxi=None, **kwargs):
         """
         :param layer_sizes: List of # of units at each layer, including output
            layer.
@@ -104,17 +104,21 @@ class StochasticNeuralNetwork(NeuralNetwork):
         :param K: Number of samples to be generated per data point.
         :param kwargs: Other kwargs to be passed to the parent class.
         """
+        # TODO: update comments: Added variable latent variable dimension.
         Serializable.quick_init(self, locals())
         self._K = K
+        if Dxi is None:
+            Dxi = layer_sizes[-1]
+        self._Dxi = Dxi
 
         n_dims = inputs[0].get_shape().ndims
 
         if K > 1:
             xi_shape = np.ones(n_dims + 1, dtype=np.int32)
-            xi_shape[-2:] = (self._K, layer_sizes[-1])
+            xi_shape[-2:] = (self._K, Dxi)
         else:
             xi_shape = np.ones(n_dims, dtype=np.int32)
-            xi_shape[-1:] = layer_sizes[-1]
+            xi_shape[-1:] = Dxi
 
         expanded_inputs = [tf.expand_dims(t, n_dims-1) for t in inputs]
 
