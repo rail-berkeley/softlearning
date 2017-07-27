@@ -65,6 +65,7 @@ class OnlineAlgorithm(RLAlgorithm):
             itr = 0
             path_length = 0
             path_return = 0
+            n_episodes = 0
             gt.rename_root('online algo')
             gt.reset()
             gt.set_def_unique(False)
@@ -105,6 +106,7 @@ class OnlineAlgorithm(RLAlgorithm):
                         policy.reset()
                         path_length = 0
                         path_return = 0
+                        n_episodes += 1
                     else:
                         observation = next_ob
                     gt.stamp('train: fill replay pool')
@@ -136,6 +138,7 @@ class OnlineAlgorithm(RLAlgorithm):
                 logger.record_tabular("time: total", total_time)
                 logger.record_tabular("scale_reward", self._scale_reward)
                 logger.record_tabular("epochs", epoch)
+                logger.record_tabular("episodes", n_episodes)
                 logger.record_tabular("steps: all", itr)
                 logger.dump_tabular(with_prefix=False)
                 logger.pop_prefix()

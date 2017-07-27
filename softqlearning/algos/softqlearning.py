@@ -479,6 +479,10 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             path['rewards'].sum() for path in paths
         ]
 
+        episode_lengths = [
+            len(p['rewards']) for p in paths
+        ]
+
         statistics = OrderedDict([
             ('Epoch', epoch),
             ('Alpha', self._alpha),
@@ -486,7 +490,11 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             ('TotalReturnAvg', np.mean(total_returns)),
             ('TotalReturnMin', np.min(total_returns)),
             ('TotalReturnMax', np.max(total_returns)),
-            ('TotalReturnStd', np.std(total_returns))
+            ('TotalReturnStd', np.std(total_returns)),
+            ('EpisodeLengthAvg', np.mean(episode_lengths)),
+            ('EpisodeLengthMin', np.min(episode_lengths)),
+            ('EpisodeLengthMax', np.max(episode_lengths)),
+            ('EpisodeLengthStd', np.std(episode_lengths))
         ])
 
         for key, value in statistics.items():
