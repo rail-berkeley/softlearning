@@ -36,13 +36,13 @@ class Walker2dEnv(GymEnv, Parameterized):
     @overrides
     def log_diagnostics(self, paths):
         progs = [
-            path["observations"][-1][0] - path["observations"][0][0]
+            path['env_infos']['pos'][-1][0] - path['env_infos']['pos'][0][0]
             for path in paths
-            ]
-        logger.record_tabular('AverageForwardProgress', np.mean(progs))
-        logger.record_tabular('MaxForwardProgress', np.max(progs))
-        logger.record_tabular('MinForwardProgress', np.min(progs))
-        logger.record_tabular('StdForwardProgress', np.std(progs))
+        ]
+        logger.record_tabular('ForwardProgressAvg', np.mean(progs))
+        logger.record_tabular('ForwardProgressMax', np.max(progs))
+        logger.record_tabular('ForwardProgressMin', np.min(progs))
+        logger.record_tabular('ForwardProgressStd', np.std(progs))
 
     @overrides
     def get_params_internal(self, **tags):
