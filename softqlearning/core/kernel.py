@@ -28,7 +28,7 @@ class Kernel(SerializableTensor):
         :param kappa: Kernel.
         :param grad_x:  Gradient of 'kappa' with respect to 'xs'.
         """
-        Serializable.quick_init(self, locals())
+        SerializableTensor.quick_init(self, locals())
         self._kappa = kappa  # ... x Kx x Ky
         self._xs = xs  # ... x Kx x D
         self._ys = ys  # ... x Ky x D

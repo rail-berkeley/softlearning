@@ -2,12 +2,15 @@ import tensorflow as tf
 import numpy as np
 
 from rllab.misc.overrides import overrides
+from softqlearning.core.serializable import ScopedSerializable
 
 from softqlearning.q_functions.base import QFunction
 
 
-class NNQFunction(QFunction):
+class NNQFunction(QFunction, ScopedSerializable):
     def __init__(self, obs_pl, actions_pl, q_value):
+        ScopedSerializable.quick_init(self, locals())
+
         super(NNQFunction, self).__init__()
         self._obs_pl = obs_pl
         self._actions_pl = actions_pl
@@ -56,3 +59,18 @@ class NNQFunction(QFunction):
             raise NotImplementedError
         return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
                                  self._scope_name + '/')
+
+    def __getstate__(self):
+        d = ScopedSerializable.__getstate__(self)
+        d.update({
+            'params': self.get_param_values(),
+        })
+        return d
+
+    def __setstate__(self, d):
+        ScopedSerializable.__setstate__(self, d)
+        tf.get_default_session().run(
+            tf.variables_initializer(self.get_params())
+        )
+
+        self.set_param_values(d['params'])
