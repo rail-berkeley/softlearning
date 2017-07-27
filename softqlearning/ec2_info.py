@@ -14,8 +14,8 @@ all_subnet_info = {
     'tuomas': {
         "us-west-1b": dict(
             SubnetID="subnet-3d90f159", Groups=["sg-7571c912"]),
-        #"us-west-2c": dict(
-        #    SubnetID="subnet-e18512b9", Groups=["sg-8e57c5f7"]),
+        "us-west-2a": dict(
+            SubnetID="subnet-39f52370", Groups=["sg-9985fae1"]),
     },
 }
 subnet_info = all_subnet_info[config.BUCKET]
