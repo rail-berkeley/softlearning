@@ -474,13 +474,19 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             [special.discount_return(path["rewards"], self._discount)
              for path in paths]
         )
-        returns = np.asarray([sum(path["rewards"]) for path in paths])
+
+        total_returns = [
+            path['rewards'].sum() for path in paths
+        ]
 
         statistics = OrderedDict([
             ('Epoch', epoch),
-            ('AverageDiscountedReturn', average_discounted_return),
             ('Alpha', self._alpha),
-            ('returns', returns)
+            ('DiscountedReturnAvg', average_discounted_return),
+            ('TotalReturnAvg', np.mean(total_returns)),
+            ('TotalReturnMin', np.min(total_returns)),
+            ('TotalReturnMax', np.max(total_returns)),
+            ('TotalReturnStd', np.std(total_returns))
         ])
 
         for key, value in statistics.items():
