@@ -14,7 +14,7 @@ from railrl.policies.nn_policy import NNPolicy
 from railrl.core.neuralnet import NeuralNetwork
 from railrl.data_management.simple_replay_pool import SimpleReplayPool
 from rllab.algos.base import RLAlgorithm
-from rllab.misc import logger
+from softqlearning.misc import logger
 from rllab.misc.overrides import overrides
 from sandbox.rocky.tf.samplers.batch_sampler import BatchSampler
 
@@ -119,8 +119,8 @@ class OnlineAlgorithm(RLAlgorithm):
         self.batch_size = self.n_eval_samples
         paths = self.eval_sampler.obtain_samples(
             itr=epoch,
-            max_path_length=self.max_path_length,
-            batch_size=self.n_eval_samples
+            # max_path_length=self.max_path_length,
+            # batch_size=self.n_eval_samples
         )
         self.batch_size = saved_batch_size
         return paths
