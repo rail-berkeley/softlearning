@@ -122,6 +122,9 @@ class StochasticNeuralNetwork(NeuralNetwork):
 
         expanded_inputs = [tf.expand_dims(t, n_dims-1) for t in inputs]
 
+        # TODO: is it better to use independent random samples for different
+        # states?
+
         xi = tf.random_normal(xi_shape)  # 1 x ... x 1 x K x (output shape)
         expanded_inputs.append(xi)
 

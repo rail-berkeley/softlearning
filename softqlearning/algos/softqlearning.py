@@ -505,21 +505,20 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         # Plot test paths.
         if (hasattr(self._env, 'plot_paths')
                 and self._env_plot_settings is not None):
-            img_file = os.path.join(snapshot_dir,
-                                    'env_itr_%05d.png' % epoch)
             # Remove previous paths.
             if self._env_lines is not None:
                 [path.remove() for path in self._env_lines]
             self._env_lines = self._env.plot_paths(paths, self._ax_env)
             plt.pause(0.001)
             plt.draw()
-            self._fig_env.savefig(img_file, dpi=100)
+            if snapshot_dir is not None:
+                img_file = os.path.join(snapshot_dir,
+                                        'env_itr_%05d.png' % epoch)
+                self._fig_env.savefig(img_file, dpi=100)
 
         # Plot the Q-function level curves and action samples.
         if (hasattr(self._qf_eval, 'plot_level_curves')
                 and self._q_plot_settings is not None):
-            img_file = os.path.join(snapshot_dir,
-                                    'q_itr_%05d.png' % epoch)
             [ax.clear() for ax in self._ax_q_lst]
             self._qf_eval.plot_level_curves(
                 ax_lst=self._ax_q_lst,
@@ -536,7 +535,10 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
                 ax.set_ylim(self._q_plot_settings['ylim'])
             plt.pause(0.001)
             plt.draw()
-            self._fig_q.savefig(img_file, dpi=100)
+            if snapshot_dir is not None:
+                img_file = os.path.join(snapshot_dir,
+                                        'q_itr_%05d.png' % epoch)
+                self._fig_q.savefig(img_file, dpi=100)
 
         gc.collect()
 

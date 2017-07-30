@@ -13,7 +13,8 @@ from railrl.misc.rllab_util import split_paths
 from railrl.algos.online_algorithm import OnlineAlgorithm
 from railrl.policies.nn_policy import NNPolicy
 from railrl.qfunctions.nn_qfunction import NNQFunction
-from rllab.misc import logger
+from softqlearning.misc import logger
+# from rllab.misc import logger
 from rllab.misc import special
 from rllab.misc.overrides import overrides
 
