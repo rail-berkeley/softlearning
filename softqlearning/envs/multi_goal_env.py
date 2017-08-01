@@ -17,7 +17,7 @@ class MultiGoalEnv(Env, Serializable):
     Action: velocity.
     """
     def __init__(self, goal_reward=10):
-        super().__init__()
+        super(MultiGoalEnv, self).__init__()
         Serializable.quick_init(self, locals())
 
         self.dynamics = PointDynamics(dim=2, sigma=0)
