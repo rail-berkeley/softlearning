@@ -1,5 +1,17 @@
-def step_annealer(step_fraction, step_interval):
-    def anneal(val, itr):
-        return val * step_fraction**(itr // step_interval)
+from rllab.misc.overrides import overrides
 
-    return anneal
+
+class BaseAnnealer:
+    def apply(self, val, itr):
+        raise NotImplementedError
+
+
+class StepAnnealer(BaseAnnealer):
+    def __init__(self, step_coeff, step_interval):
+        super(StepAnnealer, self).__init__()
+        self._step_coeff = step_coeff
+        self._step_interval = step_interval
+
+    @overrides
+    def apply(self, val, itr):
+        return val * self._step_coeff**(itr // self._step_interval)

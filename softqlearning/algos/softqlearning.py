@@ -415,7 +415,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             self, itr, rewards, terminals, obs, actions, next_obs
     ):
         if self._alpha_scheduler:
-            alpha = self._alpha_scheduler(self._alpha, itr)
+            alpha = self._alpha_scheduler.apply(self._alpha, itr)
         else:
             alpha = self._alpha
 
