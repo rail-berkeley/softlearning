@@ -48,6 +48,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
             discount=0.99,
             alpha=1,
+            alpha_scheduler=None,
 
             eval_n_episodes=10,
             eval_render=False,
@@ -87,6 +88,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         self._policy_lr = policy_lr
         self._discount = discount
         self._alpha = alpha
+        self._alpha_scheduler = alpha_scheduler
 
         self._kernel_K = kernel_n_particles
         self._kernel_update_ratio = kernel_update_ratio
@@ -179,6 +181,12 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             tf.float32,
             shape=[None],
             name='terminals',
+        )
+
+        self._alpha_pl = tf.placeholder(
+            tf.float32,
+            shape=(),
+            name='alpha'
         )
 
     def _create_policy(self, policy_class, policy_kwargs):
@@ -320,7 +328,7 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         # Stein Variational Gradient!
         action_grads = tf.reduce_mean(
             kappa * grad_log_p  # N x K_fix x K_upd x Da
-            + self._alpha * kappa_grads,
+            + self._alpha_pl * kappa_grads,
             reduction_indices=1
         )  # N x K_upd x Da
 
@@ -403,13 +411,21 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
         return ops
 
     @overrides
-    def _update_feed_dict(self, rewards, terminals, obs, actions, next_obs):
+    def _update_feed_dict(
+            self, itr, rewards, terminals, obs, actions, next_obs
+    ):
+        if self._alpha_scheduler:
+            alpha = self._alpha_scheduler(self._alpha, itr)
+        else:
+            alpha = self._alpha
+
         feeds = {
             self._obs_pl: obs,
             self._actions_pl: actions,
             self._obs_next_pl: next_obs,
             self._rewards_pl: rewards,
-            self._terminals_pl: terminals
+            self._terminals_pl: terminals,
+            self._alpha_pl: alpha
         }
 
         return feeds

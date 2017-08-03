@@ -166,7 +166,8 @@ class OnlineAlgorithm(RLAlgorithm):
         sampled_next_obs = minibatch['next_observations']
         gt.stamp("train: sample minibatch")
 
-        feed_dict = self._update_feed_dict(sampled_rewards,
+        feed_dict = self._update_feed_dict(itr,
+                                           sampled_rewards,
                                            sampled_terminals,
                                            sampled_obs,
                                            sampled_actions,
@@ -226,8 +227,11 @@ class OnlineAlgorithm(RLAlgorithm):
         return
 
     @abc.abstractmethod
-    def _update_feed_dict(self, rewards, terminals, obs, actions, next_obs):
+    def _update_feed_dict(
+            self, itr, rewards, terminals, obs, actions, next_obs
+    ):
         """
+        :param itr: Iteration number.
         :param rewards: Minibatch of rewards.
         :param terminals: Minibatch of terminal variables.
         :param obs: Minibatch of observations.
