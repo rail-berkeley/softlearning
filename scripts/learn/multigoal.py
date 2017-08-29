@@ -8,7 +8,6 @@ from rllab.misc import logger
 from rllab.envs.normalized_env import normalize
 from sandbox.rocky.tf.envs.base import TfEnv
 
-import ipdb; ipdb.set_trace()
 from softqlearning.algos.softqlearning import SoftQLearning
 from softqlearning.core.kernel import AdaptiveIsotropicGaussianKernel
 from softqlearning.core.nn import NeuralNetwork, StochasticNeuralNetwork
