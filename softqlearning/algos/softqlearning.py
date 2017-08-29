@@ -478,9 +478,25 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
 
     @overrides
     def _evaluate(self, epoch):
-
         logger.log("Collecting samples for evaluation")
         snapshot_dir = logger.get_snapshot_dir()
+
+        # Evaluate Q-function:
+        # TODO: should not access _pool here.
+        if self._double_pool:
+            minibatch = self._double_pool.random_batch(self._batch_size)
+        else:
+            minibatch = self._pool.random_batch(self._batch_size)
+
+        feeds = {self._obs_next_pl: minibatch['next_observations'],
+                 self._alpha_pl: self._alpha,
+                 self._obs_pl: minibatch['observations'],
+                 self._terminals_pl: minibatch['terminals'],
+                 self._rewards_pl: minibatch['rewards'],
+                 self._actions_pl: minibatch['actions']}
+
+        # Evaluating the target Q-function that samples actions uniformly.
+        qf, td_loss = self._sess.run([self._qf, self._td_loss], feeds)
 
         paths = rollouts(self._env, self._eval_policy,
                          self._max_path_length, self._eval_n_episodes,
@@ -510,7 +526,12 @@ class SoftQLearning(OnlineAlgorithm, Serializable):
             ('EpisodeLengthAvg', np.mean(episode_lengths)),
             ('EpisodeLengthMin', np.min(episode_lengths)),
             ('EpisodeLengthMax', np.max(episode_lengths)),
-            ('EpisodeLengthStd', np.std(episode_lengths))
+            ('EpisodeLengthStd', np.std(episode_lengths)),
+            ('TargetQAvg', np.mean(qf)),
+            ('TargetQMin', np.min(qf)),
+            ('TargetQMax', np.max(qf)),
+            ('TargetQStd', np.std(qf)),
+            ('MeanSqBellmanError', td_loss)
         ])
 
         for key, value in statistics.items():

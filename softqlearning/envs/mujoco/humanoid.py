@@ -16,7 +16,7 @@ class DummySpec:
 
 
 class HumanoidEnv(GymEnv, Parameterized):
-    def __init__(self, **kwargs):
+    def __init__(self, record_video=False, record_log=False, **kwargs):
         Parameterized.__init__(self)
         Serializable.quick_init(self, locals())
 
@@ -25,10 +25,10 @@ class HumanoidEnv(GymEnv, Parameterized):
 
         super().__init__(
             env=env,
-            record_video=False,
+            record_video=record_video,
             video_schedule=None,
             log_dir=None,
-            record_log=False,
+            record_log=record_log,
             force_reset=False,
         )
 

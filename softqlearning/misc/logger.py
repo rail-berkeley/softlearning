@@ -424,7 +424,25 @@ def log_parameters_lite(log_file, args):
         log_params["json_args"]["algo"] = stub_to_json(stub_method.obj)
     mkdir_p(os.path.dirname(log_file))
     with open(log_file, "w") as f:
+        log_params = numpy_to_list_deep(log_params)
         json.dump(log_params, f, indent=2, sort_keys=True, cls=MyEncoder)
+
+
+def numpy_to_list_deep(obj):
+    if isinstance(obj, dict):
+        retval = dict()
+        for k, v in obj.items():
+            retval[k] = numpy_to_list_deep(v)
+    elif isinstance(obj, list) or isinstance(obj, tuple):
+        retval = list()
+        for item in obj:
+            retval.append(numpy_to_list_deep(item))
+    elif isinstance(obj, np.ndarray):
+        retval = obj.tolist()
+    else:
+        retval = obj
+
+    return retval
 
 
 def log_variant(log_file, variant_data):
