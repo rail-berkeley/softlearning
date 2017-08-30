@@ -6,7 +6,7 @@ import os.path as osp
 import pickle as pickle
 import inspect
 import sys
-from rllab.misc import docker
+# from rllab.misc import docker
 
 import errno
 import uuid

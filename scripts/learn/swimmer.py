@@ -65,7 +65,7 @@ def main():
         env_plot_settings=None,
     )
 
-    exp_prefix = 'swimmer/swimmer-{0}'
+    exp_prefix = 'swimmer'
     exp_name = format(timestamp())
 
     run_experiment_lite(
