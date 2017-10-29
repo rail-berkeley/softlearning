@@ -87,3 +87,8 @@ else:
         import sys; sys.exit(0)
 
 LABEL = ""
+
+TF_GPU_ALLOW_GROWTH = True
+TF_GPU_MEM_FRAC = .1
+TF_LOG_DEVICE_PLACEMENT = False
+TF_USE_GPU = True
