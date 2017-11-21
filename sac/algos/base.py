@@ -190,3 +190,15 @@ class RLAlgorithm(Algorithm):
         self._eval_env = deep_clone(env)
         self._policy = policy
         self._pool = pool
+
+    @property
+    def policy(self):
+        return self._policy
+
+    @property
+    def env(self):
+        return self._env
+
+    @property
+    def pool(self):
+        return self._pool

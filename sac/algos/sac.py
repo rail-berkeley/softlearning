@@ -213,7 +213,7 @@ class SAC(RLAlgorithm, Serializable):
         if self._save_full_state:
             return dict(
                 epoch=epoch,
-                alg=self
+                algo=self
             )
         else:
             return dict(
