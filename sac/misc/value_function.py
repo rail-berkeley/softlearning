@@ -1,17 +1,18 @@
 import tensorflow as tf
 
+from rllab.core.serializable import Serializable
 
 from sandbox.rocky.tf.core.parameterized import Parameterized
 
-from sac.core.serializable import ScopedSerializable
 from sac.misc.mlp import mlp
 from sac.misc import tf_utils
 
 
-class ValueFunction(ScopedSerializable, Parameterized):
+class ValueFunction(Parameterized, Serializable):
 
     def __init__(self, name, input_pls, hidden_layer_sizes):
         Parameterized.__init__(self)
+        Serializable.quick_init(self, locals())
 
         self._name = name
         self._input_pls = input_pls
@@ -49,7 +50,7 @@ class ValueFunction(ScopedSerializable, Parameterized):
 class NNVFunction(ValueFunction):
 
     def __init__(self, env_spec, hidden_layer_sizes=(100, 100)):
-        ScopedSerializable.quick_init(self, locals())
+        Serializable.quick_init(self, locals())
 
         self._Do = env_spec.observation_space.flat_dim
         self._obs_pl = tf.placeholder(
@@ -64,7 +65,7 @@ class NNVFunction(ValueFunction):
 
 class NNQFunction(ValueFunction):
     def __init__(self, env_spec, hidden_layer_sizes=(100, 100)):
-        ScopedSerializable.quick_init(self, locals())
+        Serializable.quick_init(self, locals())
 
         self._Da = env_spec.action_space.flat_dim
         self._Do = env_spec.observation_space.flat_dim

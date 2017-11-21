@@ -6,17 +6,17 @@ import tensorflow as tf
 
 from rllab.misc.overrides import overrides
 from rllab.misc import logger
+from rllab.core.serializable import Serializable
 
 from sac.distributions.gmm import GMM
 from sac.policies.nn_policy import NNPolicy
-from sac.core.serializable import ScopedSerializable
 from sac.misc import tf_utils
 
 
-class GMMPolicy(NNPolicy, ScopedSerializable):
+class GMMPolicy(NNPolicy, Serializable):
     def __init__(self, env_spec, K=2, hidden_layers=(100, 100), reg=0.001,
                  squash=True, qf=None):
-        ScopedSerializable.quick_init(self, locals())
+        Serializable.quick_init(self, locals())
 
         self._hidden_layers = hidden_layers
         self._Da = env_spec.action_space.flat_dim

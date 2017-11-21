@@ -1,28 +1,6 @@
-import tensorflow as tf
-
 from rllab.core.serializable import Serializable
 
 
-class ScopedSerializable(Serializable):
-    def __init__(self, locals_):
-        Serializable.__init__(self, locals_)
-        self.__scope = None
-
-    def quick_init(self, locals_):
-        self.__scope = tf.get_variable_scope().name
-        Serializable.quick_init(self, locals_)
-
-    def __getstate__(self):
-        d = Serializable.__getstate__(self)
-        d['scope'] = self.__scope
-        return d
-
-    def __setstate__(self, d):
-        with tf.variable_scope(d['scope']):
-            Serializable.__setstate__(self, d)
-
-
-# TODO: this should go into rllab.core.serializable.Serializable.
 def deep_clone(obj):
     assert isinstance(obj, Serializable)
 

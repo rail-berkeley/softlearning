@@ -1,14 +1,14 @@
 import tensorflow as tf
 
+from rllab.core.serializable import Serializable
+
 from rllab.misc.overrides import overrides
 from sandbox.rocky.tf.policies.base import Policy
 
-from sac.core.serializable import ScopedSerializable
 
-
-class NNPolicy(Policy, ScopedSerializable):
+class NNPolicy(Policy, Serializable):
     def __init__(self, env_spec, obs_pl, action, scope_name=None):
-        ScopedSerializable.quick_init(self, locals())
+        Serializable.quick_init(self, locals())
 
         self._obs_pl = obs_pl
         self._action = action

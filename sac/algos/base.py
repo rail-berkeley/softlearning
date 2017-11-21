@@ -3,7 +3,6 @@ import gtimer as gt
 
 import numpy as np
 
-from rllab.core.serializable import Serializable
 from rllab.misc import logger
 from rllab.algos.base import Algorithm
 
