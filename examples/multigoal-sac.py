@@ -3,8 +3,6 @@ import numpy as np
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import run_experiment_lite
 
-from sandbox.rocky.tf.envs.base import TfEnv
-
 from sac.algos.sac import SAC
 from sac.envs.multigoal import MultiGoalEnv
 from sac.misc.plotter import QFPolicyPlotter
@@ -15,12 +13,11 @@ from sac.misc.value_function import NNQFunction, NNVFunction
 
 
 def run(*_):
-    # TODO: TfEnv
-    env = TfEnv(normalize(MultiGoalEnv(
+    env = normalize(MultiGoalEnv(
         actuation_cost_coeff=10,
         distance_cost_coeff=1,
         goal_reward=10,
-    )))
+    ))
 
     pool = SimpleReplayPool(
         env_spec=env.spec,
@@ -96,6 +93,5 @@ run_experiment_lite(
     exp_name=timestamp(),
     n_parallel=1,
     seed=1,
-    terminate_machine=False,
     mode='local',
 )

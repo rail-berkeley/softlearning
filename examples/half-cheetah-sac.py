@@ -61,7 +61,6 @@ def run(*_):
         pool=pool,
         qf=qf,
         vf=vf,
-        plotter=None,
 
         policy_lr=3E-4,
         qf_lr=3E-4,
@@ -71,7 +70,7 @@ def run(*_):
         tau=0,
         qf_target_update_interval=1000,
 
-        save_full_state=True
+        save_full_state=False
     )
     algorithm.train()
 
@@ -81,10 +80,7 @@ run_sac_experiment(
     exp_name=timestamp(),
     n_parallel=1,
     seed=1,
-    terminate_machine=False,
     snapshot_mode='gap',
     snapshot_gap='10',
     mode='local',
-    # mode='ec2',
-    # sync_s3_pkl=True,
 )

@@ -20,7 +20,7 @@ class SAC(RLAlgorithm, Serializable):
             qf,
             vf,
             pool,
-            plotter,
+            plotter=None,
 
             policy_lr=1E-3,
             qf_lr=1E-3,
