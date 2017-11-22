@@ -69,7 +69,7 @@ class GMMPolicy(NNPolicy, Serializable):
         qs = self._qf.eval(obs[None], mus)
         max_ind = np.argmax(qs)
 
-        return mus[[max_ind], :], {}  # 1 x Da
+        return mus[max_ind, :], {}  # Da
 
     @contextmanager
     def deterministic(self, set_deterministic=True):
