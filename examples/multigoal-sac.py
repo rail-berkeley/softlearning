@@ -75,13 +75,10 @@ def run(*_):
         vf=vf,
         plotter=plotter,
 
-        policy_lr=1E-3,
-        qf_lr=1E-3,
-        vf_lr=1E-3,
+        lr=1E-3,
 
         discount=0.99,
         tau=0.999,
-        qf_target_update_interval=1,
 
         save_full_state=True
     )

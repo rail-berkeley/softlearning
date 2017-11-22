@@ -62,13 +62,9 @@ def run(*_):
         qf=qf,
         vf=vf,
 
-        policy_lr=3E-4,
-        qf_lr=3E-4,
-        vf_lr=3E-4,
-
+        lr=3E-4,
         discount=0.99,
-        tau=0,
-        qf_target_update_interval=1000,
+        tau=0.99,
 
         save_full_state=False
     )

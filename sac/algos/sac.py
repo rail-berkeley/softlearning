@@ -22,12 +22,8 @@ class SAC(RLAlgorithm, Serializable):
             pool,
             plotter=None,
 
-            policy_lr=1E-3,
-            qf_lr=1E-3,
-            vf_lr=1E-3,
-
+            lr=3E-3,
             discount=0.99,
-            qf_target_update_interval=1,
             tau=0,
 
             save_full_state=False,
@@ -44,12 +40,11 @@ class SAC(RLAlgorithm, Serializable):
         self._pool = pool
         self._plotter = plotter
 
-        self._policy_lr = policy_lr
-        self._qf_lr = qf_lr
-        self._vf_lr = vf_lr
+        self._policy_lr = lr
+        self._qf_lr = lr
+        self._vf_lr = lr
 
         self._discount = discount
-        self._qf_target_update_interval = qf_target_update_interval
         self._tau = tau
 
         self._save_full_state = save_full_state
@@ -178,8 +173,7 @@ class SAC(RLAlgorithm, Serializable):
     def _do_training(self, itr, batch):
         feeds = self._get_feed_dict(batch)
         self._sess.run(self._training_ops, feeds)
-        if itr % self._qf_target_update_interval == 0:
-            self._sess.run(self._target_ops)
+        self._sess.run(self._target_ops)
 
     def _get_feed_dict(self, batch):
         feeds = {
