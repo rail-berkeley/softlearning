@@ -84,11 +84,12 @@ def run(*_):
     )
     algorithm.train()
 
-run_experiment_lite(
-    run,
-    exp_prefix='multigoal',
-    exp_name=timestamp(),
-    n_parallel=1,
-    seed=1,
-    mode='local',
-)
+if __name__ == "__main__":
+    run_experiment_lite(
+        run,
+        exp_prefix='multigoal',
+        exp_name=timestamp(),
+        n_parallel=1,
+        seed=1,
+        mode='local',
+    )

@@ -70,13 +70,14 @@ def run(*_):
     )
     algorithm.train()
 
-run_sac_experiment(
-    run,
-    exp_prefix='half-cheetah',
-    exp_name=timestamp(),
-    n_parallel=1,
-    seed=1,
-    snapshot_mode='gap',
-    snapshot_gap='10',
-    mode='local',
-)
+if __name__ == "__main__":
+    run_sac_experiment(
+        run,
+        exp_prefix='half-cheetah',
+        exp_name=timestamp(),
+        n_parallel=1,
+        seed=1,
+        snapshot_mode='gap',
+        snapshot_gap='10',
+        mode='local',
+    )
