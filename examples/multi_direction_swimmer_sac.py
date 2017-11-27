@@ -1,23 +1,16 @@
-import numpy as np
-
 from rllab.envs.normalized_env import normalize
-from rllab.misc.instrument import run_experiment_lite
 
+from sac.misc.instrument import run_sac_experiment
 from sac.algos.sac import SAC
-from sac.envs import MultiGoalEnv
-from sac.misc.plotter import QFPolicyPlotter
 from sac.misc.replay_pool import SimpleReplayPool
 from sac.misc.utils import timestamp
 from sac.policies.gmm import GMMPolicy
 from sac.misc.value_function import NNQFunction, NNVFunction
+from sac.envs import MultiDirectionSwimmerEnv
 
 
 def run(*_):
-    env = normalize(MultiGoalEnv(
-        actuation_cost_coeff=10,
-        distance_cost_coeff=1,
-        goal_reward=10,
-    ))
+    env = normalize(MultiDirectionSwimmerEnv())
 
     pool = SimpleReplayPool(
         env_spec=env.spec,
@@ -25,16 +18,16 @@ def run(*_):
     )
 
     base_kwargs = dict(
-        min_pool_size=30,
+        min_pool_size=1000,
         epoch_length=1000,
         n_epochs=1000,
-        max_path_length=30,
+        max_path_length=1000,
         batch_size=64,
-        scale_reward=0.3,
+        scale_reward=1,
         n_train_repeat=1,
-        eval_render=True,
-        eval_n_episodes=10,
-        eval_deterministic=False
+        eval_render=False,
+        eval_n_episodes=1,
+        eval_deterministic=True,
     )
 
     M = 100
@@ -50,20 +43,10 @@ def run(*_):
 
     policy = GMMPolicy(
         env_spec=env.spec,
-        K=8,
+        K=2,
         hidden_layers=(M, M),
         qf=qf,
         reg=0.001
-    )
-
-    plotter = QFPolicyPlotter(
-        qf=qf,
-        policy=policy,
-        obs_lst=np.array([[-2.5, 0.0],
-                          [0.0, 0.0],
-                          [2.5, 2.5]]),
-        default_action=[np.nan, np.nan],
-        n_samples=100
     )
 
     algorithm = SAC(
@@ -73,23 +56,23 @@ def run(*_):
         pool=pool,
         qf=qf,
         vf=vf,
-        plotter=plotter,
 
-        lr=1E-3,
-
+        lr=3E-4,
         discount=0.99,
-        tau=0.999,
+        tau=0.99,
 
-        save_full_state=True
+        save_full_state=False
     )
     algorithm.train()
 
 if __name__ == "__main__":
-    run_experiment_lite(
+    run_sac_experiment(
         run,
-        exp_prefix='multigoal',
+        exp_prefix='multi_direction_swimmer',
         exp_name=timestamp(),
         n_parallel=1,
         seed=1,
+        snapshot_mode='gap',
+        snapshot_gap='10',
         mode='local',
     )
