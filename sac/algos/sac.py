@@ -7,6 +7,7 @@ from rllab.misc.overrides import overrides
 
 from sac.algos.base import RLAlgorithm
 
+EPS = 1E-6
 
 class SAC(RLAlgorithm, Serializable):
     """Soft Actor-Critic (SAC)
@@ -262,7 +263,6 @@ class SAC(RLAlgorithm, Serializable):
 
     @staticmethod
     def _squash_correction(t):
-        EPS = 1E-6
         return tf.reduce_sum(tf.log(1 - tf.tanh(t) ** 2 + EPS), axis=1)
 
     def _init_target_ops(self):
