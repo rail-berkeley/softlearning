@@ -52,7 +52,7 @@ def rollout(env, policy, path_length, render=False, speedup=10, callback=None,
 
     last_obs = observation
 
-    concat_infos = dict()
+    concat_infos = {}
     for key in all_infos[0].keys():
         all_vals = [np.array(info[key])[None] for info in all_infos]
         concat_infos[key] = np.concatenate(all_vals)
@@ -73,8 +73,9 @@ def rollout(env, policy, path_length, render=False, speedup=10, callback=None,
 
 
 def rollouts(env, policy, path_length, n_paths, render=False):
-    paths = list()
-    for i in range(n_paths):
-        paths.append(rollout(env, policy, path_length, render))
+    paths = [
+        rollout(env, policy, path_length, render)
+        for i in range(n_paths)
+    ]
 
     return paths
