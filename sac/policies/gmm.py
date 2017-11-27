@@ -14,8 +14,21 @@ from sac.misc import tf_utils
 
 
 class GMMPolicy(NNPolicy, Serializable):
+    """Gaussian Mixture Model policy"""
     def __init__(self, env_spec, K=2, hidden_layers=(100, 100), reg=0.001,
                  squash=True, qf=None):
+        """
+        Args:
+            env_spec (`rllab.EnvSpec`): Specification of the environment
+                to create the policy for.
+            K (`int`): Number of mixture components.
+            hidden_layers (`list` of `int`): Sizes for the Multilayer
+                perceptron hidden layers.
+            reg (`float`): Regularization coeffiecient for the GMM parameters.
+            squash (`bool`): If True, squash the GMM the gmm action samples
+               between -1 and 1 with tanh.
+            qf (`ValueFunction`): Q-function approximator.
+        """
         Serializable.quick_init(self, locals())
 
         self._hidden_layers = hidden_layers
@@ -42,6 +55,8 @@ class GMMPolicy(NNPolicy, Serializable):
         )
 
     def get_distribution_for(self, obs_t, reuse=False):
+        """Create the actual GMM distribution instance."""
+
         with tf.variable_scope('policy', reuse=reuse):
             gmm = GMM(
                 K=self._K,
@@ -55,6 +70,12 @@ class GMMPolicy(NNPolicy, Serializable):
 
     @overrides
     def get_action(self, obs):
+        """Sample action based on the observations.
+
+        If `self._is_deterministic` is True, returns a greedily sampled action
+        for the observations. If False, return stochastically sampled action.
+        """
+
         if not self._is_deterministic:
             return NNPolicy.get_action(self, obs)
 
@@ -73,12 +94,28 @@ class GMMPolicy(NNPolicy, Serializable):
 
     @contextmanager
     def deterministic(self, set_deterministic=True):
+        """Context manager for changing the determinism of the policy.
+
+        See `self.get_action` for further information about the effect of
+        self._is_deterministic.
+
+        Args:
+            set_deterministic (`bool`): Value to set the self._is_deterministic
+            to during the context. The value will be reset back to the previous
+            value when the context exits.
+        """
         current = self._is_deterministic
         self._is_deterministic = set_deterministic
         yield
         self._is_deterministic = current
 
     def log_diagnostics(self, batch):
+        """Record diagnostic information to the logger.
+
+        Records the mean, min, max, and standard deviation of the GMM
+        means, component weights, and covariances.
+        """
+
         feeds = {self._obs_pl: batch['observations']}
         sess = tf_utils.get_default_session()
         mus, log_sigs, log_ws = sess.run(

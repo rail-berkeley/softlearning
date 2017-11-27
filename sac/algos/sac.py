@@ -102,7 +102,7 @@ class SAC(RLAlgorithm, Serializable):
             discount (`float`): Discount factor for Q-function updates.
             tau (`float`): Soft value function target update weight.
 
-            save_full_state (`bool`): Whether or not to save full class in the
+            save_full_state (`bool`): If True, save the full class in the
                 snapshot. See `self.get_snapshot` for more information.
         """
 

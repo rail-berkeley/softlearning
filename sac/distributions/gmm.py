@@ -73,8 +73,8 @@ class GMM(object):
         mu_t = w_and_mu_and_logsig_t[..., 1:1+Dx]
         log_sig_t = w_and_mu_and_logsig_t[..., 1+Dx:]
 
-        log_sig_t = tf.minimum(log_sig_t, LOG_SIG_CAP_MAX)
-        log_sig_t = tf.maximum(log_sig_t, LOG_SIG_CAP_MIN)
+        log_sig_t = tf.clip_by_value(
+            log_sig_t, LOG_SIG_CAP_MIN, LOG_SIG_CAP_MAX)
 
         return log_w_t, mu_t, log_sig_t
 
@@ -91,8 +91,8 @@ class GMM(object):
         # Create p(x|z).
         with tf.variable_scope('p'):
             log_ws_t, xz_mus_t, xz_log_sigs_t = self._create_p_xz_params()
-            xz_sigs_t = tf.exp(xz_log_sigs_t)
             # (N x K), (N x K x Dx), (N x K x Dx)
+            xz_sigs_t = tf.exp(xz_log_sigs_t)
 
             # Sample the latent code.
             z_t = tf.multinomial(logits=log_ws_t, num_samples=1)  # N x 1
