@@ -12,7 +12,10 @@ from sac.misc.sampler import rollouts
 
 
 class RLAlgorithm(Algorithm):
-    """
+    """Abstract RLAlgorithm.
+
+    Implements the _train and _evaluate methods to be used
+    by classes inheriting from RLAlgorithm.
     """
 
     def __init__(
@@ -29,6 +32,24 @@ class RLAlgorithm(Algorithm):
             eval_render=False,
     ):
         """
+        Args:
+            batch_size (`int`): Size of the sample batch to be used
+                for training.
+            n_epochs (`int`): Number of epochs to run the training for.
+            n_train_repeat (`int`): Number of times to repeat the training
+                for single time step.
+            epoch_length (`int`): Epoch length.
+            min_pool_size (`int`): Minimum size of the sample pool before
+                running training.
+            max_path_length (`int`): Number of timesteps before resetting
+                environment and policy, and the number of paths used for
+                evaluation rollout.
+            scale_reward (`float`): Scaling factor for raw reward.
+            eval_n_episodes (`int`): Number of rollouts to evaluate.
+            eval_deterministic (`int`): Whether or not to run the policy in
+                deterministic mode when evaluating policy.
+            eval_render (`int`): Whether or not to render the evaluation
+                environment.
         """
         self._batch_size = batch_size
         self._n_epochs = n_epochs
@@ -49,6 +70,14 @@ class RLAlgorithm(Algorithm):
         self._pool = None
 
     def _train(self, env, policy, pool):
+        """Perform RL training.
+
+        Args:
+            env (`rllab.Env`): Environment used for training
+            policy (`Policy`): Policy used for training
+            pool (`PoolBase`): Sample pool to add samples to
+        """
+
         self._init_training(env, policy, pool)
 
         with self._sess.as_default():
@@ -133,11 +162,12 @@ class RLAlgorithm(Algorithm):
             env.terminate()
 
     def _evaluate(self, epoch):
-        """ Perform evaluation for the current policy.
+        """Perform evaluation for the current policy.
 
         :param epoch: The epoch number.
         :return: None
         """
+
         if self._eval_n_episodes < 1:
             return
 
@@ -180,12 +210,13 @@ class RLAlgorithm(Algorithm):
 
     @abc.abstractmethod
     def _init_training(self, env, policy, pool):
-        """ Method to be called at the start of training.
+        """Method to be called at the start of training.
 
         :param env: Environment instance.
         :param policy:  Policy instance.
         :return: None
         """
+
         self._env = env
         self._eval_env = deep_clone(env)
         self._policy = policy
