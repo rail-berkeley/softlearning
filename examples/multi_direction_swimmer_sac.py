@@ -20,17 +20,17 @@ def run(*_):
     base_kwargs = dict(
         min_pool_size=1000,
         epoch_length=1000,
-        n_epochs=1000,
+        n_epochs=2001,
         max_path_length=1000,
-        batch_size=64,
-        scale_reward=1,
+        batch_size=128,
+        scale_reward=100.0,
         n_train_repeat=1,
         eval_render=False,
         eval_n_episodes=1,
         eval_deterministic=True,
     )
 
-    M = 100
+    M = 128
     qf = NNQFunction(
         env_spec=env.spec,
         hidden_layer_sizes=(M, M)
@@ -43,7 +43,7 @@ def run(*_):
 
     policy = GMMPolicy(
         env_spec=env.spec,
-        K=2,
+        K=4,
         hidden_layers=(M, M),
         qf=qf,
         reg=0.001
@@ -57,12 +57,13 @@ def run(*_):
         qf=qf,
         vf=vf,
 
-        lr=3E-4,
+        lr=3e-4,
         discount=0.99,
         tau=0.99,
 
         save_full_state=False
     )
+
     algorithm.train()
 
 if __name__ == "__main__":
