@@ -36,6 +36,7 @@ class GMMPolicy(NNPolicy, Serializable):
         self._Ds = env_spec.observation_space.flat_dim
         self._K = K
         self._is_deterministic = False
+        self._fixed_h = None
         self._qf = qf
         self._reg = reg
 
@@ -88,9 +89,22 @@ class GMMPolicy(NNPolicy, Serializable):
         mus = tf.get_default_session().run(self._dist.mus_t, feeds)[0]  # K x Da
 
         qs = self._qf.eval(obs[None], mus)
-        max_ind = np.argmax(qs)
 
-        return mus[max_ind, :], {}  # Da
+        if self._fixed_h is not None:
+            h = self._fixed_h
+        else:
+            h = np.argmax(qs)
+
+        return mus[h, :], {}  # Da
+
+    @contextmanager
+    def fix_h(self, h):
+        was_deterministic = self._is_deterministic
+        self._is_deterministic = True
+        self._fixed_h = h
+        yield
+        self._fixed_h = None
+        self._is_deterministic = was_deterministic
 
     @contextmanager
     def deterministic(self, set_deterministic=True):
@@ -107,7 +121,7 @@ class GMMPolicy(NNPolicy, Serializable):
         current = self._is_deterministic
         self._is_deterministic = set_deterministic
         yield
-        self._is_deterministic = current
+        self._is_deterministic = was_deterministic
 
     def log_diagnostics(self, batch):
         """Record diagnostic information to the logger.
