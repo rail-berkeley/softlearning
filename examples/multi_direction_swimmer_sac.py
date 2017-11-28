@@ -20,14 +20,14 @@ def run(*_):
     base_kwargs = dict(
         min_pool_size=1000,
         epoch_length=1000,
-        n_epochs=2001,
+        n_epochs=202,
         max_path_length=1000,
         batch_size=128,
         scale_reward=100.0,
         n_train_repeat=1,
         eval_render=False,
         eval_n_episodes=1,
-        eval_deterministic=True,
+        eval_deterministic=False,
     )
 
     M = 128
