@@ -17,13 +17,13 @@ class MultiGoalEnv(Env, Serializable):
     Action: velocity.
     """
     def __init__(self, goal_reward=10, actuation_cost_coeff=30,
-                 distance_cost_coeff=1):
+                 distance_cost_coeff=1, init_sigma=0.1):
         super().__init__()
         Serializable.quick_init(self, locals())
 
         self.dynamics = PointDynamics(dim=2, sigma=0)
         self.init_mu = np.array((0, 0), dtype=np.float32)
-        self.init_sigma = 0
+        self.init_sigma = init_sigma
         self.goal_positions = np.array(
             [
                 [5, 0],

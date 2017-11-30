@@ -8,21 +8,21 @@ from rllab.misc.overrides import overrides
 from rllab.misc import logger
 from rllab.core.serializable import Serializable
 
-from sac.distributions.gmm import GMM
-from sac.policies.nn_policy import NNPolicy
+from sac.distributions import GMM
+from sac.policies import NNPolicy
 from sac.misc import tf_utils
 
 
 class GMMPolicy(NNPolicy, Serializable):
     """Gaussian Mixture Model policy"""
-    def __init__(self, env_spec, K=2, hidden_layers=(100, 100), reg=0.001,
+    def __init__(self, env_spec, K=2, hidden_layer_sizes=(100, 100), reg=0.001,
                  squash=True, qf=None):
         """
         Args:
             env_spec (`rllab.EnvSpec`): Specification of the environment
                 to create the policy for.
             K (`int`): Number of mixture components.
-            hidden_layers (`list` of `int`): Sizes for the Multilayer
+            hidden_layer_sizes (`list` of `int`): Sizes for the Multilayer
                 perceptron hidden layers.
             reg (`float`): Regularization coeffiecient for the GMM parameters.
             squash (`bool`): If True, squash the GMM the gmm action samples
@@ -31,7 +31,7 @@ class GMMPolicy(NNPolicy, Serializable):
         """
         Serializable.quick_init(self, locals())
 
-        self._hidden_layers = hidden_layers
+        self._hidden_layers = hidden_layer_sizes
         self._Da = env_spec.action_space.flat_dim
         self._Ds = env_spec.observation_space.flat_dim
         self._K = K
@@ -61,7 +61,7 @@ class GMMPolicy(NNPolicy, Serializable):
         with tf.variable_scope('policy', reuse=reuse):
             gmm = GMM(
                 K=self._K,
-                hidden_layers=self._hidden_layers,
+                hidden_layers_sizes=self._hidden_layers,
                 Dx=self._Da,
                 cond_t_lst=[obs_t],
                 reg=self._reg

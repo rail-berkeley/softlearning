@@ -13,13 +13,13 @@ class GMM(object):
             self,
             K,
             Dx,
-            hidden_layers=(100, 100),
+            hidden_layers_sizes=(100, 100),
             reg=0.001,
             cond_t_lst=(),
     ):
         self._cond_t_lst = cond_t_lst
         self._reg = reg
-        self._layer_sizes = list(hidden_layers) + [K*(2*Dx + 1)]
+        self._layer_sizes = list(hidden_layers_sizes) + [K * (2 * Dx + 1)]
 
         self._Dx = Dx
         self._K = K

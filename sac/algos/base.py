@@ -83,7 +83,8 @@ class RLAlgorithm(Algorithm):
             gt.reset()
             gt.set_def_unique(False)
 
-            for epoch in gt.timed_for(range(self._n_epochs), save_itrs=True):
+            for epoch in gt.timed_for(range(1, self._n_epochs + 1),
+                                      save_itrs=True):
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
                 for t in range(self._epoch_length):

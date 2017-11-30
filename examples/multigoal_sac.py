@@ -6,22 +6,23 @@ from rllab.misc.instrument import run_experiment_lite
 from sac.algos.sac import SAC
 from sac.envs import MultiGoalEnv
 from sac.misc.plotter import QFPolicyPlotter
-from sac.misc.replay_pool import SimpleReplayPool
 from sac.misc.utils import timestamp
-from sac.policies.gmm import GMMPolicy
-from sac.misc.value_function import NNQFunction, NNVFunction
+from sac.policies import GMMPolicy
+from sac.replay_buffers import SimpleReplayBuffer
+from sac.value_functions import NNQFunction, NNVFunction
 
 
 def run(*_):
     env = normalize(MultiGoalEnv(
-        actuation_cost_coeff=10,
-        distance_cost_coeff=1,
-        goal_reward=10,
+        actuation_cost_coeff=1,
+        distance_cost_coeff=0.1,
+        goal_reward=1,
+        init_sigma=0.1,
     ))
 
-    pool = SimpleReplayPool(
+    pool = SimpleReplayBuffer(
+        max_replay_buffer_size=1e6,
         env_spec=env.spec,
-        max_pool_size=1E6
     )
 
     base_kwargs = dict(
@@ -30,28 +31,27 @@ def run(*_):
         n_epochs=1000,
         max_path_length=30,
         batch_size=64,
-        scale_reward=0.3,
         n_train_repeat=1,
         eval_render=True,
         eval_n_episodes=10,
-        eval_deterministic=False
+        eval_deterministic=True
     )
 
     M = 100
     qf = NNQFunction(
         env_spec=env.spec,
-        hidden_layer_sizes=(M, M)
+        hidden_layer_sizes=[M, M]
     )
 
     vf = NNVFunction(
         env_spec=env.spec,
-        hidden_layer_sizes=(M, M)
+        hidden_layer_sizes=[M, M]
     )
 
     policy = GMMPolicy(
         env_spec=env.spec,
-        K=8,
-        hidden_layers=(M, M),
+        K=4,
+        hidden_layer_sizes=[M, M],
         qf=qf,
         reg=0.001
     )
@@ -75,10 +75,10 @@ def run(*_):
         vf=vf,
         plotter=plotter,
 
-        lr=1E-3,
-
+        lr=3E-4,
+        scale_reward=3,
         discount=0.99,
-        tau=0.999,
+        tau=0.001,
 
         save_full_state=True
     )
@@ -89,6 +89,7 @@ if __name__ == "__main__":
         run,
         exp_prefix='multigoal',
         exp_name=timestamp(),
+        snapshot_mode='last',
         n_parallel=1,
         seed=1,
         mode='local',

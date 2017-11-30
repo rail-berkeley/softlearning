@@ -5,9 +5,10 @@ from rllab.core.serializable import Serializable
 from rllab.misc import logger
 from rllab.misc.overrides import overrides
 
-from sac.algos.base import RLAlgorithm
+from .base import RLAlgorithm
 
 EPS = 1E-6
+
 
 class SAC(RLAlgorithm, Serializable):
     """Soft Actor-Critic (SAC)
@@ -55,7 +56,7 @@ class SAC(RLAlgorithm, Serializable):
 
         lr=3E-4,
         discount=0.99,
-        tau=0.99,
+        tau=0.01,
 
         save_full_state=False
     )
@@ -82,7 +83,7 @@ class SAC(RLAlgorithm, Serializable):
             lr=3E-3,
             scale_reward=1,
             discount=0.99,
-            tau=0,
+            tau=0.01,
 
             save_full_state=False,
     ):
@@ -203,7 +204,7 @@ class SAC(RLAlgorithm, Serializable):
             self._vf_target_params = self._vf.get_params_internal()
 
         ys = tf.stop_gradient(
-            self._reward_pl +
+            self._scale_reward * self._reward_pl +
             (1 - self._terminal_pl) * self._discount * vf_next_target_t
         )  # N
 
@@ -267,13 +268,13 @@ class SAC(RLAlgorithm, Serializable):
         return tf.reduce_sum(tf.log(1 - tf.tanh(t) ** 2 + EPS), axis=1)
 
     def _init_target_ops(self):
-        """Create tensorflow operations for updating value function."""
+        """Create tensorflow operations for updating target value function."""
 
         source_params = self._vf_params
         target_params = self._vf_target_params
 
         self._target_ops = [
-            tf.assign(target, self._tau * target + (1 - self._tau) * source)
+            tf.assign(target, (1 - self._tau) * target + self._tau * source)
             for target, source in zip(target_params, source_params)
         ]
 
