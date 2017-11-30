@@ -130,7 +130,7 @@ class RLAlgorithm(Algorithm):
                 logger.save_itr_params(epoch, params)
                 times_itrs = gt.get_times().stamps.itrs
 
-                eval_time = times_itrs['eval'][-1] if epoch > 0 else 0
+                eval_time = times_itrs['eval'][-1] if epoch > 1 else 0
                 total_time = gt.get_times().total
                 logger.record_tabular('time-train', times_itrs['train'][-1])
                 logger.record_tabular('time-eval', eval_time)
