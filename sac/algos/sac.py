@@ -80,6 +80,7 @@ class SAC(RLAlgorithm, Serializable):
             plotter=None,
 
             lr=3E-3,
+            scale_reward=1,
             discount=0.99,
             tau=0,
 
@@ -119,7 +120,7 @@ class SAC(RLAlgorithm, Serializable):
         self._policy_lr = lr
         self._qf_lr = lr
         self._vf_lr = lr
-
+        self._scale_reward = scale_reward
         self._discount = discount
         self._tau = tau
 

@@ -26,7 +26,6 @@ class RLAlgorithm(Algorithm):
             epoch_length=1000,
             min_pool_size=10000,
             max_path_length=1000,
-            scale_reward=1.,
             eval_n_episodes=10,
             eval_deterministic=True,
             eval_render=False,
@@ -57,7 +56,6 @@ class RLAlgorithm(Algorithm):
         self._epoch_length = epoch_length
         self._min_pool_size = min_pool_size
         self._max_path_length = max_path_length
-        self._scale_reward = scale_reward
 
         self._eval_n_episodes = eval_n_episodes
         self._eval_deterministic = eval_deterministic
@@ -70,19 +68,12 @@ class RLAlgorithm(Algorithm):
         self._pool = None
 
     def _train(self, env, policy, pool):
-        """Perform RL training.
-
-        Args:
-            env (`rllab.Env`): Environment used for training
-            policy (`Policy`): Policy used for training
-            pool (`PoolBase`): Sample pool to add samples to
-        """
-
         self._init_training(env, policy, pool)
 
         with self._sess.as_default():
             observation = env.reset()
             policy.reset()
+
             path_length = 0
             path_return = 0
             last_path_return = 0
@@ -97,25 +88,21 @@ class RLAlgorithm(Algorithm):
 
                 for t in range(self._epoch_length):
                     iteration = t + epoch * self._epoch_length
-                    action, _ = policy.get_action(observation)
-                    next_ob, raw_reward, terminal, info = env.step(action)
-                    reward = raw_reward * self._scale_reward
-                    path_length += 1
-                    path_return += raw_reward
 
-                    if not terminal:
-                        self._pool.add_sample(
-                            observation, action, reward, terminal, False)
+                    action, _ = policy.get_action(observation)
+                    next_ob, reward, terminal, info = env.step(action)
+                    path_length += 1
+                    path_return += reward
+
+                    self._pool.add_sample(
+                        observation,
+                        action,
+                        reward,
+                        terminal,
+                        next_ob,
+                    )
 
                     if terminal or path_length >= self._max_path_length:
-                        self._pool.add_sample(
-                            next_ob,
-                            np.zeros_like(action),
-                            0,
-                            np.zeros_like(terminal),
-                            True
-                        )
-
                         observation = env.reset()
                         policy.reset()
                         path_length = 0
@@ -218,7 +205,8 @@ class RLAlgorithm(Algorithm):
         """
 
         self._env = env
-        self._eval_env = deep_clone(env)
+        if self._eval_n_episodes > 0:
+            self._eval_env = deep_clone(env)
         self._policy = policy
         self._pool = pool
 
