@@ -22,13 +22,17 @@ def _create_symlink(folder):
     return include_path
 
 
-def run_sac_experiment(main, mode, include_folders=None,
-                       log_dir=None, exp_name=None, **kwargs):
+def run_sac_experiment(main, mode, include_folders=None, log_dir=None,
+                       exp_prefix="experiment", exp_name=None, **kwargs):
     if exp_name is None:
         exp_name = timestamp()
 
     if log_dir is None:
-        log_dir = os.path.join(DEFAULT_LOG_DIR, exp_name)
+        log_dir = os.path.join(
+            DEFAULT_LOG_DIR,
+            "local",
+            exp_prefix.replace("_", "-"),
+            exp_name)
 
     if include_folders is None:
         include_folders = list()
@@ -45,6 +49,7 @@ def run_sac_experiment(main, mode, include_folders=None,
     run_experiment_lite(
         stub_method_call=main,
         mode=mode,
+        exp_prefix=exp_prefix,
         exp_name=exp_name,
         log_dir=log_dir,
         **kwargs,
