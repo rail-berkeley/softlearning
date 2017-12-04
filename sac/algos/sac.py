@@ -66,7 +66,9 @@ class SAC(RLAlgorithm, Serializable):
 
     References
     ----------
-    [1] TODO: SAC paper
+    [1] Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, and Sergey Levine, "Soft
+        Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning
+        with a Stochastic Actor," Deep Learning Symposium, NIPS 2017.
     """
 
     def __init__(
@@ -192,7 +194,7 @@ class SAC(RLAlgorithm, Serializable):
         critic Q-function with gradient descent, and appends it to
         `self._training_ops` attribute.
 
-        See Equation (10) in [TODO: SAC paper], for further information of the
+        See Equation (10) in [1], for further information of the
         Q-function update rule.
         """
 
@@ -229,7 +231,7 @@ class SAC(RLAlgorithm, Serializable):
         policy. However, in practice, the separate function approximator
         stabilizes training.
 
-        See Equations (8, 13) in [TODO: SAC paper], for further information
+        See Equations (8, 13) in [1], for further information
         of the value function and policy function update rules.
         """
 
