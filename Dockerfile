@@ -48,13 +48,13 @@ RUN apt-get -y install libav-tools
 CMD alias ffmpeg="avconv"
 
 # ========== Add codebase stub ==========
-WORKDIR /root/softqlearning-private
+WORKDIR /root/sac
 
-ADD environment.yml /root/softqlearning-private/environment.yml
-RUN conda env create -f /root/softqlearning-private/environment.yml \
+ADD environment.yml /root/sac/environment.yml
+RUN conda env create -f /root/sac/environment.yml \
     && conda env update
 
-ENV PYTHONPATH /root/softqlearning-private/sac:$PYTHONPATH
+ENV PYTHONPATH /root/sac/sac:$PYTHONPATH
 ENV PATH /opt/conda/envs/sac/bin:$PATH
 RUN echo "source activate sac" >> /root/.bashrc
 ENV BASH_ENV /root/.bashrc
