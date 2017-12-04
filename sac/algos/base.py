@@ -83,7 +83,7 @@ class RLAlgorithm(Algorithm):
             gt.reset()
             gt.set_def_unique(False)
 
-            for epoch in gt.timed_for(range(1, self._n_epochs + 1),
+            for epoch in gt.timed_for(range(self._n_epochs + 1),
                                       save_itrs=True):
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
@@ -136,7 +136,7 @@ class RLAlgorithm(Algorithm):
                 logger.record_tabular('time-eval', eval_time)
                 logger.record_tabular('time-sample', times_itrs['sample'][-1])
                 logger.record_tabular('time-total', total_time)
-                logger.record_tabular('epochs', epoch)
+                logger.record_tabular('epoch', epoch)
                 logger.record_tabular('episodes', n_episodes)
                 logger.record_tabular('max-path-return', max_path_return)
                 logger.record_tabular('last-path-return', last_path_return)
@@ -167,7 +167,6 @@ class RLAlgorithm(Algorithm):
         total_returns = [path['rewards'].sum() for path in paths]
         episode_lengths = [len(p['rewards']) for p in paths]
 
-        logger.record_tabular('epoch', epoch)
         logger.record_tabular('return-average', np.mean(total_returns))
         logger.record_tabular('return-min', np.min(total_returns))
         logger.record_tabular('return-max', np.max(total_returns))
