@@ -54,7 +54,7 @@ ADD environment.yml /root/sac/environment.yml
 RUN conda env create -f /root/sac/environment.yml \
     && conda env update
 
-ENV PYTHONPATH /root/sac/sac:$PYTHONPATH
+ENV PYTHONPATH /root/sac:$PYTHONPATH
 ENV PATH /opt/conda/envs/sac/bin:$PATH
 RUN echo "source activate sac" >> /root/.bashrc
 ENV BASH_ENV /root/.bashrc
