@@ -7,10 +7,6 @@ import matplotlib.pyplot as plt
 
 from sac.distributions.real_nvp import RealNVP
 
-MEANS = np.array([[0.2, 0.7], [-0.5, -0.5]])
-VARS = np.array([[0.05, 0.05], [0.1, 0.1]])
-WEIGHTS = np.array([0.5, 1.0])
-
 def _log_gaussian_2d(mean, variance, inputs):
   weighted_sq_diff = (inputs - mean[None])**2 / variance[None]
   weighted_sq_sum = tf.reduce_sum(weighted_sq_diff, axis=1,
