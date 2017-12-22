@@ -11,3 +11,13 @@ services:
       - ${MUJOCO_LICENSE_PATH:-./.mujoco/mjkey.txt}:/root/rllab/vendor/mujoco/mjkey.txt
     environment:
       MUJOCO_PY_MJKEY_PATH: /root/rllab/vendor/mujoco/mjkey.txt
+  real-nvp-sandbox:
+    image: gcr.io/tensorflow/tensorflow:1.4.1-py3
+    container_name: sac-real-nvp
+    ports:
+      - "8888:8888"
+    expose:
+      - "8888"
+    volumes:
+      - ./:/sac
+    command: jupyter notebook --notebook-dir=/sac --allow-root

@@ -33,7 +33,7 @@ class NNPolicy(Policy, Serializable):
 
     @overrides
     def get_params_internal(self, **tags):
-        if len(tags) > 0:
+        if tags:
             raise NotImplementedError
         scope = self._scope_name
         # Add "/" to 'scope' unless it's empty (otherwise get_collection will

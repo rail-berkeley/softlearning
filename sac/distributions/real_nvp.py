@@ -1,3 +1,4 @@
+import json
 import tensorflow as tf
 import numpy as np
 
@@ -85,20 +86,6 @@ class CouplingLayer(object):
 
             return outputs
 
-class Config(object):
-    def __init__(self, *args, **kwargs):
-        self.__dict__.update(kwargs)
-
-    def toJSON(self, separators=(',', ': ')):
-        return json.dumps(self.__dict__, sort_keys=True,
-                          indent=2, separators=separators)
-
-    def __str__(self):
-        return "{}({})".format(self.__class__.__name__,
-                               self.toJSON())
-    def __repr__(self):
-        return str(self)
-
 def feedforward_net(inputs,
                     layer_sizes=(10,),
                     activation_fn=tf.nn.tanh,
@@ -128,20 +115,21 @@ def feedforward_net(inputs,
 
     return out
 
-DEFAULT_CONFIG = Config(
-    mode="train",
-    D_in=2,
-    learning_rate=8e-3
-    scale_regularization=5e2,
-    num_coupling_layers=10,
-    translation_hidden_sizes=(25,),
-    scale_hidden_sizes=(25,))
+
+DEFAULT_CONFIG = {
+    "mode": "train",
+    "D_in": 2,
+    "learning_rate": 8e-3,
+    "scale_regularization": 5e2,
+    "num_coupling_layers": 10,
+    "translation_hidden_sizes": (25,),
+    "scale_hidden_sizes": (25,)
+}
 
 class RealNVP(object):
-    def __init__(self, config=DEFAULT_CONFIG):
+    def __init__(self, config=None):
         """TODO"""
-        config = config or DEFAULT_CONFIG
-        self.config = config
+        self.config = dict(DEFAULT_CONFIG, **(config or {}))
         self.build()
 
     def build(self):
@@ -154,7 +142,7 @@ class RealNVP(object):
 
     def add_placeholders(self):
         """TODO"""
-        D_in = self.config.D_in
+        D_in = self.config["D_in"]
 
         self.batch_size = tf.placeholder_with_default(
             64, (), name="batch_size"
@@ -206,9 +194,9 @@ class RealNVP(object):
 
     def add_layers(self):
         """Create coupling layers"""
-        num_coupling_layers = self.config.num_coupling_layers
-        translation_hidden_sizes = self.config.translation_hidden_sizes
-        scale_hidden_sizes = self.config.scale_hidden_sizes
+        num_coupling_layers = self.config["num_coupling_layers"]
+        translation_hidden_sizes = self.config["translation_hidden_sizes"]
+        scale_hidden_sizes = self.config["scale_hidden_sizes"]
 
         def translation_wrapper(inputs):
             return feedforward_net(
@@ -217,15 +205,14 @@ class RealNVP(object):
                              self.x_placeholder.shape.as_list()[-1]))
 
         def scale_wrapper(inputs):
-            hidden_sizes = self.config.scale_hidden_sizes
-                return feedforward_net(
-                    inputs,
-                    layer_sizes=(
-                        *scale_hidden_sizes,
-                        self.x_placeholder.shape.as_list()[-1]),
-                    regularizer=tf.contrib.layers.l2_regularizer(
-                        self.config.scale_regularization)
-                )
+            return feedforward_net(
+                inputs,
+                layer_sizes=(
+                    *scale_hidden_sizes,
+                    self.x_placeholder.shape.as_list()[-1]),
+                regularizer=tf.contrib.layers.l2_regularizer(
+                    self.config["scale_regularization"])
+            )
 
         # parity, name, translation_fn, scale_fn
         self.layers = [
@@ -240,7 +227,7 @@ class RealNVP(object):
 
     def add_encoder_decoder_ops(self):
         """TODO"""
-        train = self.config.mode == "train"
+        train = self.config["mode"] == "train"
 
         x = self.add_forward_preprocessing_ops()  # (N, D)
 
@@ -280,7 +267,7 @@ class RealNVP(object):
     def add_training_ops(self):
         """TODO: regularization? logging? check gradients?"""
         optimizer = tf.train.AdamOptimizer(
-            self.config.learning_rate,
+            self.config["learning_rate"],
             use_locking=False,
             name="Adam",
         )
