@@ -119,11 +119,12 @@ def feedforward_net(inputs,
 DEFAULT_CONFIG = {
     "mode": "train",
     "D_in": 2,
-    "learning_rate": 8e-3,
+    "learning_rate": 5e-4,
     "scale_regularization": 5e2,
     "num_coupling_layers": 10,
     "translation_hidden_sizes": (25,),
-    "scale_hidden_sizes": (25,)
+    "scale_hidden_sizes": (25,),
+    "squash": False
 }
 
 class RealNVP(object):
