@@ -234,13 +234,12 @@ class RealNVP(object):
 
         x = self.add_forward_preprocessing_ops()  # (N, D)
 
-        self.sum_log_det_jacobians = np.zeros_like(x)  # (N, D)
-
+        self.sum_log_det_jacobians = np.zeros_like((x.shape[0],))  # (N,)
         forward_out = x
         for layer in self.layers:
             forward_out, log_det_jacobian = layer.forward_and_jacobian(
                 forward_out)
-            self.sum_log_det_jacobians += log_det_jacobian  # (N, D)
+            self.sum_log_det_jacobians += log_det_jacobian  # (N,)
 
         # self.z = f(x)
         self.z = self.add_forward_postprocessing_ops(forward_out)

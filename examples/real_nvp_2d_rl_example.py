@@ -76,13 +76,6 @@ class RealNVP2dRlExample(object):
     with self.session.as_default():
       for epoch in range(1, NUM_EPOCHS+1):
         for i in range(1, NUM_STEPS+1):
-          sampled_x = self.session.run(
-            self.policy_distribution.x_placeholder,
-            feed_dict={
-              self.policy_distribution.batch_size: self._batch_size,
-            }
-          )
-
           _, sampled_z, forward_loss = self.session.run(
             (
               self.policy_distribution.train_op,
@@ -90,7 +83,7 @@ class RealNVP2dRlExample(object):
               self.policy_distribution.forward_loss,
             ),
             feed_dict={
-              self.policy_distribution.x_placeholder: sampled_x
+              self.policy_distribution.batch_size: self._batch_size,
             }
           )
 
