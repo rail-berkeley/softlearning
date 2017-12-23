@@ -2,12 +2,13 @@ import json
 import tensorflow as tf
 import numpy as np
 
+EPS = 1e-9
+
 def standard_normal_log_likelihood(x):
-    # TODO: the last term should probably have K as coefficient?
-    # log_likelihood = - 0.5 * (tf.square(x) + tf.log(2.0 * np.pi))
-    log_likelihoods = - 0.5 * tf.square(x) - tf.log(2.0 * np.pi)
-    log_likelihood = tf.reduce_sum(log_likelihoods, axis=1)
-    return log_likelihood
+    log_likelihoods = (
+        - 0.5 * tf.reduce_sum(tf.square(x), axis=1)
+        - tf.log(2.0 * np.pi))
+    return log_likelihoods
 
 def checkerboard(shape, parity="even", dtype=tf.bool):
     """TODO: Check this implementation"""
@@ -254,6 +255,16 @@ class RealNVP(object):
             backward_out = layer.backward(backward_out)
 
         self.x = self.add_backward_postprocessing_ops(backward_out)
+
+    def _squash(self, inputs):
+        return tf.tanh(inputs) if self.config["squash"] else inputs
+
+    def _squash_correction(self, inputs):
+        return (
+            tf.reduce_sum(tf.log(1 - inputs ** 2 + EPS), axis=1)
+            if self.config["squash"]
+            else tf.constant(0.0)
+        )
 
     def add_loss_ops(self):
         """TODO"""
