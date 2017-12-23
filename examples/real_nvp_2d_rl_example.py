@@ -57,11 +57,14 @@ class RealNVP2dRlExample(object):
 
     tf.reset_default_graph()
 
-    self.policy_distribution = RealNVP(nvp_config)
-    self.target_Q_input_ph = tf.placeholder(
-      shape=(None, nvp_config["D_in"]), dtype=tf.float32)
-    self.target_Q = _log_target(
-      weights, means, variances, self.target_Q_input_ph)
+    def create_target_wrapper(weights, means, variances):
+        def wraps(inputs):
+            return _log_target(weights, means, variances, inputs)
+        return wraps
+
+    self.policy_distribution = RealNVP(
+        config=nvp_config,
+        create_target_fn=create_target_wrapper(weights, means, variances))
 
     self.session = tf.Session()
     self.session.run(tf.global_variables_initializer())
@@ -80,10 +83,6 @@ class RealNVP2dRlExample(object):
             }
           )
 
-          target_Q = self.session.run(
-            self.target_Q,
-            feed_dict={self.target_Q_input_ph: sampled_x})
-
           _, sampled_z, forward_loss = self.session.run(
             (
               self.policy_distribution.train_op,
@@ -91,8 +90,7 @@ class RealNVP2dRlExample(object):
               self.policy_distribution.forward_loss,
             ),
             feed_dict={
-              self.policy_distribution.x_placeholder: sampled_x,
-              self.policy_distribution.Q_placeholder: target_Q
+              self.policy_distribution.x_placeholder: sampled_x
             }
           )
 

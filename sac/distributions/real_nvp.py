@@ -128,9 +128,10 @@ DEFAULT_CONFIG = {
 }
 
 class RealNVP(object):
-    def __init__(self, config=None):
+    def __init__(self, create_target_fn, config=None):
         """TODO"""
         self.config = dict(DEFAULT_CONFIG, **(config or {}))
+        self.create_target_fn = create_target_fn
         self.build()
 
     def build(self):
@@ -257,8 +258,9 @@ class RealNVP(object):
     def add_loss_ops(self):
         """TODO"""
 
+        self.log_target = self.create_target_fn(self.x_placeholder)
         reinforce_loss = tf.reduce_mean(
-            self.log_p_z * tf.stop_gradient(self.log_p_z - self.Q_placeholder))
+            self.log_p_z * tf.stop_gradient(self.log_p_z - self.log_target))
 
         reg_variables = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
         reg_loss = tf.reduce_sum(reg_variables)
