@@ -87,7 +87,7 @@ class CouplingLayer(object):
             return outputs
 
 def feedforward_net(inputs,
-                    layer_sizes=(10,),
+                    layer_sizes,
                     activation_fn=tf.nn.tanh,
                     output_nonlinearity=None,
                     regularizer=None):
@@ -217,7 +217,7 @@ class RealNVP(object):
         # parity, name, translation_fn, scale_fn
         self.layers = [
             CouplingLayer(
-                parity={0: "even", 1: "odd"}[i % 2 == 0],
+                parity=("even", "odd")[i % 2 == 0],
                 name="coupling_{i}".format(i=i),
                 translation_fn=translation_wrapper,
                 scale_fn=scale_wrapper
