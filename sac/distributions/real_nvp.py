@@ -37,7 +37,7 @@ class CouplingLayer(object):
         return mask
 
     def forward_and_jacobian(self, inputs):
-        with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
+        with tf.variable_scope(self.name):
             shape = inputs.get_shape()
             mask = self.get_mask(inputs, dtype=inputs.dtype)
 
@@ -45,10 +45,10 @@ class CouplingLayer(object):
             masked_inputs = inputs * mask
 
             # TODO: scale and translation could be merged into a single network
-            with tf.variable_scope("scale"):
+            with tf.variable_scope("scale", reuse=tf.AUTO_REUSE):
                 scale = self.scale_fn(masked_inputs)
 
-            with tf.variable_scope("translation"):
+            with tf.variable_scope("translation", reuse=tf.AUTO_REUSE):
                 translation = self.translation_fn(masked_inputs)
 
             # TODO: check the masks
@@ -69,16 +69,16 @@ class CouplingLayer(object):
 
         Note that `inputs` correspond to the `outputs` in forward function
         """
-        with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
+        with tf.variable_scope(self.name):
             mask = self.get_mask(inputs, dtype=inputs.dtype)
 
             masked_inputs = inputs * mask
 
             # TODO: scale and translation could be merged into a single network
-            with tf.variable_scope("scale"):
+            with tf.variable_scope("scale", reuse=tf.AUTO_REUSE):
                 scale = self.scale_fn(masked_inputs)
 
-            with tf.variable_scope("translation"):
+            with tf.variable_scope("translation", reuse=tf.AUTO_REUSE):
                 translation = self.translation_fn(masked_inputs)
 
             outputs = (
@@ -204,8 +204,9 @@ class RealNVP(object):
         def translation_wrapper(inputs):
             return feedforward_net(
                 inputs,
-                layer_sizes=(*translation_hidden_sizes,
-                             self.x_placeholder.shape.as_list()[-1]))
+                layer_sizes=(
+                    *translation_hidden_sizes,
+                    self.x_placeholder.shape.as_list()[-1]))
 
         def scale_wrapper(inputs):
             return feedforward_net(
@@ -220,7 +221,7 @@ class RealNVP(object):
         # parity, name, translation_fn, scale_fn
         self.layers = [
             CouplingLayer(
-                parity=("even", "odd")[i % 2 == 0],
+                parity=("even", "odd")[i % 2],
                 name="coupling_{i}".format(i=i),
                 translation_fn=translation_wrapper,
                 scale_fn=scale_wrapper
@@ -232,8 +233,8 @@ class RealNVP(object):
         """TODO"""
         train = self.config["mode"] == "train"
 
+        # Encoder
         x = self.add_forward_preprocessing_ops()  # (N, D)
-
         self.sum_log_det_jacobians = np.zeros_like((x.shape[0],))  # (N,)
         forward_out = x
         for layer in self.layers:
@@ -242,18 +243,22 @@ class RealNVP(object):
             self.sum_log_det_jacobians += log_det_jacobian  # (N,)
 
         # self.z = f(x)
-        self.z = self.add_forward_postprocessing_ops(forward_out)
-        # self.log_p_z = log (p_{Z}(f(x)))
-        self.log_p_z = (
-            standard_normal_log_likelihood(x)
-            + self.sum_log_det_jacobians)  # (N,)
+        self.z = self.add_forward_postprocessing_ops(forward_out) # (N, D)
+        # End Encoder
 
+        # Decoder
         z = self.add_backward_preprocessing_ops()
         backward_out = z
         for layer in reversed(self.layers):
             backward_out = layer.backward(backward_out)
 
         self.x = self.add_backward_postprocessing_ops(backward_out)
+        # End Decoder
+
+        # self.log_p_z = log (p_{Z}(f(x)))
+        self.log_p_z = (
+            standard_normal_log_likelihood(x)
+            + self.sum_log_det_jacobians)  # (N,)
 
     def _squash(self, inputs):
         return tf.tanh(inputs) if self.config["squash"] else inputs
@@ -280,10 +285,7 @@ class RealNVP(object):
     def add_training_ops(self):
         """TODO: regularization? logging? check gradients?"""
         optimizer = tf.train.AdamOptimizer(
-            self.config["learning_rate"],
-            use_locking=False,
-            name="Adam",
-        )
+            self.config["learning_rate"], use_locking=False)
 
         self.global_step = tf.get_variable(
             "global_step", (), tf.int64,
