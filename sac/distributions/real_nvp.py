@@ -235,11 +235,17 @@ class RealNVP(object):
 
         # Encoder
         x = self.add_forward_preprocessing_ops()  # (N, D)
-        self.sum_log_det_jacobians = np.zeros_like((x.shape[0],))  # (N,)
+        # Following could be tf.zeros((None,)), but zeros does not accept
+        # None dimension in the shape. The result of this is just zero
+        # tensor with shape (None, ), i.e. (N,), where N is the batch_size
+        self.sum_log_det_jacobians = tf.reduce_sum(
+            tf.zeros_like(x), axis=tuple(range(1, len(x.shape))))  # (N,)
         forward_out = x
         for layer in self.layers:
             forward_out, log_det_jacobian = layer.forward_and_jacobian(
                 forward_out)
+            assert self.sum_log_det_jacobians.shape.as_list() == [None]
+            assert log_det_jacobian.shape.as_list() == [None]
             self.sum_log_det_jacobians += log_det_jacobian  # (N,)
 
         # self.z = f(x)
@@ -255,7 +261,7 @@ class RealNVP(object):
         self.x = self.add_backward_postprocessing_ops(backward_out)
         # End Decoder
 
-        # self.log_p_z = log (p_{Z}(f(x)))
+        # log (p_{X}(x)) = log (p_{Z}(f(x))) + log(|det(∂f(x)/∂x^{T})|)
         self.log_p_z = (
             standard_normal_log_likelihood(x)
             + self.sum_log_det_jacobians)  # (N,)
