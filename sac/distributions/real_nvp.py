@@ -83,7 +83,7 @@ class CouplingLayer(object):
 
             outputs = (
                 masked_inputs
-                + (inputs * (1.0 - mask) - translation) * tf.exp(-scale))
+                + (inputs - translation) * (1.0 - mask) * tf.exp(-scale))
 
             return outputs
 
