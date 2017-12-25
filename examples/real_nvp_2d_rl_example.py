@@ -87,10 +87,19 @@ class RealNVP2dRlExample(object):
             }
           )
 
+        if i % 10 == 0:
+            self.redraw_samples(sampled_z)
+
         print("{epoch:05d} | {forward_loss:.5f}".format(
           epoch=epoch, forward_loss=forward_loss))
 
         self.redraw_contours()
+
+  def redraw_samples(self, sampled_z):
+      if not getattr(self, "samples_lines", None):
+          self.samples_lines = self.ax.plot(sampled_z[:, 0], sampled_z[:, 1], 'bx')[0]
+      else:
+          self.samples_lines.set_data(sampled_z[:, 0], sampled_z[:, 1])
 
   def redraw_contours(self):
     MIN, MAX = -2.1, 2.1
