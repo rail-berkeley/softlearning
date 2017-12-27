@@ -5,10 +5,10 @@ import numpy as np
 EPS = 1e-9
 
 def standard_normal_log_likelihood(x):
-    log_likelihoods = (
-        - 0.5 * tf.reduce_sum(tf.square(x), axis=1)
-        - tf.log(2.0 * np.pi))
-    return log_likelihoods
+    dist = tf.contrib.distributions.MultivariateNormalDiag(
+        loc=tf.zeros(x.shape[1:]), scale_diag=tf.ones(x.shape[1:]))
+    log_probs = dist.log_prob(x)
+    return log_probs
 
 def checkerboard(shape, parity="even", dtype=tf.bool):
     """TODO: Check this implementation"""
@@ -87,10 +87,10 @@ class CouplingLayer(object):
 
             # TODO: scale and translation could be merged into a single network
             with tf.variable_scope("scale", reuse=tf.AUTO_REUSE):
-                scale = self.scale_fn(masked_inputs)
+                scale = mask * self.scale_fn(inputs)
 
             with tf.variable_scope("translation", reuse=tf.AUTO_REUSE):
-                translation = self.translation_fn(masked_inputs)
+                translation = mask * self.translation_fn(inputs)
 
             # outputs = (
             #     masked_inputs
@@ -123,9 +123,11 @@ def feedforward_net(inputs,
             shape=(prev_size, layer_size),
             initializer=weight_initializer,
             regularizer=regularizer)
+        bias_initializer = tf.initializers.random_normal()
         bias = tf.get_variable(
             name="bias_{i}".format(i=i),
-            initializer=tf.random_normal([layer_size])),
+            shape=(layer_size,),
+            initializer=bias_initializer)
         prev_size = layer_size
         z = tf.matmul(out, weight) + bias
 
@@ -178,10 +180,10 @@ class RealNVP(object):
             x_default, (None, D_in), name="x_placeholder")
 
         self.z_placeholder = tf.placeholder(
-            shape=(None, D_in), dtype=tf.float32)
+            shape=(None, D_in), dtype=tf.float32, name="z_placeholder")
 
         self.Q_placeholder = tf.placeholder(
-            shape=(None,), dtype=tf.float32)
+            shape=(None,), dtype=tf.float32, name="Q_placeholder")
 
     def create_feed_dict(self,
                          x_batch=None,
