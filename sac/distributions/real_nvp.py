@@ -46,18 +46,29 @@ class CouplingLayer(object):
 
             # TODO: scale and translation could be merged into a single network
             with tf.variable_scope("scale", reuse=tf.AUTO_REUSE):
-                scale = self.scale_fn(masked_inputs)
+                scale = mask * self.scale_fn(inputs)
 
             with tf.variable_scope("translation", reuse=tf.AUTO_REUSE):
-                translation = self.translation_fn(masked_inputs)
+                translation = mask * self.translation_fn(inputs)
 
             # TODO: check the masks
             exp_scale = tf.check_numerics(
                 tf.exp(scale), "tf.exp(scale) contains NaNs or Infs.")
             # (9) in paper
-            outputs = (
-                masked_inputs
-                + (1.0 - mask) * (inputs * exp_scale + translation))
+            # outputs = (
+            #     masked_inputs
+            #     + (1.0 - mask) * (inputs * exp_scale + translation))
+
+            if self.parity == "odd":
+                outputs = tf.stack((
+                    inputs[:, 0] * exp_scale[:, 1] + translation[:, 1],
+                    inputs[:, 1],
+                ), axis=1)
+            else:
+                outputs = tf.stack((
+                    inputs[:, 0],
+                    inputs[:, 1] * exp_scale[:, 0] + translation[:, 0],
+                ), axis=1)
 
             log_det_jacobian = tf.reduce_sum(
                 scale, axis=tuple(range(1, len(shape))))
@@ -81,9 +92,20 @@ class CouplingLayer(object):
             with tf.variable_scope("translation", reuse=tf.AUTO_REUSE):
                 translation = self.translation_fn(masked_inputs)
 
-            outputs = (
-                masked_inputs
-                + (inputs - translation) * (1.0 - mask) * tf.exp(-scale))
+            # outputs = (
+            #     masked_inputs
+            #     + (inputs - translation) * (1.0 - mask) * tf.exp(-scale))
+
+            if self.parity == "odd":
+                outputs = tf.stack((
+                    (inputs[:, 0] - translation[:, 1]) * tf.exp(-scale[:, 1]),
+                    inputs[:, 1],
+                ), axis=1)
+            else:
+                outputs = tf.stack((
+                    inputs[:, 0],
+                    (inputs[:, 1] - translation[:, 0]) * tf.exp(-scale[:, 0]),
+                ), axis=1)
 
             return outputs
 
