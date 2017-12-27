@@ -125,16 +125,24 @@ class CouplingLayerTest(test.TestCase):
         )
 
     def test_forward_backward_returns_identity(self):
-        layer = real_nvp.CouplingLayer(
+        layer1 = real_nvp.CouplingLayer(
             parity="odd",
             name="coupling_1",
             translation_fn=TRANSLATION_FN_WITH_BIAS,
             scale_fn=SCALE_FN_WITH_BIAS
         )
+        layer2 = real_nvp.CouplingLayer(
+            parity="even",
+            name="coupling_2",
+            translation_fn=TRANSLATION_FN_WITH_BIAS,
+            scale_fn=SCALE_FN_WITH_BIAS
+        )
 
         inputs = tf.constant(DEFAULT_2D_INPUTS)
-        forward_out, log_det_jacobian = layer.forward_and_jacobian(inputs)
-        backward_out = layer.backward(forward_out)
+        forward_out, log_det_jacobian = layer1.forward_and_jacobian(inputs)
+        forward_out, log_det_jacobian = layer2.forward_and_jacobian(forward_out)
+        backward_out = layer2.backward(forward_out)
+        backward_out = layer1.backward(backward_out)
 
         with self.test_session():
             self.assertAllClose(inputs.eval(), backward_out.eval())
