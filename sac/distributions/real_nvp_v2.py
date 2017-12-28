@@ -239,6 +239,15 @@ class RealNVP(object):
         self.z = self.add_forward_postprocessing_ops(forward_out) # (N, D)
         # End Encoder
 
+
+        # Decoder
+        z = self.add_backward_preprocessing_ops()  # (N, D)
+        backward_out = z
+        for layer in reversed(self.layers):
+            backward_out = layer.backward(backward_out)
+        self.x = self.add_backward_postprocessing_ops(backward_out)
+        # End Decoder
+
         self.log_p_x = (
             standard_normal_log_likelihood(self.z)
             + self.sum_log_det_jacobians)
