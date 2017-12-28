@@ -19,14 +19,15 @@ def generate_grid_data(x_min=-1, x_max=1, y_min=-1, y_max=1, nx=5, ny=5, density
         xs += np.linspace(min(xx), max(xx), density).tolist()
     return np.array([xs, ys]).swapaxes(0, 1)
 
-class RealNVP2UnsupervisedlExample(object):
+class RealNVP2UnsupervisedExample(object):
   def __init__(self,
                x_train,
                subplots,
                real_nvp_config=None,
                seed=None,
                batch_size=128,
-               plot_every=20):
+               plot_every=100,
+               num_epochs=20):
     if seed is not None:
       print('Seed: ' + str(seed))
       tf.set_random_seed(seed)
@@ -49,6 +50,7 @@ class RealNVP2UnsupervisedlExample(object):
         }
     }
 
+    self.num_epochs = num_epochs
     self.plot_every = plot_every
     self.x_grid = generate_grid_data(-1.5, 2.5, -1.0, 1.5, 20, 20)
     self.z_grid = generate_grid_data(-2.5, 2.5, -2.5, 2.5, 20, 20)
@@ -62,12 +64,10 @@ class RealNVP2UnsupervisedlExample(object):
     self.session.run(tf.global_variables_initializer())
 
   def run(self):
-    NUM_EPOCHS = 100
-
     N_train = self.x_train.shape[0]
     print("epoch | loss")
     with self.session.as_default():
-      for epoch in range(1, NUM_EPOCHS+1):
+      for epoch in range(1, self.num_epochs+1):
         num_steps = (N_train // self.batch_size) + 1
         for i in range(1, num_steps+1):
           batch_idx = np.random.choice(N_train,
