@@ -146,14 +146,18 @@ class CouplingLayer(object):
             return outputs, log_det_jacobian
 
 
+DEFAULT_CONFIG = {
+    "num_coupling_layers": 2,
+    "translation_hidden_sizes": (25,),
+    "scale_hidden_sizes": (25,),
+    "scale_regularization": 5e2
+}
+
 class RealNVPBijector(bijector.Bijector):
     """TODO"""
 
     def __init__(self,
-                 num_coupling_layers,
-                 translation_hidden_sizes,
-                 scale_hidden_sizes,
-                 scale_regularization=0.0,
+                 config=None,
                  event_ndims=0,
                  validate_args=False,
                  name="real_nvp"):
@@ -174,10 +178,7 @@ class RealNVPBijector(bijector.Bijector):
         self._name = name
         self._validate_args = validate_args
 
-        self.num_coupling_layers = num_coupling_layers
-        self.translation_hidden_sizes = translation_hidden_sizes
-        self.scale_hidden_sizes = scale_hidden_sizes
-        self.scale_regularization = scale_regularization
+        self.config = dict(DEFAULT_CONFIG, **(config or {}))
 
         self.build()
 
@@ -188,9 +189,9 @@ class RealNVPBijector(bijector.Bijector):
     # TODO: Properties
 
     def build(self):
-        num_coupling_layers = self.num_coupling_layers
-        translation_hidden_sizes = self.translation_hidden_sizes
-        scale_hidden_sizes = self.scale_hidden_sizes
+        num_coupling_layers = self.config["num_coupling_layers"]
+        translation_hidden_sizes = self.config["translation_hidden_sizes"]
+        scale_hidden_sizes = self.config["scale_hidden_sizes"]
 
         def translation_wrapper(inputs):
             return feedforward_net(
@@ -204,7 +205,7 @@ class RealNVPBijector(bijector.Bijector):
                 # TODO: should allow multi_dimensional inputs/outputs
                 layer_sizes=(*scale_hidden_sizes, inputs.shape.as_list()[-1]),
                 regularizer=tf.contrib.layers.l2_regularizer(
-                    self.scale_regularization))
+                    self.config["scale_regularization"]))
 
         self.layers = [
             CouplingLayer(
