@@ -88,24 +88,21 @@ class RealNVP2dRlExample(object):
             feed_dict={ self.policy.batch_size: self._batch_size, }
           )
 
-        if i % 20 == 0:
-            sampled_x, sampled_y  = self.session.run(
-                (self.policy.x, self.policy.y),
-                feed_dict={ self.policy.batch_size: self._batch_size }
-            )
-            x_grid = generate_grid_data(-2.0, 2.0, -2.0, 2.0, 20, 20)
-            y_grid = self.session.run(
-                self.policy.y,
-                feed_dict={ self.policy.x: x_grid }
-            )
-            self.redraw_samples(sampled_y, sampled_x, y_grid)
-
+        self.redraw_samples()
+        self.redraw_contours()
         print("{epoch:05d} | {loss:.5f}".format(
           epoch=epoch, loss=loss))
 
-        self.redraw_contours()
+  def redraw_samples(self):
+      sampled_x, sampled_y  = self.session.run(
+          (self.policy.x, self.policy.y),
+          feed_dict={ self.policy.batch_size: self._batch_size }
+      )
+      x_grid = generate_grid_data(-2.0, 2.0, -2.0, 2.0, 20, 20)
+      y_grid = self.session.run(
+          self.policy.y, feed_dict={ self.policy.x: x_grid }
+      )
 
-  def redraw_samples(self, sampled_y, sampled_x, y_grid):
       if not getattr(self, "samples_lines", None):
           self.samples_lines = self.ax.plot(sampled_y[:, 0], sampled_y[:, 1], 'bx')[0]
           self.samples_x_lines = self.ax.plot(sampled_x[:, 0], sampled_x[:, 1], 'rx')[0]
@@ -115,11 +112,37 @@ class RealNVP2dRlExample(object):
           self.samples_x_lines.set_data(sampled_x[:, 0], sampled_x[:, 1])
           self.y_grid_lines.set_data(y_grid[:, 0], y_grid[:, 1])
 
+  def redraw_contours(self):
+    MIN, MAX = -2.1, 2.1
+    xs = np.linspace(MIN, MAX, 100)
+    ys = np.linspace(MIN, MAX, 100)
+    mesh_x, mesh_y = np.meshgrid(xs, ys)
+
+    y = np.stack((mesh_x.ravel(), mesh_y.ravel()), axis=1).astype(np.float32)
+    p_y = self.session.run(
+        self.policy.pi, feed_dict={ self.policy.y: y }
+    ).reshape(mesh_x.shape)
+
+    levels = 20
+    cmap = plt.cm.plasma
+
+    if self.cs is None:
+      self.ax.plot(self.means[:, 0], self.means[:, 1], 'kx', markersize=20)
+      Q = self.session.run(
+          tf.exp(self.policy.Q), feed_dict={ self.policy.y: y }
+      ).reshape(mesh_x.shape)
+      self.ax.contour(mesh_x, mesh_y, Q, 30)
+      self.cs = self.ax.contour(mesh_x, mesh_y, p_y, levels, cmap=cmap)
+    else:
+      for tp in self.cs.collections:
+        tp.remove()
+      self.cs = self.ax.contour(mesh_x, mesh_y, p_y, levels, cmap=cmap)
+
+    self.fig.canvas.draw()
+
   def _compute_true_value(self):
-    # min, max = -2.1, 2.1; 1000 => true value:  -1.93696
-    # min, max = -2.1, 2.1; 2000 => -1.50888
-    MIN = -2.1 # -0.999
-    MAX = 2.1 # 0.999
+    MIN = -0.999
+    MAX = 0.999
 
     xs = np.linspace(MIN, MAX, 1000)
     ys = np.linspace(MIN, MAX, 1000)
@@ -136,37 +159,6 @@ class RealNVP2dRlExample(object):
     da = (xs[1] - xs[0])**2
     V = np.log(np.sum(values[1:, 1:]*da))
     return V
-
-
-  def redraw_contours(self):
-    MIN, MAX = -2.1, 2.1
-    xs = np.linspace(MIN, MAX, 100)
-    ys = np.linspace(MIN, MAX, 100)
-    mesh_x, mesh_y = np.meshgrid(xs, ys)
-
-    y = np.stack((mesh_x.ravel(), mesh_y.ravel()), axis=1).astype(np.float32)
-    x, p_y = self.session.run(
-        (self.policy.inverse_x, tf.exp(self.policy.log_pi)),
-        feed_dict={ self.policy.y: y }
-    )
-    p_y = p_y.reshape(mesh_x.shape)
-
-    levels = 20
-    cmap=plt.cm.viridis
-
-    if self.cs is None:
-      self.ax.plot(self.means[:, 0], self.means[:, 1], 'kx', markersize=20)
-      Q = self.session.run(
-          tf.exp(self.policy.Q), feed_dict={ self.policy.y: y }
-      ).reshape(mesh_x.shape)
-      self.ax.contour(mesh_x, mesh_y, Q, levels)
-      self.cs = self.ax.contour(mesh_x, mesh_y, p_y, levels, cmap=cmap)
-    else:
-      for tp in self.cs.collections:
-        tp.remove()
-      self.cs = self.ax.contour(mesh_x, mesh_y, p_y, levels, cmap=cmap)
-
-    self.fig.canvas.draw()
 
 if __name__ == '__main__':
   example = RealNVP2dRlExample()
