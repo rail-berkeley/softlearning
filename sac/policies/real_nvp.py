@@ -43,8 +43,9 @@ class RealNVPPolicy(object):
         )
 
         ds = tf.contrib.distributions
-        self.bijector = RealNVPBijector(config=self.config["real_nvp_config"],
-                                        event_ndims=self._Ds)
+        self.bijector = RealNVPBijector(
+            config=self.config["real_nvp_config"], event_ndims=self._Ds)
+
         self.base_distribution = ds.MultivariateNormalDiag(
             loc=tf.zeros(self._Ds), scale_diag=tf.ones(self._Ds))
 
@@ -60,11 +61,11 @@ class RealNVPPolicy(object):
         self.batch_size = tf.placeholder_with_default(4, (), name="batch_size")
 
         self.x = tf.placeholder_with_default(
-            self.base_distribution.sample(self.batch_size),
+            tf.stop_gradient(self.base_distribution.sample(self.batch_size)),
             (None, 2),
             name="x")
         self.y = tf.placeholder_with_default(
-            self.distribution.bijector.forward(self.x),
+            tf.stop_gradient(self.distribution.bijector.forward(self.x)),
             (None, 2),
             name="y")
         self.inverse_x = self.distribution.bijector.inverse(self.y)
@@ -76,7 +77,7 @@ class RealNVPPolicy(object):
         log_Z = 0.0
         self.Q = self._qf(self.y)
         surrogate_loss = tf.reduce_mean(
-            self.pi * tf.stop_gradient(self.pi - self.Q + log_Z))
+            self.log_pi * tf.stop_gradient(self.log_pi - self.Q + log_Z))
 
         reg_variables = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
         reg_loss = tf.reduce_sum(reg_variables)
