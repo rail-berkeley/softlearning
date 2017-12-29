@@ -4,10 +4,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from tensorflow.python.ops.distributions import bijector
-
 import tensorflow as tf
 import numpy as np
+ConditionalBijector = tf.contrib.distributions.bijectors.ConditionalBijector
 
 __all__ = [ "RealNVPBijector", ]
 
@@ -153,7 +152,7 @@ DEFAULT_CONFIG = {
     "scale_regularization": 5e2
 }
 
-class RealNVPBijector(bijector.Bijector):
+class RealNVPBijector(ConditionalBijector):
     """TODO"""
 
     def __init__(self,
@@ -216,7 +215,7 @@ class RealNVPBijector(bijector.Bijector):
             for i in range(1, num_coupling_layers + 1)
         ]
 
-    def _forward(self, x):
+    def _forward(self, x, **condition_kwargs):
         x = self._maybe_assert_valid_x(x)
 
         out = x
@@ -225,7 +224,7 @@ class RealNVPBijector(bijector.Bijector):
 
         return out
 
-    def _forward_log_det_jacobian(self, x):
+    def _forward_log_det_jacobian(self, x, **condition_kwargs):
         x = self._maybe_assert_valid_x(x)
 
         sum_log_det_jacobians = tf.reduce_sum(
@@ -241,7 +240,7 @@ class RealNVPBijector(bijector.Bijector):
 
         return sum_log_det_jacobians
 
-    def _inverse(self, y):
+    def _inverse(self, y, **condition_kwargs):
         y = self._maybe_assert_valid_y(y)
 
         out = y
@@ -250,7 +249,7 @@ class RealNVPBijector(bijector.Bijector):
 
         return out
 
-    def _inverse_log_det_jacobian(self, y):
+    def _inverse_log_det_jacobian(self, y, **condition_kwargs):
         y = self._maybe_assert_valid_y(y)
 
         sum_log_det_jacobians = tf.reduce_sum(

@@ -49,7 +49,7 @@ class RealNVPPolicy(object):
         self.base_distribution = ds.MultivariateNormalDiag(
             loc=tf.zeros(self._Ds), scale_diag=tf.ones(self._Ds))
 
-        self.distribution = ds.TransformedDistribution(
+        self.distribution = ds.ConditionalTransformedDistribution(
             distribution=self.base_distribution,
             bijector=self.bijector,
             name="RealNVPPolicyDistribution")
@@ -58,6 +58,8 @@ class RealNVPPolicy(object):
 
 
     def build(self):
+        observations = self._observations_ph
+
         self.batch_size = tf.placeholder_with_default(4, (), name="batch_size")
 
         self.x = tf.placeholder_with_default(
