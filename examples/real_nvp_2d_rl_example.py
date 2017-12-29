@@ -1,11 +1,24 @@
 import time
+from unittest import mock
 
 import numpy as np
 import tensorflow as tf
 
 import matplotlib.pyplot as plt
 
-from sac.distributions.real_nvp import RealNVP
+from sac.policies.real_nvp import RealNVPPolicy
+
+def generate_grid_data(x_min=-1, x_max=1, y_min=-1, y_max=1, nx=5, ny=5, density=200):
+    xx = np.linspace(x_min, x_max, nx)
+    yy = np.linspace(y_min, y_max, ny)
+    xs, ys = [], []
+    for x in xx:
+        xs += (np.ones(density) * x).tolist()
+        ys += np.linspace(min(yy), max(yy), density).tolist()
+    for y in yy:
+        ys += (np.ones(density) * y).tolist()
+        xs += np.linspace(min(xx), max(xx), density).tolist()
+    return np.array([xs, ys]).swapaxes(0, 1)
 
 def _log_gaussian_2d(mean, variance, inputs):
   weighted_sq_diff = (inputs - mean[None])**2 / variance[None]
@@ -32,6 +45,7 @@ class RealNVP2dRlExample(object):
   def __init__(self,
                plt_subplots,
                weights, means, variances,
+               policy_config=None,
                seed=None):
     self.weights, self.means, self.variances = weights, means, variances
     self.fig, self.ax = plt_subplots
@@ -44,27 +58,19 @@ class RealNVP2dRlExample(object):
 
     self._batch_size = 64
 
-    nvp_config = {
-      "mode": "train",
-      "D_in": 2,
-      "learning_rate": 5e-4,
-      "scale_regularization": 0.0, # 5e-2,
-      "num_coupling_layers": 8,
-      "translation_hidden_sizes": (25,),
-      "scale_hidden_sizes": (25,),
-      "squash": False
-    }
-
-    tf.reset_default_graph()
-
     def create_target_wrapper(weights, means, variances):
         def wraps(inputs):
             return _log_target(weights, means, variances, inputs)
         return wraps
 
-    self.policy_distribution = RealNVP(
-        config=nvp_config,
-        create_target_fn=create_target_wrapper(weights, means, variances))
+    env_spec = mock.Mock()
+    env_spec.action_space.flat_dim = 2
+    env_spec.observation_space.flat_dim = 2
+
+    self.policy = RealNVPPolicy(
+        env_spec=env_spec,
+        config=policy_config,
+        qf=create_target_wrapper(weights, means, variances))
 
     self.session = tf.Session()
     self.session.run(tf.global_variables_initializer())
@@ -72,34 +78,65 @@ class RealNVP2dRlExample(object):
   def run(self):
     NUM_EPOCHS, NUM_STEPS = 100, 100
 
-    print("epoch | forward_loss")
+    print("epoch | loss")
     with self.session.as_default():
+      print("true value: ", self._compute_true_value())
       for epoch in range(1, NUM_EPOCHS+1):
         for i in range(1, NUM_STEPS+1):
-          _, sampled_z, forward_loss = self.session.run(
-            (
-              self.policy_distribution.train_op,
-              self.policy_distribution.z,
-              self.policy_distribution.forward_loss,
-            ),
-            feed_dict={
-              self.policy_distribution.batch_size: self._batch_size,
-            }
+          _, loss = self.session.run(
+            (self.policy.train_op, self.policy.loss),
+            feed_dict={ self.policy.batch_size: self._batch_size, }
           )
 
-        if i % 10 == 0:
-            self.redraw_samples(sampled_z)
+        if i % 20 == 0:
+            sampled_x, sampled_y  = self.session.run(
+                (self.policy.x, self.policy.y),
+                feed_dict={ self.policy.batch_size: self._batch_size }
+            )
+            x_grid = generate_grid_data(-2.0, 2.0, -2.0, 2.0, 20, 20)
+            y_grid = self.session.run(
+                self.policy.y,
+                feed_dict={ self.policy.x: x_grid }
+            )
+            self.redraw_samples(sampled_y, sampled_x, y_grid)
 
-        print("{epoch:05d} | {forward_loss:.5f}".format(
-          epoch=epoch, forward_loss=forward_loss))
+        print("{epoch:05d} | {loss:.5f}".format(
+          epoch=epoch, loss=loss))
 
         self.redraw_contours()
 
-  def redraw_samples(self, sampled_z):
+  def redraw_samples(self, sampled_y, sampled_x, y_grid):
       if not getattr(self, "samples_lines", None):
-          self.samples_lines = self.ax.plot(sampled_z[:, 0], sampled_z[:, 1], 'bx')[0]
+          self.samples_lines = self.ax.plot(sampled_y[:, 0], sampled_y[:, 1], 'bx')[0]
+          self.samples_x_lines = self.ax.plot(sampled_x[:, 0], sampled_x[:, 1], 'rx')[0]
+          self.y_grid_lines = self.ax.plot(y_grid[:, 0], y_grid[:, 1], 'k.', markersize=0.25)[0]
       else:
-          self.samples_lines.set_data(sampled_z[:, 0], sampled_z[:, 1])
+          self.samples_lines.set_data(sampled_y[:, 0], sampled_y[:, 1])
+          self.samples_x_lines.set_data(sampled_x[:, 0], sampled_x[:, 1])
+          self.y_grid_lines.set_data(y_grid[:, 0], y_grid[:, 1])
+
+  def _compute_true_value(self):
+    # min, max = -2.1, 2.1; 1000 => true value:  -1.93696
+    # min, max = -2.1, 2.1; 2000 => -1.50888
+    MIN = -2.1 # -0.999
+    MAX = 2.1 # 0.999
+
+    xs = np.linspace(MIN, MAX, 1000)
+    ys = np.linspace(MIN, MAX, 1000)
+    X, Y = np.meshgrid(xs, ys)
+
+    x = np.stack((X.ravel(), Y.ravel()), axis=1)
+    values = self.session.run(
+        tf.exp(self.policy.Q),
+        feed_dict={ self.policy.y: x }
+    )
+
+    values = values.reshape(X.shape)
+
+    da = (xs[1] - xs[0])**2
+    V = np.log(np.sum(values[1:, 1:]*da))
+    return V
+
 
   def redraw_contours(self):
     MIN, MAX = -2.1, 2.1
@@ -107,23 +144,27 @@ class RealNVP2dRlExample(object):
     ys = np.linspace(MIN, MAX, 100)
     mesh_x, mesh_y = np.meshgrid(xs, ys)
 
-    x = np.stack((mesh_x.ravel(), mesh_y.ravel()), axis=1)
-    log_p_z = self.session.run(
-      self.policy_distribution.log_p_z,
-      feed_dict={self.policy_distribution.x_placeholder: x}
-    ).reshape(mesh_x.shape)
-    p_z = np.exp(log_p_z)
+    y = np.stack((mesh_x.ravel(), mesh_y.ravel()), axis=1).astype(np.float32)
+    x, p_y = self.session.run(
+        (self.policy.inverse_x, tf.exp(self.policy.log_pi)),
+        feed_dict={ self.policy.y: y }
+    )
+    p_y = p_y.reshape(mesh_x.shape)
 
     levels = 20
     cmap=plt.cm.viridis
 
     if self.cs is None:
       self.ax.plot(self.means[:, 0], self.means[:, 1], 'kx', markersize=20)
-      self.cs = self.ax.contour(mesh_x, mesh_y, p_z, levels, cmap=cmap)
+      Q = self.session.run(
+          tf.exp(self.policy.Q), feed_dict={ self.policy.y: y }
+      ).reshape(mesh_x.shape)
+      self.ax.contour(mesh_x, mesh_y, Q, levels)
+      self.cs = self.ax.contour(mesh_x, mesh_y, p_y, levels, cmap=cmap)
     else:
       for tp in self.cs.collections:
         tp.remove()
-      self.cs = self.ax.contour(mesh_x, mesh_y, p_z, levels, cmap=cmap)
+      self.cs = self.ax.contour(mesh_x, mesh_y, p_y, levels, cmap=cmap)
 
     self.fig.canvas.draw()
 
