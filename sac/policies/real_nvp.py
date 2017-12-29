@@ -90,13 +90,15 @@ class RealNVPPolicy(object):
         self.train_op = optimizer.minimize(loss=self.loss)
 
     def get_action(self, observations):
-        """Sample action based on the observations.
+        """Sample single action based on the observations.
 
-        TODO: implement
+        TODO: if self._is_deterministic
         """
-        return super().get_action(observations[None])[0], None
+        return self.get_actions(observation[None])[0], None
 
     def get_actions(self, observations):
+        """Sample batch of actions based on the observations"""
+
         feed_dict = {self._observations_ph: observations}
         actions = tf.get_default_session().run(
             self._action, feed_dict=feed_dict)
