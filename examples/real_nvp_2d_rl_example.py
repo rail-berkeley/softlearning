@@ -124,14 +124,14 @@ class RealNVP2dRlExample(object):
     ).reshape(mesh_x.shape)
 
     levels = 20
-    cmap = plt.cm.plasma
+    cmap = plt.cm.viridis
 
     if self.cs is None:
       self.ax.plot(self.means[:, 0], self.means[:, 1], 'kx', markersize=20)
       Q = self.session.run(
           tf.exp(self.policy.Q), feed_dict={ self.policy.y: y }
       ).reshape(mesh_x.shape)
-      self.ax.contour(mesh_x, mesh_y, Q, 30)
+      self.ax.contour(mesh_x, mesh_y, Q, 30, colors="silver", linewidths=0.5)
       self.cs = self.ax.contour(mesh_x, mesh_y, p_y, levels, cmap=cmap)
     else:
       for tp in self.cs.collections:

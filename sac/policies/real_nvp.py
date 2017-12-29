@@ -82,8 +82,7 @@ class RealNVPPolicy(object):
         reg_variables = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
         reg_loss = tf.reduce_sum(reg_variables)
 
-        with tf.control_dependencies([tf.assert_equal(reg_loss, tf.constant(0.0))]):
-            self.loss = surrogate_loss + reg_loss
+        self.loss = surrogate_loss + reg_loss
 
         optimizer = tf.train.AdamOptimizer(
             self.config["learning_rate"], use_locking=False)
