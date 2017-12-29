@@ -6,6 +6,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 
 from sac.distributions.real_nvp_v2 import RealNVP
+from sac.distributions.real_nvp_bijector import RealNVPBijector
 
 def generate_grid_data(x_min=-1, x_max=1, y_min=-1, y_max=1, nx=5, ny=5, density=200):
     xx = np.linspace(x_min, x_max, nx)
@@ -19,10 +20,46 @@ def generate_grid_data(x_min=-1, x_max=1, y_min=-1, y_max=1, nx=5, ny=5, density
         xs += np.linspace(min(xx), max(xx), density).tolist()
     return np.array([xs, ys]).swapaxes(0, 1)
 
+class HalfMoonRealNVP(object):
+    def __init__(self,
+                 placeholders,
+                 training_config=None,
+                 real_nvp_config=None):
+
+        self.config = training_config
+        ds = tf.contrib.distributions
+        D_in = self.config["D_in"]
+        self.bijector = RealNVPBijector(config=real_nvp_config,
+                                        event_ndims=D_in)
+        self.base_distribution = ds.MultivariateNormalDiag(
+            loc=tf.zeros(D_in), scale_diag=tf.ones(D_in))
+
+        self.distribution = ds.TransformedDistribution(
+            distribution=self.base_distribution,
+            bijector=self.bijector,
+            name="RealNVPTransformedDistribution")
+
+        # Note: x and z directions are flipped in this example
+        self.z = self.bijector.inverse(placeholders["x"])
+        self.x = self.bijector.forward(placeholders["z"])
+
+        self.log_p_x = (
+            self.bijector.inverse_log_det_jacobian(placeholders["x"])
+            + self.distribution.log_prob(placeholders["x"]))
+
+        self.loss = - tf.reduce_mean(self.log_p_x)
+
+        optimizer = tf.train.AdamOptimizer(
+            self.config["learning_rate"], use_locking=False)
+
+        self.train_op = optimizer.minimize(loss=self.loss)
+
+
 class RealNVP2UnsupervisedExample(object):
   def __init__(self,
                x_train,
                subplots,
+               training_config=None,
                real_nvp_config=None,
                seed=None,
                batch_size=128,
@@ -57,8 +94,18 @@ class RealNVP2UnsupervisedExample(object):
 
     self.batch_size = batch_size
 
+    D_in = 2
+    self.placeholders = {
+        "x": tf.placeholder(
+            shape=(None, D_in), dtype=tf.float32, name="x_placeholder"),
+        "z": tf.placeholder(
+            shape=(None, D_in), dtype=tf.float32, name="z_placeholder")
+    }
     self.real_nvp_config = real_nvp_config
-    self.real_nvp = RealNVP(config=real_nvp_config)
+    self.training_config = training_config
+    self.real_nvp = HalfMoonRealNVP(placeholders=self.placeholders,
+                                    training_config=training_config,
+                                    real_nvp_config=real_nvp_config)
 
     self.session = tf.Session()
     self.session.run(tf.global_variables_initializer())
@@ -77,7 +124,7 @@ class RealNVP2UnsupervisedExample(object):
 
           _, loss = self.session.run(
             (self.real_nvp.train_op, self.real_nvp.loss),
-            feed_dict={self.real_nvp.x_placeholder: x_batch}
+            feed_dict={self.placeholders["x"]: x_batch}
           )
 
           if i % self.plot_every == 0:
@@ -101,11 +148,11 @@ class RealNVP2UnsupervisedExample(object):
 
       z_samples = self.session.run(
           self.real_nvp.z,
-          feed_dict={self.real_nvp.x_placeholder: x_samples}
+          feed_dict={self.placeholders["x"]: x_samples}
       )
       z_grid = self.session.run(
           self.real_nvp.z,
-          feed_dict={self.real_nvp.x_placeholder: x_grid}
+          feed_dict={self.placeholders["x"]: x_grid}
       )
 
       if ax_markers.get("X_grid") is None:
@@ -159,11 +206,11 @@ class RealNVP2UnsupervisedExample(object):
 
       x_samples = self.session.run(
           self.real_nvp.x,
-          feed_dict={self.real_nvp.z_placeholder: z_samples}
+          feed_dict={self.placeholders["z"]: z_samples}
       )
       x_grid = self.session.run(
           self.real_nvp.x,
-          feed_dict={self.real_nvp.z_placeholder: z_grid}
+          feed_dict={self.placeholders["z"]: z_grid}
       )
 
       if ax_markers.get("X_grid") is None:
