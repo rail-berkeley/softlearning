@@ -5,7 +5,6 @@ import tensorflow as tf
 
 import matplotlib.pyplot as plt
 
-from sac.distributions.real_nvp_v2 import RealNVP
 from sac.distributions.real_nvp_bijector import RealNVPBijector
 
 def generate_grid_data(x_min=-1, x_max=1, y_min=-1, y_max=1, nx=5, ny=5, density=200):

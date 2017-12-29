@@ -1,2 +1,2 @@
 from .gmm import GMM
-from .real_nvp import RealNVP
+from .real_nvp_bijector import RealNVPBijector
