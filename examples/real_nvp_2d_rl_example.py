@@ -6,7 +6,7 @@ import tensorflow as tf
 
 import matplotlib.pyplot as plt
 
-from sac.policies.real_nvp import RealNVPPolicy
+from sac.policies import RealNVPPolicy
 
 def generate_grid_data(x_min=-1, x_max=1, y_min=-1, y_max=1, nx=5, ny=5, density=200):
     xx = np.linspace(x_min, x_max, nx)
