@@ -6,6 +6,8 @@ import tensorflow as tf
 
 from sac.distributions import RealNVPBijector
 
+EPS = 1e-9
+
 DEFAULT_CONFIG = {
     "mode": "train",
     "D_in": 2,
@@ -72,14 +74,23 @@ class RealNVPPolicy(object):
             name="y")
         self.inverse_x = self.distribution.bijector.inverse(self.y)
 
+
+        if self.config["squash"]:
+            self._action = tf.tanh(self.y)
+            squash_correction = tf.reduce_sum(
+                tf.log(1 - self._action ** 2 + EPS), axis=1)
+        else:
+            self._action = self.y
+            squash_correction = 0.0
+
+        self.Q = self._qf(self._action)
         self.log_pi = self.distribution.log_prob(self.y)
         self.pi = tf.exp(self.log_pi)
-        self._action = tf.tanh(self.pi) if self.config["squash"] else self.pi
 
         log_Z = 0.0
-        self.Q = self._qf(self.y)
         surrogate_loss = tf.reduce_mean(
-            self.log_pi * tf.stop_gradient(self.log_pi - self.Q + log_Z))
+            self.log_pi * tf.stop_gradient(
+                self.log_pi - self.Q - squash_correction + log_Z))
 
         reg_variables = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
         reg_loss = tf.reduce_sum(reg_variables)

@@ -72,6 +72,8 @@ class RealNVP2dRlExample(object):
         config=policy_config,
         qf=create_target_wrapper(weights, means, variances))
 
+    self.policy_config = policy_config
+
     self.session = tf.Session()
     self.session.run(tf.global_variables_initializer())
 
@@ -95,12 +97,12 @@ class RealNVP2dRlExample(object):
 
   def redraw_samples(self):
       sampled_x, sampled_y  = self.session.run(
-          (self.policy.x, self.policy.y),
+          (self.policy.x, self.policy._action),
           feed_dict={ self.policy.batch_size: self._batch_size }
       )
       x_grid = generate_grid_data(-2.0, 2.0, -2.0, 2.0, 20, 20)
       y_grid = self.session.run(
-          self.policy.y, feed_dict={ self.policy.x: x_grid }
+          self.policy._action, feed_dict={ self.policy.x: x_grid }
       )
 
       if not getattr(self, "samples_lines", None):
@@ -119,6 +121,10 @@ class RealNVP2dRlExample(object):
     mesh_x, mesh_y = np.meshgrid(xs, ys)
 
     y = np.stack((mesh_x.ravel(), mesh_y.ravel()), axis=1).astype(np.float32)
+
+    if self.policy_config["squash"]:
+        y = np.arctanh(y)
+
     p_y = self.session.run(
         self.policy.pi, feed_dict={ self.policy.y: y }
     ).reshape(mesh_x.shape)
@@ -151,7 +157,7 @@ class RealNVP2dRlExample(object):
     x = np.stack((X.ravel(), Y.ravel()), axis=1)
     values = self.session.run(
         tf.exp(self.policy.Q),
-        feed_dict={ self.policy.y: x }
+        feed_dict={ self.policy._action: x }
     )
 
     values = values.reshape(X.shape)
