@@ -53,7 +53,10 @@ class RealNVP2dRlExample(object):
                  plt_subplots,
                  weights, means, variances,
                  policy_config=None,
-                 seed=None):
+                 seed=None,
+                 batch_size=64,
+                 num_epochs=1000,
+                 num_steps_per_epoch=100):
         self.weights, self.means, self.variances = weights, means, variances
         self.fig, self.ax = plt_subplots
         self.cs = None
@@ -63,7 +66,10 @@ class RealNVP2dRlExample(object):
             tf.set_random_seed(seed)
             np.random.seed(seed)
 
-        self._batch_size = 64
+
+        self.num_epochs = num_epochs
+        self.num_steps_per_epoch = num_steps_per_epoch
+        self._batch_size = batch_size
 
 
         D_in = 2
@@ -88,15 +94,13 @@ class RealNVP2dRlExample(object):
         self.session.run(tf.global_variables_initializer())
 
     def run(self):
-        NUM_EPOCHS, NUM_STEPS = 100, 100
-
         print("epoch | loss")
         with self.session.as_default():
             print("true value: ", self._compute_true_value())
-            for epoch in range(1, NUM_EPOCHS + 1):
-                observations = np.random.randint(
-                    0, 2, size=(self._batch_size, 2))
-                for i in range(1, NUM_STEPS + 1):
+            for epoch in range(1, self.num_epochs + 1):
+                for i in range(1, self.num_steps_per_epoch + 1):
+                    observations = np.random.randint(
+                        0, 2, size=(self._batch_size, 2))
                     _, loss = self.session.run(
                         (self.policy.train_op, self.policy.loss),
                         feed_dict={
