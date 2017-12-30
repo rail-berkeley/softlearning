@@ -30,7 +30,6 @@ def feedforward_net(inputs,
     prev_size = inputs.get_shape().as_list()[-1]
     out = inputs
     for i, layer_size in enumerate(layer_sizes):
-        tf.set_random_seed(seed=1)
         weight_initializer = tf.contrib.layers.xavier_initializer()
         weight = tf.get_variable(
             name="weight_{i}".format(i=i),

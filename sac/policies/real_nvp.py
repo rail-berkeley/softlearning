@@ -78,7 +78,7 @@ class RealNVPPolicy(object):
         if self.config["squash"]:
             self._action = tf.tanh(self.y)
             squash_correction = tf.reduce_sum(
-                tf.log(1.0 - self._action ** 2 + EPS), axis=1)
+                tf.log(1.0 - self._action ** 2.0 + EPS), axis=1)
         else:
             self._action = self.y
             squash_correction = 0.0
