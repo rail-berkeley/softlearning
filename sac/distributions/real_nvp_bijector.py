@@ -46,15 +46,14 @@ def feedforward_net(inputs,
         prev_size = layer_size
         z = tf.matmul(out, weight) + bias
 
-        if i < len(layer_sizes) - 1:
+        if i < len(layer_sizes) - 1 and activation_fn is not None:
             out = activation_fn(z)
-        elif output_nonlinearity is not None:
+        elif i == len(layer_sizes) -1 and output_nonlinearity is not None:
             out = output_nonlinearity(z)
         else:
             out = z
 
     return out
-
 
 class CouplingLayer(object):
     def __init__(self, parity, name, translation_fn, scale_fn):
@@ -72,7 +71,7 @@ class CouplingLayer(object):
 
         return mask
 
-    def forward_and_jacobian(self, inputs):
+    def forward_and_jacobian(self, inputs, observations):
         with tf.variable_scope(self.name):
             shape = inputs.get_shape()
             mask = self.get_mask(inputs, dtype=inputs.dtype)
@@ -82,10 +81,11 @@ class CouplingLayer(object):
 
             # TODO: scale and translation could be merged into a single network
             with tf.variable_scope("scale", reuse=tf.AUTO_REUSE):
-                scale = mask * self.scale_fn(masked_inputs)
+                scale = mask * self.scale_fn(masked_inputs, observations)
 
             with tf.variable_scope("translation", reuse=tf.AUTO_REUSE):
-                translation = mask * self.translation_fn(masked_inputs)
+                translation = mask * self.translation_fn(
+                    masked_inputs, observations)
 
             # TODO: check the masks
             exp_scale = tf.check_numerics(
@@ -108,7 +108,7 @@ class CouplingLayer(object):
 
             return outputs, log_det_jacobian
 
-    def backward_and_jacobian(self, inputs):
+    def backward_and_jacobian(self, inputs, observations):
         """Calculate inverse of the layer
 
         Note that `inputs` correspond to the `outputs` in forward function
@@ -121,10 +121,11 @@ class CouplingLayer(object):
 
             # TODO: scale and translation could be merged into a single network
             with tf.variable_scope("scale", reuse=tf.AUTO_REUSE):
-                scale = mask * self.scale_fn(masked_inputs)
+                scale = mask * self.scale_fn(masked_inputs, observations)
 
             with tf.variable_scope("translation", reuse=tf.AUTO_REUSE):
-                translation = mask * self.translation_fn(masked_inputs)
+                translation = mask * self.translation_fn(
+                    masked_inputs, observations)
 
             if self.parity == "odd":
                 outputs = tf.stack((
@@ -191,15 +192,15 @@ class RealNVPBijector(ConditionalBijector):
         translation_hidden_sizes = self.config["translation_hidden_sizes"]
         scale_hidden_sizes = self.config["scale_hidden_sizes"]
 
-        def translation_wrapper(inputs):
+        def translation_wrapper(inputs, observations):
             return feedforward_net(
-                inputs,
+                tf.concat((inputs, observations), axis=1),
                 # TODO: should allow multi_dimensional inputs/outputs
                 layer_sizes=(*translation_hidden_sizes, inputs.shape.as_list()[-1]))
 
-        def scale_wrapper(inputs):
+        def scale_wrapper(inputs, observations):
             return feedforward_net(
-                inputs,
+                tf.concat((inputs, observations), axis=1),
                 # TODO: should allow multi_dimensional inputs/outputs
                 layer_sizes=(*scale_hidden_sizes, inputs.shape.as_list()[-1]),
                 regularizer=tf.contrib.layers.l2_regularizer(
@@ -215,23 +216,25 @@ class RealNVPBijector(ConditionalBijector):
         ]
 
     def _forward(self, x, **condition_kwargs):
-        x = self._maybe_assert_valid_x(x)
+        self._maybe_assert_valid_x(x)
+        observations = condition_kwargs["observations"]
 
         out = x
         for layer in self.layers:
-            out, _ = layer.forward_and_jacobian(out)
+            out, _ = layer.forward_and_jacobian(out, observations)
 
         return out
 
     def _forward_log_det_jacobian(self, x, **condition_kwargs):
-        x = self._maybe_assert_valid_x(x)
+        self._maybe_assert_valid_x(x)
+        observations = condition_kwargs["observations"]
 
         sum_log_det_jacobians = tf.reduce_sum(
             tf.zeros_like(x), axis=tuple(range(1, len(x.shape))))
 
         out = x
         for layer in self.layers:
-            out, log_det_jacobian = layer.forward_and_jacobian(out)
+            out, log_det_jacobian = layer.forward_and_jacobian(out, observations)
             assert (sum_log_det_jacobians.shape.as_list()
                     == log_det_jacobian.shape.as_list())
 
@@ -240,23 +243,25 @@ class RealNVPBijector(ConditionalBijector):
         return sum_log_det_jacobians
 
     def _inverse(self, y, **condition_kwargs):
-        y = self._maybe_assert_valid_y(y)
+        self._maybe_assert_valid_y(y)
+        observations = condition_kwargs["observations"]
 
         out = y
         for layer in reversed(self.layers):
-            out, _ = layer.backward_and_jacobian(out)
+            out, _ = layer.backward_and_jacobian(out, observations)
 
         return out
 
     def _inverse_log_det_jacobian(self, y, **condition_kwargs):
-        y = self._maybe_assert_valid_y(y)
+        self._maybe_assert_valid_y(y)
+        observations = condition_kwargs["observations"]
 
         sum_log_det_jacobians = tf.reduce_sum(
             tf.zeros_like(y), axis=tuple(range(1, len(y.shape))))
 
         out = y
         for layer in reversed(self.layers):
-            out, log_det_jacobian = layer.backward_and_jacobian(out)
+            out, log_det_jacobian = layer.backward_and_jacobian(out, observations)
             assert (sum_log_det_jacobians.shape.as_list()
                     == log_det_jacobian.shape.as_list())
 

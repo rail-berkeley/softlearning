@@ -32,7 +32,7 @@ def _log_gaussian_2d(mean, variance, inputs):
     return log_gauss  # N x 1
 
 
-def _log_target(weights, means, variances, inputs):
+def _log_target(weights, means, variances, conditions, inputs):
     # inputs: N x Dx
     weights, means, variances = [
         v.astype(np.float32) for v in [ weights, means, variances ]
@@ -43,6 +43,7 @@ def _log_target(weights, means, variances, inputs):
     ]
 
     target_log_components = tf.concat(target_log_components, axis=1)
+    target_log_components -= (1 - conditions) * 99
 
     return tf.reduce_logsumexp(target_log_components, axis=1)  # N
 
@@ -64,14 +65,17 @@ class RealNVP2dRlExample(object):
 
         self._batch_size = 64
 
-        def create_target_wrapper(weights, means, variances):
-            def wraps(inputs):
-                return _log_target(weights, means, variances, inputs)
-            return wraps
 
+        D_in = 2
         env_spec = mock.Mock()
-        env_spec.action_space.flat_dim = 2
-        env_spec.observation_space.flat_dim = 2
+        env_spec.action_space.flat_dim = D_in
+        env_spec.observation_space.flat_dim = D_in
+
+        def create_target_wrapper(weights, means, variances):
+            def wraps(observations, actions):
+                return _log_target(
+                    weights, means, variances, observations, actions)
+            return wraps
 
         self.policy = RealNVPPolicy(
             env_spec=env_spec,
@@ -90,25 +94,46 @@ class RealNVP2dRlExample(object):
         with self.session.as_default():
             print("true value: ", self._compute_true_value())
             for epoch in range(1, NUM_EPOCHS + 1):
+                observations = np.random.randint(
+                    0, 2, size=(self._batch_size, 2))
                 for i in range(1, NUM_STEPS + 1):
                     _, loss = self.session.run(
                         (self.policy.train_op, self.policy.loss),
-                        feed_dict={self.policy.batch_size: self._batch_size, }
+                        feed_dict={
+                            self.policy._observations_ph: observations
+                        }
                     )
 
-                self.redraw_samples()
-                self.redraw_contours()
+                fixed_observation = np.random.randint(0, 2, size=(1, 2))
+                self.update_figure_texts(fixed_observation)
+                self.redraw_samples(fixed_observation)
+                self.redraw_contours(fixed_observation)
+                self.fig.canvas.draw()
                 print("{epoch:05d} | {loss:.5f}".format(
                     epoch=epoch, loss=loss))
 
-    def redraw_samples(self):
+    def update_figure_texts(self, fixed_observation):
+        fixed_observation_text = "fixed_observation: " + str(fixed_observation)
+        if not getattr(self, "fixed_observation_text", None):
+            self.fixed_observation_text = self.ax.text(
+                -2, 2, fixed_observation_text, fontsize=15)
+        else:
+            self.fixed_observation_text.set_text(fixed_observation_text)
+
+    def redraw_samples(self, fixed_observation):
+        observations = np.tile(fixed_observation, (self._batch_size, 1))
         sampled_x, sampled_y = self.session.run(
             (self.policy.x, self.policy._action),
-            feed_dict={self.policy.batch_size: self._batch_size}
+            feed_dict={self.policy._observations_ph: observations}
         )
+
         x_grid = generate_grid_data(-2.0, 2.0, -2.0, 2.0, 20, 20)
+        observations = np.tile(fixed_observation, (x_grid.shape[0], 1))
         y_grid = self.session.run(
-            self.policy._action, feed_dict={self.policy.x: x_grid}
+            self.policy._action, feed_dict={
+                self.policy.x: x_grid,
+                self.policy._observations_ph: observations
+            }
         )
 
         if not getattr(self, "samples_lines", None):
@@ -123,7 +148,7 @@ class RealNVP2dRlExample(object):
             self.samples_x_lines.set_data(sampled_x[:, 0], sampled_x[:, 1])
             self.y_grid_lines.set_data(y_grid[:, 0], y_grid[:, 1])
 
-    def redraw_contours(self):
+    def redraw_contours(self, fixed_observation):
         MIN, MAX = -2.1, 2.1
         xs = np.linspace(MIN, MAX, 100)
         ys = np.linspace(MIN, MAX, 100)
@@ -135,9 +160,15 @@ class RealNVP2dRlExample(object):
         if self.policy_config["squash"]:
             y = np.arctanh(y)
 
-        p_y = self.session.run(
-            self.policy.pi, feed_dict={self.policy.y: y}
-        ).reshape(mesh_x.shape)
+        observations = np.tile(fixed_observation, (y.shape[0], 1))
+        p_y, Q = self.session.run(
+            (self.policy.pi, tf.exp(self.policy.Q)), feed_dict={
+                self.policy.y: y,
+                self.policy._observations_ph: observations
+            }
+        )
+        p_y = p_y.reshape(mesh_x.shape)
+        Q = Q.reshape(mesh_x.shape)
 
         levels = 20
         cmap = plt.cm.viridis
@@ -145,18 +176,17 @@ class RealNVP2dRlExample(object):
         if self.cs is None:
             self.ax.plot(self.means[:, 0],
                          self.means[:, 1], 'kx', markersize=20)
-            Q = self.session.run(
-                tf.exp(self.policy.Q), feed_dict={self.policy.y: y}
-            ).reshape(mesh_x.shape)
-            self.ax.contour(mesh_x, mesh_y, Q, 30,
-                            colors="silver", linewidths=0.5)
+            self.Q_contour = self.ax.contour(mesh_x, mesh_y, Q, 30,
+                                             cmap=cmap, linewidths=0.5)
             self.cs = self.ax.contour(mesh_x, mesh_y, p_y, levels, cmap=cmap)
         else:
             for tp in self.cs.collections:
                 tp.remove()
+            for tp in self.Q_contour.collections:
+                tp.remove()
+            self.Q_contour = self.ax.contour(
+                mesh_x, mesh_y, Q, 30, cmap=cmap, linewidths=0.5)
             self.cs = self.ax.contour(mesh_x, mesh_y, p_y, levels, cmap=cmap)
-
-        self.fig.canvas.draw()
 
     def _compute_true_value(self):
         MIN = -0.999
@@ -169,7 +199,10 @@ class RealNVP2dRlExample(object):
         x = np.stack((X.ravel(), Y.ravel()), axis=1)
         values = self.session.run(
             tf.exp(self.policy.Q),
-            feed_dict={self.policy._action: x}
+            feed_dict={
+                self.policy._action: x,
+                self.policy._observations_ph: np.ones((x.shape[0], 2))
+            }
         )
 
         values = values.reshape(X.shape)

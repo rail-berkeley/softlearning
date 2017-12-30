@@ -62,18 +62,18 @@ class RealNVPPolicy(object):
     def build(self):
         observations = self._observations_ph
 
-        self.batch_size = tf.placeholder_with_default(4, (), name="batch_size")
+        self.batch_size = tf.placeholder_with_default(
+            tf.shape(observations)[0], (), name="batch_size")
 
         self.x = tf.placeholder_with_default(
             tf.stop_gradient(self.base_distribution.sample(self.batch_size)),
             (None, 2),
             name="x")
-        self.y = tf.placeholder_with_default(
-            tf.stop_gradient(self.distribution.bijector.forward(self.x)),
-            (None, 2),
-            name="y")
-        self.inverse_x = self.distribution.bijector.inverse(self.y)
 
+        y = tf.stop_gradient(self.distribution.bijector.forward(
+            self.x, observations=observations))
+
+        self.y = tf.placeholder_with_default(y, (None, 2), name="y")
 
         if self.config["squash"]:
             self._action = tf.tanh(self.y)
@@ -83,8 +83,9 @@ class RealNVPPolicy(object):
             self._action = self.y
             squash_correction = 0.0
 
-        self.Q = self._qf(self._action)
-        self.log_pi = self.distribution.log_prob(self.y)
+        self.Q = self._qf(self._observations_ph, self._action)
+        self.log_pi = self.distribution.log_prob(
+            self.y, bijector_kwargs={"observations": observations})
         self.pi = tf.exp(self.log_pi)
 
         log_Z = 0.0
