@@ -4,7 +4,10 @@ from contextlib import contextmanager
 import numpy as np
 import tensorflow as tf
 
+from rllab.core.serializable import Serializable
+
 from sac.distributions import RealNVPBijector
+from sac.policies import NNPolicy
 
 EPS = 1e-9
 
@@ -16,10 +19,17 @@ DEFAULT_CONFIG = {
     "real_nvp_config": None
 }
 
-class RealNVPPolicy(object):
+DEFAULT_BATCH_SIZE = 32
+
+class RealNVPPolicy(NNPolicy, Serializable):
     """Real NVP policy"""
 
-    def __init__(self, env_spec, config=None, qf=None):
+    def __init__(self,
+                 env_spec,
+                 config=None,
+                 qf=None,
+                 name="policy",
+                 squash=False):
         """Initialize Real NVP policy.
 
         Args:
@@ -31,19 +41,43 @@ class RealNVPPolicy(object):
                 -1 and 1 with tanh.
             qf (`ValueFunction`): Q-function approximator.
         """
+        Serializable.quick_init(self, locals())
+
         self.config = dict(DEFAULT_CONFIG, **(config or {}))
 
         self._env_spec = env_spec
         self._Da = env_spec.action_space.flat_dim
         self._Ds = env_spec.observation_space.flat_dim
         self._qf = qf
+        self.squash = squash
 
-        self._observations_ph = tf.placeholder(
-            dtype=tf.float32,
-            shape=(None, self._Ds),
-            name='observations',
+        self.name = name
+        self.build()
+
+        super().__init__(
+            env_spec,
+            self._observations_ph,
+            tf.tanh(self._actions) if squash else self._actions,
+            'policy'
         )
 
+    def actions_for(self, observations, name=None, reuse=tf.AUTO_REUSE):
+        name = name or self.name
+        with tf.variable_scope(name, reuse=True):
+            N = tf.shape(observations)[0]
+            return tf.stop_gradient(
+                self.distribution.sample(
+                    N, bijector_kwargs={"observations": observations}))
+
+    def log_pi_for(self, observations, name=None, reuse=tf.AUTO_REUSE):
+        name = name or self.name
+        actions = self.actions_for(observations, name, reuse)
+
+        with tf.variable_scope(name, reuse=True):
+            return self.distribution.log_prob(
+                actions, bijector_kwargs={"observations": observations})
+
+    def build(self):
         ds = tf.contrib.distributions
         self.bijector = RealNVPBijector(
             config=self.config["real_nvp_config"], event_ndims=self._Ds)
@@ -56,67 +90,52 @@ class RealNVPPolicy(object):
             bijector=self.bijector,
             name="RealNVPPolicyDistribution")
 
-        self.build()
+        self._observations_ph = tf.placeholder(
+            dtype=tf.float32,
+            shape=(None, self._Ds),
+            name='observations',
+        )
 
-
-    def build(self):
-        observations = self._observations_ph
-
-        self.batch_size = tf.placeholder_with_default(
-            tf.shape(observations)[0], (), name="batch_size")
-
-        self.x = tf.placeholder_with_default(
-            tf.stop_gradient(self.base_distribution.sample(self.batch_size)),
-            (None, 2),
-            name="x")
-
-        y = tf.stop_gradient(self.distribution.bijector.forward(
-            self.x, observations=observations))
-
-        self.y = tf.placeholder_with_default(y, (None, 2), name="y")
-
-        if self.config["squash"]:
-            self._action = tf.tanh(self.y)
-            squash_correction = tf.reduce_sum(
-                tf.log(1.0 - self._action ** 2.0 + EPS), axis=1)
-        else:
-            self._action = self.y
-            squash_correction = 0.0
-
-        self.Q = self._qf(self._observations_ph, self._action)
-        self.log_pi = self.distribution.log_prob(
-            self.y, bijector_kwargs={"observations": observations})
-        self.pi = tf.exp(self.log_pi)
-
-        log_Z = 0.0
-        surrogate_loss = tf.reduce_mean(
-            self.log_pi * tf.stop_gradient(
-                self.log_pi - self.Q - squash_correction + log_Z))
-
-        reg_variables = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
-        reg_loss = tf.reduce_sum(reg_variables)
-
-        self.loss = surrogate_loss + reg_loss
-
-        optimizer = tf.train.AdamOptimizer(
-            self.config["learning_rate"], use_locking=False)
-
-        self.train_op = optimizer.minimize(loss=self.loss)
+        self._actions = self.actions_for(self._observations_ph)
 
     def get_action(self, observations):
         """Sample single action based on the observations.
 
         TODO: if self._is_deterministic
         """
-        return self.get_actions(observation[None])[0], None
+        return self.get_actions(observations[None])[0], None
 
     def get_actions(self, observations):
         """Sample batch of actions based on the observations"""
 
         feed_dict = {self._observations_ph: observations}
         actions = tf.get_default_session().run(
-            self._action, feed_dict=feed_dict)
+            self._actions, feed_dict=feed_dict)
         return actions
+
+    @contextmanager
+    def deterministic(self, set_deterministic=True):
+        """Context manager for changing the determinism of the policy.
+
+        See `self.get_action` for further information about the effect of
+        self._is_deterministic.
+
+        Args:
+            set_deterministic (`bool`): Value to set the self._is_deterministic
+            to during the context. The value will be reset back to the previous
+            value when the context exits.
+        """
+        current = getattr(self, "_is_deterministic", None)
+        self._is_deterministic = set_deterministic
+        yield
+        self._is_deterministic = current
+
+    def get_params_internal(self, **tags):
+        if tags: raise NotImplementedError
+        return tf.trainable_variables(scope=self.name)
+
+    def reset(self, dones=None):
+        pass
 
     def log_diagnostics(self, batch):
         """Record diagnostic information to the logger.
