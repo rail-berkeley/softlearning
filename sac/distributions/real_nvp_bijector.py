@@ -8,17 +8,17 @@ import tensorflow as tf
 import numpy as np
 ConditionalBijector = tf.contrib.distributions.bijectors.ConditionalBijector
 
-__all__ = [ "RealNVPBijector", ]
+__all__ = [
+    "RealNVPBijector",
+]
 
 
 def checkerboard(shape, parity="even", dtype=tf.bool):
     """TODO: Check this implementation"""
-    unit = (
-        tf.constant((True, False))
-        if parity == "even"
-        else tf.constant((False, True)))
+    unit = (tf.constant((True, False))
+            if parity == "even" else tf.constant((False, True)))
 
-    tiled = tf.tile(unit, (np.prod(shape) // 2,))
+    tiled = tf.tile(unit, (np.prod(shape) // 2, ))
     return tf.cast(tf.reshape(tiled, shape), dtype)
 
 
@@ -40,7 +40,7 @@ def feedforward_net(inputs,
         bias_initializer = tf.initializers.random_normal()
         bias = tf.get_variable(
             name="bias_{i}".format(i=i),
-            shape=(layer_size,),
+            shape=(layer_size, ),
             initializer=bias_initializer)
 
         prev_size = layer_size
@@ -48,12 +48,13 @@ def feedforward_net(inputs,
 
         if i < len(layer_sizes) - 1 and activation_fn is not None:
             out = activation_fn(z)
-        elif i == len(layer_sizes) -1 and output_nonlinearity is not None:
+        elif i == len(layer_sizes) - 1 and output_nonlinearity is not None:
             out = output_nonlinearity(z)
         else:
             out = z
 
     return out
+
 
 class CouplingLayer(object):
     def __init__(self, parity, name, translation_fn, scale_fn):
@@ -93,15 +94,15 @@ class CouplingLayer(object):
             # (9) in paper
 
             if self.parity == "odd":
-                outputs = tf.stack((
-                    inputs[:, 0] * exp_scale[:, 1] + translation[:, 1],
-                    inputs[:, 1],
-                ), axis=1)
+                outputs = tf.stack(
+                    (inputs[:, 0] * exp_scale[:, 1] + translation[:, 1],
+                     inputs[:, 1], ),
+                    axis=1)
             else:
-                outputs = tf.stack((
-                    inputs[:, 0],
-                    inputs[:, 1] * exp_scale[:, 0] + translation[:, 0],
-                ), axis=1)
+                outputs = tf.stack(
+                    (inputs[:, 0],
+                     inputs[:, 1] * exp_scale[:, 0] + translation[:, 0], ),
+                    axis=1)
 
             log_det_jacobian = tf.reduce_sum(
                 scale, axis=tuple(range(1, len(shape))))
@@ -128,17 +129,16 @@ class CouplingLayer(object):
                     masked_inputs, observations)
 
             if self.parity == "odd":
-                outputs = tf.stack((
-                    (inputs[:, 0] - translation[:, 1]) * tf.exp(-scale[:, 1]),
-                    inputs[:, 1],
-                ), axis=1)
+                outputs = tf.stack(
+                    ((inputs[:, 0] - translation[:, 1]) * tf.exp(-scale[:, 1]),
+                     inputs[:, 1], ),
+                    axis=1)
             else:
-                outputs = tf.stack((
-                    inputs[:, 0],
-                    (inputs[:, 1] - translation[:, 0]) * tf.exp(-scale[:, 0]),
-                ), axis=1)
+                outputs = tf.stack(
+                    (inputs[:, 0], (inputs[:, 1] - translation[:, 0]) *
+                     tf.exp(-scale[:, 0]), ),
+                    axis=1)
 
-            # TODO: Should this be - or +?
             log_det_jacobian = tf.reduce_sum(
                 -scale, axis=tuple(range(1, len(shape))))
 
@@ -147,10 +147,11 @@ class CouplingLayer(object):
 
 DEFAULT_CONFIG = {
     "num_coupling_layers": 2,
-    "translation_hidden_sizes": (25,),
-    "scale_hidden_sizes": (25,),
+    "translation_hidden_sizes": (25, ),
+    "scale_hidden_sizes": (25, ),
     "scale_regularization": 5e2
 }
+
 
 class RealNVPBijector(ConditionalBijector):
     """TODO"""
@@ -181,9 +182,8 @@ class RealNVPBijector(ConditionalBijector):
 
         self.build()
 
-        super().__init__(event_ndims=event_ndims,
-                         validate_args=validate_args,
-                         name=name)
+        super().__init__(
+            event_ndims=event_ndims, validate_args=validate_args, name=name)
 
     # TODO: Properties
 
@@ -196,7 +196,8 @@ class RealNVPBijector(ConditionalBijector):
             return feedforward_net(
                 tf.concat((inputs, observations), axis=1),
                 # TODO: should allow multi_dimensional inputs/outputs
-                layer_sizes=(*translation_hidden_sizes, inputs.shape.as_list()[-1]))
+                layer_sizes=(*translation_hidden_sizes,
+                             inputs.shape.as_list()[-1]))
 
         def scale_wrapper(inputs, observations):
             return feedforward_net(
@@ -234,9 +235,10 @@ class RealNVPBijector(ConditionalBijector):
 
         out = x
         for layer in self.layers:
-            out, log_det_jacobian = layer.forward_and_jacobian(out, observations)
-            assert (sum_log_det_jacobians.shape.as_list()
-                    == log_det_jacobian.shape.as_list())
+            out, log_det_jacobian = layer.forward_and_jacobian(
+                out, observations)
+            assert (sum_log_det_jacobians.shape.as_list() ==
+                    log_det_jacobian.shape.as_list())
 
             sum_log_det_jacobians += log_det_jacobian
 
@@ -261,9 +263,10 @@ class RealNVPBijector(ConditionalBijector):
 
         out = y
         for layer in reversed(self.layers):
-            out, log_det_jacobian = layer.backward_and_jacobian(out, observations)
-            assert (sum_log_det_jacobians.shape.as_list()
-                    == log_det_jacobian.shape.as_list())
+            out, log_det_jacobian = layer.backward_and_jacobian(
+                out, observations)
+            assert (sum_log_det_jacobians.shape.as_list() ==
+                    log_det_jacobian.shape.as_list())
 
             sum_log_det_jacobians += log_det_jacobian
 
