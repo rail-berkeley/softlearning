@@ -135,16 +135,87 @@ class CouplingLayer(object):
         return mask
 
     def _forward(self, x, **condition_kwargs):
-        """TODO"""
-        pass
+        self._maybe_assert_valid_x(x)
+        observations = condition_kwargs["observations"]
+
+        mask = self.get_mask(x, dtype=x.dtype)
+
+        # masked half of the x
+        masked_x = x * mask
+
+        # TODO: scale and translation could be merged into a single network
+        with tf.variable_scope("scale", reuse=tf.AUTO_REUSE):
+            scale = mask * self.scale_fn(masked_x, observations)
+
+        with tf.variable_scope("translation", reuse=tf.AUTO_REUSE):
+            translation = mask * self.translation_fn(
+                masked_x, observations)
+
+        exp_scale = tf.check_numerics(
+            tf.exp(scale), "tf.exp(scale) contains NaNs or Infs.")
+        # (9) in paper
+
+        if self.parity == "odd":
+            out = tf.stack((
+                x[:, 0] * exp_scale[:, 1] + translation[:, 1],
+                x[:, 1],
+            ), axis=1)
+        else:
+            out = tf.stack((
+                x[:, 0],
+                x[:, 1] * exp_scale[:, 0] + translation[:, 0],
+            ), axis=1)
+
+        return out
 
     def _forward_log_det_jacobian(self, x, **condition_kwargs):
-        """TODO"""
-        pass
+        self._maybe_assert_valid_x(x)
+        observations = condition_kwargs["observations"]
+
+        mask = self.get_mask(x, dtype=x.dtype)
+
+        # masked half of the x
+        masked_x = x * mask
+
+        # TODO: scale and translation could be merged into a single network
+        with tf.variable_scope("scale", reuse=tf.AUTO_REUSE):
+            scale = mask * self.scale_fn(masked_x, observations)
+
+        log_det_jacobian = tf.reduce_sum(
+            scale, axis=tuple(range(1, len(x.shape))))
+
+        return log_det_jacobian
 
     def _inverse(self, y, **condition_kwargs):
-        """TODO"""
-        pass
+        self._maybe_assert_valid_y(y)
+        observations = condition_kwargs["observations"]
+
+        shape = y.get_shape()
+        mask = self.get_mask(y, dtype=y.dtype)
+
+        masked_y = y * mask
+
+        # TODO: scale and translation could be merged into a single network
+        with tf.variable_scope("scale", reuse=tf.AUTO_REUSE):
+            scale = mask * self.scale_fn(masked_y, observations)
+
+        with tf.variable_scope("translation", reuse=tf.AUTO_REUSE):
+            translation = mask * self.translation_fn(
+                masked_y, observations)
+
+        if self.parity == "odd":
+            out = tf.stack((
+                (y[:, 0] - translation[:, 1]) * tf.exp(-scale[:, 1]),
+                y[:, 1],
+            ), axis=1)
+        else:
+            out = tf.stack((
+                y[:, 0],
+                (y[:, 1] - translation[:, 0]) * tf.exp(-scale[:, 0]),
+            ), axis=1)
+
+        return out
+
 
             if self.parity == "odd":
                 outputs = tf.stack(
