@@ -144,10 +144,12 @@ class CouplingLayer(object):
         masked_x = x * mask
 
         # TODO: scale and translation could be merged into a single network
-        with tf.variable_scope("scale", reuse=tf.AUTO_REUSE):
+        with tf.variable_scope("{name}/scale".format(name=self.name),
+                               reuse=tf.AUTO_REUSE):
             scale = mask * self.scale_fn(masked_x, observations)
 
-        with tf.variable_scope("translation", reuse=tf.AUTO_REUSE):
+        with tf.variable_scope("{name}/translation".format(name=self.name),
+                               reuse=tf.AUTO_REUSE):
             translation = mask * self.translation_fn(
                 masked_x, observations)
 
@@ -178,7 +180,8 @@ class CouplingLayer(object):
         masked_x = x * mask
 
         # TODO: scale and translation could be merged into a single network
-        with tf.variable_scope("scale", reuse=tf.AUTO_REUSE):
+        with tf.variable_scope("{name}/scale".format(name=self.name),
+                               reuse=tf.AUTO_REUSE):
             scale = mask * self.scale_fn(masked_x, observations)
 
         log_det_jacobian = tf.reduce_sum(
@@ -196,10 +199,12 @@ class CouplingLayer(object):
         masked_y = y * mask
 
         # TODO: scale and translation could be merged into a single network
-        with tf.variable_scope("scale", reuse=tf.AUTO_REUSE):
+        with tf.variable_scope("{name}/scale".format(name=self.name),
+                               reuse=tf.AUTO_REUSE):
             scale = mask * self.scale_fn(masked_y, observations)
 
-        with tf.variable_scope("translation", reuse=tf.AUTO_REUSE):
+        with tf.variable_scope("{name}/translation".format(name=self.name),
+                               reuse=tf.AUTO_REUSE):
             translation = mask * self.translation_fn(
                 masked_y, observations)
 
