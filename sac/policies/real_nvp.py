@@ -9,7 +9,7 @@ from rllab.core.serializable import Serializable
 from sac.distributions import RealNVPBijector
 from sac.policies import NNPolicy
 
-EPS = 1e-9
+EPS = 1e-6
 
 DEFAULT_CONFIG = {
     "mode": "train",
