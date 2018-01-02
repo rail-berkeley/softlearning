@@ -82,6 +82,7 @@ class SAC(RLAlgorithm, Serializable):
             pool,
             plotter=None,
 
+            policy_lr=None,
             lr=3E-3,
             scale_reward=1,
             discount=0.99,
@@ -120,7 +121,7 @@ class SAC(RLAlgorithm, Serializable):
         self._pool = pool
         self._plotter = plotter
 
-        self._policy_lr = lr
+        self._policy_lr = policy_lr or lr
         self._qf_lr = lr
         self._vf_lr = lr
         self._scale_reward = scale_reward

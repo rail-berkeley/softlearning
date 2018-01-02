@@ -28,8 +28,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
                  env_spec,
                  config=None,
                  qf=None,
-                 name="policy",
-                 squash=False):
+                 name="policy"):
         """Initialize Real NVP policy.
 
         Args:
@@ -49,11 +48,11 @@ class RealNVPPolicy(NNPolicy, Serializable):
         self._Da = env_spec.action_space.flat_dim
         self._Ds = env_spec.observation_space.flat_dim
         self._qf = qf
-        self.squash = squash
 
         self.name = name
         self.build()
 
+        squash = self.config["squash"]
         super().__init__(
             env_spec,
             self._observations_ph,

@@ -51,14 +51,13 @@ def run(*_):
     policy_config = {
         "mode": "train",
         "D_in": 2,
-        # TODO: currently uses learning rate through SACV2
-        # "learning_rate": 5e-3,
+        "learning_rate": 5e-4,
         "squash": True,
         "real_nvp_config": {
-            "scale_regularization": 1e1,
-            "num_coupling_layers": 2,
-            "translation_hidden_sizes": (128,),
-            "scale_hidden_sizes": (128,),
+            "scale_regularization": 0.0,
+            "num_coupling_layers": 4,
+            "translation_hidden_sizes": (32,),
+            "scale_hidden_sizes": (32,),
         }
     }
 
@@ -87,7 +86,8 @@ def run(*_):
         vf=vf,
         plotter=plotter,
 
-        lr=1e-4,
+        policy_lr=policy_config["learning_rate"],
+        lr=3e-4,
         scale_reward=3,
         discount=0.99,
         tau=0.001,
