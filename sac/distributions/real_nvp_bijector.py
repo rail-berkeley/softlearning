@@ -369,7 +369,7 @@ class RealNVPBijector(ConditionalBijector):
         """TODO"""
         if not self.validate_args:
             return x
-        raise NotImplementedError("_maybe_assert_valid_y")
+        raise NotImplementedError("_maybe_assert_valid_x")
 
     def _maybe_assert_valid_y(self, y):
         """TODO"""
