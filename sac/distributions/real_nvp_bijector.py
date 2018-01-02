@@ -88,10 +88,14 @@ class CouplingLayer(object):
                 translation = mask * self.translation_fn(
                     masked_inputs, observations)
 
-            # TODO: check the masks
-            exp_scale = tf.check_numerics(
-                tf.exp(scale), "tf.exp(scale) contains NaNs or Infs.")
-            # (9) in paper
+    def __init__(self,
+                 parity,
+                 translation_fn,
+                 scale_fn,
+                 event_ndims=0,
+                 validate_args=False,
+                 name="coupling_bijector"):
+        """Instantiates the `CouplingBijector` bijector.
 
             if self.parity == "odd":
                 outputs = tf.stack(
@@ -104,29 +108,34 @@ class CouplingLayer(object):
                      inputs[:, 1] * exp_scale[:, 0] + translation[:, 0], ),
                     axis=1)
 
-            log_det_jacobian = tf.reduce_sum(
-                scale, axis=tuple(range(1, len(shape))))
-
-            return outputs, log_det_jacobian
-
-    def backward_and_jacobian(self, inputs, observations):
-        """Calculate inverse of the layer
-
-        Note that `inputs` correspond to the `outputs` in forward function
+        Raises:
+            ValueError: if TODO happens
         """
-        with tf.variable_scope(self.name):
-            shape = inputs.get_shape()
-            mask = self.get_mask(inputs, dtype=inputs.dtype)
+        self._graph_parents = []
+        self._name = name
+        self._validate_args = validate_args
 
-            masked_inputs = inputs * mask
+        self.parity = parity
+        self.translation_fn = translation_fn
+        self.scale_fn = scale_fn
 
-            # TODO: scale and translation could be merged into a single network
-            with tf.variable_scope("scale", reuse=tf.AUTO_REUSE):
-                scale = mask * self.scale_fn(masked_inputs, observations)
+        super().__init__(event_ndims=event_ndims,
+                         validate_args=validate_args,
+                         name=name)
 
-            with tf.variable_scope("translation", reuse=tf.AUTO_REUSE):
-                translation = mask * self.translation_fn(
-                    masked_inputs, observations)
+    # TODO: Properties
+
+    def _forward(self, x, **condition_kwargs):
+        """TODO"""
+        pass
+
+    def _forward_log_det_jacobian(self, x, **condition_kwargs):
+        """TODO"""
+        pass
+
+    def _inverse(self, y, **condition_kwargs):
+        """TODO"""
+        pass
 
             if self.parity == "odd":
                 outputs = tf.stack(
@@ -142,7 +151,11 @@ class CouplingLayer(object):
             log_det_jacobian = tf.reduce_sum(
                 -scale, axis=tuple(range(1, len(shape))))
 
-            return outputs, log_det_jacobian
+    def _maybe_assert_valid_y(self, y):
+        """TODO"""
+        if not self.validate_args:
+            return y
+        raise NotImplementedError("_maybe_assert_valid_y")
 
 
 DEFAULT_CONFIG = {
@@ -208,7 +221,7 @@ class RealNVPBijector(ConditionalBijector):
                     self.config["scale_regularization"]))
 
         self.layers = [
-            CouplingLayer(
+            CouplingBijector(
                 parity=("even", "odd")[i % 2],
                 name="coupling_{i}".format(i=i),
                 translation_fn=translation_wrapper,
@@ -222,7 +235,7 @@ class RealNVPBijector(ConditionalBijector):
 
         out = x
         for layer in self.layers:
-            out, _ = layer.forward_and_jacobian(out, observations)
+            out = layer.forward(out, **condition_kwargs)
 
         return out
 
@@ -250,7 +263,7 @@ class RealNVPBijector(ConditionalBijector):
 
         out = y
         for layer in reversed(self.layers):
-            out, _ = layer.backward_and_jacobian(out, observations)
+            out = layer.inverse(out, **condition_kwargs)
 
         return out
 
