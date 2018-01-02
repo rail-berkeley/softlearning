@@ -136,7 +136,6 @@ class CouplingLayer(object):
 
     def _forward(self, x, **condition_kwargs):
         self._maybe_assert_valid_x(x)
-        observations = condition_kwargs["observations"]
 
         mask = self.get_mask(x, dtype=x.dtype)
 
@@ -146,12 +145,12 @@ class CouplingLayer(object):
         # TODO: scale and translation could be merged into a single network
         with tf.variable_scope("{name}/scale".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
-            scale = mask * self.scale_fn(masked_x, observations)
+            scale = mask * self.scale_fn(masked_x, **condition_kwargs)
 
         with tf.variable_scope("{name}/translation".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
             translation = mask * self.translation_fn(
-                masked_x, observations)
+                masked_x, **condition_kwargs)
 
         exp_scale = tf.check_numerics(
             tf.exp(scale), "tf.exp(scale) contains NaNs or Infs.")
@@ -172,7 +171,6 @@ class CouplingLayer(object):
 
     def _forward_log_det_jacobian(self, x, **condition_kwargs):
         self._maybe_assert_valid_x(x)
-        observations = condition_kwargs["observations"]
 
         mask = self.get_mask(x, dtype=x.dtype)
 
@@ -182,7 +180,7 @@ class CouplingLayer(object):
         # TODO: scale and translation could be merged into a single network
         with tf.variable_scope("{name}/scale".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
-            scale = mask * self.scale_fn(masked_x, observations)
+            scale = mask * self.scale_fn(masked_x, **condition_kwargs)
 
         log_det_jacobian = tf.reduce_sum(
             scale, axis=tuple(range(1, len(x.shape))))
@@ -191,9 +189,7 @@ class CouplingLayer(object):
 
     def _inverse(self, y, **condition_kwargs):
         self._maybe_assert_valid_y(y)
-        observations = condition_kwargs["observations"]
 
-        shape = y.get_shape()
         mask = self.get_mask(y, dtype=y.dtype)
 
         masked_y = y * mask
@@ -201,12 +197,12 @@ class CouplingLayer(object):
         # TODO: scale and translation could be merged into a single network
         with tf.variable_scope("{name}/scale".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
-            scale = mask * self.scale_fn(masked_y, observations)
+            scale = mask * self.scale_fn(masked_y, **condition_kwargs)
 
         with tf.variable_scope("{name}/translation".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
             translation = mask * self.translation_fn(
-                masked_y, observations)
+                masked_y, **condition_kwargs)
 
         if self.parity == "odd":
             out = tf.stack((
@@ -316,7 +312,6 @@ class RealNVPBijector(ConditionalBijector):
 
     def _forward(self, x, **condition_kwargs):
         self._maybe_assert_valid_x(x)
-        observations = condition_kwargs["observations"]
 
         out = x
         for layer in self.layers:
@@ -326,7 +321,6 @@ class RealNVPBijector(ConditionalBijector):
 
     def _forward_log_det_jacobian(self, x, **condition_kwargs):
         self._maybe_assert_valid_x(x)
-        observations = condition_kwargs["observations"]
 
         sum_log_det_jacobians = tf.reduce_sum(
             tf.zeros_like(x), axis=tuple(range(1, len(x.shape))))
@@ -344,7 +338,6 @@ class RealNVPBijector(ConditionalBijector):
 
     def _inverse(self, y, **condition_kwargs):
         self._maybe_assert_valid_y(y)
-        observations = condition_kwargs["observations"]
 
         out = y
         for layer in reversed(self.layers):
@@ -354,7 +347,6 @@ class RealNVPBijector(ConditionalBijector):
 
     def _inverse_log_det_jacobian(self, y, **condition_kwargs):
         self._maybe_assert_valid_y(y)
-        observations = condition_kwargs["observations"]
 
         sum_log_det_jacobians = tf.reduce_sum(
             tf.zeros_like(y), axis=tuple(range(1, len(y.shape))))
