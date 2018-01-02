@@ -51,13 +51,13 @@ def run(*_):
     policy_config = {
         "mode": "train",
         "D_in": 2,
-        "learning_rate": 5e-4,
+        "learning_rate": 1e-4,
         "squash": True,
         "real_nvp_config": {
-            "scale_regularization": 0.0,
-            "num_coupling_layers": 4,
-            "translation_hidden_sizes": (32,),
-            "scale_hidden_sizes": (32,),
+            "scale_regularization": 1e2,
+            "num_coupling_layers": 2,
+            "translation_hidden_sizes": (M,),
+            "scale_hidden_sizes": (M,),
         }
     }
 
