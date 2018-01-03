@@ -22,7 +22,7 @@ class MultiGoalEnv(Env, Serializable):
         Serializable.quick_init(self, locals())
 
         self.dynamics = PointDynamics(dim=2, sigma=0)
-        self.init_mu = np.array((0, 0), dtype=np.float32)
+        self.init_mu = np.zeros(2, dtype=np.float32)
         self.init_sigma = init_sigma
         self.goal_positions = np.array(
             [

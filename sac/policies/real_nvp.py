@@ -62,17 +62,18 @@ class RealNVPPolicy(NNPolicy, Serializable):
 
     def actions_for(self, observations, name=None, reuse=tf.AUTO_REUSE):
         name = name or self.name
-        with tf.variable_scope(name, reuse=True):
+        with tf.variable_scope(name, reuse=reuse):
             N = tf.shape(observations)[0]
             return tf.stop_gradient(
                 self.distribution.sample(
                     N, bijector_kwargs={"observations": observations}))
 
-    def log_pi_for(self, observations, name=None, reuse=tf.AUTO_REUSE):
+    def log_pi_for(self, observations, actions=None, name=None, reuse=tf.AUTO_REUSE):
         name = name or self.name
-        actions = self.actions_for(observations, name, reuse)
+        if actions is None:
+            actions = self.actions_for(observations, name, reuse)
 
-        with tf.variable_scope(name, reuse=True):
+        with tf.variable_scope(name, reuse=reuse):
             return self.distribution.log_prob(
                 actions, bijector_kwargs={"observations": observations})
 

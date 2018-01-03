@@ -237,7 +237,7 @@ class SAC(RLAlgorithm, Serializable):
         """
 
         actions = self._policy.actions_for(self._obs_pl)
-        log_pi = self._policy.log_pi_for(self._obs_pl)
+        log_pi = self._policy.log_pi_for(self._obs_pl, actions=actions)
 
         self._vf_t = self._vf.get_output_for(self._obs_pl, reuse=True)  # N
         self._vf_params = self._vf.get_params_internal()
