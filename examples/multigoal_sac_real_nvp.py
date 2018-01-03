@@ -31,7 +31,7 @@ def run(*_):
         n_epochs=1000,
         max_path_length=30,
         batch_size=64,
-        n_train_repeat=1,
+        n_train_repeat=2,
         eval_render=True,
         eval_n_episodes=10,
         eval_deterministic=True
@@ -51,7 +51,7 @@ def run(*_):
     policy_config = {
         "mode": "train",
         "D_in": 2,
-        "learning_rate": 5e-3,
+        "learning_rate": 5e-4,
         "squash": True,
         "real_nvp_config": {
             "scale_regularization": 0.0,
@@ -90,7 +90,7 @@ def run(*_):
         lr=3e-4,
         scale_reward=3,
         discount=0.99,
-        tau=0.001,
+        tau=1e-4,
 
         save_full_state=True
     )
