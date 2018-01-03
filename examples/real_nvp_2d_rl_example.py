@@ -98,9 +98,9 @@ class RealNVP2dRlExample(object):
         with self.session.as_default():
             print("true value: ", self._compute_true_value())
             for epoch in range(1, self.num_epochs + 1):
+                observations = np.random.randint(
+                    0, 2, size=(self._batch_size, 2))
                 for i in range(1, self.num_steps_per_epoch + 1):
-                    observations = np.random.randint(
-                        0, 2, size=(self._batch_size, 2))
                     _, loss = self.session.run(
                         (self.policy.train_op, self.policy.loss),
                         feed_dict={
