@@ -1,47 +1,41 @@
+import os
 import argparse
+import pickle
+import glob
+import json
+from collections import defaultdict
 
-import joblib
-import tensorflow as tf
-
-from rllab.sampler.utils import rollout
-from sac.misc.visualization import visitation_plot
+from sac.misc.visualization import plot_visitations
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('file', type=str, help='Path to the snapshot file.')
-    parser.add_argument('--max-path-length', '-l', type=int, default=1000)
-    parser.add_argument('--speedup', '-s', type=float, default=1)
-    parser.add_argument('--deterministic', '-d', dest='deterministic',
-                        action='store_true')
-    parser.add_argument('--no-deterministic', '-nd', dest='deterministic',
-                        action='store_false')
-    parser.add_argument('--policy_h', type=int)
-    parser.set_defaults(deterministic=True)
+    parser.add_argument('--run_glob',
+                        type=str,
+                        help='Glob pattern for experiments to visualize')
 
     args = parser.parse_args()
 
     return args
 
-def simulate_policy(args):
-    with tf.Session() as sess:
-        data = joblib.load(args.file)
-        if 'algo' in data.keys():
-            policy = data['algo'].policy
-            env = data['algo'].env
-        else:
-            policy = data['policy']
-            env = data['env']
+def visitation_plots(args):
+    runs = defaultdict(dict)
+    for run_path in glob.iglob(args.run_glob):
+        path_file = os.path.join(run_path, "itr_200_path.pkl")
+        variant_file = os.path.join(run_path, "variant.json")
+        with open(variant_file, "r") as f:
+            variant = json.load(f)
 
-        paths = []
-        for h in range(policy._K):
-            with policy.fix_h(h):
-                path = rollout(env, policy,
-                               max_path_length=args.max_path_length,
-                               animated=False, speedup=args.speedup)
-                paths.append(path)
+        with open(path_file, "rb") as f:
+            run_data = pickle.load(f)
 
-        visitation_plot(paths)
+        run_id = variant["exp_name"].split("-")[-1]
+        key = (variant["K"], variant["tau"], variant["scale_reward"])
+        runs[key][run_id] = run_data
+
+    for key, variant_runs in runs.items():
+        print(key)
+        plot_visitations(variant_runs, suptitle=str(key))
 
 if __name__ == "__main__":
     args = parse_args()
-    simulate_policy(args)
+    visitation_plots(args)
