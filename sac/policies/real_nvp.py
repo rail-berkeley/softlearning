@@ -80,10 +80,10 @@ class RealNVPPolicy(NNPolicy, Serializable):
     def build(self):
         ds = tf.contrib.distributions
         self.bijector = RealNVPBijector(
-            config=self.config["real_nvp_config"], event_ndims=self._Ds)
+            config=self.config["real_nvp_config"], event_ndims=self._Da)
 
         self.base_distribution = ds.MultivariateNormalDiag(
-            loc=tf.zeros(self._Ds), scale_diag=tf.ones(self._Ds))
+            loc=tf.zeros(self._Da), scale_diag=tf.ones(self._Da))
 
         self.distribution = ds.ConditionalTransformedDistribution(
             distribution=self.base_distribution,
