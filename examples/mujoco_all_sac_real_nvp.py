@@ -4,10 +4,11 @@ from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
 
 from sac.algos import SAC
+from sac.algos import SACV2
 from sac.envs.gym_env import GymEnv
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
-from sac.policies.gmm import GMMPolicy
+from sac.policies import GMMPolicy, RealNVPPolicy
 from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
 
@@ -144,15 +145,26 @@ def run_experiment(variant):
         hidden_layer_sizes=[M, M],
     )
 
-    policy = GMMPolicy(
+    policy_config = {
+        "mode": "train",
+        "D_in": 2,
+        "learning_rate": 5e-4,
+        "squash": True,
+        "real_nvp_config": {
+            "scale_regularization": 0.0,
+            "num_coupling_layers": 2,
+            "translation_hidden_sizes": (M, M),
+            "scale_hidden_sizes": (M, M),
+        }
+    }
+
+    policy = RealNVPPolicy(
         env_spec=env.spec,
-        K=variant['K'],
-        hidden_layer_sizes=[M, M],
+        config=policy_config,
         qf=qf,
-        reg=0.001,
     )
 
-    algorithm = SAC(
+    algorithm = SACV2(
         base_kwargs=base_kwargs,
         env=env,
         policy=policy,
@@ -160,6 +172,7 @@ def run_experiment(variant):
         qf=qf,
         vf=vf,
 
+        policy_lr=policy_config["learning_rate"],
         lr=variant['lr'],
         scale_reward=variant['scale_reward'],
         discount=variant['discount'],
