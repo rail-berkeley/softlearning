@@ -14,11 +14,16 @@ __all__ = [
 
 
 def checkerboard(shape, parity="even", dtype=tf.bool):
-    """TODO: Check this implementation"""
+    """TODO: Implement for dimensions >1"""
+    if len(shape) > 1:
+        raise NotImplementedError(
+            "checkerboard not yet implemented for dimensions >1")
+
     unit = (tf.constant((True, False))
             if parity == "even" else tf.constant((False, True)))
 
-    tiled = tf.tile(unit, (np.prod(shape) // 2, ))
+    num_elements = np.prod(shape)
+    tiled = tf.tile(unit, ((num_elements // 2) + 1, ))[:num_elements]
     return tf.cast(tf.reshape(tiled, shape), dtype)
 
 
