@@ -34,6 +34,14 @@ COMMON_PARAMS = {
 
 
 ENV_PARAMS = {
+    'multi-direction-swimmer': { # 2 DoF
+        'prefix': 'multi-direction-swimmer',
+        'env_name': 'multi-direction-swimmer',
+        'max_path_length': 1000,
+        'n_epochs': 202,
+        'scale_reward': 100.0,
+        'n_train_repeat': 4,
+    },
     'swimmer': { # 2 DoF
         'prefix': 'swimmer',
         'env_name': 'swimmer-rllab',

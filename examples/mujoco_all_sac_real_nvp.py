@@ -5,7 +5,7 @@ from rllab.misc.instrument import VariantGenerator
 
 from sac.algos import SAC
 from sac.algos import SACV2
-from sac.envs.gym_env import GymEnv
+from sac.envs import GymEnv, MultiDirectionSwimmerEnv
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
 from sac.policies import GMMPolicy, RealNVPPolicy
@@ -31,6 +31,15 @@ COMMON_PARAMS = {
 
 
 ENV_PARAMS = {
+    'multi-direction-swimmer': { # 2 DoF
+        'prefix': 'multi-direction-swimmer',
+        'env_name': 'multi-direction-swimmer',
+        'max_path_length': 1000,
+        'n_epochs': 202,
+        'scale_reward': 100.0,
+        'n_train_repeat': 4,
+        'policy_lr': [1e-4, 5e-4, 1e-3, 5e-3],
+    },
     'swimmer': { # 2 DoF
         'prefix': 'swimmer',
         'env_name': 'swimmer-rllab',
@@ -114,6 +123,8 @@ def run_experiment(variant):
     elif variant['env_name'] == 'swimmer-rllab':
         from rllab.envs.mujoco.swimmer_env import SwimmerEnv
         env = normalize(SwimmerEnv())
+    elif variant['env_name'] == 'multi-direction-swimmer':
+        env = normalize(MultiDirectionSwimmerEnv())
     else:
         env = normalize(GymEnv(variant['env_name']))
 
@@ -148,13 +159,13 @@ def run_experiment(variant):
     policy_config = {
         "mode": "train",
         "D_in": 2,
-        "learning_rate": 5e-4,
+        # "learning_rate": 5e-4, # not used, see variant
         "squash": True,
         "real_nvp_config": {
             "scale_regularization": 0.0,
-            "num_coupling_layers": 2,
-            "translation_hidden_sizes": (M, M),
-            "scale_hidden_sizes": (M, M),
+            "num_coupling_layers": 4,
+            "translation_hidden_sizes": (M, ),
+            "scale_hidden_sizes": (M, ),
         }
     }
 
@@ -172,7 +183,7 @@ def run_experiment(variant):
         qf=qf,
         vf=vf,
 
-        policy_lr=policy_config["learning_rate"],
+        policy_lr=variant["policy_lr"],
         lr=variant['lr'],
         scale_reward=variant['scale_reward'],
         discount=variant['discount'],
