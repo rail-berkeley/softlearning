@@ -44,20 +44,34 @@ class CouplingBijectorTest(test.TestCase):
 
         inputs = tf.constant(DEFAULT_2D_INPUTS)
         odd_forward_out = odd_layer.forward(inputs)
+        odd_forward_log_det_jacobian = odd_layer.forward_log_det_jacobian(
+            inputs)
+
         even_forward_out = even_layer.forward(odd_forward_out)
+        even_forward_log_det_jacobian = even_layer.forward_log_det_jacobian(
+            odd_forward_out)
 
         # Verify that the true side of the mask comes out as identity
         with self.test_session() as session:
             (inputs_num,
              odd_forward_out_num,
-             even_forward_out_num) = session.run((
+             even_forward_out_num,
+             odd_forward_log_det_jacobian_num,
+             even_forward_log_det_jacobian_num) = session.run((
                  inputs,
                  odd_forward_out,
-                 even_forward_out
+                 even_forward_out,
+                 odd_forward_log_det_jacobian,
+                 even_forward_log_det_jacobian,
              ))
 
         self.assertAllEqual(odd_forward_out_num[:, 1], inputs_num[:, 1])
         self.assertAllEqual(even_forward_out_num[:, 0], odd_forward_out_num[:, 0])
+
+        self.assertAllEqual(odd_forward_log_det_jacobian_num,
+                            SCALE_FN_WITH_BIAS(inputs_num[:, 1]))
+        self.assertAllEqual(even_forward_log_det_jacobian_num,
+                            SCALE_FN_WITH_BIAS(odd_forward_out_num[:, 0]))
 
     def test_forward_without_bias(self):
         layer_without_bias = CouplingBijector(
