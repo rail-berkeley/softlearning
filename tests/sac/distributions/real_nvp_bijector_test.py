@@ -27,7 +27,7 @@ DEFAULT_2D_INPUTS = np.array([
 ], dtype=np.float32)
 
 class CouplingBijectorTest(test.TestCase):
-    def test_forward(self):
+    def test_composed_forward_and_log_det_jacobian(self):
         odd_layer = CouplingBijector(
             parity="odd",
             name="coupling_odd",
