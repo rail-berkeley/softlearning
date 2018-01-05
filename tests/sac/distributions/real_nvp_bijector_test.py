@@ -132,13 +132,25 @@ class CouplingBijectorTest(test.TestCase):
         )
 
         inputs = tf.constant(DEFAULT_2D_INPUTS)
+
+        forward_log_det_jacobian = np.zeros(inputs.shape[0])
+        inverse_log_det_jacobian = np.zeros(inputs.shape[0])
+
+        forward_log_det_jacobian += layer1.forward_log_det_jacobian(inputs)
         forward_out = layer1.forward(inputs)
+        forward_log_det_jacobian += layer2.forward_log_det_jacobian(forward_out)
         forward_out = layer2.forward(forward_out)
+
+        inverse_log_det_jacobian += layer2.inverse_log_det_jacobian(forward_out)
         inverse_out = layer2.inverse(forward_out)
+        inverse_log_det_jacobian += layer1.inverse_log_det_jacobian(inverse_out)
         inverse_out = layer1.inverse(inverse_out)
 
         with self.test_session():
-            self.assertAllClose(inputs.eval(), inverse_out.eval())
+            self.assertAllEqual(
+                (forward_log_det_jacobian + inverse_log_det_jacobian).eval(),
+                np.zeros(inputs.shape[0]))
+            self.assertAllEqual(inputs.eval(), inverse_out.eval())
 
     def test_get_mask(self):
         inputs = tf.constant([[0,0], [0,1], [1,0], [1,1]], dtype=tf.float32)
