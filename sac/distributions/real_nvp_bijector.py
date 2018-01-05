@@ -130,62 +130,50 @@ class CouplingLayer(object):
 
     # TODO: Properties
 
-    def get_mask(self, x, dtype):
-        shape = x.get_shape()
-        mask = checkerboard(shape[1:], parity=self.parity, dtype=dtype)
-
-        # TODO: remove assert
-        assert mask.get_shape() == shape[1:]
-
-        return mask
-
     def _forward(self, x, **condition_kwargs):
         self._maybe_assert_valid_x(x)
 
-        mask = self.get_mask(x, dtype=x.dtype)
+        slice_begin = {"even": 0, "odd": 1}[self.parity]
+        masked_x = x[:, slice(slice_begin, None, 2)]
+        non_masked_x = x[:, slice(1-slice_begin, None, 2)]
 
-        # masked half of the x
-        masked_x = x * mask
-
-        # TODO: scale and translation could be merged into a single network
         with tf.variable_scope("{name}/scale".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
-            scale = mask * self.scale_fn(masked_x, **condition_kwargs)
+            # s(x_{1:d}) in paper
+            scale = self.scale_fn(masked_x, **condition_kwargs)
 
         with tf.variable_scope("{name}/translation".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
-            translation = mask * self.translation_fn(
-                masked_x, **condition_kwargs)
+            # t(x_{1:d}) in paper
+            translation = self.translation_fn(masked_x, **condition_kwargs)
 
-        exp_scale = tf.check_numerics(
-            tf.exp(scale), "tf.exp(scale) contains NaNs or Infs.")
-        # (9) in paper
+        # exp(s(b*x)) in paper
+        exp_scale = tf.exp(scale)
 
-        if self.parity == "odd":
-            out = tf.stack((
-                x[:, 0] * exp_scale[:, 1] + translation[:, 1],
-                x[:, 1],
-            ), axis=1)
-        else:
-            out = tf.stack((
-                x[:, 0],
-                x[:, 1] * exp_scale[:, 0] + translation[:, 0],
-            ), axis=1)
+        # y_{d+1:D} = x_{d+1:D} * exp(s(x_{1:d})) + t(x_{1:d})
+        part_1 = masked_x
+        part_2 = non_masked_x * exp_scale + translation
 
-        return out
+        to_interleave = (
+            (part_2, part_1)
+            if self.parity == "odd"
+            else (part_1, part_2)
+        )
+
+        outputs = tf.reshape(tf.stack(to_interleave, axis=2), tf.shape(x))
+
+        return outputs
 
     def _forward_log_det_jacobian(self, x, **condition_kwargs):
         self._maybe_assert_valid_x(x)
 
-        mask = self.get_mask(x, dtype=x.dtype)
-
-        # masked half of the x
-        masked_x = x * mask
+        slice_begin = {"odd": 1, "even": 0}[self.parity]
+        masked_x = x[:, slice(slice_begin, None, 2)]
 
         # TODO: scale and translation could be merged into a single network
         with tf.variable_scope("{name}/scale".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
-            scale = mask * self.scale_fn(masked_x, **condition_kwargs)
+            scale = self.scale_fn(masked_x, **condition_kwargs)
 
         log_det_jacobian = tf.reduce_sum(
             scale, axis=tuple(range(1, len(x.shape))))
@@ -195,33 +183,33 @@ class CouplingLayer(object):
     def _inverse(self, y, **condition_kwargs):
         self._maybe_assert_valid_y(y)
 
-        mask = self.get_mask(y, dtype=y.dtype)
+        slice_begin = {"even": 0, "odd": 1}[self.parity]
+        masked_y = y[:, slice(slice_begin, None, 2)]
+        non_masked_y = y[:, slice(1-slice_begin, None, 2)]
 
-        masked_y = y * mask
-
-        # TODO: scale and translation could be merged into a single network
         with tf.variable_scope("{name}/scale".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
-            scale = mask * self.scale_fn(masked_y, **condition_kwargs)
+            # s(y_{1:d}) in paper
+            scale = self.scale_fn(masked_y, **condition_kwargs)
 
         with tf.variable_scope("{name}/translation".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
-            translation = mask * self.translation_fn(
-                masked_y, **condition_kwargs)
+            # t(y_{1:d}) in paper
+            translation = self.translation_fn(masked_y, **condition_kwargs)
 
-        if self.parity == "odd":
-            out = tf.stack((
-                (y[:, 0] - translation[:, 1]) * tf.exp(-scale[:, 1]),
-                y[:, 1],
-            ), axis=1)
-        else:
-            out = tf.stack((
-                y[:, 0],
-                (y[:, 1] - translation[:, 0]) * tf.exp(-scale[:, 0]),
-            ), axis=1)
+        # y_{d+1:D} = (y_{d+1:D} - t(y_{1:d})) * exp(-s(y_{1:d}))
+        part_1 = masked_y
+        part_2 = (non_masked_y - translation) * tf.exp(-scale)
 
-        return out
+        to_interleave = (
+            (part_2, part_1)
+            if self.parity == "odd"
+            else (part_1, part_2)
+        )
 
+        outputs = tf.reshape(tf.stack(to_interleave, axis=2), tf.shape(y))
+
+        return outputs
 
             if self.parity == "odd":
                 outputs = tf.stack(
@@ -242,7 +230,6 @@ class CouplingLayer(object):
         if not self.validate_args:
             return y
         raise NotImplementedError("_maybe_assert_valid_y")
-
 
 DEFAULT_CONFIG = {
     "num_coupling_layers": 2,

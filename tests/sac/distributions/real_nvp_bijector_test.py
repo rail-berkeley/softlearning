@@ -198,20 +198,5 @@ class CouplingBijectorTest(test.TestCase):
                 np.zeros(inputs.shape[0]))
             self.assertAllEqual(inputs.eval(), inverse_out.eval())
 
-    def test_get_mask(self):
-        inputs = tf.constant([[0,0], [0,1], [1,0], [1,1]], dtype=tf.float32)
-        EXPECTED = {"odd": [0,1], "even": [1,0]}
-        for parity, expected_mask in EXPECTED.items():
-            layer = CouplingBijector(
-                parity=parity,
-                name="coupling_" + parity,
-                translation_fn=lambda x: None,
-                scale_fn=lambda x: None)
-            mask = layer.get_mask(inputs, tf.float32)
-
-            with self.test_session():
-                self.assertAllEqual(
-                    mask.eval(), tf.constant(expected_mask).eval())
-
 if __name__ == '__main__':
   test.main()
