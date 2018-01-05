@@ -73,6 +73,52 @@ class CouplingBijectorTest(test.TestCase):
         self.assertAllEqual(even_forward_log_det_jacobian_num,
                             SCALE_FN_WITH_BIAS(odd_forward_out_num[:, 0]))
 
+    def test_composed_inverse_and_log_det_jacobian(self):
+        odd_layer = CouplingBijector(
+            parity="odd",
+            name="coupling_odd",
+            translation_fn=TRANSLATION_FN_WITH_BIAS,
+            scale_fn=SCALE_FN_WITH_BIAS
+        )
+
+        even_layer = CouplingBijector(
+            parity="even",
+            name="coupling_even",
+            translation_fn=TRANSLATION_FN_WITH_BIAS,
+            scale_fn=SCALE_FN_WITH_BIAS
+        )
+
+        inputs = tf.constant(DEFAULT_2D_INPUTS)
+        odd_inverse_out = odd_layer.inverse(inputs)
+        odd_inverse_log_det_jacobian = odd_layer.inverse_log_det_jacobian(
+            inputs)
+
+        even_inverse_out = even_layer.inverse(odd_inverse_out)
+        even_inverse_log_det_jacobian = even_layer.inverse_log_det_jacobian(
+            odd_inverse_out)
+
+        # Verify that the true side of the mask comes out as identity
+        with self.test_session() as session:
+            (inputs_num,
+             odd_inverse_out_num,
+             even_inverse_out_num,
+             odd_inverse_log_det_jacobian_num,
+             even_inverse_log_det_jacobian_num) = session.run((
+                 inputs,
+                 odd_inverse_out,
+                 even_inverse_out,
+                 odd_inverse_log_det_jacobian,
+                 even_inverse_log_det_jacobian,
+             ))
+
+        self.assertAllEqual(odd_inverse_out_num[:, 1], inputs_num[:, 1])
+        self.assertAllEqual(even_inverse_out_num[:, 0], odd_inverse_out_num[:, 0])
+
+        self.assertAllEqual(odd_inverse_log_det_jacobian_num,
+                            -SCALE_FN_WITH_BIAS(inputs_num[:, 1]))
+        self.assertAllEqual(even_inverse_log_det_jacobian_num,
+                            -SCALE_FN_WITH_BIAS(odd_inverse_out_num[:, 0]))
+
     def test_forward_without_bias(self):
         layer_without_bias = CouplingBijector(
             parity="odd",
