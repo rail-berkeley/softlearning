@@ -133,6 +133,11 @@ class CouplingLayer(object):
     def _forward(self, x, **condition_kwargs):
         self._maybe_assert_valid_x(x)
 
+        D = x.shape[1]
+
+        if D % 2 != 0:
+            x = tf.pad(x, [[0,0], [0, 1]], constant_values=0)
+
         slice_begin = {"even": 0, "odd": 1}[self.parity]
         masked_x = x[:, slice(slice_begin, None, 2)]
         non_masked_x = x[:, slice(1-slice_begin, None, 2)]
@@ -160,12 +165,20 @@ class CouplingLayer(object):
             else (part_1, part_2)
         )
 
-        outputs = tf.reshape(tf.stack(to_interleave, axis=2), tf.shape(x))
+        outputs = tf.reshape(
+            tf.stack(to_interleave, axis=2),
+            tf.shape(x)
+        )[:, :D]
 
         return outputs
 
     def _forward_log_det_jacobian(self, x, **condition_kwargs):
         self._maybe_assert_valid_x(x)
+
+        D = x.shape[1]
+
+        if D % 2 != 0:
+            x = tf.pad(x, [[0,0], [0, 1]], constant_values=0)
 
         slice_begin = {"odd": 1, "even": 0}[self.parity]
         masked_x = x[:, slice(slice_begin, None, 2)]
@@ -175,6 +188,9 @@ class CouplingLayer(object):
                                reuse=tf.AUTO_REUSE):
             scale = self.scale_fn(masked_x, **condition_kwargs)
 
+        if D % 2 != 0 and slice_begin == 1:
+            scale = scale[:, :-1]
+
         log_det_jacobian = tf.reduce_sum(
             scale, axis=tuple(range(1, len(x.shape))))
 
@@ -182,6 +198,11 @@ class CouplingLayer(object):
 
     def _inverse(self, y, **condition_kwargs):
         self._maybe_assert_valid_y(y)
+
+        D = y.shape[1]
+
+        if D % 2 != 0:
+            y = tf.pad(y, [[0,0], [0, 1]], constant_values=0)
 
         slice_begin = {"even": 0, "odd": 1}[self.parity]
         masked_y = y[:, slice(slice_begin, None, 2)]
@@ -207,7 +228,10 @@ class CouplingLayer(object):
             else (part_1, part_2)
         )
 
-        outputs = tf.reshape(tf.stack(to_interleave, axis=2), tf.shape(y))
+        outputs = tf.reshape(
+            tf.stack(to_interleave, axis=2),
+            tf.shape(y)
+        )[:, :D]
 
         return outputs
 
@@ -279,6 +303,7 @@ class RealNVPBijector(ConditionalBijector):
         scale_hidden_sizes = self.config["scale_hidden_sizes"]
 
         def translation_wrapper(inputs, observations):
+            output_size = inputs.shape.as_list()[-1]
             return feedforward_net(
                 tf.concat((inputs, observations), axis=1),
                 # TODO: should allow multi_dimensional inputs/outputs
@@ -286,10 +311,11 @@ class RealNVPBijector(ConditionalBijector):
                              inputs.shape.as_list()[-1]))
 
         def scale_wrapper(inputs, observations):
+            output_size = inputs.shape.as_list()[-1]
             return feedforward_net(
                 tf.concat((inputs, observations), axis=1),
                 # TODO: should allow multi_dimensional inputs/outputs
-                layer_sizes=(*scale_hidden_sizes, inputs.shape.as_list()[-1]),
+                layer_sizes=(*scale_hidden_sizes, output_size),
                 regularizer=tf.contrib.layers.l2_regularizer(
                     self.config["scale_regularization"]))
 
