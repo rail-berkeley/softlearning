@@ -194,18 +194,25 @@ def run_experiment(variant):
 
     algorithm.train()
 
-
 def launch_experiments(variant_generator):
     variants = variant_generator.variants()
 
+    num_experiments = len(variants)
+    print('Launching {} experiments.'.format(num_experiments))
+
     for i, variant in enumerate(variants):
-        print('Launching {} experiments.'.format(len(variants)))
+        print("Experiment: {}/{}".format(i, num_experiments))
+        experiment_prefix = variant['prefix'] + '/' + args.exp_name
+        experiment_name = (variant['prefix']
+                           + '-' + args.exp_name
+                           + '-' + str(i).zfill(2))
+
         run_sac_experiment(
             run_experiment,
             mode=args.mode,
             variant=variant,
-            exp_prefix=variant['prefix'] + '/' + args.exp_name,
-            exp_name=variant['prefix'] + '-' + args.exp_name + '-' + str(i).zfill(2),
+            exp_prefix=experiment_prefix,
+            exp_name=experiment_name,
             n_parallel=1,
             seed=variant['seed'],
             terminate_machine=True,
