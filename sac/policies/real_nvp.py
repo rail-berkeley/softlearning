@@ -47,6 +47,8 @@ class RealNVPPolicy(NNPolicy, Serializable):
         self._env_spec = env_spec
         self._Da = env_spec.action_space.flat_dim
         self._Ds = env_spec.observation_space.flat_dim
+        self._fixed_h = None
+        self._is_deterministic = False
         self._qf = qf
 
         self.name = name
@@ -62,6 +64,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
 
     def actions_for(self, observations, name=None, reuse=tf.AUTO_REUSE):
         name = name or self.name
+
         with tf.variable_scope(name, reuse=reuse):
             N = tf.shape(observations)[0]
             return tf.stop_gradient(
@@ -96,7 +99,16 @@ class RealNVPPolicy(NNPolicy, Serializable):
             name='observations',
         )
 
+        self._latents_ph = tf.placeholder(
+            dtype=tf.float32,
+            shape=(None, self._Da),
+            name='observations',
+        )
+
         self._actions = self.actions_for(self._observations_ph)
+        with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
+            self._determistic_actions = self.bijector.forward(
+                self._latents_ph, observations=self._observations_ph)
 
     def get_action(self, observations):
         """Sample single action based on the observations.
@@ -108,9 +120,19 @@ class RealNVPPolicy(NNPolicy, Serializable):
     def get_actions(self, observations):
         """Sample batch of actions based on the observations"""
 
-        feed_dict = {self._observations_ph: observations}
-        actions = tf.get_default_session().run(
-            self._actions, feed_dict=feed_dict)
+        feed_dict = { self._observations_ph: observations }
+
+        if self._fixed_h is not None:
+            feed_dict.update({
+                self._latents_ph: self._fixed_h
+            })
+            actions = tf.get_default_session().run(
+                self._determistic_actions,
+                feed_dict=feed_dict)
+        else:
+            actions = tf.get_default_session().run(
+                self._actions, feed_dict=feed_dict)
+
         return actions
 
     @contextmanager
@@ -125,10 +147,23 @@ class RealNVPPolicy(NNPolicy, Serializable):
             to during the context. The value will be reset back to the previous
             value when the context exits.
         """
-        current = getattr(self, "_is_deterministic", None)
+        was_deterministic = self._is_deterministic
         self._is_deterministic = set_deterministic
         yield
-        self._is_deterministic = current
+        self._is_deterministic = was_deterministic
+
+    @contextmanager
+    def fix_h(self, h=None):
+        if h is None:
+            h = self.base_distribution.sample(1).eval()
+
+        print("h:", h)
+        was_deterministic = self._is_deterministic
+        self._is_deterministic = True
+        self._fixed_h = h
+        yield
+        self._fixed_h = None
+        self._is_deterministic = was_deterministic
 
     def get_params_internal(self, **tags):
         if tags: raise NotImplementedError
