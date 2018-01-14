@@ -19,7 +19,6 @@ COMMON_PARAMS = {
     "discount": 0.99,
     "target_update_interval": [1000.0]
     "tau": 1.0, # 1e-2 if target_update_interval == 1
-    "K": 4,
     "layer_size": 128,
     "batch_size": 128,
     "max_pool_size": 1E6,
