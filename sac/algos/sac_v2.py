@@ -87,6 +87,7 @@ class SAC(RLAlgorithm, Serializable):
             scale_reward=1,
             discount=0.99,
             tau=0.01,
+            target_update_interval=1,
 
             save_full_state=False,
     ):
@@ -127,6 +128,7 @@ class SAC(RLAlgorithm, Serializable):
         self._scale_reward = scale_reward
         self._discount = discount
         self._tau = tau
+        self._target_update_interval = target_update_interval
 
         self._save_full_state = save_full_state
 
@@ -299,7 +301,10 @@ class SAC(RLAlgorithm, Serializable):
 
         feed_dict = self._get_feed_dict(batch)
         self._sess.run(self._training_ops, feed_dict)
-        self._sess.run(self._target_ops)
+
+        if itr % self._target_update_interval == 0:
+            # Run target ops here.
+            self._sess.run(self._target_ops)
 
     def _get_feed_dict(self, batch):
         """Construct TensorFlow feed_dict from sample batch."""

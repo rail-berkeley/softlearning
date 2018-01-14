@@ -17,16 +17,23 @@ COMMON_PARAMS = {
     "seed": [1, 2, 3],
     "lr": 3E-4,
     "discount": 0.99,
-    "tau": 0.01,
+    "target_update_interval": [1000.0]
+    "tau": 1.0, # 1e-2 if target_update_interval == 1
     "K": 4,
     "layer_size": 128,
     "batch_size": 128,
     "max_pool_size": 1E6,
-    "n_train_repeat": 1,
+    "n_train_repeat": 4,
     "epoch_length": 1000,
     "snapshot_mode": 'gap',
     "snapshot_gap": 100,
     "sync_pkl": True,
+
+    # real nvp configs
+    "policy_lr":  3e-4,
+    "policy_coupling_layers": [2],
+    "policy_s_t_layers": [1],
+    "policy_s_t_units": [128],
 }
 
 
@@ -35,30 +42,30 @@ ENV_PARAMS = {
         'prefix': 'multi-direction-swimmer',
         'env_name': 'multi-direction-swimmer',
         'max_path_length': 1000,
-        'n_epochs': 202,
+        'n_epochs': 502,
         'scale_reward': 100.0,
-        'n_train_repeat': 4,
-        'policy_lr': [1e-4, 5e-4, 1e-3, 5e-3],
+
     },
     'swimmer': { # 2 DoF
         'prefix': 'swimmer',
         'env_name': 'swimmer-rllab',
         'max_path_length': 1000,
-        'n_epochs': 2000,
+        'n_epochs': 2001,
         'scale_reward': 100,
     },
     'hopper': { # 3 DoF
         'prefix': 'hopper',
         'env_name': 'Hopper-v1',
         'max_path_length': 1000,
-        'n_epochs': 3000,
+        'n_epochs': 3001,
         'scale_reward': 1,
+        'policy_lr': [3e-4, 1e-3],
     },
     'half-cheetah': { # 6 DoF
         'prefix': 'half-cheetah',
         'env_name': 'HalfCheetah-v1',
         'max_path_length': 1000,
-        'n_epochs': 10000,
+        'n_epochs': 10001,
         'scale_reward': 1,
         'max_pool_size': 1E7,
     },
@@ -66,21 +73,21 @@ ENV_PARAMS = {
         'prefix': 'walker',
         'env_name': 'Walker2d-v1',
         'max_path_length': 1000,
-        'n_epochs': 5000,
+        'n_epochs': 5001,
         'scale_reward': 3,
     },
     'ant': { # 8 DoF
         'prefix': 'ant',
         'env_name': 'Ant-v1',
         'max_path_length': 1000,
-        'n_epochs': 10000,
-        'scale_reward': 3,
+        'n_epochs': 10001,
+        'scale_reward': [3.0],
     },
     'humanoid': { # 21 DoF
         'prefix': 'humanoid',
         'env_name': 'humanoid-rllab',
         'max_path_length': 1000,
-        'n_epochs': 20000,
+        'n_epochs': 20001,
         'scale_reward': 3,
     },
 }
@@ -156,6 +163,10 @@ def run_experiment(variant):
         hidden_layer_sizes=[M, M],
     )
 
+    policy_s_t_layers = variant['policy_s_t_layers']
+    policy_s_t_units = variant['policy_s_t_units']
+    s_t_hidden_sizes = [policy_s_t_units] * policy_s_t_layers
+
     policy_config = {
         "mode": "train",
         "D_in": 2,
@@ -163,9 +174,9 @@ def run_experiment(variant):
         "squash": True,
         "real_nvp_config": {
             "scale_regularization": 0.0,
-            "num_coupling_layers": 4,
-            "translation_hidden_sizes": (M, ),
-            "scale_hidden_sizes": (M, ),
+            "num_coupling_layers": variant['policy_coupling_layers'],
+            "translation_hidden_sizes": s_t_hidden_sizes,
+            "scale_hidden_sizes": s_t_hidden_sizes,
         }
     }
 
@@ -188,6 +199,7 @@ def run_experiment(variant):
         scale_reward=variant['scale_reward'],
         discount=variant['discount'],
         tau=variant['tau'],
+        target_update_interval=variant['target_update_interval'],
 
         save_full_state=False,
     )
