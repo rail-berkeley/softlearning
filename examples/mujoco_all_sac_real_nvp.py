@@ -35,7 +35,7 @@ COMMON_PARAMS = {
     "policy_s_t_layers": [1],
     "policy_s_t_units": [128],
 
-    "conditionals_dim": 1,
+    "preprocessing_hidden_sizes": (64, 8),
 }
 
 
@@ -165,12 +165,11 @@ def run_experiment(variant):
         hidden_layer_sizes=[M, M],
     )
 
-    conditionals_dim = variant['conditionals_dim']
+    preprocessing_hidden_sizes = variant.get('preprocessing_hidden_sizes')
     observations_preprocessor = (
         MLPPreprocessor(env_spec=env.spec,
-                        hidden_layer_sizes=(M, ),
-                        output_size=conditionals_dim)
-        if (conditionals_dim < env.spec.observation_space.flat_dim)
+                        layer_sizes=preprocessing_hidden_sizes)
+        if preprocessing_hidden_sizes is not None
         else None
     )
 
