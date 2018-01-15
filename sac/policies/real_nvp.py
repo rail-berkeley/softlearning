@@ -28,6 +28,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
                  env_spec,
                  config=None,
                  qf=None,
+                 observations_preprocessor=None,
                  name="policy"):
         """Initialize Real NVP policy.
 
@@ -50,6 +51,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
         self._fixed_h = None
         self._is_deterministic = False
         self._qf = qf
+        self._observations_preprocessor = observations_preprocessor
 
         self.name = name
         self.build()
@@ -59,26 +61,27 @@ class RealNVPPolicy(NNPolicy, Serializable):
             env_spec,
             self._observations_ph,
             tf.tanh(self._actions) if squash else self._actions,
-            'policy'
+            observations_preprocessor=observations_preprocessor,
+            scope_name='policy'
         )
 
-    def actions_for(self, observations, name=None, reuse=tf.AUTO_REUSE):
+    def actions_for(self, conditionals, name=None, reuse=tf.AUTO_REUSE):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
-            N = tf.shape(observations)[0]
+            N = tf.shape(conditionals)[0]
             return tf.stop_gradient(
                 self.distribution.sample(
-                    N, bijector_kwargs={"observations": observations}))
+                    N, bijector_kwargs={"observations": conditionals}))
 
-    def log_pi_for(self, observations, actions=None, name=None, reuse=tf.AUTO_REUSE):
+    def log_pi_for(self, conditionals, actions=None, name=None, reuse=tf.AUTO_REUSE):
         name = name or self.name
         if actions is None:
-            actions = self.actions_for(observations, name, reuse)
+            actions = self.actions_for(conditionals, name, reuse)
 
         with tf.variable_scope(name, reuse=reuse):
             return self.distribution.log_prob(
-                actions, bijector_kwargs={"observations": observations})
+                actions, bijector_kwargs={"observations": conditionals})
 
     def build(self):
         ds = tf.contrib.distributions
@@ -105,17 +108,19 @@ class RealNVPPolicy(NNPolicy, Serializable):
             name='observations',
         )
 
-        self._actions = self.actions_for(self._observations_ph)
+        self._conditionals = self._get_conditionals(self._observations_ph)
+
+        self._actions = self.actions_for(self._conditionals)
         with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
             self._determistic_actions = self.bijector.forward(
-                self._latents_ph, observations=self._observations_ph)
+                self._latents_ph, observations=self._conditionals)
 
-    def get_action(self, observations):
+    def get_action(self, observation):
         """Sample single action based on the observations.
 
         TODO: if self._is_deterministic
         """
-        return self.get_actions(observations[None])[0], {}
+        return self.get_actions(observation[None])[0], {}
 
     def get_actions(self, observations):
         """Sample batch of actions based on the observations"""

@@ -11,14 +11,15 @@ from sac.misc.utils import timestamp
 from sac.policies import GMMPolicy, RealNVPPolicy
 from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
+from sac.preprocessors import MLPPreprocessor
 
 
 COMMON_PARAMS = {
     "seed": [1, 2, 3],
     "lr": 3E-4,
     "discount": 0.99,
-    "target_update_interval": [1000.0],
-    "tau": 1.0, # 1e-2 if target_update_interval == 1
+    "target_update_interval": 1,
+    "tau": 1e-2,
     "layer_size": 128,
     "batch_size": 128,
     "max_pool_size": 1E6,
@@ -33,6 +34,8 @@ COMMON_PARAMS = {
     "policy_coupling_layers": [2],
     "policy_s_t_layers": [1],
     "policy_s_t_units": [128],
+
+    "conditionals_dim": 1,
 }
 
 
@@ -162,6 +165,15 @@ def run_experiment(variant):
         hidden_layer_sizes=[M, M],
     )
 
+    conditionals_dim = variant['conditionals_dim']
+    observations_preprocessor = (
+        MLPPreprocessor(env_spec=env.spec,
+                        hidden_layer_sizes=(M, ),
+                        output_size=conditionals_dim)
+        if (conditionals_dim < env.spec.observation_space.flat_dim)
+        else None
+    )
+
     policy_s_t_layers = variant['policy_s_t_layers']
     policy_s_t_units = variant['policy_s_t_units']
     s_t_hidden_sizes = [policy_s_t_units] * policy_s_t_layers
@@ -183,6 +195,7 @@ def run_experiment(variant):
         env_spec=env.spec,
         config=policy_config,
         qf=qf,
+        observations_preprocessor=observations_preprocessor
     )
 
     algorithm = SACV2(

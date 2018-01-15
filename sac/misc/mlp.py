@@ -1,5 +1,9 @@
 import tensorflow as tf
 
+from rllab.core.serializable import Serializable
+
+from sandbox.rocky.tf.core.parameterized import Parameterized
+
 WEIGHT_DEFAULT_NAME = "weights"
 BIAS_DEFAULT_NAME = "bias"
 
@@ -152,3 +156,41 @@ def mlp(inputs,
         layer = tf.squeeze(layer, axis=-1)
 
     return layer
+
+class MLPFunction(Parameterized, Serializable):
+
+    def __init__(self, name, input_pls, hidden_layer_sizes):
+        Parameterized.__init__(self)
+        Serializable.quick_init(self, locals())
+
+        self._name = name
+        self._input_pls = input_pls
+        self._layer_sizes = list(hidden_layer_sizes) + [None]
+
+        self._output_t = self.get_output_for(*self._input_pls)
+
+    def get_output_for(self, *inputs, reuse=False):
+        with tf.variable_scope(self._name, reuse=reuse):
+            value_t = mlp(
+                inputs=inputs,
+                output_nonlinearity=None,
+                layer_sizes=self._layer_sizes,
+            )  # N
+
+        return value_t
+
+    def eval(self, *inputs):
+        feeds = {pl: val for pl, val in zip(self._input_pls, inputs)}
+
+        return tf_utils.get_default_session().run(self._output_t, feeds)
+
+    def get_params_internal(self, **tags):
+        if len(tags) > 0:
+            raise NotImplementedError
+
+        scope = tf.get_variable_scope().name
+        scope += '/' + self._name + '/' if len(scope) else self._name + '/'
+
+        return tf.get_collection(
+            tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope
+        )
