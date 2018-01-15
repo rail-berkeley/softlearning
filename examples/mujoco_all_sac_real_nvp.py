@@ -17,7 +17,7 @@ COMMON_PARAMS = {
     "seed": [1, 2, 3],
     "lr": 3E-4,
     "discount": 0.99,
-    "target_update_interval": [1000.0]
+    "target_update_interval": [1000.0],
     "tau": 1.0, # 1e-2 if target_update_interval == 1
     "layer_size": 128,
     "batch_size": 128,
