@@ -61,27 +61,44 @@ class RealNVPPolicy(NNPolicy, Serializable):
             env_spec,
             self._observations_ph,
             tf.tanh(self._actions) if squash else self._actions,
-            observations_preprocessor=observations_preprocessor,
             scope_name='policy'
         )
 
-    def actions_for(self, conditionals, name=None, reuse=tf.AUTO_REUSE):
+    def actions_for(self, observations, name=None, reuse=tf.AUTO_REUSE,
+                    stop_gradient=True):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
-            N = tf.shape(conditionals)[0]
-            return tf.stop_gradient(
-                self.distribution.sample(
-                    N, bijector_kwargs={"observations": conditionals}))
+            if self._observations_preprocessor is not None:
+                condition_var = self._observations_preprocessor.get_output_for(
+                    observations, reuse=reuse)
+            else:
+                condition_var = observations
 
-    def log_pi_for(self, conditionals, actions=None, name=None, reuse=tf.AUTO_REUSE):
+            N = tf.shape(condition_var)[0]
+            actions = self.distribution.sample(
+                N, bijector_kwargs={"observations": condition_var})
+
+            if stop_gradient:
+                actions = tf.stop_gradient(actions)
+
+            return actions
+
+
+    def log_pi_for(self, condition_var, actions=None, name=None, reuse=tf.AUTO_REUSE,
+                   stop_action_gradient=True):
         name = name or self.name
         if actions is None:
-            actions = self.actions_for(conditionals, name, reuse)
+            actions = self.actions_for(condition_var, name, reuse,
+                                       stop_gradient=stop_action_gradient)
 
         with tf.variable_scope(name, reuse=reuse):
+            if self._observations_preprocessor is not None:
+                condition_var = self._observations_preprocessor.get_output_for(
+                    condition_var, reuse=reuse)
+
             return self.distribution.log_prob(
-                actions, bijector_kwargs={"observations": conditionals})
+                actions, bijector_kwargs={"observations": condition_var})
 
     def build(self):
         ds = tf.contrib.distributions
@@ -108,12 +125,16 @@ class RealNVPPolicy(NNPolicy, Serializable):
             name='observations',
         )
 
-        self._conditionals = self._get_conditionals(self._observations_ph)
+        if self._observations_preprocessor is not None:
+            self._condition_var = self._observations_preprocessor.get_output_for(
+                self._observations_ph, reuse=True)
+        else:
+            self._condition_var = self._observations_ph
 
-        self._actions = self.actions_for(self._conditionals)
+        self._actions = self.actions_for(self._observations_ph)
         with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
             self._determistic_actions = self.bijector.forward(
-                self._latents_ph, observations=self._conditionals)
+                self._latents_ph, observations=self._condition_var)
 
     def get_action(self, observation):
         """Sample single action based on the observations.
