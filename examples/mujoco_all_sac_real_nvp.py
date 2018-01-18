@@ -88,6 +88,8 @@ ENV_PARAMS = {
         'scale_reward': [10.0],
 
         "preprocessing_hidden_sizes": [(128, 16)],
+
+        "snapshot_gap": 1000,
     },
     'ant': { # 8 DoF
         'prefix': 'ant',
@@ -97,6 +99,8 @@ ENV_PARAMS = {
         'scale_reward': [10.0],
 
         "preprocessing_hidden_sizes": [(128, 16)],
+
+        "snapshot_gap": 1000,
     },
     'humanoid': { # 21 DoF
         'prefix': 'humanoid',
@@ -104,6 +108,8 @@ ENV_PARAMS = {
         'max_path_length': 1000,
         'n_epochs': 20001,
         'scale_reward': 3,
+
+        "snapshot_gap": 2000,
     },
 }
 DEFAULT_ENV = 'swimmer'
@@ -114,7 +120,7 @@ def parse_args():
     parser.add_argument('--env',
                         type=str,
                         choices=AVAILABLE_ENVS,
-                        default='swimmer')
+                        default=DEFAULT_ENV)
     parser.add_argument('--exp_name',type=str, default=timestamp())
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--log_dir', type=str, default=None)
@@ -194,7 +200,6 @@ def run_experiment(variant):
 
     policy_config = {
         "mode": "train",
-        "D_in": 2,
         # "learning_rate": 5e-4, # not used, see variant
         "squash": True,
         "real_nvp_config": {
