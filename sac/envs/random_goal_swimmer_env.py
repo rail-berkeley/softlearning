@@ -6,6 +6,7 @@ from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.misc.overrides import overrides
 from rllab.envs.base import Step
 from rllab.envs.mujoco.mujoco_env import MujocoEnv
+from rllab.misc import logger
 
 DEFAULT_GOAL_RADIUS = 0.25
 
@@ -44,10 +45,11 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
         next_obs = self.get_current_obs()
 
         xy_position = self.model.data.xpos[0, :2]
-        goal_distance = np.sqrt(np.sum((xy_position - self.goal_position)**2))
+        self.goal_distance = np.sqrt(
+            np.sum((xy_position - self.goal_position)**2))
 
         # TODO: control cost?
-        if goal_distance < self.goal_radius:
+        if self.goal_distance < self.goal_radius:
             reward, done = self.goal_reward, True
         else:
             reward, done = 0.0, False
@@ -61,3 +63,4 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
         TODO: figure out what this should log and implement
         """
         super().log_diagnostics(paths, *args, **kwargs)
+        logger.record_tabular('DistanceFromGoal', self.goal_distance)
