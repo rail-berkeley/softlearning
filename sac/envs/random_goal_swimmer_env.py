@@ -31,6 +31,13 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
 
         return super().reset(*args, **kwargs)
 
+    def get_current_obs(self):
+        proprioceptive_observation = super().get_current_obs()
+        exteroceptive_observation = [self.goal_position]
+        observation = np.concatenate([proprioceptive_observation,
+                                      exteroceptive_observation])
+        return observation
+
     @overrides
     def step(self, action):
         self.forward_dynamics(action)
