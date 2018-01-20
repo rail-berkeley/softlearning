@@ -91,8 +91,13 @@ class RealNVPPolicy(NNPolicy, Serializable):
 
     def build(self):
         ds = tf.contrib.distributions
+        real_nvp_config = self._real_nvp_config
         self.bijector = RealNVPBijector(
-            config=self._real_nvp_config, event_ndims=self._Da)
+            num_coupling_layers=real_nvp_config.get("num_coupling_layers"),
+            translation_hidden_sizes=real_nvp_config.get("translation_hidden_sizes"),
+            scale_hidden_sizes=real_nvp_config.get("scale_hidden_sizes"),
+            scale_regularization=real_nvp_config.get("scale_regularization"),
+            event_ndims=self._Da)
 
         self.base_distribution = ds.MultivariateNormalDiag(
             loc=tf.zeros(self._Da), scale_diag=tf.ones(self._Da))

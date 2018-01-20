@@ -267,7 +267,10 @@ class RealNVPBijector(ConditionalBijector):
     """TODO"""
 
     def __init__(self,
-                 config=None,
+                 num_coupling_layers=2,
+                 translation_hidden_sizes=(25,),
+                 scale_hidden_sizes=(25,),
+                 scale_regularization=0,
                  event_ndims=0,
                  validate_args=False,
                  name="real_nvp"):
@@ -288,7 +291,10 @@ class RealNVPBijector(ConditionalBijector):
         self._name = name
         self._validate_args = validate_args
 
-        self.config = dict(DEFAULT_CONFIG, **(config or {}))
+        self._num_coupling_layers = num_coupling_layers
+        self._translation_hidden_sizes = translation_hidden_sizes
+        self._scale_hidden_sizes = scale_hidden_sizes
+        self._scale_regularization = scale_regularization
 
         self.build()
 
@@ -298,9 +304,9 @@ class RealNVPBijector(ConditionalBijector):
     # TODO: Properties
 
     def build(self):
-        num_coupling_layers = self.config["num_coupling_layers"]
-        translation_hidden_sizes = self.config["translation_hidden_sizes"]
-        scale_hidden_sizes = self.config["scale_hidden_sizes"]
+        num_coupling_layers = self._num_coupling_layers
+        translation_hidden_sizes = self._translation_hidden_sizes
+        scale_hidden_sizes = self._scale_hidden_sizes
 
         def translation_wrapper(inputs, observations):
             output_size = inputs.shape.as_list()[-1]
@@ -317,7 +323,7 @@ class RealNVPBijector(ConditionalBijector):
                 # TODO: should allow multi_dimensional inputs/outputs
                 layer_sizes=(*scale_hidden_sizes, output_size),
                 regularizer=tf.contrib.layers.l2_regularizer(
-                    self.config["scale_regularization"]))
+                    self._scale_regularization))
 
         self.layers = [
             CouplingBijector(
