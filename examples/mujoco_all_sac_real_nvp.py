@@ -198,22 +198,18 @@ def run_experiment(variant):
     policy_s_t_units = variant['policy_s_t_units']
     s_t_hidden_sizes = [policy_s_t_units] * policy_s_t_layers
 
-    policy_config = {
-        "mode": "train",
-        # "learning_rate": 5e-4, # not used, see variant
-        "squash": True,
-        "real_nvp_config": {
-            "scale_regularization": 0.0,
-            "num_coupling_layers": variant['policy_coupling_layers'],
-            "translation_hidden_sizes": s_t_hidden_sizes,
-            "scale_hidden_sizes": s_t_hidden_sizes,
-        }
+    real_nvp_config = {
+        "scale_regularization": 0.0,
+        "num_coupling_layers": variant['policy_coupling_layers'],
+        "translation_hidden_sizes": s_t_hidden_sizes,
+        "scale_hidden_sizes": s_t_hidden_sizes,
     }
 
     policy = RealNVPPolicy(
         env_spec=env.spec,
-        config=policy_config,
-        qf=qf,
+        mode="train",
+        squash=True,
+        real_nvp_config=real_nvp_config,
         observations_preprocessor=observations_preprocessor
     )
 

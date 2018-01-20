@@ -9,27 +9,16 @@ from rllab.core.serializable import Serializable
 from sac.distributions import RealNVPBijector
 from sac.policies import NNPolicy
 
-EPS = 1e-6
-
-DEFAULT_CONFIG = {
-    "mode": "train",
-    "D_in": 2,
-    "learning_rate": 1e-4,
-    "squash": False,
-    "real_nvp_config": None
-}
-
-DEFAULT_BATCH_SIZE = 32
-
 class RealNVPPolicy(NNPolicy, Serializable):
     """Real NVP policy"""
 
     def __init__(self,
                  env_spec,
-                 config=None,
-                 qf=None,
+                 mode="train",
+                 squash=True,
+                 real_nvp_config=None,
                  observations_preprocessor=None,
-                 name="policy"):
+                 name="real_nvp_policy"):
         """Initialize Real NVP policy.
 
         Args:
@@ -39,24 +28,24 @@ class RealNVPPolicy(NNPolicy, Serializable):
                 configuration for real nvp distribution.
             squash (`bool`): If True, squash the action samples between
                 -1 and 1 with tanh.
-            qf (`ValueFunction`): Q-function approximator.
         """
         Serializable.quick_init(self, locals())
 
-        self.config = dict(DEFAULT_CONFIG, **(config or {}))
-
         self._env_spec = env_spec
+        self._real_nvp_config = real_nvp_config
+        self._mode = mode
+        self._squash = squash
+        self._observations_preprocessor = observations_preprocessor
+
         self._Da = env_spec.action_space.flat_dim
         self._Ds = env_spec.observation_space.flat_dim
         self._fixed_h = None
         self._is_deterministic = False
-        self._qf = qf
         self._observations_preprocessor = observations_preprocessor
 
         self.name = name
         self.build()
 
-        squash = self.config["squash"]
         super().__init__(
             env_spec,
             self._observations_ph,
@@ -103,7 +92,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
     def build(self):
         ds = tf.contrib.distributions
         self.bijector = RealNVPBijector(
-            config=self.config["real_nvp_config"], event_ndims=self._Da)
+            config=self._real_nvp_config, event_ndims=self._Da)
 
         self.base_distribution = ds.MultivariateNormalDiag(
             loc=tf.zeros(self._Da), scale_diag=tf.ones(self._Da))
