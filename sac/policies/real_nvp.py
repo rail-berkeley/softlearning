@@ -122,7 +122,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
         self._latents_ph = tf.placeholder(
             dtype=tf.float32,
             shape=(None, self._Da),
-            name='observations',
+            name='latents',
         )
 
         if self._observations_preprocessor is not None:
