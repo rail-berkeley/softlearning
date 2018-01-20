@@ -1,6 +1,3 @@
-try:
-    from .nn_policy import NNPolicy
-    from .gmm import GMMPolicy
-except Exception as e:
-    pass
+from .nn_policy import NNPolicy
+from .gmm import GMMPolicy
 from .real_nvp import RealNVPPolicy
