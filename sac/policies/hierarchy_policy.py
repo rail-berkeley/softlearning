@@ -7,9 +7,9 @@ import tensorflow as tf
 from rllab.core.serializable import Serializable
 
 from sac.distributions import RealNVPBijector
-from sac.policies import NNPolicy
+from sac.policies import NNPolicy, RealNVPPolicy
 
-class HierarchyPolicy(NNPolicy, Serializable):
+class HierarchyPolicy(RealNVPPolicy):
     def __init__(self,
                  env_spec,
                  low_level_policy=None,
@@ -25,7 +25,7 @@ class HierarchyPolicy(NNPolicy, Serializable):
             env_spec (`rllab.EnvSpec`): Specification of the environment
                 to create the policy for.
         """
-        # assert low_level_policy is not None
+        assert low_level_policy is not None
         Serializable.quick_init(self, locals())
 
         self._env_spec = env_spec
@@ -36,73 +36,34 @@ class HierarchyPolicy(NNPolicy, Serializable):
         self._observations_preprocessor = observations_preprocessor
 
         self._Da = env_spec.action_space.flat_dim
+        # _Ds for high-level state dimension
         self._Ds = env_spec.observation_space.flat_dim
+        # _Ds_L for low-level state dimension
+        self._Ds_L = low_level_policy._Ds
         self._fixed_h = None
         self._is_deterministic = False
 
         self.name = name
         self.build()
 
-        super().__init__(
+        NNPolicy.__init__(
+            self,
             env_spec,
             self._observations_ph,
             tf.tanh(self._actions) if squash else self._actions,
-            scope_name='policy'
-        )
+            scope_name='policy')
 
-    def actions_for(self, observations):
-        """TODO: implement"""
-        pass
 
-    def log_pi_for(self, observations):
-        """TODO: implement"""
-        pass
+    def actions_for(self, observations, name=None, reuse=tf.AUTO_REUSE,
+                    stop_gradient=True):
 
-    def build(self):
-        """TODO: implement"""
-        pass
+        high_level_actions = super().actions_for(observations,
+                                                 name=name,
+                                                 reuse=reuse,
+                                                 stop_gradient=stop_gradient)
 
-    def get_action(self, observation):
-        """Sample single action based on the observations."""
-        return self.get_actions(observation[None])[0], {}
+        low_level_observations = observations[:, self._Ds_L]
+        actions = self._low_level_policy.bijector.forward(
+            high_level_actions, observations=low_level_observations)
 
-    def get_actions(self, observations):
-        """Sample batch of actions based on the observations."""
-        pass
-
-    @contextmanager
-    def deterministic(self, set_deterministic=True):
-        """Context manager for changing the determinism of the policy.
-
-        See `self.get_action` for further information about the effect of
-        self._is_deterministic.
-
-        Args:
-            set_deterministic (`bool`): Value to set the self._is_deterministic
-            to during the context. The value will be reset back to the previous
-            value when the context exits.
-        """
-        was_deterministic = self._is_deterministic
-        self._is_deterministic = set_deterministic
-        yield
-        self._is_deterministic = was_deterministic
-
-    @contextmanager
-    def fix_h(self, h=None):
-        """TODO: implement"""
-        pass
-
-    def get_params_internal(self, **tags):
-        if tags: raise NotImplementedError
-        return tf.trainable_variables(scope=self.name)
-
-    def reset(self, dones=None):
-        """TODO: implement"""
-        pass
-
-    def log_diagnostics(self, batch):
-        """Record diagnostic information to the logger.
-
-        TODO: implement
-        """
-        pass
+        return actions
