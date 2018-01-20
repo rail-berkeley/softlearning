@@ -1,4 +1,8 @@
 import argparse
+import pickle
+import joblib
+
+import tensorflow as tf
 
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
@@ -15,6 +19,7 @@ from sac.policies import HierarchyPolicy
 from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
 from sac.preprocessors import MLPPreprocessor
+from sac.misc import tf_utils
 
 
 COMMON_PARAMS = {
@@ -90,8 +95,13 @@ def get_variants(args):
 
 
 def load_low_level_policy(policy_path):
-    return None
+    with tf_utils.get_default_session().as_default():
+        with tf.variable_scope("low_level_policy", reuse=False):
+            snapshot = joblib.load(policy_path)
 
+    policy = snapshot["policy"]
+
+    return policy
 
 def run_experiment(variant):
     if variant['env_name'] == 'random-goal-swimmer':
