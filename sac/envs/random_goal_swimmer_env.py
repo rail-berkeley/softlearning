@@ -6,21 +6,24 @@ from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.misc.overrides import overrides
 from rllab.envs.base import Step
 from rllab.envs.mujoco.mujoco_env import MujocoEnv
-from rllab.misc import logger
+from rllab.misc import logger, autoargs
 
 DEFAULT_GOAL_RADIUS = 0.25
 
 class RandomGoalSwimmerEnv(SwimmerEnv):
     """Implements a swimmer which is sparsely rewarded for reaching a goal"""
 
-    @overrides
+    @autoargs.arg('ctrl_cost_coeff', type=float,
+                  help='cost coefficient for controls')
     def __init__(self,
                  goal_reward=10,
                  goal_radius=DEFAULT_GOAL_RADIUS,
+                 ctrl_cost_coeff=0,
                  *args,
                  **kwargs):
         self.goal_reward = goal_reward
         self.goal_radius = goal_radius
+        self.ctrl_cost_coeff = ctrl_cost_coeff
         MujocoEnv.__init__(self, *args, **kwargs)
         Serializable.quick_init(self, locals())
 
@@ -54,9 +57,21 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
 
         # TODO: control cost?
         if self.goal_distance < self.goal_radius:
-            reward, done = self.goal_reward, True
+            goal_reward, done = self.goal_reward, True
         else:
-            reward, done = 0.0, False
+            goal_reward, done = 0.0, False
+
+
+        # Add control cost
+        if self.ctrl_cost_coeff > 0:
+            lb, ub = self.action_bounds
+            scaling = (ub - lb) * 0.5
+            ctrl_cost = 0.5 * self.ctrl_cost_coeff * np.sum(
+                np.square(action / scaling))
+
+            reward = goal_reward - ctrl_cost
+        else:
+            reward = goal_reward
 
         return Step(next_obs, reward, done)
 
