@@ -185,7 +185,7 @@ def run_experiment(variant):
         save_full_state=False,
     )
 
-    # algorithm.train()
+    algorithm.train()
 
 def launch_experiments(variant_generator):
     variants = variant_generator.variants()

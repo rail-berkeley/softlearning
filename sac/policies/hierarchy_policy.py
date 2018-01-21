@@ -18,7 +18,7 @@ class HierarchyPolicy(RealNVPPolicy):
                  squash=True,
                  real_nvp_config=None,
                  observations_preprocessor=None,
-                 name="policy"):
+                 name="hierarchy_policy"):
         """Initialize Hierarchy policy.
 
         Args:
@@ -30,6 +30,7 @@ class HierarchyPolicy(RealNVPPolicy):
 
         self._env_spec = env_spec
         self._low_level_policy = low_level_policy
+        self._control_interval = control_interval
         self._squash = squash
         self._mode = mode
         self._real_nvp_config = real_nvp_config
@@ -51,19 +52,19 @@ class HierarchyPolicy(RealNVPPolicy):
             env_spec,
             self._observations_ph,
             tf.tanh(self._actions) if squash else self._actions,
-            scope_name='policy')
+            scope_name=name)
 
 
     def actions_for(self, observations, name=None, reuse=tf.AUTO_REUSE,
                     stop_gradient=True):
-
+        # TODO: Our actions should be modulated by `self._control_interval`
         high_level_actions = super().actions_for(observations,
                                                  name=name,
                                                  reuse=reuse,
                                                  stop_gradient=stop_gradient)
 
-        low_level_observations = observations[:, self._Ds_L]
+        low_level_observations = observations[:, :self._Ds_L]
         actions = self._low_level_policy.bijector.forward(
-            high_level_actions, observations=low_level_observations)
+            high_level_actions, conditions=low_level_observations)
 
         return actions

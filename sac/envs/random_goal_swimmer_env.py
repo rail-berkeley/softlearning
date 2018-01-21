@@ -35,8 +35,12 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
     def get_current_obs(self):
         proprioceptive_observation = super().get_current_obs()
         exteroceptive_observation = self.goal_position
-        observation = np.concatenate([proprioceptive_observation,
-                                      exteroceptive_observation])
+
+        observation = np.concatenate(
+            [proprioceptive_observation,
+             exteroceptive_observation]
+        ).reshape(-1)
+
         return observation
 
     @overrides
@@ -44,7 +48,7 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
         self.forward_dynamics(action)
         next_obs = self.get_current_obs()
 
-        xy_position = self.model.data.xpos[0, :2]
+        xy_position = self.current_com[:2]
         self.goal_distance = np.sqrt(
             np.sum((xy_position - self.goal_position)**2))
 
@@ -63,4 +67,7 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
         TODO: figure out what this should log and implement
         """
         super().log_diagnostics(paths, *args, **kwargs)
-        logger.record_tabular('DistanceFromGoal', self.goal_distance)
+
+        logger.record_tabular('FinalDistanceFromGoal', self.goal_distance)
+        logger.record_tabular('OriginDistanceFromGoal',
+                              np.sqrt(np.sum(self.goal_position**2)))
