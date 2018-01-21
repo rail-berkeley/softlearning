@@ -23,7 +23,7 @@ from sac.misc import tf_utils
 
 
 COMMON_PARAMS = {
-    "seed": [1],
+    "seed": list(range(5)),
     "lr": 3e-4,
     "discount": 0.99,
     "target_update_interval": 1,
@@ -31,7 +31,7 @@ COMMON_PARAMS = {
     "layer_size": 128,
     "batch_size": 128,
     "max_pool_size": 1e6,
-    "n_train_repeat": [4],
+    "n_train_repeat": [1],
     "epoch_length": 1000,
     "snapshot_mode": 'gap',
     "snapshot_gap": 100,
@@ -43,7 +43,7 @@ COMMON_PARAMS = {
     "policy_s_t_layers": [1],
     "policy_s_t_units": [128],
 
-    "preprocessing_hidden_sizes": [(128, 16)],
+    "preprocessing_hidden_sizes": None,
 }
 
 
@@ -53,7 +53,7 @@ ENV_PARAMS = {
         'env_name': 'random-goal-swimmer',
         'max_path_length': 1000,
         'n_epochs': 502,
-        'scale_reward': 100.0,
+        'scale_reward': 200.0,
 
         "preprocessing_hidden_sizes": None,
     },
