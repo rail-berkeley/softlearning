@@ -50,12 +50,9 @@ class RealNVPPolicy(NNPolicy, Serializable):
         self.name = name
         self.build()
 
-        super().__init__(
-            env_spec,
-            self._observations_ph,
-            tf.tanh(self._actions) if squash else self._actions,
-            scope_name='policy'
-        )
+        self._scope_name = (
+            tf.get_variable_scope().name if not name else name)
+        super(NNPolicy, self).__init__(env_spec)
 
     def actions_for(self, observations, name=None, reuse=tf.AUTO_REUSE,
                     stop_gradient=True):
