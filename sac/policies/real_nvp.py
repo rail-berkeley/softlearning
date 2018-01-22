@@ -75,24 +75,24 @@ class RealNVPPolicy(NNPolicy, Serializable):
         actions = tf.tanh(raw_actions) if self._squash else raw_actions
 
         if with_log_pis:
-            log_pis = self.log_pi_for(
+            log_pis = self.log_pis_for(
                 conditions, raw_actions, name=name, reuse=reuse)
             return actions, log_pis
 
         return actions
 
 
-    def log_pi_for(self, conditions, raw_actions, name=None, reuse=tf.AUTO_REUSE):
+    def log_pis_for(self, conditions, raw_actions, name=None, reuse=tf.AUTO_REUSE):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
-            log_pi = self.distribution.log_prob(
+            log_pis = self.distribution.log_prob(
                 raw_actions, bijector_kwargs={"conditions": conditions})
 
         if self._squash:
-            log_pi -= self._squash_correction(raw_actions)
+            log_pis -= self._squash_correction(raw_actions)
 
-        return log_pi
+        return log_pis
 
     def build(self):
         ds = tf.contrib.distributions
