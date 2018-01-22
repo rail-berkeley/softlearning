@@ -39,7 +39,6 @@ class RealNVPPolicy(NNPolicy, Serializable):
         self._real_nvp_config = real_nvp_config
         self._mode = mode
         self._squash = squash
-        self._observations_preprocessor = observations_preprocessor
 
         self._Da = env_spec.action_space.flat_dim
         self._Ds = env_spec.observation_space.flat_dim
@@ -125,15 +124,14 @@ class RealNVPPolicy(NNPolicy, Serializable):
             name='latents',
         )
 
-        if self._observations_preprocessor is not None:
-            self._conditions = self._observations_preprocessor.get_output_for(
-                self._observations_ph, reuse=True)
-        else:
-            self._conditions = self._observations_ph
+        self._conditions = (
+            self._observations_preprocessor.get_output_for(
+                self._observations_ph, reuse=tf.AUTO_REUSE)
+            if self._observations_preprocessor is not None
+            else self._observations_ph)
 
-        # TODO: these should be conditions
-        self._actions = self.actions_for(self._observations_ph)
-        self._determistic_actions = self.actions_for(self._observations_ph,
+        self._actions = self.actions_for(self._conditions)
+        self._determistic_actions = self.actions_for(self._conditions,
                                                      self._latents_ph)
 
     def get_action(self, observation):
