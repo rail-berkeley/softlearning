@@ -54,8 +54,8 @@ class RealNVPPolicy(NNPolicy, Serializable):
             tf.get_variable_scope().name if not name else name)
         super(NNPolicy, self).__init__(env_spec)
 
-    def actions_for(self, observations, name=None, reuse=tf.AUTO_REUSE,
-                    stop_gradient=True):
+    def actions_for(self, observations, latents=None,
+                    name=None, reuse=tf.AUTO_REUSE, stop_gradient=True):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
@@ -65,9 +65,13 @@ class RealNVPPolicy(NNPolicy, Serializable):
             else:
                 conditions = observations
 
-            N = tf.shape(conditions)[0]
-            actions = self.distribution.sample(
-                N, bijector_kwargs={"conditions": conditions})
+            if latents is not None:
+                actions = self.bijector.forward(
+                    latents, conditions=conditions)
+            else:
+                N = tf.shape(conditions)[0]
+                actions = self.distribution.sample(
+                    N, bijector_kwargs={"conditions": conditions})
 
             if stop_gradient:
                 actions = tf.stop_gradient(actions)
@@ -82,7 +86,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
                    stop_action_gradient=True):
         name = name or self.name
         if actions is None:
-            actions = self.actions_for(conditions, name, reuse,
+            actions = self.actions_for(conditions, name=name, reuse=reuse,
                                        stop_gradient=stop_action_gradient)
 
         with tf.variable_scope(name, reuse=reuse):
@@ -135,13 +139,8 @@ class RealNVPPolicy(NNPolicy, Serializable):
             self._conditions = self._observations_ph
 
         self._actions = self.actions_for(self._observations_ph)
-        with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
-            self._determistic_actions = self.bijector.forward(
-                self._latents_ph, conditions=self._conditions)
-
-            # TODO: get these from `self.actions_for`
-            if self._squash:
-                self._determistic_actions = tf.tanh(self._determistic_actions)
+        self._determistic_actions = self.actions_for(self._observations_ph,
+                                                     self._latents_ph)
 
     def get_action(self, observation):
         """Sample single action based on the observations.
