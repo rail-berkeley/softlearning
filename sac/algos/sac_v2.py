@@ -236,17 +236,14 @@ class SAC(RLAlgorithm, Serializable):
         of the value function and policy function update rules.
         """
 
-        actions = self._policy.actions_for(observations=self._obs_pl)
-        log_pi = self._policy.log_pi_for(
-            observations=self._obs_pl, actions=actions)
+        actions, log_pi = self._policy.actions_for(observations=self._obs_pl,
+                                                   with_log_pis=True)
 
         self._vf_t = self._vf.get_output_for(self._obs_pl, reuse=True)  # N
         self._vf_params = self._vf.get_params_internal()
 
         log_target = self._qf.get_output_for(
-            self._obs_pl,
-            actions,
-            reuse=True)  # N
+            self._obs_pl, actions, reuse=True)  # N
 
         # TODO: does the log_pi "correction" get accounted incorrectly here?
         policy_kl_loss = tf.reduce_mean(log_pi * tf.stop_gradient(

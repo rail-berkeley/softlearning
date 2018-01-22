@@ -55,52 +55,43 @@ class RealNVPPolicy(NNPolicy, Serializable):
         super(NNPolicy, self).__init__(env_spec)
 
     def actions_for(self, observations, latents=None,
-                    name=None, reuse=tf.AUTO_REUSE, stop_gradient=True):
+                    name=None, reuse=tf.AUTO_REUSE, with_log_pis=False):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
-            if self._observations_preprocessor is not None:
-                conditions = self._observations_preprocessor.get_output_for(
+            conditions = (
+                self._observations_preprocessor.get_output_for(
                     observations, reuse=reuse)
-            else:
-                conditions = observations
+                if self._observations_preprocessor is not None
+                else observations)
 
             if latents is not None:
-                actions = self.bijector.forward(
+                raw_actions = self.bijector.forward(
                     latents, conditions=conditions)
             else:
                 N = tf.shape(conditions)[0]
-                actions = self.distribution.sample(
+                raw_actions = self.distribution.sample(
                     N, bijector_kwargs={"conditions": conditions})
 
-            if stop_gradient:
-                actions = tf.stop_gradient(actions)
+        actions = tf.tanh(raw_actions) if self._squash else raw_actions
 
-            if self._squash:
-                actions = tf.tanh(actions)
+        if with_log_pis:
+            log_pis = self.log_pi_for(
+                conditions, raw_actions, name=name, reuse=reuse)
+            return actions, log_pis
 
         return actions
 
 
-    def log_pi_for(self, observations, actions=None,
-                   name=None, reuse=tf.AUTO_REUSE, stop_action_gradient=True):
+    def log_pi_for(self, conditions, raw_actions, name=None, reuse=tf.AUTO_REUSE):
         name = name or self.name
-        if actions is None:
-            actions = self.actions_for(observations, name=name, reuse=reuse,
-                                       stop_gradient=stop_action_gradient)
 
         with tf.variable_scope(name, reuse=reuse):
-            if self._observations_preprocessor is not None:
-                conditions = self._observations_preprocessor.get_output_for(
-                    observations, reuse=reuse)
-            else:
-                conditions = observations
-
             log_pi = self.distribution.log_prob(
-                actions, bijector_kwargs={"conditions": conditions})
+                raw_actions, bijector_kwargs={"conditions": conditions})
 
         if self._squash:
-            pass # TODO: what should this be?
+            log_pi -= self._squash_correction(raw_actions)
 
         return log_pi
 
@@ -140,6 +131,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
         else:
             self._conditions = self._observations_ph
 
+        # TODO: these should be conditions
         self._actions = self.actions_for(self._observations_ph)
         self._determistic_actions = self.actions_for(self._observations_ph,
                                                      self._latents_ph)
