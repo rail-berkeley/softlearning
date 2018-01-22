@@ -9,6 +9,10 @@ from rllab.core.serializable import Serializable
 from sac.distributions import RealNVPBijector
 from sac.policies import NNPolicy
 
+
+EPS = 1E-6
+
+
 class RealNVPPolicy(NNPolicy, Serializable):
     """Real NVP policy"""
 
@@ -154,6 +158,10 @@ class RealNVPPolicy(NNPolicy, Serializable):
                 self._actions, feed_dict=feed_dict)
 
         return actions
+
+    def _squash_correction(self, actions):
+        if not self._squash: return 0
+        return tf.reduce_sum(tf.log(1 - tf.tanh(actions) ** 2 + EPS), axis=1)
 
     @contextmanager
     def deterministic(self, set_deterministic=True):

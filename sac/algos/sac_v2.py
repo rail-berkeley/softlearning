@@ -7,8 +7,6 @@ from rllab.misc.overrides import overrides
 
 from .base import RLAlgorithm
 
-EPS = 1E-6
-
 
 class SAC(RLAlgorithm, Serializable):
     """Soft Actor-Critic (SAC)
@@ -248,7 +246,7 @@ class SAC(RLAlgorithm, Serializable):
 
         log_target = self._qf.get_output_for(
             self._obs_pl, tf.tanh(actions), reuse=True)  # N
-        corr = self._squash_correction(actions)
+        corr = self._policy._squash_correction(actions)
 
         policy_kl_loss = tf.reduce_mean(log_pi * tf.stop_gradient(
             log_pi - log_target - corr + self._vf_t))
@@ -276,10 +274,6 @@ class SAC(RLAlgorithm, Serializable):
 
         self._training_ops.append(policy_train_op)
         self._training_ops.append(vf_train_op)
-
-    @staticmethod
-    def _squash_correction(t):
-        return tf.reduce_sum(tf.log(1 - tf.tanh(t) ** 2 + EPS), axis=1)
 
     def _init_target_ops(self):
         """Create tensorflow operations for updating target value function."""
