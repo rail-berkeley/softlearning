@@ -237,7 +237,6 @@ class SAC(RLAlgorithm, Serializable):
         """
 
         actions = self._policy.actions_for(observations=self._obs_pl)
-
         log_pi = self._policy.log_pi_for(
             conditions=self._obs_pl, actions=actions)
 
@@ -246,13 +245,12 @@ class SAC(RLAlgorithm, Serializable):
 
         log_target = self._qf.get_output_for(
             self._obs_pl,
-            tf.tanh(actions) if self._policy._squash else actions,
+            actions,
             reuse=True)  # N
 
-        corr = self._policy._squash_correction(actions)
-
+        # TODO: does the log_pi "correction" get accounted incorrectly here?
         policy_kl_loss = tf.reduce_mean(log_pi * tf.stop_gradient(
-            log_pi - log_target - corr + self._vf_t))
+            log_pi - log_target + self._vf_t))
 
         policy_regularization_variables = tf.get_collection(
             tf.GraphKeys.REGULARIZATION_LOSSES,
@@ -263,7 +261,7 @@ class SAC(RLAlgorithm, Serializable):
         policy_loss  = policy_kl_loss + policy_regularization_loss
 
         self._vf_loss_t = 0.5 * tf.reduce_mean(
-            (self._vf_t - tf.stop_gradient(log_target - log_pi + corr))**2)
+            (self._vf_t - tf.stop_gradient(log_target - log_pi))**2)
 
         policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
             loss=policy_loss,

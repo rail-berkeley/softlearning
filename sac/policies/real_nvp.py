@@ -72,7 +72,10 @@ class RealNVPPolicy(NNPolicy, Serializable):
             if stop_gradient:
                 actions = tf.stop_gradient(actions)
 
-            return actions
+            if self._squash:
+                actions = tf.tanh(actions)
+
+        return actions
 
 
     def log_pi_for(self, conditions, actions=None, name=None, reuse=tf.AUTO_REUSE,
@@ -87,8 +90,13 @@ class RealNVPPolicy(NNPolicy, Serializable):
                 conditions = self._observations_preprocessor.get_output_for(
                     conditions, reuse=reuse)
 
-            return self.distribution.log_prob(
+            log_pi = self.distribution.log_prob(
                 actions, bijector_kwargs={"conditions": conditions})
+
+        if self._squash:
+            pass # TODO: what should this be?
+
+        return log_pi
 
     def build(self):
         ds = tf.contrib.distributions
@@ -131,9 +139,9 @@ class RealNVPPolicy(NNPolicy, Serializable):
             self._determistic_actions = self.bijector.forward(
                 self._latents_ph, conditions=self._conditions)
 
-        if self._squash:
-            self._actions = tf.tanh(self._actions)
-            self._determistic_actions = tf.tanh(self._determistic_actions)
+            # TODO: get these from `self.actions_for`
+            if self._squash:
+                self._determistic_actions = tf.tanh(self._determistic_actions)
 
     def get_action(self, observation):
         """Sample single action based on the observations.
