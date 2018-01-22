@@ -134,6 +134,10 @@ class RealNVPPolicy(NNPolicy, Serializable):
             self._determistic_actions = self.bijector.forward(
                 self._latents_ph, conditions=self._conditions)
 
+        if self._squash:
+            self._actions = tf.tanh(self._actions)
+            self._determistic_actions = tf.tanh(self._determistic_actions)
+
     def get_action(self, observation):
         """Sample single action based on the observations.
 

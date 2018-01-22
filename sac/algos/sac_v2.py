@@ -245,7 +245,10 @@ class SAC(RLAlgorithm, Serializable):
         self._vf_params = self._vf.get_params_internal()
 
         log_target = self._qf.get_output_for(
-            self._obs_pl, tf.tanh(actions), reuse=True)  # N
+            self._obs_pl,
+            tf.tanh(actions) if self._policy._squash else actions,
+            reuse=True)  # N
+
         corr = self._policy._squash_correction(actions)
 
         policy_kl_loss = tf.reduce_mean(log_pi * tf.stop_gradient(
