@@ -82,17 +82,19 @@ class RealNVPPolicy(NNPolicy, Serializable):
         return actions
 
 
-    def log_pi_for(self, conditions, actions=None, name=None, reuse=tf.AUTO_REUSE,
-                   stop_action_gradient=True):
+    def log_pi_for(self, observations, actions=None,
+                   name=None, reuse=tf.AUTO_REUSE, stop_action_gradient=True):
         name = name or self.name
         if actions is None:
-            actions = self.actions_for(conditions, name=name, reuse=reuse,
+            actions = self.actions_for(observations, name=name, reuse=reuse,
                                        stop_gradient=stop_action_gradient)
 
         with tf.variable_scope(name, reuse=reuse):
             if self._observations_preprocessor is not None:
                 conditions = self._observations_preprocessor.get_output_for(
-                    conditions, reuse=reuse)
+                    observations, reuse=reuse)
+            else:
+                conditions = observations
 
             log_pi = self.distribution.log_prob(
                 actions, bijector_kwargs={"conditions": conditions})
