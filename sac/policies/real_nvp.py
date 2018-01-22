@@ -74,6 +74,8 @@ class RealNVPPolicy(NNPolicy, Serializable):
 
         actions = tf.tanh(raw_actions) if self._squash else raw_actions
 
+        # TODO: should always return same shape out
+        # Figure out how to make the interface for `log_pis` cleaner
         if with_log_pis:
             log_pis = self.log_pis_for(
                 conditions, raw_actions, name=name, reuse=reuse)
