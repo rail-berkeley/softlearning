@@ -128,14 +128,8 @@ class RealNVPPolicy(NNPolicy, Serializable):
             name='latents',
         )
 
-        self._conditions = (
-            self._observations_preprocessor.get_output_for(
-                self._observations_ph, reuse=tf.AUTO_REUSE)
-            if self._observations_preprocessor is not None
-            else self._observations_ph)
-
-        self._actions = self.actions_for(self._conditions)
-        self._determistic_actions = self.actions_for(self._conditions,
+        self._actions = self.actions_for(self._observations_ph)
+        self._determistic_actions = self.actions_for(self._observations_ph,
                                                      self._latents_ph)
 
     def get_action(self, observation):
