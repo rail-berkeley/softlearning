@@ -3,6 +3,7 @@ import tensorflow as tf
 from rllab.core.serializable import Serializable
 
 from sandbox.rocky.tf.core.parameterized import Parameterized
+from sac.misc import tf_utils
 
 WEIGHT_DEFAULT_NAME = "weights"
 BIAS_DEFAULT_NAME = "bias"

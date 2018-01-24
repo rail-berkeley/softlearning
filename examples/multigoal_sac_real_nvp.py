@@ -48,23 +48,19 @@ def run(*_):
         hidden_layer_sizes=[M, M]
     )
 
-    policy_config = {
-        "mode": "train",
-        "D_in": 2,
-        "learning_rate": 5e-4,
-        "squash": True,
-        "real_nvp_config": {
-            "scale_regularization": 0.0,
-            "num_coupling_layers": 2,
-            "translation_hidden_sizes": (M, M),
-            "scale_hidden_sizes": (M, M),
-        }
+    real_nvp_config = {
+        "scale_regularization": 0.0,
+        "num_coupling_layers": 2,
+        "translation_hidden_sizes": (M,),
+        "scale_hidden_sizes": (M,),
     }
 
     policy = RealNVPPolicy(
         env_spec=env.spec,
-        config=policy_config,
-        qf=qf,
+        mode="train",
+        squash=True,
+        real_nvp_config=real_nvp_config,
+        observations_preprocessor=None
     )
 
     plotter = QFPolicyPlotter(
@@ -86,7 +82,6 @@ def run(*_):
         vf=vf,
         plotter=plotter,
 
-        policy_lr=policy_config["learning_rate"],
         lr=3e-4,
         scale_reward=3,
         discount=0.99,
@@ -94,6 +89,7 @@ def run(*_):
 
         save_full_state=True
     )
+
     algorithm.train()
 
 if __name__ == "__main__":
