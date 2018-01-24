@@ -5,14 +5,16 @@ import tensorflow as tf
 from rllab.core.serializable import Serializable
 from rllab.misc import logger
 from rllab.misc.overrides import overrides
+
 from softqlearning.misc.tensor_utils import flatten_tensor_variables
-from softqlearning.algos.base import RLAlgorithm
-from softqlearning.core.nn import input_bounds
+from softqlearning.misc.nn import input_bounds
 from softqlearning.misc.sampler import rollouts
 from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 
+from .rl_algorithm import RLAlgorithm
 
-class SoftQLearning(RLAlgorithm, Serializable):
+
+class SQL(RLAlgorithm, Serializable):
     """
     The Soft Q-Learning algorithm.
 
@@ -113,7 +115,6 @@ class SoftQLearning(RLAlgorithm, Serializable):
 
         self._q_plot_settings = q_plot_settings
         self._env_plot_settings = env_plot_settings
-        self._init_figures()
 
         self._n_eval_episodes = n_eval_episodes
         self._save_full_state = save_full_state
@@ -265,6 +266,7 @@ class SoftQLearning(RLAlgorithm, Serializable):
             grad_ys=action_grads,
         )
 
+        # TODO: why `flatten_tensor_variables`?
         svgd_training_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
             loss=-flatten_tensor_variables(self._policy_params),
             var_list=self._policy_params,
@@ -346,34 +348,6 @@ class SoftQLearning(RLAlgorithm, Serializable):
 
         return feeds
 
-    # TODO: remove
-    def _init_figures(self):
-        # Init an environment figure.
-        if self._env_plot_settings is not None:
-            if "figsize" not in self._env_plot_settings.keys():
-                figsize = (7, 7)
-            else:
-                figsize = self._env_plot_settings['figsize']
-            self._fig_env = plt.figure(
-                figsize=figsize,
-            )
-            self._ax_env = self._fig_env.add_subplot(111)
-            if hasattr(self._env, 'init_plot'):
-                self._env.init_plot(self._ax_env)
-
-            # A list for holding line objects created by the environment.
-            self._env_lines = []
-            self._ax_env.set_xlim(self._env_plot_settings['xlim'])
-            self._ax_env.set_ylim(self._env_plot_settings['ylim'])
-
-            # Labelling.
-            if "title" in self._env_plot_settings:
-                self._ax_env.set_title(self._env_plot_settings["title"])
-            if "xlabel" in self._env_plot_settings:
-                self._ax_env.set_xlabel(self._env_plot_settings["xlabel"])
-            if "ylabel" in self._env_plot_settings:
-                self._ax_env.set_ylabel(self._env_plot_settings["ylabel"])
-
     @overrides
     def log_diagnostics(self, batch):
         """Record diagnostic information to the logger.
@@ -396,19 +370,6 @@ class SoftQLearning(RLAlgorithm, Serializable):
         self._policy.log_diagnostics(batch)
         if self._plotter:
             self._plotter.draw()
-
-        # TODO: remove rest
-        paths = rollouts(self._env, self.policy,
-                         self._max_path_length, self._n_eval_episodes)
-        # Plot test paths.
-        if (hasattr(self._env, 'plot_paths')
-                and self._env_plot_settings is not None):
-            # Remove previous paths.
-            if self._env_lines is not None:
-                [path.remove() for path in self._env_lines]
-            self._env_lines = self._env.render(paths, self._ax_env)
-            plt.pause(0.001)
-            plt.draw()
 
 
     @overrides

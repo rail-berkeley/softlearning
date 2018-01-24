@@ -7,9 +7,9 @@ from rllab import config
 from rllab.misc import logger
 from rllab.envs.normalized_env import normalize
 
-from softqlearning.algos.softqlearning import SoftQLearning
+from softqlearning.algorithms import SQL
 from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softqlearning.envs.multi_goal_env import MultiGoalEnv
+from softqlearning.environments import MultiGoalEnv
 from softqlearning.replay_buffers import SimpleReplayBuffer
 from softqlearning.value_functions import NNQFunction
 from softqlearning.misc.plotter import QFPolicyPlotter
@@ -36,6 +36,7 @@ def test():
         n_epochs=100,
         max_path_length=30,
         batch_size=64,
+        eval_render=True,
     )
 
     q_plot_settings = dict(
@@ -76,7 +77,7 @@ def test():
         n_samples=100
     )
 
-    algorithm = SoftQLearning(
+    algorithm = SQL(
         base_kwargs=base_kwargs,
         env=env,
         pool=pool,

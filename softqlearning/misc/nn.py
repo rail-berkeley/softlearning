@@ -8,6 +8,8 @@ from softqlearning.misc import tf_utils
 WEIGHT_DEFAULT_NAME = "weights"
 BIAS_DEFAULT_NAME = "bias"
 
+# TODO: do refactor
+
 
 def weight_variable(
         shape,
@@ -173,6 +175,37 @@ def mlp(inputs,
         layer = output_nonlinearity(layer)
 
     return layer
+
+
+# TODO: make InputBound temporally a function. Later we'll get rid of it by
+# using a squasing function instead.
+def input_bounds(inp, output):
+    """
+    Modifies the gradient of a given graph ('output') with respect to its
+    input so that the gradient always points towards the inputs domain.
+    It is assumed that the input domain is L_\infty unit ball.
+
+    'InputBounds' can be used to implement the SVGD algorithm, which assumes a
+    target distribution with infinite action support: 'InputBounds' allows
+    actions to temporally violate the boundaries, but the modified gradient will
+    eventually bring them back within boundaries.
+
+    :param inp: Input tensor with a constrained domain.
+    :param output: Output tensor, whose gradient will be modified.
+    """
+    SLOPE = 10  # This is the new gradient outside the input domain.
+
+    violation = tf.maximum(tf.abs(inp) - 1, 0)
+    total_violation = tf.reduce_sum(violation, axis=-1, keep_dims=True)
+
+    # Expand the first dimension to match the graph
+    # (needed for tf.where which does not support broadcasting).
+    expanded_total_violation = total_violation * tf.ones_like(output)
+
+    bounded_output = tf.where(tf.greater(expanded_total_violation, 0),
+                              - SLOPE * expanded_total_violation, output)
+
+    return bounded_output
 
 
 class MLPFunction(Parameterized, Serializable):

@@ -6,7 +6,7 @@ import numpy as np
 from rllab.misc import logger
 from rllab.algos.base import Algorithm
 
-from softqlearning.core.serializable import deep_clone
+from softqlearning.misc.utils import deep_clone
 from softqlearning.misc import tf_utils
 from softqlearning.misc.sampler import rollouts
 

@@ -3,8 +3,9 @@ import numpy as np
 
 from rllab.core.serializable import Serializable
 
-from softqlearning.misc.mlp import mlp
-from softqlearning.policies.nn_policy import NNPolicy
+from softqlearning.misc.nn import mlp
+
+from .nn_policy import NNPolicy
 
 
 class StochasticNNPolicy(NNPolicy, Serializable):

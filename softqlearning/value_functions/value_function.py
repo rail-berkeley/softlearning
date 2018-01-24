@@ -2,7 +2,7 @@ import tensorflow as tf
 
 from rllab.core.serializable import Serializable
 
-from softqlearning.misc.mlp import MLPFunction
+from softqlearning.misc.nn import MLPFunction
 
 
 class NNVFunction(MLPFunction):

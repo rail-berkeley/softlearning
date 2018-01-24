@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
+# TODO: needed?
 
 def flatten_tensor_variables(ts):
     return tf.concat([tf.reshape(x, [-1]) for x in ts], 0)

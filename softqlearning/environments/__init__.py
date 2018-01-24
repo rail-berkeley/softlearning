@@ -1,0 +1,1 @@
+from .multigoal import MultiGoalEnv

@@ -6,7 +6,7 @@ from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
 
 from softqlearning.misc.instrument import run_sql_experiment
-from softqlearning.algos.softqlearning import SoftQLearning
+from softqlearning.algorithms import SQL
 from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softqlearning.misc.utils import timestamp
 from softqlearning.replay_buffers import SimpleReplayBuffer
@@ -144,7 +144,7 @@ def run_experiment(variant):
         hidden_layer_sizes=(M, M)
     )
 
-    algorithm = SoftQLearning(
+    algorithm = SQL(
         base_kwargs=base_kwargs,
         env=env,
         policy=policy,

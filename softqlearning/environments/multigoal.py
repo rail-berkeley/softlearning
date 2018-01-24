@@ -1,11 +1,11 @@
-from rllab.misc.overrides import overrides
-from rllab.core.serializable import Serializable
-from rllab.misc import logger
-from rllab.spaces.box import Box
-from rllab.envs.base import Env
-
 import numpy as np
 import matplotlib.pyplot as plt
+
+from rllab.misc.overrides import overrides
+from rllab.core.serializable import Serializable
+from rllab.spaces.box import Box
+from rllab.envs.base import Env
+from rllab.misc import logger
 
 
 class MultiGoalEnv(Env, Serializable):
@@ -16,13 +16,14 @@ class MultiGoalEnv(Env, Serializable):
     State: position.
     Action: velocity.
     """
-    def __init__(self, goal_reward=10):
+    def __init__(self, goal_reward=10, actuation_cost_coeff=30,
+                 distance_cost_coeff=1, init_sigma=0.1):
         super().__init__()
         Serializable.quick_init(self, locals())
 
         self.dynamics = PointDynamics(dim=2, sigma=0)
-        self.init_mu = np.array((0, 0), dtype=np.float32)
-        self.init_sigma = 0
+        self.init_mu = np.zeros(2, dtype=np.float32)
+        self.init_sigma = init_sigma
         self.goal_positions = np.array(
             [
                 [5, 0],
@@ -34,15 +35,16 @@ class MultiGoalEnv(Env, Serializable):
         )
         self.goal_threshold = 1.
         self.goal_reward = goal_reward
-        self.action_cost_coeff = 30.
+        self.action_cost_coeff = actuation_cost_coeff
+        self.distance_cost_coeff = distance_cost_coeff
         self.xlim = (-7, 7)
         self.ylim = (-7, 7)
         self.vel_bound = 1.
         self.reset()
         self.observation = None
 
-        self.fig = None
-        self.ax = None
+        self._ax = None
+        self._env_lines = []
         self.fixed_plots = None
         self.dynamic_plots = []
 
@@ -86,6 +88,8 @@ class MultiGoalEnv(Env, Serializable):
         o_lb, o_ub = self.observation_space.bounds
         next_obs = np.clip(next_obs, o_lb, o_ub)
 
+        self.observation = np.copy(next_obs)
+
         reward = self.compute_reward(self.observation, action)
         cur_position = self.observation
         dist_to_goal = np.amin([
@@ -96,33 +100,40 @@ class MultiGoalEnv(Env, Serializable):
         if done:
             reward += self.goal_reward
 
-        self.observation = np.copy(next_obs)
         return next_obs, reward, done, {'pos': next_obs}
 
-    def init_plot(self, ax):
-        ax.set_aspect('equal', adjustable='box')
-        ax.set_xlim(self.xlim)
-        ax.set_ylim(self.ylim)
-        ax.grid(True)
-        self.plot_position_cost(ax)
+    def _init_plot(self):
+        fig_env = plt.figure(figsize=(7, 7))
+        self._ax = fig_env.add_subplot(111)
+        self._ax.axis('equal')
 
-    @staticmethod
-    def plot_path(env_info_list, ax, style='b'):
-        path = np.concatenate([i['pos'][None] for i in env_info_list], axis=0)
-        xx = path[:, 0]
-        yy = path[:, 1]
-        line, = ax.plot(xx, yy, style)
-        return line
+        self._env_lines = []
+        self._ax.set_xlim((-7, 7))
+        self._ax.set_ylim((-7, 7))
 
-    @staticmethod
-    def plot_paths(paths, ax):
-        line_lst = []
+        self._ax.set_title('Multigoal Environment')
+        self._ax.set_xlabel('x')
+        self._ax.set_ylabel('y')
+
+        self._plot_position_cost(self._ax)
+
+    @overrides
+    def render(self, paths):
+        if self._ax is None:
+            self._init_plot()
+
+        # noinspection PyArgumentList
+        [line.remove() for line in self._env_lines]
+        self._env_lines = []
+
         for path in paths:
             positions = path["env_infos"]["pos"]
             xx = positions[:, 0]
             yy = positions[:, 1]
-            line_lst += ax.plot(xx, yy, 'b')
-        return line_lst
+            self._env_lines += self._ax.plot(xx, yy, 'b')
+
+        plt.draw()
+        plt.pause(0.01)
 
     def compute_reward(self, observation, action):
         # penalize the L2 norm of acceleration
@@ -132,7 +143,7 @@ class MultiGoalEnv(Env, Serializable):
         # penalize squared dist to goal
         cur_position = observation
         # noinspection PyTypeChecker
-        goal_cost = np.amin([
+        goal_cost = self.distance_cost_coeff * np.amin([
             np.sum((cur_position - goal_position) ** 2)
             for goal_position in self.goal_positions
         ])
@@ -142,7 +153,7 @@ class MultiGoalEnv(Env, Serializable):
         reward = -np.sum(costs)
         return reward
 
-    def plot_position_cost(self, ax):
+    def _plot_position_cost(self, ax):
         delta = 0.01
         x_min, x_max = tuple(1.1 * np.array(self.xlim))
         y_min, y_max = tuple(1.1 * np.array(self.ylim))
@@ -183,31 +194,9 @@ class MultiGoalEnv(Env, Serializable):
 
         logger.record_tabular('env:goals_reached', goal_reached.count(True))
 
+    @overrides
     def horizon(self):
         return None
-
-    @overrides
-    def render(self, close=False):
-        if self.fig is None:
-            self.fig = plt.figure()
-            self.ax = self.fig.add_subplot(111)
-            plt.axis('equal')
-
-        if self.fixed_plots is None:
-            self.fixed_plots = self.plot_position_cost(self.ax)
-
-        [o.remove() for o in self.dynamic_plots]
-
-        x, y = self.observation
-        point = self.ax.plot(x, y, 'b*')
-        self.dynamic_plots = point
-
-        if close:
-            self.fixed_plots = None
-
-        plt.pause(0.001)
-        plt.draw()
-
 
 class PointDynamics(object):
     """
