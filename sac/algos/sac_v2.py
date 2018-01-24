@@ -245,7 +245,6 @@ class SAC(RLAlgorithm, Serializable):
         log_target = self._qf.get_output_for(
             self._obs_pl, actions, reuse=True)  # N
 
-        # TODO: does the log_pi "correction" get accounted incorrectly here?
         policy_kl_loss = tf.reduce_mean(log_pi * tf.stop_gradient(
             log_pi - log_target + self._vf_t))
 
