@@ -72,8 +72,9 @@ class RealNVPPolicy(NNPolicy, Serializable):
                 raw_actions = self.distribution.sample(
                     N, bijector_kwargs={"conditions": conditions})
 
-        actions = tf.stop_gradient(
-            tf.tanh(raw_actions) if self._squash else raw_actions)
+            raw_actions = tf.stop_gradient(raw_actions)
+
+        actions = tf.tanh(raw_actions) if self._squash else raw_actions
 
         # TODO: should always return same shape out
         # Figure out how to make the interface for `log_pis` cleaner
