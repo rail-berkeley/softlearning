@@ -248,13 +248,13 @@ class SAC(RLAlgorithm, Serializable):
         policy_kl_loss = tf.reduce_mean(log_pi * tf.stop_gradient(
             log_pi - log_target + self._vf_t))
 
-        policy_regularization_variables = tf.get_collection(
+        policy_regularization_losses = tf.get_collection(
             tf.GraphKeys.REGULARIZATION_LOSSES,
             scope=self._policy.name)
         policy_regularization_loss = tf.reduce_sum(
-            policy_regularization_variables)
+            policy_regularization_losses)
 
-        policy_loss  = policy_kl_loss + policy_regularization_loss
+        policy_loss = policy_kl_loss + policy_regularization_loss
 
         self._vf_loss_t = 0.5 * tf.reduce_mean(
             (self._vf_t - tf.stop_gradient(log_target - log_pi))**2)

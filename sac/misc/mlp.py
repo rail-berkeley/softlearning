@@ -160,13 +160,15 @@ def mlp(inputs,
 
 class MLPFunction(Parameterized, Serializable):
 
-    def __init__(self, name, input_pls, hidden_layer_sizes):
+    def __init__(self, name, input_pls, hidden_layer_sizes,
+                 output_nonlinearity=None):
         Parameterized.__init__(self)
         Serializable.quick_init(self, locals())
 
         self._name = name
         self._input_pls = input_pls
         self._layer_sizes = list(hidden_layer_sizes) + [None]
+        self._output_nonlinearity = output_nonlinearity
 
         self._output_t = self.get_output_for(*self._input_pls)
 
@@ -174,7 +176,7 @@ class MLPFunction(Parameterized, Serializable):
         with tf.variable_scope(self._name, reuse=reuse):
             value_t = mlp(
                 inputs=inputs,
-                output_nonlinearity=None,
+                output_nonlinearity=self._output_nonlinearity,
                 layer_sizes=self._layer_sizes,
             )  # N
 

@@ -54,7 +54,8 @@ class RealNVPPolicy(NNPolicy, Serializable):
         super(NNPolicy, self).__init__(env_spec)
 
     def actions_for(self, observations, latents=None,
-                    name=None, reuse=tf.AUTO_REUSE, with_log_pis=False):
+                    name=None, reuse=tf.AUTO_REUSE, with_log_pis=False,
+                    regularize=False):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
@@ -66,11 +67,12 @@ class RealNVPPolicy(NNPolicy, Serializable):
 
             if latents is not None:
                 raw_actions = self.bijector.forward(
-                    latents, conditions=conditions)
+                    latents, condition=conditions)
             else:
                 N = tf.shape(conditions)[0]
                 raw_actions = self.distribution.sample(
-                    N, bijector_kwargs={"conditions": conditions})
+                    N, bijector_kwargs={"condition": conditions,
+                                        "regularize": regularize})
 
             raw_actions = tf.stop_gradient(raw_actions)
 
@@ -85,13 +87,14 @@ class RealNVPPolicy(NNPolicy, Serializable):
 
         return actions
 
-
-    def log_pis_for(self, conditions, raw_actions, name=None, reuse=tf.AUTO_REUSE):
+    def log_pis_for(self, conditions, raw_actions, name=None,
+                    reuse=tf.AUTO_REUSE, regularize=False):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
             log_pis = self.distribution.log_prob(
-                raw_actions, bijector_kwargs={"conditions": conditions})
+                raw_actions, bijector_kwargs={"condition": conditions,
+                                              "regularize": regularize})
 
         if self._squash:
             log_pis -= self._squash_correction(raw_actions)

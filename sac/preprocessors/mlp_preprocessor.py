@@ -8,7 +8,9 @@ from sac.misc.mlp import MLPFunction
 from sac.misc import tf_utils
 
 class MLPPreprocessor(MLPFunction):
-    def __init__(self, env_spec, layer_sizes=(128, 16)):
+    def __init__(self, env_spec, layer_sizes=(128, 16),
+                 output_nonlinearity=None):
+
         Parameterized.__init__(self)
         Serializable.quick_init(self, locals())
 
@@ -24,5 +26,6 @@ class MLPPreprocessor(MLPFunction):
 
         self._input_pls = (obs_ph, )
         self._layer_sizes = layer_sizes
+        self._output_nonlinearity = output_nonlinearity
 
         self._output_t = self.get_output_for(obs_ph)

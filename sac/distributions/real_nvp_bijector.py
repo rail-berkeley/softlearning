@@ -97,6 +97,7 @@ class CouplingLayer(object):
                  parity,
                  translation_fn,
                  scale_fn,
+                 scale_regularization,
                  event_ndims=0,
                  validate_args=False,
                  name="coupling_bijector"):
@@ -123,6 +124,7 @@ class CouplingLayer(object):
         self.parity = parity
         self.translation_fn = translation_fn
         self.scale_fn = scale_fn
+        self.scale_regularization = scale_regularization
 
         super().__init__(event_ndims=event_ndims,
                          validate_args=validate_args,
@@ -145,15 +147,19 @@ class CouplingLayer(object):
         with tf.variable_scope("{name}/scale".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
             # s(x_{1:d}) in paper
-            scale = self.scale_fn(masked_x, **condition_kwargs)
+            scale = self.scale_fn(masked_x, condition_kwargs['condition'])
 
         with tf.variable_scope("{name}/translation".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
             # t(x_{1:d}) in paper
-            translation = self.translation_fn(masked_x, **condition_kwargs)
+            translation = self.translation_fn(masked_x, condition_kwargs['condition'])
 
         # exp(s(b*x)) in paper
         exp_scale = tf.exp(scale)
+        if condition_kwargs.get('regularize', False):
+            tf.add_to_collection(
+                tf.GraphKeys.REGULARIZATION_LOSSES,
+                self.scale_regularization * tf.reduce_mean(exp_scale))
 
         # y_{d+1:D} = x_{d+1:D} * exp(s(x_{1:d})) + t(x_{1:d})
         part_1 = masked_x
@@ -207,20 +213,27 @@ class CouplingLayer(object):
         slice_begin = {"even": 0, "odd": 1}[self.parity]
         masked_y = y[:, slice(slice_begin, None, 2)]
         non_masked_y = y[:, slice(1-slice_begin, None, 2)]
+        condition = condition_kwargs["condition"]
 
         with tf.variable_scope("{name}/scale".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
             # s(y_{1:d}) in paper
-            scale = self.scale_fn(masked_y, **condition_kwargs)
+            scale = self.scale_fn(masked_y, condition)
 
         with tf.variable_scope("{name}/translation".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
             # t(y_{1:d}) in paper
-            translation = self.translation_fn(masked_y, **condition_kwargs)
+            translation = self.translation_fn(masked_y, condition)
+
+        exp_scale = tf.exp(-scale)
+        if condition_kwargs.get('regularize', False):
+            tf.add_to_collection(
+                tf.GraphKeys.REGULARIZATION_LOSSES,
+                self.scale_regularization * tf.reduce_mean(exp_scale))
 
         # y_{d+1:D} = (y_{d+1:D} - t(y_{1:d})) * exp(-s(y_{1:d}))
         part_1 = masked_y
-        part_2 = (non_masked_y - translation) * tf.exp(-scale)
+        part_2 = (non_masked_y - translation) * exp_scale
 
         to_interleave = (
             (part_2, part_1)
@@ -308,29 +321,28 @@ class RealNVPBijector(ConditionalBijector):
         translation_hidden_sizes = self._translation_hidden_sizes
         scale_hidden_sizes = self._scale_hidden_sizes
 
-        def translation_wrapper(inputs, conditions):
+        def translation_wrapper(inputs, condition):
             output_size = inputs.shape.as_list()[-1]
             return feedforward_net(
-                tf.concat((inputs, conditions), axis=1),
+                tf.concat((inputs, condition), axis=1),
                 # TODO: should allow multi_dimensional inputs/outputs
                 layer_sizes=(*translation_hidden_sizes,
                              inputs.shape.as_list()[-1]))
 
-        def scale_wrapper(inputs, conditions):
+        def scale_wrapper(inputs, condition):
             output_size = inputs.shape.as_list()[-1]
             return feedforward_net(
-                tf.concat((inputs, conditions), axis=1),
+                tf.concat((inputs, condition), axis=1),
                 # TODO: should allow multi_dimensional inputs/outputs
-                layer_sizes=(*scale_hidden_sizes, output_size),
-                regularizer=tf.contrib.layers.l2_regularizer(
-                    self._scale_regularization))
+                layer_sizes=(*scale_hidden_sizes, output_size))
 
         self.layers = [
             CouplingBijector(
                 parity=("even", "odd")[i % 2],
                 name="coupling_{i}".format(i=i),
                 translation_fn=translation_wrapper,
-                scale_fn=scale_wrapper)
+                scale_fn=scale_wrapper,
+                scale_regularization=self._scale_regularization)
             for i in range(1, num_coupling_layers + 1)
         ]
 
