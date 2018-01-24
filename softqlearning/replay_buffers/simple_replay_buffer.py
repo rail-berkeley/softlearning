@@ -7,8 +7,8 @@ from .replay_buffer import ReplayBuffer
 
 class SimpleReplayBuffer(ReplayBuffer, Serializable):
     def __init__(self, env_spec, max_replay_buffer_size):
+        super().__init__()
         Serializable.quick_init(self, locals())
-        super(SimpleReplayBuffer, self).__init__(env_spec)
 
         max_replay_buffer_size = int(max_replay_buffer_size)
 
@@ -78,7 +78,7 @@ class SimpleReplayBuffer(ReplayBuffer, Serializable):
     def __setstate__(self, buffer_state):
         super(SimpleReplayBuffer, self).__setstate__(buffer_state)
 
-        flat_obs = np.fromstring(buffer_state('observations'))
+        flat_obs = np.fromstring(buffer_state['observations'])
         flat_next_obs = np.fromstring(buffer_state['next_observations'])
         flat_actions = np.fromstring(buffer_state['actions'])
         flat_reward = np.fromstring(buffer_state['rewards'])
@@ -90,6 +90,5 @@ class SimpleReplayBuffer(ReplayBuffer, Serializable):
         self._actions = flat_actions.reshape(self._max_buffer_size, -1)
         self._rewards = flat_reward.reshape(self._max_buffer_size)
         self._terminals = flat_terminals.reshape(self._max_buffer_size)
-        self._bottom = buffer_state['bottom']
         self._top = buffer_state['top']
         self._size = buffer_state['size']

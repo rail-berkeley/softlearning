@@ -1,13 +1,12 @@
 import numpy as np
 import tensorflow as tf
 
-from rllab.core.serializable import Serializable
-
 from softqlearning.misc.mlp import mlp
-from softqlearning.misc.tf_proxy import SerializableTensor
 
 
-class InputBounds(SerializableTensor):
+# TODO: make InputBound temporally a function. Later we'll get rid of it by
+# using a squasing function instead.
+def input_bounds(inp, output):
     """
     Modifies the gradient of a given graph ('output') with respect to its
     input so that the gradient always points towards the inputs domain.
@@ -17,30 +16,27 @@ class InputBounds(SerializableTensor):
     target distribution with infinite action support: 'InputBounds' allows
     actions to temporally violate the boundaries, but the modified gradient will
     eventually bring them back within boundaries.
+
+    :param inp: Input tensor with a constrained domain.
+    :param output: Output tensor, whose gradient will be modified.
     """
     SLOPE = 10  # This is the new gradient outside the input domain.
 
-    def __init__(self, inp, output):
-        """
-        :param inp: Input tensor with a constrained domain.
-        :param output: Output tensor, whose gradient will be modified.
-        """
-        Serializable.quick_init(self, locals())
+    violation = tf.maximum(tf.abs(inp) - 1, 0)
+    total_violation = tf.reduce_sum(violation, axis=-1, keep_dims=True)
 
-        violation = tf.maximum(tf.abs(inp) - 1, 0)
-        total_violation = tf.reduce_sum(violation, axis=-1, keep_dims=True)
+    # Expand the first dimension to match the graph
+    # (needed for tf.where which does not support broadcasting).
+    expanded_total_violation = total_violation * tf.ones_like(output)
 
-        # Expand the first dimension to match the graph
-        # (needed for tf.where which does not support broadcasting).
-        expanded_total_violation = total_violation * tf.ones_like(output)
+    bounded_output = tf.where(tf.greater(expanded_total_violation, 0),
+                              - SLOPE * expanded_total_violation, output)
 
-        bounded_output = tf.where(tf.greater(expanded_total_violation, 0),
-                                  - self.SLOPE * expanded_total_violation,
-                                  output)
-        super().__init__(bounded_output)
+    return bounded_output
 
 
-class NeuralNetwork(SerializableTensor):
+# TODO: this is not needed anymore
+class NeuralNetwork():
     """ Multilayer Perceptron that support broadcasting.
 
     See documentation of 'mlp' for information in regards to broadcasting.
@@ -67,6 +63,7 @@ class NeuralNetwork(SerializableTensor):
         super().__init__(graph)
 
 
+# TODO: this is not needed anymore
 class StochasticNeuralNetwork(NeuralNetwork):
     """
     StochasticNeuralNetwork is like NeuralNetwork, but it feeds an additional

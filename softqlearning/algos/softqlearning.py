@@ -1,14 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-import softqlearning.misc.tf_proxy as tp
 
 from rllab.core.serializable import Serializable
 from rllab.misc import logger
 from rllab.misc.overrides import overrides
 from softqlearning.misc.tensor_utils import flatten_tensor_variables
 from softqlearning.algos.base import RLAlgorithm
-from softqlearning.core.nn import InputBounds
+from softqlearning.core.nn import input_bounds
 from softqlearning.misc.sampler import rollouts
 from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 
@@ -134,7 +133,7 @@ class SoftQLearning(RLAlgorithm, Serializable):
         """ Creates all necessary placeholders. """
         # We use tf_proxy for the observation placeholder to make it
         # serializable. This is needed to make also the policy serializable.
-        self._obs_pl = tp.placeholder(
+        self._obs_pl = tf.placeholder(
             tf.float32,
             shape=[None, self._Do],
             name='observation',
@@ -218,8 +217,8 @@ class SoftQLearning(RLAlgorithm, Serializable):
         # assumes unconstrained target domain, so actions may "leave" their
         # domain temporarily, but the modified gradient will eventually
         # bring them back.
-        self._qf_svgd_target = InputBounds(self._actions_fixed,
-                                           qf_unbounded_net)
+        self._qf_svgd_target = input_bounds(self._actions_fixed,
+                                            qf_unbounded_net)
 
         with tf.variable_scope('qf_td_target'):
             # Creates TD target network. Value of the next state is approximated
@@ -407,7 +406,7 @@ class SoftQLearning(RLAlgorithm, Serializable):
             # Remove previous paths.
             if self._env_lines is not None:
                 [path.remove() for path in self._env_lines]
-            self._env_lines = self._env.plot_paths(paths, self._ax_env)
+            self._env_lines = self._env.render(paths, self._ax_env)
             plt.pause(0.001)
             plt.draw()
 
@@ -421,30 +420,33 @@ class SoftQLearning(RLAlgorithm, Serializable):
         of policy, Q-function, state value function, and environment instances.
         """
 
-        return {}  # TODO: return snapshot dictionary.
+        if self._save_full_state:
+            return {'epoch': epoch, 'algo': self}
 
-        # if self._save_full_state:
-        #     return dict(
-        #         epoch=epoch,
-        #         algo=self
-        #     )
-        # else:
-        #     return dict(
-        #         epoch=epoch,
-        #         policy=self._policy,
-        #         qf=self._qf,
-        #         env=self._env,
-        #     )
+        return {
+            'epoch': epoch,
+            'policy': self._policy,
+            'qf': self._qf,
+            'env': self._env,
+        }
 
     def __getstate__(self):
-        d = Serializable.__getstate__(self)
-        d.update({
-            "policy_params": self._training_policy.get_param_values(),
-            "qf_params": self._qf_eval.get_param_values(),
-        })
-        return d
+        """Get Serializable state of the RLALgorithm instance."""
 
-    def __setstate__(self, d):
-        Serializable.__setstate__(self, d)
-        self._qf_eval.set_param_values(d["qf_params"])
-        self._training_policy.set_param_values(d["policy_params"])
+        state = Serializable.__getstate__(self)
+        state.update({
+            'qf-params': self._qf.get_param_values(),
+            'policy-params': self._policy.get_param_values(),
+            'pool': self._pool.__getstate__(),
+            'env': self._env.__getstate__(),
+        })
+        return state
+
+    def __setstate__(self, state):
+        """Set Serializable state fo the RLAlgorithm instance."""
+
+        Serializable.__setstate__(self, state)
+        self._qf.set_param_values(state['qf-params'])
+        self._policy.set_param_values(state['policy-params'])
+        self._pool.__setstate__(state['pool'])
+        self._env.__setstate__(state['env'])

@@ -6,7 +6,6 @@ import numpy as np
 from rllab import config
 from rllab.misc import logger
 from rllab.envs.normalized_env import normalize
-from rllab.tf.envs.base import TfEnv
 
 from softqlearning.algos.softqlearning import SoftQLearning
 from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
@@ -24,7 +23,7 @@ logger.set_snapshot_dir(snapshot_dir)
 
 def test():
 
-    env = TfEnv(normalize(MultiGoalEnv()))
+    env = normalize(MultiGoalEnv())
 
     pool = SimpleReplayBuffer(
         env_spec=env.spec,
