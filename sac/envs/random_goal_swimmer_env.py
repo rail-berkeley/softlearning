@@ -8,7 +8,7 @@ from rllab.envs.base import Step
 from rllab.envs.mujoco.mujoco_env import MujocoEnv
 from rllab.misc import logger, autoargs
 
-DEFAULT_GOAL_RADIUS = 0.25
+REWARD_TYPES = ('dense', 'sparse')
 
 class RandomGoalSwimmerEnv(SwimmerEnv):
     """Implements a swimmer which is sparsely rewarded for reaching a goal"""
@@ -16,12 +16,18 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
     @autoargs.arg('ctrl_cost_coeff', type=float,
                   help='cost coefficient for controls')
     def __init__(self,
+                 reward_type='dense',
                  goal_reward=10,
-                 goal_radius=DEFAULT_GOAL_RADIUS,
+                 goal_reward_weight=1e-3,
+                 goal_radius=0.25,
                  ctrl_cost_coeff=0,
                  *args,
                  **kwargs):
+        assert reward_type in REWARD_TYPES
+
+        self._reward_type = reward_type
         self.goal_reward = goal_reward
+        self.goal_reward_weight = goal_reward_weight
         self.goal_radius = goal_radius
         self.ctrl_cost_coeff = ctrl_cost_coeff
         MujocoEnv.__init__(self, *args, **kwargs)
@@ -55,12 +61,12 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
         self.goal_distance = np.sqrt(
             np.sum((xy_position - self.goal_position)**2))
 
-        # TODO: control cost?
-        if self.goal_distance < self.goal_radius:
-            goal_reward, done = self.goal_reward, True
-        else:
-            goal_reward, done = 0.0, False
+        done = self.goal_distance < self.goal_radius
 
+        if self._reward_type == 'dense':
+            goal_reward = -self.goal_distance * self.goal_reward_weight
+        elif self._reward_type == 'sparse':
+            goal_reward = int(done) * self.goal_reward
 
         # Add control cost
         if self.ctrl_cost_coeff > 0:
