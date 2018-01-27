@@ -54,7 +54,7 @@ class QFPolicyPlotter:
         actions[:, self._var_inds[1]] = ygrid.ravel()
 
         for ax, obs in zip(self._ax_lst, self._obs_lst):
-            qs = self._qf.eval(obs[None], actions)
+            qs = self._qf._eval(obs[None], actions)
 
             qs = qs.reshape(xgrid.shape)
 

@@ -58,9 +58,9 @@ class RLAlgorithm(Algorithm):
 
         self._sess = tf_utils.get_default_session()
 
-        self._env = None
-        self._policy = None
-        self._pool = None
+        self.env = None
+        self.policy = None
+        self.pool = None
 
     def _train(self, env, policy, pool):
         """Perform RL training.
@@ -86,8 +86,8 @@ class RLAlgorithm(Algorithm):
             gt.reset()
             gt.set_def_unique(False)
 
-            for epoch in gt.timed_for(range(self._n_epochs + 1),
-                                      save_itrs=True):
+            for epoch in gt.timed_for(
+                    range(self._n_epochs + 1), save_itrs=True):
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
                 for t in range(self._epoch_length):
@@ -98,7 +98,7 @@ class RLAlgorithm(Algorithm):
                     path_length += 1
                     path_return += reward
 
-                    self._pool.add_sample(
+                    self.pool.add_sample(
                         observation,
                         action,
                         reward,
@@ -120,9 +120,9 @@ class RLAlgorithm(Algorithm):
                         observation = next_ob
                     gt.stamp('sample')
 
-                    if self._pool.size >= self._min_pool_size:
+                    if self.pool.size >= self._min_pool_size:
                         for i in range(self._n_train_repeat):
-                            batch = self._pool.random_batch(self._batch_size)
+                            batch = self.pool.random_batch(self._batch_size)
                             self._do_training(iteration, batch)
 
                     gt.stamp('train')
@@ -143,7 +143,7 @@ class RLAlgorithm(Algorithm):
                 logger.record_tabular('episodes', n_episodes)
                 logger.record_tabular('max-path-return', max_path_return)
                 logger.record_tabular('last-path-return', last_path_return)
-                logger.record_tabular('pool-size', self._pool.size)
+                logger.record_tabular('pool-size', self.pool.size)
 
                 logger.dump_tabular(with_prefix=False)
                 logger.pop_prefix()
@@ -162,8 +162,8 @@ class RLAlgorithm(Algorithm):
         if self._eval_n_episodes < 1:
             return
 
-        paths = rollouts(self._eval_env, self._policy,
-                         self._max_path_length, self._eval_n_episodes)
+        paths = rollouts(self._eval_env, self.policy, self._max_path_length,
+                         self._eval_n_episodes)
 
         total_returns = [path['rewards'].sum() for path in paths]
         episode_lengths = [len(p['rewards']) for p in paths]
@@ -176,12 +176,13 @@ class RLAlgorithm(Algorithm):
         logger.record_tabular('episode-length-min', np.min(episode_lengths))
         logger.record_tabular('episode-length-max', np.max(episode_lengths))
         logger.record_tabular('episode-length-std', np.std(episode_lengths))
+        logger.record_tabular('epoch', epoch)
 
         self._eval_env.log_diagnostics(paths)
         if self._eval_render:
             self._eval_env.render(paths)
 
-        batch = self._pool.random_batch(self._batch_size)
+        batch = self.pool.random_batch(self._batch_size)
         self.log_diagnostics(batch)
 
     @abc.abstractmethod
@@ -205,20 +206,8 @@ class RLAlgorithm(Algorithm):
         :return: None
         """
 
-        self._env = env
+        self.env = env
         if self._eval_n_episodes > 0:
             self._eval_env = deep_clone(env)
-        self._policy = policy
-        self._pool = pool
-
-    @property
-    def policy(self):
-        return self._policy
-
-    @property
-    def env(self):
-        return self._env
-
-    @property
-    def pool(self):
-        return self._pool
+        self.policy = policy
+        self.pool = pool

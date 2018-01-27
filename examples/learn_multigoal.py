@@ -64,7 +64,8 @@ def test():
 
     policy = StochasticNNPolicy(
         env.spec,
-        hidden_layer_sizes=(M, M)
+        hidden_layer_sizes=(M, M),
+        squash=True
     )
 
     plotter = QFPolicyPlotter(
@@ -85,23 +86,18 @@ def test():
         policy=policy,
         plotter=plotter,
 
-        kernel=adaptive_isotropic_gaussian_kernel,
+        kernel_fn=adaptive_isotropic_gaussian_kernel,
         kernel_n_particles=32,
         kernel_update_ratio=0.5,
 
-        qf_target_n_particles=16,
+        value_n_particles=16,
         qf_lr=0.001,
-        qf_target_update_interval=1000,
+        td_target_update_interval=1000,
 
         policy_lr=0.001,
 
         discount=0.99,
-        alpha=1,
         reward_scale=0.1,
-
-        n_eval_episodes=10,
-        q_plot_settings=q_plot_settings,
-        env_plot_settings=env_plot_settings,
     )
     algorithm.train()
 

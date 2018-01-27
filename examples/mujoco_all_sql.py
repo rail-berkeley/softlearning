@@ -151,12 +151,12 @@ def run_experiment(variant):
         pool=pool,
         qf=qf,
 
-        kernel=adaptive_isotropic_gaussian_kernel,
+        kernel_fn=adaptive_isotropic_gaussian_kernel,
         kernel_n_particles=32,
         kernel_update_ratio=0.5,
 
-        qf_target_n_particles=16,
-        qf_target_update_interval=1000,
+        value_n_particles=16,
+        td_target_update_interval=1000,
 
         qf_lr=variant['qf_lr'],
         policy_lr=variant['policy_lr'],
@@ -164,7 +164,7 @@ def run_experiment(variant):
         alpha=1,
         reward_scale=variant['reward_scale'],
 
-        n_eval_episodes=10,
+        eval_n_episodes=10,
         save_full_state=False,
     )
 
