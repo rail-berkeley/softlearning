@@ -13,14 +13,14 @@ __all__ = [
 ]
 
 
-def checkerboard(shape, parity="even", dtype=tf.bool):
+def checkerboard(shape, parity='even', dtype=tf.bool):
     """TODO: Implement for dimensions >1"""
     if len(shape) > 1:
         raise NotImplementedError(
             "checkerboard not yet implemented for dimensions >1")
 
     unit = (tf.constant((True, False))
-            if parity == "even" else tf.constant((False, True)))
+            if parity == 'even' else tf.constant((False, True)))
 
     num_elements = np.prod(shape)
     tiled = tf.tile(unit, ((num_elements // 2) + 1, ))[:num_elements]
@@ -294,8 +294,8 @@ class RealNVPBijector(ConditionalBijector):
 
         Args:
             TODO
-            event_ndims: Python scalar indicating the number of dimensions associated
-                with a particular draw from the distribution.
+            event_ndims: Python scalar indicating the number of dimensions
+                associated with a particular draw from the distribution.
             validate_args: Python `bool` indicating whether arguments should be
                 checked for correctness.
             name: Python `str` name given to ops managed by this object.
@@ -308,8 +308,8 @@ class RealNVPBijector(ConditionalBijector):
         self._validate_args = validate_args
 
         self._num_coupling_layers = num_coupling_layers
-        self._translation_hidden_sizes = translation_hidden_sizes
-        self._scale_hidden_sizes = scale_hidden_sizes
+        self._translation_hidden_sizes = tuple(translation_hidden_sizes)
+        self._scale_hidden_sizes = tuple(scale_hidden_sizes)
         self._scale_regularization = scale_regularization
 
         self.build()
@@ -339,7 +339,7 @@ class RealNVPBijector(ConditionalBijector):
 
         self.layers = [
             CouplingBijector(
-                parity=("even", "odd")[i % 2],
+                parity=('even', 'odd')[i % 2],
                 name="coupling_{i}".format(i=i),
                 translation_fn=translation_wrapper,
                 scale_fn=scale_wrapper,
