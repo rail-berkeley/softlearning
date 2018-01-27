@@ -170,9 +170,9 @@ class CouplingLayer(object):
         part_2 = non_masked_x * exp_scale + translation
 
         to_concat = (
-            (part_2, part_1)
-            if self.parity == "odd"
-            else (part_1, part_2)
+            (part_1, part_2)
+            if self.parity == 'even'
+            else (part_2, part_1)
         )
 
         outputs = tf.concat(to_concat, axis=1)
@@ -242,9 +242,9 @@ class CouplingLayer(object):
         part_2 = (non_masked_y - translation) * exp_scale
 
         to_concat = (
-            (part_2, part_1)
-            if self.parity == "odd"
-            else (part_1, part_2)
+            (part_1, part_2)
+            if self.parity == 'even'
+            else (part_2, part_1)
         )
 
         outputs = tf.concat(to_concat, axis=1)
