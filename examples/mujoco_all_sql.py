@@ -12,7 +12,7 @@ from softqlearning.misc.utils import timestamp
 from softqlearning.replay_buffers import SimpleReplayBuffer
 from softqlearning.value_functions import NNQFunction
 from softqlearning.policies import StochasticNNPolicy
-
+from softqlearning.environments import GymEnv
 
 SHARED_PARAMS = {
     'seed': [1, 2, 3],
@@ -80,10 +80,8 @@ AVAILABLE_ENVS = list(ENV_PARAMS.keys())
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env',
-                        type=str,
-                        choices=AVAILABLE_ENVS,
-                        default=DEFAULT_ENV)
+    parser.add_argument(
+        '--env', type=str, choices=AVAILABLE_ENVS, default=DEFAULT_ENV)
     parser.add_argument('--exp_name', type=str, default=timestamp())
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--log_dir', type=str, default=None)
@@ -113,9 +111,7 @@ def run_experiment(variant):
     elif variant['env_name'] == 'swimmer-rllab':
         env = normalize(SwimmerEnv())
     else:
-        raise ValueError
-        # TODO: GymEnvs
-        # env = normalize(GymEnv(variant['env_name']))
+        env = normalize(GymEnv(variant['env_name']))
 
     pool = SimpleReplayBuffer(
         env_spec=env.spec,
@@ -139,32 +135,23 @@ def run_experiment(variant):
         hidden_layer_sizes=(M, M),
     )
 
-    policy = StochasticNNPolicy(
-        env_spec=env.spec,
-        hidden_layer_sizes=(M, M)
-    )
+    policy = StochasticNNPolicy(env_spec=env.spec, hidden_layer_sizes=(M, M))
 
     algorithm = SQL(
         base_kwargs=base_kwargs,
         env=env,
-        policy=policy,
         pool=pool,
         qf=qf,
-
+        policy=policy,
         kernel_fn=adaptive_isotropic_gaussian_kernel,
         kernel_n_particles=32,
         kernel_update_ratio=0.5,
-
         value_n_particles=16,
         td_target_update_interval=1000,
-
         qf_lr=variant['qf_lr'],
         policy_lr=variant['policy_lr'],
         discount=variant['discount'],
-        alpha=1,
         reward_scale=variant['reward_scale'],
-
-        eval_n_episodes=10,
         save_full_state=False,
     )
 

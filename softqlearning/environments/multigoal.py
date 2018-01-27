@@ -198,6 +198,7 @@ class MultiGoalEnv(Env, Serializable):
     def horizon(self):
         return None
 
+
 class PointDynamics(object):
     """
     State: position.
