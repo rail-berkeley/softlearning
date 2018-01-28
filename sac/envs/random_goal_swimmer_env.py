@@ -17,16 +17,14 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
                   help='cost coefficient for controls')
     def __init__(self,
                  reward_type='dense',
-                 goal_reward=10,
                  goal_reward_weight=1e-3,
                  goal_radius=0.25,
-                 ctrl_cost_coeff=0,
+                 ctrl_cost_coeff=1e-2,
                  *args,
                  **kwargs):
         assert reward_type in REWARD_TYPES
 
         self._reward_type = reward_type
-        self.goal_reward = goal_reward
         self.goal_reward_weight = goal_reward_weight
         self.goal_radius = goal_radius
         self.ctrl_cost_coeff = ctrl_cost_coeff
@@ -35,7 +33,9 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
 
     def reset(self, goal_position=None, *args, **kwargs):
         if goal_position is None:
-            goal_position = np.random.uniform(low=-5.0, high=5.0, size=(2,))
+            goal_position_x = 5.0
+            goal_position_y = np.random.uniform(low=-5.0, high=5.0)
+            goal_position = np.array([goal_position_x, goal_position_y])
 
         self.goal_position = goal_position
 
@@ -57,7 +57,7 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
         self.forward_dynamics(action)
         next_obs = self.get_current_obs()
 
-        xy_position = self.current_com[:2]
+        xy_position = self.get_body_com('torso')[:2]
         self.goal_distance = np.sqrt(
             np.sum((xy_position - self.goal_position)**2))
 
@@ -66,7 +66,7 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
         if self._reward_type == 'dense':
             goal_reward = -self.goal_distance * self.goal_reward_weight
         elif self._reward_type == 'sparse':
-            goal_reward = int(done) * self.goal_reward
+            goal_reward = int(done) * self.goal_reward_weight
 
         # Add control cost
         if self.ctrl_cost_coeff > 0:
@@ -87,7 +87,20 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
 
         TODO: figure out what this should log and implement
         """
-        super().log_diagnostics(paths, *args, **kwargs)
+        if len(paths) > 0:
+            progs = [
+                path["observations"][-1][-5] - path["observations"][0][-5]
+                for path in paths
+            ]
+            logger.record_tabular('AverageForwardProgress', np.mean(progs))
+            logger.record_tabular('MaxForwardProgress', np.max(progs))
+            logger.record_tabular('MinForwardProgress', np.min(progs))
+            logger.record_tabular('StdForwardProgress', np.std(progs))
+        else:
+            logger.record_tabular('AverageForwardProgress', np.nan)
+            logger.record_tabular('MaxForwardProgress', np.nan)
+            logger.record_tabular('MinForwardProgress', np.nan)
+            logger.record_tabular('StdForwardProgress', np.nan)
 
         logger.record_tabular('FinalDistanceFromGoal', self.goal_distance)
         logger.record_tabular('OriginDistanceFromGoal',
