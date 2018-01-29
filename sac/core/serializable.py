@@ -18,7 +18,7 @@ def deep_clone(obj):
     for i, val in enumerate(d['__args']):
         d['__args'][i] = maybe_deep_clone(val)
 
-    for key, val in d['__kwargs']:
+    for key, val in d['__kwargs'].items():
         d['__kwargs'][key] = maybe_deep_clone(val)
 
     out = type(obj).__new__(type(obj))
