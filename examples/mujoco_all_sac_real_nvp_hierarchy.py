@@ -1,18 +1,14 @@
 import argparse
-import pickle
 import joblib
 
 import tensorflow as tf
+import numpy as np
 
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
 
 from sac.algos import SACV2
-from sac.envs import (
-    GymEnv,
-    MultiDirectionSwimmerEnv,
-    MultiDirectionAntEnv,
-    RandomGoalSwimmerEnv)
+from sac.envs import RandomGoalSwimmerEnv, HierarchyProxyEnv
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
 from sac.policies import HierarchyPolicy
@@ -23,7 +19,7 @@ from sac.misc import tf_utils
 
 
 COMMON_PARAMS = {
-    "seed": list(range(5)),
+    "seed": np.random.randint(1, 100, 5).tolist(),
     "lr": 3e-4,
     "discount": 0.99,
     "target_update_interval": 1,
@@ -104,8 +100,13 @@ def load_low_level_policy(policy_path):
     return policy
 
 def run_experiment(variant):
+    low_level_policy = load_low_level_policy(
+        policy_path=variant['low_level_policy_path'])
+
     if variant['env_name'] == 'random-goal-swimmer':
-        env = normalize(RandomGoalSwimmerEnv())
+        random_goal_swimmer_env = normalize(RandomGoalSwimmerEnv())
+        env = HierarchyProxyEnv(env=random_goal_swimmer_env,
+                                low_level_policy=low_level_policy)
 
     pool = SimpleReplayBuffer(
         env_spec=env.spec,
@@ -153,9 +154,6 @@ def run_experiment(variant):
         "translation_hidden_sizes": s_t_hidden_sizes,
         "scale_hidden_sizes": s_t_hidden_sizes,
     }
-
-    low_level_policy = load_low_level_policy(
-        policy_path=variant['low_level_policy_path'])
 
     policy = HierarchyPolicy(
         env_spec=env.spec,
