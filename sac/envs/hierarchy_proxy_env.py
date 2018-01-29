@@ -10,7 +10,11 @@ class HierarchyProxyEnv(ProxyEnv):
         super().__init__(*args, **kwargs)
 
     def step(self, high_level_action):
-        current_observation = self._wrapped_env.get_current_obs()
+        current_observation = (
+            # Our env might be double wrapped, e.g. around NormalizedEnv
+            self._wrapped_env._wrapped_env.get_current_obs()
+            if isinstance(self._wrapped_env, ProxyEnv)
+            else self._wrapped_env.get_current_obs())
 
         with self._low_level_policy.fix_h(h=high_level_action[None]):
             action, _ = self._low_level_policy.get_action(
