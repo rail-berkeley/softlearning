@@ -19,7 +19,7 @@ class HierarchyProxyEnv(Serializable):
             else self._env.get_current_obs())
 
         with self._low_level_policy.fix_h(h=high_level_action[None]):
-            action = self._low_level_policy.get_action(
+            action, _ = self._low_level_policy.get_action(
                 observation=current_observation[:self._low_level_policy._Ds])
 
         return self._env.step(action)
