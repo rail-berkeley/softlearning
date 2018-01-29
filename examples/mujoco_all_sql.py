@@ -13,6 +13,7 @@ from softqlearning.replay_buffers import SimpleReplayBuffer
 from softqlearning.value_functions import NNQFunction
 from softqlearning.policies import StochasticNNPolicy
 from softqlearning.environments import GymEnv
+from softqlearning.misc.sampler import SimpleSampler
 
 SHARED_PARAMS = {
     'seed': [1, 2, 3],
@@ -72,7 +73,7 @@ ENV_PARAMS = {
         'max_path_length': 1000,
         'n_epochs': 20000,
         'reward_scale': 3,
-    },
+    }
 }
 DEFAULT_ENV = 'swimmer'
 AVAILABLE_ENVS = list(ENV_PARAMS.keys())
@@ -114,26 +115,23 @@ def run_experiment(variant):
         env = normalize(GymEnv(variant['env_name']))
 
     pool = SimpleReplayBuffer(
-        env_spec=env.spec,
-        max_replay_buffer_size=variant['max_pool_size'],
-    )
+        env_spec=env.spec, max_replay_buffer_size=variant['max_pool_size'])
+
+    sampler = SimpleSampler(
+        max_path_length=variant['max_path_length'],
+        min_pool_size=variant['max_path_length'],
+        batch_size=variant['batch_size'])
 
     base_kwargs = dict(
-        min_pool_size=variant['max_path_length'],
         epoch_length=variant['epoch_length'],
         n_epochs=variant['n_epochs'],
-        max_path_length=variant['max_path_length'],
-        batch_size=variant['batch_size'],
         n_train_repeat=variant['n_train_repeat'],
         eval_render=False,
         eval_n_episodes=1,
-    )
+        sampler=sampler)
 
     M = variant['layer_size']
-    qf = NNQFunction(
-        env_spec=env.spec,
-        hidden_layer_sizes=(M, M),
-    )
+    qf = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
 
     policy = StochasticNNPolicy(env_spec=env.spec, hidden_layer_sizes=(M, M))
 
@@ -152,8 +150,7 @@ def run_experiment(variant):
         policy_lr=variant['policy_lr'],
         discount=variant['discount'],
         reward_scale=variant['reward_scale'],
-        save_full_state=False,
-    )
+        save_full_state=False)
 
     algorithm.train()
 
@@ -177,8 +174,7 @@ def launch_experiments(variant_generator, args):
             log_dir=args.log_dir,
             snapshot_mode=variant['snapshot_mode'],
             snapshot_gap=variant['snapshot_gap'],
-            sync_s3_pkl=True,
-        )
+            sync_s3_pkl=True)
 
 
 def main():

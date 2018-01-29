@@ -6,6 +6,7 @@ from rllab.misc import logger
 from rllab.misc.overrides import overrides
 
 from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
+from softqlearning.misc import tf_utils
 
 from .rl_algorithm import RLAlgorithm
 
@@ -112,12 +113,8 @@ class SQL(RLAlgorithm, Serializable):
         self._create_svgd_update()
         self._create_target_ops()
 
+        self._sess = tf_utils.get_default_session()
         self._sess.run(tf.global_variables_initializer())
-
-    @overrides
-    def train(self):
-        """Start the Soft Q-Learning algorithm."""
-        self._train(self.env, self.policy, self.pool)
 
     def _create_placeholders(self):
         """Create all necessary placeholders."""
@@ -259,19 +256,22 @@ class SQL(RLAlgorithm, Serializable):
             for tgt, src in zip(target_params, source_params)
         ]
 
+    # TODO: do not pass, policy, and pool to `__init__` directly.
+    def train(self):
+        self._train(self.env, self.policy, self.pool)
+
     @overrides
-    def _init_training(self, env, policy, pool):
-        super()._init_training(env, policy, pool)
+    def _init_training(self):
         self._sess.run(self._target_ops)
 
     @overrides
-    def _do_training(self, itr, batch):
+    def _do_training(self, iteration, batch):
         """Run the operations for updating training and target ops."""
 
         feed_dict = self._get_feed_dict(batch)
         self._sess.run(self._training_ops, feed_dict)
 
-        if itr % self._qf_target_update_interval == 0:
+        if iteration % self._qf_target_update_interval == 0:
             self._sess.run(self._target_ops)
 
     def _get_feed_dict(self, batch):
