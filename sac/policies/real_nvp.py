@@ -186,7 +186,6 @@ class RealNVPPolicy(NNPolicy, Serializable):
         if h is None:
             h = self.base_distribution.sample(1).eval()
 
-        print("h:", h)
         was_deterministic = self._is_deterministic
         self._is_deterministic = True
         self._fixed_h = h
