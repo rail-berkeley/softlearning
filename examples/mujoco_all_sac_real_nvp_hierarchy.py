@@ -60,6 +60,8 @@ ENV_PARAMS = {
         'scale_reward': 200.0,
 
         "preprocessing_hidden_sizes": None,
+
+        "env_goal_reward_weight": 1e-3,
     },
 }
 
@@ -112,7 +114,9 @@ def run_experiment(variant):
         policy_path=variant['low_level_policy_path'])
 
     if variant['env_name'] == 'random-goal-swimmer':
-        random_goal_swimmer_env = normalize(RandomGoalSwimmerEnv())
+        random_goal_swimmer_env = normalize(RandomGoalSwimmerEnv(
+            goal_reward_weight=variant['env_goal_reward_weight']
+        ))
         env = HierarchyProxyEnv(wrapped_env=random_goal_swimmer_env,
                                 low_level_policy=low_level_policy)
 
