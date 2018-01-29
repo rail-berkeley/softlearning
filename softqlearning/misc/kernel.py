@@ -1,19 +1,31 @@
 import numpy as np
 import tensorflow as tf
 
-# TODO: Add test
-
 
 def adaptive_isotropic_gaussian_kernel(xs, ys, h_min=1e-3):
-    """
-    TODO: better documentation
+    """Gaussian kernel with dynamic bandwidth.
 
-    Gaussian kernel with dynamic bandwidth equal to
-    median_distance / log(Kx).
+    The bandwidth is adjusted dynamically to match median_distance / log(Kx).
+    See [2] for more information.
 
-    :param xs: Left particles.
-    :param ys: Right particles.
-    :param h_min: Minimum bandwidth.
+    Args:
+        xs(`tf.Tensor`): A tensor of shape (N x Kx x D) containing N sets of Kx
+            particles of dimension D. This is the first kernel argument.
+        ys(`tf.Tensor`): A tensor of shape (N x Ky x D) containing N sets of Kx
+            particles of dimension D. This is the second kernel argument.
+        h_min(`float`): Minimum bandwidth.
+
+    Returns:
+        `dict`: Returned dictionary has two fields:
+            'output': A `tf.Tensor` object of shape (N x Kx x Ky) representing
+                the kernel matrix for inputs `xs` and `ys`.
+            'gradient': A 'tf.Tensor` object of shape (N x Kx x Ky x D)
+                representing the gradient of the kernel with respect to `xs`.
+
+    Reference:
+        [2] Qiang Liu,Dilin Wang, "Stein Variational Gradient Descent: A General
+            Purpose Bayesian Inference Algorithm," Neural Information Processing
+            Systems (NIPS), 2016.
     """
     Kx, D = xs.get_shape().as_list()[-2:]
     Ky, D2 = ys.get_shape().as_list()[-2:]
@@ -28,12 +40,11 @@ def adaptive_isotropic_gaussian_kernel(xs, ys, h_min=1e-3):
     # ... x Kx x Ky
 
     # Get median.
-    input_shape = tf.concat((leading_shape, [Kx*Ky]), axis=0)
+    input_shape = tf.concat((leading_shape, [Kx * Ky]), axis=0)
     values, _ = tf.nn.top_k(
         input=tf.reshape(dist_sq, input_shape),
-        k=(Kx*Ky // 2 + 1),  # This is exactly true only if Kx*Ky is odd.
-        sorted=True
-    )  # ... x floor(Ks*Kd/2)
+        k=(Kx * Ky // 2 + 1),  # This is exactly true only if Kx*Ky is odd.
+        sorted=True)  # ... x floor(Ks*Kd/2)
 
     medians_sq = values[..., -1]  # ... (shape) (last element is the median)
 
@@ -43,17 +54,14 @@ def adaptive_isotropic_gaussian_kernel(xs, ys, h_min=1e-3):
     h_expanded_twice = tf.expand_dims(tf.expand_dims(h, -1), -1)
     # ... x 1 x 1
 
-    kappa = tf.exp(- dist_sq / h_expanded_twice)  # ... x Kx x Ky
+    kappa = tf.exp(-dist_sq / h_expanded_twice)  # ... x Kx x Ky
 
     # Construct the gradient
     h_expanded_thrice = tf.expand_dims(h_expanded_twice, -1)
     # ... x 1 x 1 x 1
     kappa_expanded = tf.expand_dims(kappa, -1)  # ... x Kx x Ky x 1
 
-    kappa_grad = - 2 * diff / h_expanded_thrice * kappa_expanded
+    kappa_grad = -2 * diff / h_expanded_thrice * kappa_expanded
     # ... x Kx x Ky x D
 
-    return {
-        "output": kappa,
-        "gradient": kappa_grad
-    }
+    return {"output": kappa, "gradient": kappa_grad}

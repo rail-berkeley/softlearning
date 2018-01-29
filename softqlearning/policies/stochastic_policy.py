@@ -8,7 +8,7 @@ from .nn_policy import NNPolicy
 
 
 class StochasticNNPolicy(NNPolicy, Serializable):
-    """Stochastic neural network policy"""
+    """Stochastic neural network policy."""
 
     def __init__(self, env_spec, hidden_layer_sizes, squash=True):
         Serializable.quick_init(self, locals())

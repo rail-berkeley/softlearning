@@ -1,4 +1,4 @@
-""" Rllab implementation with a HACK. See comment in GymEnv.__init__(). """
+""" Rllab implementation with a HACK. See comment in `GymEnv.__init__`. """
 import gym
 import gym.wrappers
 import gym.envs

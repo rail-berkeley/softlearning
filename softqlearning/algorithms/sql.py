@@ -19,11 +19,15 @@ def assert_shape(tensor, expected_shape):
 
 
 class SQL(RLAlgorithm, Serializable):
-    """
-    The Soft Q-Learning algorithm.
+    """Soft Q-learning (SQL).
 
-    Equations (eq. (X)) refer to the paper "Reinforcement Learning with Deep
-    Energy-Based Policies", arXiv v2.
+    Example:
+        See `examples/mujoco_all_sql.py`.
+
+    Reference:
+        [1] Tuomas Haarnoja, Haoran Tang, Pieter Abbeel, and Sergey Levine,
+        "Reinforcement Learning with Deep Energy-Based Policies," International
+        Conference on Machine Learning, 2017. https://arxiv.org/abs/1702.08165
     """
 
     def __init__(
@@ -46,19 +50,32 @@ class SQL(RLAlgorithm, Serializable):
             save_full_state=False,
     ):
         """
-        :param base_kwargs: Keyword arguments for OnlineAlgorithm.
-        :param env: Environment object.
-        :param value_n_particles: Number of uniform samples used to estimate
-            the soft target value for TD learning.
-        :param td_target_update_interval: How often (after how many iterations)
-            the target network is updated to match the current Q-function.
-        :param qf_lr: TD learning rate.
-        :param policy_lr: SVGD learning rate.
-        :param kernel_n_particles: Total number of particles per state used in
-            the SVGD updates.
-        :param kernel_update_ratio: The ratio of SVGD particles used for the
-            computation of the inner/outer empirical expectation.
-        :param discount: Discount factor.
+        Args:
+            base_kwargs (dict): Dictionary of base arguments that are directly
+                passed to the base `RLAlgorithm` constructor.
+            env (`rllab.Env`): rllab environment object.
+            pool (`PoolBase`): Replay buffer to add gathered samples to.
+            qf (`NNQFunction`): Q-function approximator.
+            policy: (`rllab.NNPolicy`): A policy function approximator.
+            plotter (`QFPolicyPlotter`): Plotter instance to be used for
+                visualizing Q-function during training.
+            qf_lr (`float`): Learning rate used for the Q-function approximator.
+            value_n_particles (`int`): The number of action samples used for
+                estimating the value of next state.
+            td_target_update_interval (`int`): How often the target network is
+                updated to match the current Q-function.
+            kernel_fn (function object): A function object that represents
+                a kernel function.
+            kernel_n_particles (`int`): Total number of particles per state
+                used in SVGD updates.
+            kernel_update_ratio ('float'): The ratio of SVGD particles used for
+                the computation of the inner/outer empirical expectation.
+            discount ('float'): Discount factor.
+            reward_scale ('float'): A factor that scales the raw rewards.
+                Useful for adjusting the temperature of the optimal Boltzmann
+                distribution.
+            save_full_state ('boolean'): If true, saves the full algorithm
+                state, including the replay buffer.
         """
         Serializable.quick_init(self, locals())
         super().__init__(**base_kwargs)
@@ -99,11 +116,11 @@ class SQL(RLAlgorithm, Serializable):
 
     @overrides
     def train(self):
-        """ Starts the Soft Q-Learning algorithm. """
+        """Start the Soft Q-Learning algorithm."""
         self._train(self.env, self.policy, self.pool)
 
     def _create_placeholders(self):
-        """ Creates all necessary placeholders. """
+        """Create all necessary placeholders."""
 
         self._observations_ph = tf.placeholder(
             tf.float32,
@@ -128,13 +145,10 @@ class SQL(RLAlgorithm, Serializable):
             tf.float32, shape=[None], name='terminals')
 
     def _create_td_update(self):
-        """ Creates a TF operation for the TD update. """
+        """Create a minimization operation for Q-function update."""
 
         with tf.variable_scope('target'):
-            """
-            Create TD target by approximating the next value with uniform
-            samples.
-            """
+            # The value of the next state is approximated with uniform samples.
             target_actions = tf.random_uniform(
                 (1, self._value_n_particles, self._action_dim), -1, 1)
             q_value_targets = self.qf.output_for(
@@ -146,21 +160,20 @@ class SQL(RLAlgorithm, Serializable):
             self._observations_ph, self._actions_pl, reuse=True)
         assert_shape(self._q_values, [None])
 
-        # Eq. (10):
+        # Equation 10:
         next_value = tf.reduce_logsumexp(q_value_targets, axis=1)
         assert_shape(next_value, [None])
 
-        # Importance weights add just a constant to the value, which is
-        # irrelevant in terms of the actual policy.
+        # Importance weights add just a constant to the value.
         next_value -= tf.log(tf.cast(self._value_n_particles, tf.float32))
         next_value += self._action_dim * np.log(2)
 
-        # Qhat_soft in Eq. (11):
+        # \hat Q in Equation 11:
         ys = tf.stop_gradient(self._reward_scale * self._rewards_pl + (
             1 - self._terminals_pl) * self._discount * next_value)
         assert_shape(ys, [None])
 
-        # Eq (11):
+        # Equation 11:
         bellman_residual = 0.5 * tf.reduce_mean((ys - self._q_values)**2)
 
         td_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
@@ -170,7 +183,7 @@ class SQL(RLAlgorithm, Serializable):
         self._bellman_residual = bellman_residual
 
     def _create_svgd_update(self):
-        """ Creates a TF operation for the SVGD update. """
+        """Create a minimization operation for policy update (SVGD)."""
 
         actions = self.policy.actions_for(
             observations=self._observations_ph,
@@ -178,6 +191,11 @@ class SQL(RLAlgorithm, Serializable):
         assert_shape(actions,
                      [None, self._kernel_n_particles, self._action_dim])
 
+        # SVGD requires computing two empirical expectations over actions
+        # (see Appendix C1.1.). To that end, we first sample a single set of
+        # actions, and later split them into two sets: `fixed_actions` are used
+        # to evaluate the expectation indexed by `j` and `updated_actions`
+        # the expectation indexed by `i`.
         n_updated_actions = int(
             self._kernel_n_particles * self._kernel_update_ratio)
         n_fixed_actions = self._kernel_n_particles - n_updated_actions
@@ -192,7 +210,7 @@ class SQL(RLAlgorithm, Serializable):
         svgd_target_values = self.qf.output_for(
             self._observations_ph[:, None, :], fixed_actions, reuse=True)
 
-        # Target log-density. Q_soft in eq. (13):
+        # Target log-density. Q_soft in Equation 13:
         squash_correction = tf.reduce_sum(
             tf.log(1 - fixed_actions**2 + EPS), axis=-1)
         log_p = svgd_target_values + squash_correction
@@ -204,17 +222,17 @@ class SQL(RLAlgorithm, Serializable):
 
         kernel_dict = self._kernel_fn(xs=fixed_actions, ys=updated_actions)
 
-        # Kernel function in eq. (13).
+        # Kernel function in Equation 13:
         kappa = tf.expand_dims(kernel_dict["output"], dim=3)
         assert_shape(kappa, [None, n_fixed_actions, n_updated_actions, 1])
 
-        # Stein Variational Gradient! Eq. (13):
+        # Stein Variational Gradient in Equation 13:
         action_gradients = tf.reduce_mean(
             kappa * grad_log_p + kernel_dict["gradient"], reduction_indices=1)
         assert_shape(action_gradients,
                      [None, n_updated_actions, self._action_dim])
 
-        # Propagate the gradient through the policy network. Eq. (14):
+        # Propagate the gradient through the policy network (Equation 14).
         gradients = tf.gradients(
             updated_actions,
             self.policy.get_params_internal(),
@@ -232,6 +250,7 @@ class SQL(RLAlgorithm, Serializable):
         self._training_ops.append(svgd_training_op)
 
     def _create_target_ops(self):
+        """Create tensorflow operation for updating the target Q-function."""
         source_params = self.qf.get_params_internal()
         target_params = self.qf.get_params_internal(scope='target')
 
@@ -247,7 +266,7 @@ class SQL(RLAlgorithm, Serializable):
 
     @overrides
     def _do_training(self, itr, batch):
-        """Runs the operations for updating training and target ops."""
+        """Run the operations for updating training and target ops."""
 
         feed_dict = self._get_feed_dict(batch)
         self._sess.run(self._training_ops, feed_dict)
@@ -256,7 +275,7 @@ class SQL(RLAlgorithm, Serializable):
             self._sess.run(self._target_ops)
 
     def _get_feed_dict(self, batch):
-        """Construct TensorFlow feed_dict from sample batch."""
+        """Construct a TensorFlow feed dictionary from a sample batch."""
 
         feeds = {
             self._observations_ph: batch['observations'],
@@ -270,13 +289,13 @@ class SQL(RLAlgorithm, Serializable):
 
     @overrides
     def log_diagnostics(self, batch):
-        """Record diagnostic information to the logger.
+        """Record diagnostic information.
 
-        Records mean and standard deviation of Q-function and state
-        value function, and TD-loss (mean squared Bellman error)
-        for the sample batch.
+        Records the mean and standard deviation of Q-function and the
+        squared Bellman residual of the  s (mean squared Bellman error)
+        for a sample batch.
 
-        Also calls the `draw` method of the plotter, if plotter defined.
+        Also call the `draw` method of the plotter, if plotter is defined.
         """
 
         feeds = self._get_feed_dict(batch)
@@ -293,11 +312,11 @@ class SQL(RLAlgorithm, Serializable):
 
     @overrides
     def get_snapshot(self, epoch):
-        """Return loggable snapshot of the SAC algorithm.
+        """Return loggable snapshot of the SQL algorithm.
 
         If `self._save_full_state == True`, returns snapshot of the complete
         SAC instance. If `self._save_full_state == False`, returns snapshot
-        of policy, Q-function, state value function, and environment instances.
+        of policy, Q-function, and environment instances.
         """
 
         if self._save_full_state:

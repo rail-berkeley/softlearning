@@ -8,8 +8,7 @@ DEFAULT_LOG_DIR = PROJECT_PATH + "/data"
 
 
 def _create_symlink(folder):
-    # Create a symbolic link that points to the sql folder and include it
-    # in the tarball.
+    """Create a symbolic link that points to the sql folder."""
 
     # Unique filename for the symlink.
     include_path = os.path.join('/tmp/', str(uuid.uuid4()))
