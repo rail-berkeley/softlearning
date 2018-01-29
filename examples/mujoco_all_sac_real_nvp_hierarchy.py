@@ -12,7 +12,7 @@ from sac.algos import SACV2
 from sac.envs import RandomGoalSwimmerEnv, HierarchyProxyEnv
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
-from sac.policies import HierarchyPolicy
+from sac.policies import RealNVPPolicy
 from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
 from sac.preprocessors import MLPPreprocessor
@@ -163,12 +163,10 @@ def run_experiment(variant):
         "scale_hidden_sizes": s_t_hidden_sizes,
     }
 
-    policy = HierarchyPolicy(
+    policy = RealNVPPolicy(
         env_spec=env.spec,
-        low_level_policy=low_level_policy,
-        control_interval=10,
         mode="train",
-        squash=True,
+        squash=False,
         real_nvp_config=real_nvp_config,
         observations_preprocessor=observations_preprocessor
     )
