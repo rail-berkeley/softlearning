@@ -50,7 +50,8 @@ class RealNVPPolicy(NNPolicy, Serializable):
         self.build()
 
         self._scope_name = (
-            tf.get_variable_scope().name if not name else name)
+            tf.get_variable_scope().name + "/" + name
+        ).lstrip("/")
         super(NNPolicy, self).__init__(env_spec)
 
     def actions_for(self, observations, latents=None,
@@ -195,7 +196,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
 
     def get_params_internal(self, **tags):
         if tags: raise NotImplementedError
-        return tf.trainable_variables(scope=self.name)
+        return tf.trainable_variables(scope=self._scope_name)
 
     def reset(self, dones=None):
         pass
