@@ -73,7 +73,7 @@ class RLAlgorithm(Algorithm):
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
                 for t in range(self._epoch_length):
-                    if self.sampler.sample():
+                    if not self.sampler.sample():
                         continue
                     gt.stamp('sample')
 
