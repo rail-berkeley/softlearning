@@ -1,6 +1,7 @@
 import argparse
 
 import tensorflow as tf
+import numpy as np
 
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
@@ -8,7 +9,8 @@ from rllab.misc.instrument import VariantGenerator
 from sac.algos import SAC
 from sac.algos import SACV2
 from sac.envs import (
-    GymEnv, MultiDirectionSwimmerEnv, MultiDirectionAntEnv)
+    GymEnv, MultiDirectionSwimmerEnv, MultiDirectionAntEnv,
+    RandomGoalSwimmerEnv)
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
 from sac.policies import GMMPolicy, RealNVPPolicy
@@ -18,7 +20,7 @@ from sac.preprocessors import MLPPreprocessor
 
 
 COMMON_PARAMS = {
-    "seed": [1, 2, 3],
+    "seed": np.random.randint(1, 100, 5).tolist(),
     "lr": 3e-4,
     "discount": 0.99,
     "target_update_interval": 1,
@@ -26,7 +28,7 @@ COMMON_PARAMS = {
     "layer_size": 128,
     "batch_size": 128,
     "max_pool_size": 1e6,
-    "n_train_repeat": [4],
+    "n_train_repeat": [1],
     "epoch_length": 1000,
     "snapshot_mode": 'gap',
     "snapshot_gap": 100,
@@ -39,11 +41,19 @@ COMMON_PARAMS = {
     "policy_scale_regularization": 1e-3,
 
     "preprocessing_hidden_sizes": None,
-    "preprocessing_output_nonlinearity": 'relu'
-}
+    "preprocessing_output_nonlinearity": 'relu',
 
 
 ENV_PARAMS = {
+    'random-goal-swimmer': { # 2 DoF
+        'prefix': 'random-goal-swimmer',
+        'env_name': 'random-goal-swimmer',
+        'max_path_length': 1000,
+        'n_epochs': 2002,
+        'scale_reward': 100.0,
+
+        "preprocessing_hidden_sizes": None,
+    },
     'multi-direction-swimmer': { # 2 DoF
         'prefix': 'multi-direction-swimmer',
         'env_name': 'multi-direction-swimmer',
@@ -114,6 +124,7 @@ ENV_PARAMS = {
         "snapshot_gap": 2000,
     },
 }
+
 DEFAULT_ENV = 'swimmer'
 AVAILABLE_ENVS = list(ENV_PARAMS.keys())
 
@@ -155,6 +166,8 @@ def run_experiment(variant):
         env = normalize(SwimmerEnv())
     elif variant['env_name'] == 'multi-direction-swimmer':
         env = normalize(MultiDirectionSwimmerEnv())
+    elif variant['env_name'] == 'random-goal-swimmer':
+        env = normalize(RandomGoalSwimmerEnv())
     elif variant['env_name'] == 'multi-direction-ant':
         env = normalize(MultiDirectionAntEnv())
     else:
