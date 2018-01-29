@@ -1,0 +1,13 @@
+version: "3"
+services:
+  sql:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: soft-q-learning
+    entrypoint: tail -f /dev/null
+    volumes:
+      - .:/root/sql
+      - ${MUJOCO_LICENSE_PATH:-./.mujoco/mjkey.txt}:/root/rllab/vendor/mujoco/mjkey.txt
+    environment:
+      MUJOCO_PY_MJKEY_PATH: /root/rllab/vendor/mujoco/mjkey.txt
