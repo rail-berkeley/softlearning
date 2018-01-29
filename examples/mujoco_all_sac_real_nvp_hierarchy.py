@@ -1,5 +1,6 @@
 import argparse
 import joblib
+import os
 
 import tensorflow as tf
 import numpy as np
@@ -17,6 +18,12 @@ from sac.value_functions import NNQFunction, NNVFunction
 from sac.preprocessors import MLPPreprocessor
 from sac.misc import tf_utils
 
+try:
+    import git
+    repo = git.Repo(os.getcwd())
+    git_rev = repo.active_branch.commit.name_rev
+except:
+    git_rev = None
 
 COMMON_PARAMS = {
     "seed": np.random.randint(1, 100, 5).tolist(),
@@ -40,6 +47,7 @@ COMMON_PARAMS = {
     "policy_s_t_units": [128],
 
     "preprocessing_hidden_sizes": None,
+    "git_sha": git_rev
 }
 
 

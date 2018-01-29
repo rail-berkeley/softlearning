@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import tensorflow as tf
 import numpy as np
@@ -18,6 +19,12 @@ from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
 from sac.preprocessors import MLPPreprocessor
 
+try:
+    import git
+    repo = git.Repo(os.getcwd())
+    git_rev = repo.active_branch.commit.name_rev
+except:
+    git_rev = None
 
 COMMON_PARAMS = {
     "seed": np.random.randint(1, 100, 5).tolist(),
@@ -43,6 +50,8 @@ COMMON_PARAMS = {
     "preprocessing_hidden_sizes": None,
     "preprocessing_output_nonlinearity": 'relu',
 
+    "git_sha": git_rev
+}
 
 ENV_PARAMS = {
     'random-goal-swimmer': { # 2 DoF
