@@ -103,5 +103,8 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
             logger.record_tabular('StdForwardProgress', np.nan)
 
         logger.record_tabular('FinalDistanceFromGoal', self.goal_distance)
+        origin_distance_from_goal = np.sqrt(np.sum(self.goal_position**2))
         logger.record_tabular('OriginDistanceFromGoal',
-                              np.sqrt(np.sum(self.goal_position**2)))
+                              origin_distance_from_goal)
+        progress_towards_goal = origin_distance_from_goal - self.goal_distance
+        logger.record_tabular('ProgressTowardsGoal', progress_towards_goal)

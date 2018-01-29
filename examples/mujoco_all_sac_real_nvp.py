@@ -27,7 +27,7 @@ except:
     git_rev = None
 
 COMMON_PARAMS = {
-    "seed": np.random.randint(1, 100, 5).tolist(),
+    "seed": np.random.randint(1, 100, 2).tolist(),
     "lr": 3e-4,
     "discount": 0.99,
     "target_update_interval": 1,
@@ -58,10 +58,11 @@ ENV_PARAMS = {
         'prefix': 'random-goal-swimmer',
         'env_name': 'random-goal-swimmer',
         'max_path_length': 1000,
-        'n_epochs': 2002,
+        'n_epochs': 4002,
         'scale_reward': 100.0,
 
         "preprocessing_hidden_sizes": None,
+        "env_goal_reward_weight": 1e-3,
     },
     'multi-direction-swimmer': { # 2 DoF
         'prefix': 'multi-direction-swimmer',
@@ -176,7 +177,9 @@ def run_experiment(variant):
     elif variant['env_name'] == 'multi-direction-swimmer':
         env = normalize(MultiDirectionSwimmerEnv())
     elif variant['env_name'] == 'random-goal-swimmer':
-        env = normalize(RandomGoalSwimmerEnv())
+        env = normalize(RandomGoalSwimmerEnv(
+            goal_reward_weight=variant['env_goal_reward_weight']
+        ))
     elif variant['env_name'] == 'multi-direction-ant':
         env = normalize(MultiDirectionAntEnv())
     else:
