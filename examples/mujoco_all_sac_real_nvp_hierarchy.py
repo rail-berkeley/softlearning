@@ -113,7 +113,7 @@ def run_experiment(variant):
 
     if variant['env_name'] == 'random-goal-swimmer':
         random_goal_swimmer_env = normalize(RandomGoalSwimmerEnv())
-        env = HierarchyProxyEnv(env=random_goal_swimmer_env,
+        env = HierarchyProxyEnv(wrapped_env=random_goal_swimmer_env,
                                 low_level_policy=low_level_policy)
 
     pool = SimpleReplayBuffer(
