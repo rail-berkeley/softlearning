@@ -1,3 +1,11 @@
+"""Run SAC with asynchronous sampling.
+
+This script demonstrates how we can train a policy and collect new experience
+asynchronously using two processes. Asynchronous sampling is particularly
+important when working with physical hardware and data collection becomes a
+bottleneck. In that case, it is desirable to allocate all available compute to
+optimizers rather then waiting for new sample to arrive.
+"""
 import argparse
 
 from rllab.envs.normalized_env import normalize
@@ -12,9 +20,8 @@ from softqlearning.misc.utils import timestamp
 from softqlearning.replay_buffers import SimpleReplayBuffer
 from softqlearning.value_functions import NNQFunction
 from softqlearning.policies import StochasticNNPolicy
-from softqlearning.environments import GymEnv
+from softqlearning.environments import GymEnv, DelayedEnv
 from softqlearning.misc.sampler import RemoteSampler
-from softqlearning.environments import DelayedEnv
 
 SHARED_PARAMS = {
     'seed': 1,
