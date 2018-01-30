@@ -7,14 +7,13 @@ import numpy as np
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
 
-from sac.algos import SAC
 from sac.algos import SACV2
 from sac.envs import (
     GymEnv, MultiDirectionSwimmerEnv, MultiDirectionAntEnv,
     RandomGoalSwimmerEnv)
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
-from sac.policies import GMMPolicy, RealNVPPolicy
+from sac.policies import RealNVPPolicy
 from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
 from sac.preprocessors import MLPPreprocessor
@@ -73,21 +72,21 @@ ENV_PARAMS = {
 
         "preprocessing_hidden_sizes": None,
     },
-    'swimmer': { # 2 DoF
+    'swimmer': {  # 2 DoF
         'prefix': 'swimmer',
         'env_name': 'swimmer-rllab',
         'max_path_length': 1000,
         'n_epochs': 2001,
         'scale_reward': 100,
     },
-    'hopper': { # 3 DoF
+    'hopper': {  # 3 DoF
         'prefix': 'hopper',
         'env_name': 'Hopper-v1',
         'max_path_length': 1000,
         'n_epochs': 3001,
         'scale_reward': 1,
     },
-    'half-cheetah': { # 6 DoF
+    'half-cheetah': {  # 6 DoF
         'prefix': 'half-cheetah',
         'env_name': 'HalfCheetah-v1',
         'max_path_length': 1000,
@@ -95,36 +94,34 @@ ENV_PARAMS = {
         'scale_reward': 1,
         'max_pool_size': 1e7,
     },
-    'walker': { # 6 DoF
+    'walker': {  # 6 DoF
         'prefix': 'walker',
         'env_name': 'Walker2d-v1',
         'max_path_length': 1000,
         'n_epochs': 5001,
         'scale_reward': 3,
+        'preprocessing_hidden_sizes': (128, 128, 12),
+        'policy_s_t_units': 6,
     },
-    'multi-direction-ant': { # 8 DoF
+    'multi-direction-ant': {  # 8 DoF
         'prefix': 'multi-direction-ant',
         'env_name': 'multi-direction-ant',
         'max_path_length': 1000,
         'n_epochs': 10001,
         'scale_reward': [10.0],
 
-        "preprocessing_hidden_sizes": [(128, 16)],
-
         "snapshot_gap": 1000,
     },
-    'ant': { # 8 DoF
+    'ant': {  # 8 DoF
         'prefix': 'ant',
         'env_name': 'Ant-v1',
         'max_path_length': 1000,
         'n_epochs': 10001,
         'scale_reward': [10.0],
 
-        "preprocessing_hidden_sizes": [(128, 16)],
-
         "snapshot_gap": 1000,
     },
-    'humanoid': { # 21 DoF
+    'humanoid': {  # 21 DoF
         'prefix': 'humanoid',
         'env_name': 'humanoid-rllab',
         'max_path_length': 1000,
@@ -138,13 +135,12 @@ ENV_PARAMS = {
 DEFAULT_ENV = 'swimmer'
 AVAILABLE_ENVS = list(ENV_PARAMS.keys())
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env',
-                        type=str,
-                        choices=AVAILABLE_ENVS,
-                        default=DEFAULT_ENV)
-    parser.add_argument('--exp_name',type=str, default=timestamp())
+    parser.add_argument(
+        '--env', type=str, choices=AVAILABLE_ENVS, default=DEFAULT_ENV)
+    parser.add_argument('--exp_name', type=str, default=timestamp())
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--log_dir', type=str, default=None)
     args = parser.parse_args()
@@ -220,13 +216,12 @@ def run_experiment(variant):
     }[variant['preprocessing_output_nonlinearity']]
 
     preprocessing_hidden_sizes = variant.get('preprocessing_hidden_sizes')
-    observations_preprocessor = (
-        MLPPreprocessor(env_spec=env.spec,
-                        layer_sizes=preprocessing_hidden_sizes,
-                        output_nonlinearity=nonlinearity)
-        if preprocessing_hidden_sizes is not None
-        else None
-    )
+    observations_preprocessor = (MLPPreprocessor(
+        env_spec=env.spec,
+        layer_sizes=preprocessing_hidden_sizes,
+        output_nonlinearity=nonlinearity)
+                                 if preprocessing_hidden_sizes is not None else
+                                 None)
 
     policy_s_t_layers = variant['policy_s_t_layers']
     policy_s_t_units = variant['policy_s_t_units']
@@ -244,8 +239,7 @@ def run_experiment(variant):
         mode="train",
         squash=True,
         real_nvp_config=real_nvp_config,
-        observations_preprocessor=observations_preprocessor
-    )
+        observations_preprocessor=observations_preprocessor)
 
     algorithm = SACV2(
         base_kwargs=base_kwargs,
@@ -254,19 +248,18 @@ def run_experiment(variant):
         pool=pool,
         qf=qf,
         vf=vf,
-
         lr=variant['lr'],
         scale_reward=variant['scale_reward'],
         discount=variant['discount'],
         tau=variant['tau'],
         target_update_interval=variant['target_update_interval'],
-
         save_full_state=False,
     )
 
     algorithm.train()
 
-def launch_experiments(variant_generator):
+
+def launch_experiments(variant_generator, args):
     variants = variant_generator.variants()
 
     num_experiments = len(variants)
@@ -275,9 +268,8 @@ def launch_experiments(variant_generator):
     for i, variant in enumerate(variants):
         print("Experiment: {}/{}".format(i, num_experiments))
         experiment_prefix = variant['prefix'] + '/' + args.exp_name
-        experiment_name = (variant['prefix']
-                           + '-' + args.exp_name
-                           + '-' + str(i).zfill(2))
+        experiment_name = (
+            variant['prefix'] + '-' + args.exp_name + '-' + str(i).zfill(2))
 
         run_sac_experiment(
             run_experiment,
@@ -294,7 +286,12 @@ def launch_experiments(variant_generator):
             sync_s3_pkl=variant['sync_pkl'],
         )
 
-if __name__ == '__main__':
+
+def main():
     args = parse_args()
     variant_generator = get_variants(args)
-    launch_experiments(variant_generator)
+    launch_experiments(variant_generator, args)
+
+
+if __name__ == '__main__':
+    main()
