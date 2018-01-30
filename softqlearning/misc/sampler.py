@@ -91,7 +91,8 @@ class Sampler(object):
         raise NotImplementedError
 
     def batch_ready(self):
-        return self.pool.size >= self._min_pool_size
+        enough_samples = self.pool.size >= self._min_pool_size
+        return enough_samples
 
     def random_batch(self):
         return self.pool.random_batch(self._batch_size)
