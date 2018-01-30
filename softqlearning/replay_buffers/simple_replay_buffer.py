@@ -7,7 +7,7 @@ from .replay_buffer import ReplayBuffer
 
 class SimpleReplayBuffer(ReplayBuffer, Serializable):
     def __init__(self, env_spec, max_replay_buffer_size):
-        super().__init__()
+        super(SimpleReplayBuffer, self).__init__()
         Serializable.quick_init(self, locals())
 
         max_replay_buffer_size = int(max_replay_buffer_size)

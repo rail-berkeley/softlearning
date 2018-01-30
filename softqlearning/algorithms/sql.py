@@ -79,7 +79,7 @@ class SQL(RLAlgorithm, Serializable):
                 state, including the replay buffer.
         """
         Serializable.quick_init(self, locals())
-        super().__init__(**base_kwargs)
+        super(SQL, self).__init__(**base_kwargs)
 
         self.env = env
         self.pool = pool
@@ -184,7 +184,8 @@ class SQL(RLAlgorithm, Serializable):
 
         actions = self.policy.actions_for(
             observations=self._observations_ph,
-            n_action_samples=self._kernel_n_particles)
+            n_action_samples=self._kernel_n_particles,
+            reuse=True)
         assert_shape(actions,
                      [None, self._kernel_n_particles, self._action_dim])
 

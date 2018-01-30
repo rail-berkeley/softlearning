@@ -21,18 +21,14 @@ class StochasticNNPolicy(NNPolicy, Serializable):
         self._observation_ph = tf.placeholder(
             tf.float32,
             shape=[None, self._observation_dim],
-            name='observation',
-        )
+            name='observation')
 
         self._actions = self.actions_for(self._observation_ph)
 
         super(StochasticNNPolicy, self).__init__(
             env_spec, self._observation_ph, self._actions, 'policy')
 
-    def actions_for(self,
-                    observations,
-                    n_action_samples=1,
-                    reuse=tf.AUTO_REUSE):
+    def actions_for(self, observations, n_action_samples=1, reuse=False):
 
         n_state_samples = tf.shape(observations)[0]
 
@@ -47,8 +43,7 @@ class StochasticNNPolicy(NNPolicy, Serializable):
 
         with tf.variable_scope('policy', reuse=reuse):
             raw_actions = feedforward_net(
-                observations,
-                latents,
+                (observations, latents),
                 layer_sizes=self._layer_sizes,
                 activation_fn=tf.nn.relu,
                 output_nonlinearity=None)

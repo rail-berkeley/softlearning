@@ -17,15 +17,16 @@ class NNVFunction(MLPFunction):
             tf.float32, shape=[None, self._Do], name='observations')
 
         super(NNVFunction, self).__init__(
-            self._observations_ph,
+            inputs=(self._observations_ph, ),
             name=name,
             hidden_layer_sizes=hidden_layer_sizes)
 
     def eval(self, observations):
-        return super(NNVFunction, self)._eval(observations)
+        return super(NNVFunction, self)._eval((observations, ))
 
-    def output_for(self, observations, reuse=tf.AUTO_REUSE):
-        return super(NNVFunction, self)._output_for(observations, reuse=reuse)
+    def output_for(self, observations, reuse=False):
+        return super(NNVFunction, self)._output_for(
+            (observations, ), reuse=reuse)
 
 
 class NNQFunction(MLPFunction):
@@ -44,14 +45,13 @@ class NNQFunction(MLPFunction):
             tf.float32, shape=[None, self._Da], name='actions')
 
         super(NNQFunction, self).__init__(
-            self._observations_ph,
-            self._actions_ph,
+            inputs=(self._observations_ph, self._actions_ph),
             name=name,
             hidden_layer_sizes=hidden_layer_sizes)
 
-    def output_for(self, observations, actions, reuse=tf.AUTO_REUSE):
+    def output_for(self, observations, actions, reuse=False):
         return super(NNQFunction, self)._output_for(
-            observations, actions, reuse=reuse)
+            (observations, actions), reuse=reuse)
 
     def eval(self, observations, actions):
-        return super(NNQFunction, self)._eval(observations, actions)
+        return super(NNQFunction, self)._eval((observations, actions))

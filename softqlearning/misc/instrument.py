@@ -14,23 +14,25 @@ def _create_symlink(folder):
     include_path = os.path.join('/tmp/', str(uuid.uuid4()))
     os.makedirs(include_path)
 
-    os.symlink(os.path.join(PROJECT_PATH, folder),
-               os.path.join(include_path, folder))
+    os.symlink(
+        os.path.join(PROJECT_PATH, folder), os.path.join(include_path, folder))
 
     return include_path
 
 
-def run_sql_experiment(main, mode, include_folders=None, log_dir=None,
-                       exp_prefix="experiment", exp_name=None, **kwargs):
+def run_sql_experiment(main,
+                       mode,
+                       include_folders=None,
+                       log_dir=None,
+                       exp_prefix="experiment",
+                       exp_name=None,
+                       **kwargs):
     if exp_name is None:
         exp_name = timestamp()
 
     if log_dir is None:
-        log_dir = os.path.join(
-            DEFAULT_LOG_DIR,
-            "local",
-            exp_prefix.replace("_", "-"),
-            exp_name)
+        log_dir = os.path.join(DEFAULT_LOG_DIR, "local",
+                               exp_prefix.replace("_", "-"), exp_name)
 
     if include_folders is None:
         include_folders = list()
@@ -50,5 +52,4 @@ def run_sql_experiment(main, mode, include_folders=None, log_dir=None,
         exp_prefix=exp_prefix,
         exp_name=exp_name,
         log_dir=log_dir,
-        **kwargs,
-    )
+        **kwargs)
