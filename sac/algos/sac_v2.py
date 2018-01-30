@@ -242,11 +242,16 @@ class SAC(RLAlgorithm, Serializable):
         self._vf_t = self._vf.get_output_for(self._obs_pl, reuse=True)  # N
         self._vf_params = self._vf.get_params_internal()
 
+        D_s = actions.shape.as_list()[-1]
+        policy_prior = tf.contrib.distributions.MultivariateNormalDiag(
+            loc=tf.zeros(D_s), scale_diag=tf.ones(D_s))
+        policy_prior_log_probs = policy_prior.log_prob(actions)
+
         log_target = self._qf.get_output_for(
             self._obs_pl, actions, reuse=True)  # N
 
         policy_kl_loss = tf.reduce_mean(log_pi * tf.stop_gradient(
-            log_pi - log_target + self._vf_t))
+            log_pi - log_target + self._vf_t - policy_prior_log_probs))
 
         policy_regularization_losses = tf.get_collection(
             tf.GraphKeys.REGULARIZATION_LOSSES,
@@ -254,10 +259,13 @@ class SAC(RLAlgorithm, Serializable):
         policy_regularization_loss = tf.reduce_sum(
             policy_regularization_losses)
 
-        policy_loss = policy_kl_loss + policy_regularization_loss
+        policy_loss = (policy_kl_loss
+                       + policy_regularization_loss)
 
-        self._vf_loss_t = 0.5 * tf.reduce_mean(
-            (self._vf_t - tf.stop_gradient(log_target - log_pi))**2)
+        self._vf_loss_t = 0.5 * tf.reduce_mean((
+          self._vf_t
+          - tf.stop_gradient(log_target - log_pi - policy_prior_log_probs)
+        )**2)
 
         policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
             loss=policy_loss,
