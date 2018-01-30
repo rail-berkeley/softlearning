@@ -73,7 +73,8 @@ class RLAlgorithm(Algorithm):
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
                 for t in range(self._epoch_length):
-                    if not self.sampler.sample():
+                    self.sampler.sample()
+                    if not self.sampler.batch_ready():
                         continue
                     gt.stamp('sample')
 
@@ -132,8 +133,9 @@ class RLAlgorithm(Algorithm):
         if self._eval_render:
             evaluation_env.render(paths)
 
-        batch = self.sampler.random_batch()
-        self.log_diagnostics(batch)
+        if self.sampler.batch_ready():
+            batch = self.sampler.random_batch()
+            self.log_diagnostics(batch)
 
     @abc.abstractmethod
     def log_diagnostics(self, batch):

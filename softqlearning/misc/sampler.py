@@ -1,7 +1,14 @@
 import numpy as np
 import time
+import ray
+import pickle
+
+import tensorflow as tf
 
 from rllab.misc import logger
+from rllab.misc.overrides import overrides
+
+from softqlearning.misc import tf_utils
 
 
 def rollout(env, policy, path_length, render=False, speedup=None):
@@ -11,23 +18,26 @@ def rollout(env, policy, path_length, render=False, speedup=None):
     observation = env.reset()
     policy.reset()
 
-    observations = np.zeros((path_length, Do))
+    observations = np.zeros((path_length + 1, Do))
     actions = np.zeros((path_length, Da))
     terminals = np.zeros((path_length, ))
     rewards = np.zeros((path_length, ))
-    all_infos = list()
+    agent_infos = []
+    env_infos = []
+
     t = 0
-    for t in range(t, path_length):
+    for t in range(path_length):
 
-        action, _ = policy.get_action(observation)
-        next_obs, reward, terminal, info = env.step(action)
+        action, agent_info = policy.get_action(observation)
+        next_obs, reward, terminal, env_info = env.step(action)
 
-        all_infos.append(info)
+        agent_infos.append(agent_info)
+        env_infos.append(env_info)
 
-        actions[t, :] = action
+        actions[t] = action
         terminals[t] = terminal
         rewards[t] = reward
-        observations[t, :] = observation
+        observations[t] = observation
 
         observation = next_obs
 
@@ -39,20 +49,17 @@ def rollout(env, policy, path_length, render=False, speedup=None):
         if terminal:
             break
 
-    last_obs = observation
+    observations[t + 1] = observation
 
-    concat_infos = dict()
-    for key in all_infos[0].keys():
-        all_vals = [np.array(info[key])[None] for info in all_infos]
-        concat_infos[key] = np.concatenate(all_vals)
-
-    path = dict(
-        last_obs=last_obs,
-        dones=terminals[:t + 1],
-        actions=actions[:t + 1],
-        observations=observations[:t + 1],
-        rewards=rewards[:t + 1],
-        env_infos=concat_infos)
+    path = {
+        'observations': observations[:t + 1],
+        'actions': actions[:t + 1],
+        'rewards': rewards[:t + 1],
+        'terminals': terminals[:t + 1],
+        'next_observations': observations[1:t + 2],
+        'agent_infos': agent_infos,
+        'env_infos': env_infos
+    }
 
     return path
 
@@ -82,6 +89,9 @@ class Sampler(object):
 
     def sample(self):
         raise NotImplementedError
+
+    def batch_ready(self):
+        return self.pool.size >= self._min_pool_size
 
     def random_batch(self):
         return self.pool.random_batch(self._batch_size)
@@ -136,7 +146,53 @@ class SimpleSampler(Sampler):
         else:
             self._current_observation = next_observation
 
-        return self.pool.size >= self._min_pool_size
+    def log_diagnostics(self):
+        logger.record_tabular('max-path-return', self._max_path_return)
+        logger.record_tabular('last-path-return', self._last_path_return)
+        logger.record_tabular('pool-size', self.pool.size)
+        logger.record_tabular('episodes', self._n_episodes)
+        logger.record_tabular('total-samples', self._total_samples)
+
+
+class RemoteSampler(Sampler):
+    def __init__(self, **kwargs):
+        super(RemoteSampler, self).__init__(**kwargs)
+
+        self._remote_environment = None
+        self._remote_path = None
+        self._n_episodes = 0
+        self._total_samples = 0
+        self._last_path_return = 0
+        self._max_path_return = -np.inf
+
+    @overrides
+    def initialize(self, env, policy, pool):
+        super(RemoteSampler, self).initialize(env, policy, pool)
+
+        ray.init()
+
+        env_pkl = pickle.dumps(env)
+        policy_pkl = pickle.dumps(policy)
+
+        self._remote_environment = _RemoteEnv.remote(env_pkl, policy_pkl)
+
+    def sample(self):
+        if self._remote_path is None:
+            policy_params = self.policy.get_param_values()
+            self._remote_path = self._remote_environment.rollout.remote(
+                policy_params, self._max_path_length)
+
+        path_ready, _ = ray.wait([self._remote_path], timeout=0)
+
+        if len(path_ready) or not self.batch_ready():
+            path = ray.get(self._remote_path)
+            self.pool.add_path(path)
+            self._remote_path = None
+            self._total_samples += len(path['observations'])
+            self._last_path_return = np.sum(path['rewards'])
+            self._max_path_return = max(self._max_path_return,
+                                        self._last_path_return)
+            self._n_episodes += 1
 
     def log_diagnostics(self):
         logger.record_tabular('max-path-return', self._max_path_return)
@@ -144,3 +200,22 @@ class SimpleSampler(Sampler):
         logger.record_tabular('pool-size', self.pool.size)
         logger.record_tabular('episodes', self._n_episodes)
         logger.record_tabular('total-samples', self._total_samples)
+
+
+@ray.remote
+class _RemoteEnv(object):
+    def __init__(self, env_pkl, policy_pkl):
+        self._sess = tf_utils.create_session()
+        self._sess.run(tf.global_variables_initializer())
+
+        self._env = pickle.loads(env_pkl)
+        self._policy = pickle.loads(policy_pkl)
+
+        if hasattr(self._env, 'initialize'):
+            self._env.initialize()
+
+    def rollout(self, policy_params, path_length):
+        self._policy.set_param_values(policy_params)
+        path = rollout(self._env, self._policy, path_length)
+
+        return path
