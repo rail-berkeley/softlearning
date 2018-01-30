@@ -264,7 +264,7 @@ class SAC(RLAlgorithm, Serializable):
 
         self._vf_loss_t = 0.5 * tf.reduce_mean((
           self._vf_t
-          - tf.stop_gradient(log_target - log_pi - policy_prior_log_probs)
+          - tf.stop_gradient(log_target - log_pi + policy_prior_log_probs)
         )**2)
 
         policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
