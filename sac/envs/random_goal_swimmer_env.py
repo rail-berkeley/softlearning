@@ -58,8 +58,7 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
         next_obs = self.get_current_obs()
 
         xy_position = self.get_body_com('torso')[:2]
-        self.goal_distance = np.sqrt(
-            np.sum((xy_position - self.goal_position)**2))
+        self.goal_distance = np.linalg.norm(xy_position - self.goal_position)
 
         done = self.goal_distance < self.goal_radius
 

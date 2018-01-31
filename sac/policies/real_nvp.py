@@ -115,6 +115,8 @@ class RealNVPPolicy(NNPolicy, Serializable):
         self.base_distribution = ds.MultivariateNormalDiag(
             loc=tf.zeros(self._Da), scale_diag=tf.ones(self._Da))
 
+        self.sample_z = self.base_distribution.sample(1)
+
         self.distribution = ds.ConditionalTransformedDistribution(
             distribution=self.base_distribution,
             bijector=self.bijector,
@@ -185,7 +187,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
     @contextmanager
     def fix_h(self, h=None):
         if h is None:
-            h = self.base_distribution.sample(1).eval()
+            h = self.sample_z.eval()
 
         was_deterministic = self._is_deterministic
         self._is_deterministic = True
