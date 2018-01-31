@@ -140,7 +140,10 @@ class SAC(RLAlgorithm, Serializable):
         self._init_critic_update()
         self._init_target_ops()
 
-        self._sess.run(tf.global_variables_initializer())
+        self._sess.run(tf.variables_initializer([
+            variable for variable in tf.global_variables()
+            if 'low_level_policy' not in variable.name
+        ]))
 
     @overrides
     def train(self):
