@@ -76,14 +76,18 @@ ENV_PARAMS = {
         'prefix': 'swimmer',
         'env_name': 'swimmer-rllab',
         'max_path_length': 1000,
-        'n_epochs': 2001,
-        'scale_reward': 100,
+        'n_epochs': 1000,
+        'preprocessing_hidden_sizes': (128, 128, 4),
+        'policy_s_t_units': 2,
+        'scale_reward': 300,
     },
     'hopper': {  # 3 DoF
         'prefix': 'hopper',
         'env_name': 'Hopper-v1',
         'max_path_length': 1000,
-        'n_epochs': 3001,
+        'policy_s_t_units': 3,
+        'n_epochs': 2000,
+        'preprocessing_hidden_sizes': (128, 128, 6),
         'scale_reward': 1,
     },
     'half-cheetah': {  # 6 DoF
@@ -98,7 +102,7 @@ ENV_PARAMS = {
         'prefix': 'walker',
         'env_name': 'Walker2d-v1',
         'max_path_length': 1000,
-        'n_epochs': 5001,
+        'n_epochs': 5000,
         'scale_reward': 3,
         'preprocessing_hidden_sizes': (128, 128, 12),
         'policy_s_t_units': 6,
@@ -216,12 +220,13 @@ def run_experiment(variant):
     }[variant['preprocessing_output_nonlinearity']]
 
     preprocessing_hidden_sizes = variant.get('preprocessing_hidden_sizes')
-    observations_preprocessor = (MLPPreprocessor(
-        env_spec=env.spec,
-        layer_sizes=preprocessing_hidden_sizes,
-        output_nonlinearity=nonlinearity)
-                                 if preprocessing_hidden_sizes is not None else
-                                 None)
+    if preprocessing_hidden_sizes is not None:
+        observations_preprocessor = MLPPreprocessor(
+            env_spec=env.spec,
+            layer_sizes=preprocessing_hidden_sizes,
+            output_nonlinearity=nonlinearity)
+    else:
+        observations_preprocessor = None
 
     policy_s_t_layers = variant['policy_s_t_layers']
     policy_s_t_units = variant['policy_s_t_units']
