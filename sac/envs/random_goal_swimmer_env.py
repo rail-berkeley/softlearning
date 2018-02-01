@@ -78,7 +78,8 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
         else:
             reward = goal_reward
 
-        return Step(next_obs, reward, done)
+        info = {'goal_position': self.goal_position}
+        return Step(next_obs, reward, done, **info)
 
     @overrides
     def log_diagnostics(self, paths, *args, **kwargs):
