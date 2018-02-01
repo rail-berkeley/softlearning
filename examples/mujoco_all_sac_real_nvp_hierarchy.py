@@ -61,7 +61,7 @@ ENV_PARAMS = {
 
         "preprocessing_hidden_sizes": None,
 
-        "env_goal_reward_weight": 1e-3,
+        "env_goal_reward_weight": 3e-1,
         "terminate_at_goal": True
     },
 }
