@@ -94,9 +94,10 @@ ENV_PARAMS = {
         'prefix': 'half-cheetah',
         'env_name': 'HalfCheetah-v1',
         'max_path_length': 1000,
-        'n_epochs': 10001,
-        'scale_reward': 1,
-        'max_pool_size': 1e7,
+        'n_epochs': 10000,
+        'scale_reward': 3,
+        'preprocessing_hidden_sizes': (128, 128, 12),
+        'policy_s_t_units': 6,
     },
     'walker': {  # 6 DoF
         'prefix': 'walker',
@@ -107,32 +108,27 @@ ENV_PARAMS = {
         'preprocessing_hidden_sizes': (128, 128, 12),
         'policy_s_t_units': 6,
     },
-    'multi-direction-ant': {  # 8 DoF
-        'prefix': 'multi-direction-ant',
-        'env_name': 'multi-direction-ant',
-        'max_path_length': 1000,
-        'n_epochs': 10001,
-        'scale_reward': [10.0],
-
-        "snapshot_gap": 1000,
-    },
     'ant': {  # 8 DoF
         'prefix': 'ant',
         'env_name': 'Ant-v1',
         'max_path_length': 1000,
-        'n_epochs': 10001,
-        'scale_reward': [10.0],
+        'n_epochs': 10000,
+        'scale_reward': 10,  # Haven't sweeped this yet.
+        'preprocessing_hidden_sizes': (128, 128, 16),
+        'policy_s_t_units': 8,
 
-        "snapshot_gap": 1000,
+        'snapshot_gap': 1000,
     },
     'humanoid': {  # 21 DoF
         'prefix': 'humanoid',
         'env_name': 'humanoid-rllab',
         'max_path_length': 1000,
-        'n_epochs': 20001,
-        'scale_reward': [10.0],
+        'n_epochs': 20000,
+        'preprocessing_hidden_sizes': (128, 128, 42),
+        'policy_s_t_units': 21,
+        'scale_reward': 10,
 
-        "snapshot_gap": 2000,
+        'snapshot_gap': 2000,
     },
 }
 
@@ -254,6 +250,7 @@ def run_experiment(variant):
         qf=qf,
         vf=vf,
         lr=variant['lr'],
+        policy_lr=variant['policy_lr'],
         scale_reward=variant['scale_reward'],
         discount=variant['discount'],
         tau=variant['tau'],
