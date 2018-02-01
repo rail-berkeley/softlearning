@@ -38,3 +38,18 @@ def plot_visitations(runs, suptitle=None, save_path=None):
             plt.title("run_id={}".format(run_id))
 
     plt.show()
+
+def plot_hierarchy_visitations(paths):
+    num_plots = len(paths)
+    num_rows = np.ceil(np.sqrt(num_plots))
+    num_cols = num_rows
+
+    for i, rollout_path in enumerate(paths, 1):
+        plt.subplot(num_rows, num_cols, i)
+        draw_rollout_path(i, rollout_path)
+        # from nose.tools import set_trace; from pprint import pprint; set_trace()
+        goal_position = rollout_path['env_infos']['goal_position'][0]
+        plt.plot(goal_position[0], goal_position[1], 'rx', markersize=20)
+
+    plt.show()
+    # plt.savefig('hierarchy.pdf')
