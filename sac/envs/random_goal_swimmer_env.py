@@ -20,6 +20,7 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
                  goal_reward_weight=1e-3,
                  goal_radius=0.25,
                  ctrl_cost_coeff=1e-2,
+                 terminate_at_goal=True,
                  *args,
                  **kwargs):
         assert reward_type in REWARD_TYPES
@@ -28,14 +29,13 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
         self.goal_reward_weight = goal_reward_weight
         self.goal_radius = goal_radius
         self.ctrl_cost_coeff = ctrl_cost_coeff
+        self.terminate_at_goal = terminate_at_goal
         MujocoEnv.__init__(self, *args, **kwargs)
         Serializable.quick_init(self, locals())
 
     def reset(self, goal_position=None, *args, **kwargs):
         if goal_position is None:
-            goal_position_x = 5.0
-            goal_position_y = np.random.uniform(low=-5.0, high=5.0)
-            goal_position = np.array([goal_position_x, goal_position_y])
+            goal_position = np.random.uniform(low=-5.0, high=5.0, size=2)
 
         self.goal_position = goal_position
 
@@ -77,6 +77,9 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
             reward = goal_reward - ctrl_cost
         else:
             reward = goal_reward
+
+        if not self.terminate_at_goal:
+            done = False
 
         info = {'goal_position': self.goal_position}
         return Step(next_obs, reward, done, **info)
