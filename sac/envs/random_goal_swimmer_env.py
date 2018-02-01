@@ -35,7 +35,9 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
 
     def reset(self, goal_position=None, *args, **kwargs):
         if goal_position is None:
-            goal_position = np.random.uniform(low=-5.0, high=5.0, size=2)
+            goal_position_x = 5.0
+            goal_position_y = np.random.uniform(low=-5.0, high=5.0)
+            goal_position = np.array([goal_position_x, goal_position_y])
 
         self.goal_position = goal_position
 
