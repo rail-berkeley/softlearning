@@ -56,18 +56,20 @@ ENV_PARAMS = {
     'random-goal-swimmer': { # 2 DoF
         'prefix': 'random-goal-swimmer',
         'env_name': 'random-goal-swimmer',
-        'max_path_length': 1000,
+        'epoch_length': 2000,
+        'max_path_length': 2000,
         'n_epochs': 4002,
         'scale_reward': 100.0,
 
         "preprocessing_hidden_sizes": None,
         "env_goal_reward_weight": 1e-3,
+        'policy_s_t_units': 2,
     },
     'multi-direction-swimmer': { # 2 DoF
         'prefix': 'multi-direction-swimmer',
         'env_name': 'multi-direction-swimmer',
         'max_path_length': 1000,
-        'n_epochs': 502,
+        'n_epochs': 1000,
         'scale_reward': 100.0,
 
         "preprocessing_hidden_sizes": None,

@@ -26,28 +26,28 @@ except:
     git_rev = None
 
 COMMON_PARAMS = {
-    "seed": np.random.randint(1, 100, 5).tolist(),
-    "lr": 3e-4,
-    "discount": 0.99,
-    "target_update_interval": 1,
-    "tau": 1e-2,
-    "layer_size": 128,
-    "batch_size": 128,
-    "max_pool_size": 1e6,
-    "n_train_repeat": [1],
-    "epoch_length": 2000,
-    "snapshot_mode": 'gap',
-    "snapshot_gap": 100,
-    "sync_pkl": True,
-
+    'seed': [10, 11, 12, 13, 14],
+    'lr': 3e-4,
+    'policy_lr': 3e-4,
+    'discount': 0.99,
+    'target_update_interval': 1,
+    'tau': 1e-2,
+    'layer_size': 128,
+    'batch_size': 128,
+    'max_pool_size': 1e6,
+    'n_train_repeat': [1, 4],
+    'epoch_length': 1000,
+    'snapshot_mode': 'last',
+    'snapshot_gap': 100,
+    'sync_pkl': True,
     # real nvp configs
-    "policy_lr":  3e-4,
-    "policy_coupling_layers": [2],
-    "policy_s_t_layers": [1],
-    "policy_s_t_units": [128],
+    'policy_coupling_layers': 2,
+    'policy_s_t_layers': 1,
+    'policy_scale_regularization': 0.0,
+    'preprocessing_hidden_sizes': None,
+    'preprocessing_output_nonlinearity': 'relu',
 
-    "preprocessing_hidden_sizes": None,
-    "git_sha": git_rev
+    'git_sha': git_rev
 }
 
 
@@ -55,8 +55,9 @@ ENV_PARAMS = {
     'random-goal-swimmer': { # 2 DoF
         'prefix': 'random-goal-swimmer',
         'env_name': 'random-goal-swimmer',
+        'epoch_length': 2000,
         'max_path_length': 2000,
-        'n_epochs': 2002,
+        'n_epochs': 4002,
         'scale_reward': 100.0,
 
         "preprocessing_hidden_sizes": None,
