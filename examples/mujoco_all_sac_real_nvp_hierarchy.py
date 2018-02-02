@@ -35,7 +35,7 @@ COMMON_PARAMS = {
     "batch_size": 128,
     "max_pool_size": 1e6,
     "n_train_repeat": [1],
-    "epoch_length": 1000,
+    "epoch_length": 2000,
     "snapshot_mode": 'gap',
     "snapshot_gap": 100,
     "sync_pkl": True,
@@ -55,14 +55,14 @@ ENV_PARAMS = {
     'random-goal-swimmer': { # 2 DoF
         'prefix': 'random-goal-swimmer',
         'env_name': 'random-goal-swimmer',
-        'max_path_length': 1000,
-        'n_epochs': 502,
-        'scale_reward': 200.0,
+        'max_path_length': 2000,
+        'n_epochs': 2002,
+        'scale_reward': 100.0,
 
         "preprocessing_hidden_sizes": None,
 
         "env_goal_reward_weight": 3e-1,
-        "terminate_at_goal": True
+        "terminate_at_goal": False
     },
 }
 
