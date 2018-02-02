@@ -9,7 +9,10 @@ from rllab.misc.instrument import VariantGenerator
 
 from sac.algos import SACV2
 from sac.envs import (
-    GymEnv, MultiDirectionSwimmerEnv, MultiDirectionAntEnv,
+    GymEnv,
+    MultiDirectionSwimmerEnv,
+    MultiDirectionAntEnv,
+    MultiDirectionHumanoidEnv,
     RandomGoalSwimmerEnv)
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
@@ -139,7 +142,18 @@ ENV_PARAMS = {
         'n_epochs': 20000,
         'preprocessing_hidden_sizes': (128, 128, 42),
         'policy_s_t_units': 21,
-        'scale_reward': 10,
+        'scale_reward': [1.0, 3.0, 10.0],
+
+        'snapshot_gap': 2000,
+    },
+    'multi-direction-humanoid': {  # 2 DoF
+        'prefix': 'multi-direction-humanoid',
+        'env_name': 'multi-direction-humanoid',
+        'max_path_length': 1000,
+        'n_epochs': 20000,
+        'preprocessing_hidden_sizes': (128, 128, 42),
+        'policy_s_t_units': 21,
+        'scale_reward': [3.0, 10.0],
 
         'snapshot_gap': 2000,
     },
@@ -191,6 +205,8 @@ def run_experiment(variant):
         ))
     elif variant['env_name'] == 'multi-direction-ant':
         env = normalize(MultiDirectionAntEnv())
+    elif variant['env_name'] == 'multi-direction-humanoid':
+        env = normalize(MultiDirectionHumanoidEnv())
     else:
         env = normalize(GymEnv(variant['env_name']))
 
