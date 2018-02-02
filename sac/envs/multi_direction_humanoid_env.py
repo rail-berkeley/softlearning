@@ -22,7 +22,7 @@ class MultiDirectionHumanoidEnv(HumanoidEnv):
         impact_cost = .5 * self.impact_cost_coeff * np.sum(
             np.square(np.clip(data.cfrc_ext, -1, 1)))
         vel_deviation_cost = 0.5 * self.vel_deviation_cost_coeff * np.sum(
-            np.square(comvel))
+            np.square(comvel[2:]))
         reward = velocity_reward + alive_bonus - ctrl_cost - \
             impact_cost - vel_deviation_cost
         done = data.qpos[2] < 0.8 or data.qpos[2] > 2.0
