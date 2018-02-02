@@ -121,6 +121,17 @@ ENV_PARAMS = {
 
         'snapshot_gap': 1000,
     },
+    'multi-direction-ant': {  # 2 DoF
+        'prefix': 'multi-direction-ant',
+        'env_name': 'multi-direction-ant',
+        'max_path_length': 1000,
+        'n_epochs': 10000,
+        'scale_reward': [3.0, 10.0],  # Haven't sweeped this yet.
+        'preprocessing_hidden_sizes': (128, 128, 16),
+
+        'preprocessing_hidden_sizes': (128, 128, 16),
+        'policy_s_t_units': 8,
+    },
     'humanoid': {  # 21 DoF
         'prefix': 'humanoid',
         'env_name': 'humanoid-rllab',
