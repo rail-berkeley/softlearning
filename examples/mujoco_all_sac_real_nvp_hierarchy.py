@@ -6,6 +6,7 @@ import tensorflow as tf
 import numpy as np
 
 from rllab.envs.normalized_env import normalize
+from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
 
 from sac.algos import SACV2
@@ -65,6 +66,17 @@ ENV_PARAMS = {
         "env_goal_reward_weight": 3e-1,
         "terminate_at_goal": False
     },
+    'humanoid-resume-training': {  # 21 DoF
+        'prefix': 'humanoid-resume-training',
+        'env_name': 'humanoid-rllab',
+        'max_path_length': 1000,
+        'n_epochs': 20000,
+        'preprocessing_hidden_sizes': (128, 128, 42),
+        'policy_s_t_units': 21,
+        'scale_reward': [1.0, 3.0, 10.0],
+
+        'snapshot_gap': 2000,
+    },
 }
 
 DEFAULT_ENV = 'random-goal-swimmer'
@@ -120,6 +132,11 @@ def run_experiment(variant):
             goal_reward_weight=variant['env_goal_reward_weight']
         ))
         env = HierarchyProxyEnv(wrapped_env=random_goal_swimmer_env,
+                                low_level_policy=low_level_policy)
+
+    if variant['env_name'] == 'humanoid-rllab':
+        humanoid_env = normalize(HumanoidEnv())
+        env = HierarchyProxyEnv(wrapped_env=humanoid_env,
                                 low_level_policy=low_level_policy)
 
     pool = SimpleReplayBuffer(
