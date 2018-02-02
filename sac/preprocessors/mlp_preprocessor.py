@@ -9,12 +9,12 @@ from sac.misc import tf_utils
 
 class MLPPreprocessor(MLPFunction):
     def __init__(self, env_spec, layer_sizes=(128, 16),
-                 output_nonlinearity=None):
+                 output_nonlinearity=None, name='observations_preprocessor'):
 
         Parameterized.__init__(self)
         Serializable.quick_init(self, locals())
 
-        self._name = 'observations_preprocessor'
+        self._name = name
 
         self._Do = env_spec.observation_space.flat_dim
 
@@ -28,4 +28,4 @@ class MLPPreprocessor(MLPFunction):
         self._layer_sizes = layer_sizes
         self._output_nonlinearity = output_nonlinearity
 
-        self._output_t = self.get_output_for(obs_ph)
+        self._output_t = self.get_output_for(obs_ph, reuse=tf.AUTO_REUSE)

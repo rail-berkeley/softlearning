@@ -170,7 +170,8 @@ def run_experiment(variant):
     preprocessing_hidden_sizes = variant.get('preprocessing_hidden_sizes')
     observations_preprocessor = (
         MLPPreprocessor(env_spec=env.spec,
-                        layer_sizes=preprocessing_hidden_sizes)
+                        layer_sizes=preprocessing_hidden_sizes,
+                        name='high_level_observations_preprocessor')
         if preprocessing_hidden_sizes is not None
         else None
     )
