@@ -63,9 +63,11 @@ ENV_PARAMS = {
 
         'preprocessing_hidden_sizes': None,
 
-
+        'env_reward_type': 'dense',
         'env_goal_reward_weight': 3e-1,
-        'terminate_at_goal': False
+        'env_goal_radius': 0.25,
+        'env_ctrl_cost_coeff': 1e-2,
+        'env_terminate_at_goal': False
     },
     'humanoid-resume-training': {  # 21 DoF
         'prefix': 'humanoid-resume-training',
@@ -130,7 +132,11 @@ def run_experiment(variant):
 
     if variant['env_name'] == 'random-goal-swimmer':
         random_goal_swimmer_env = normalize(RandomGoalSwimmerEnv(
-            goal_reward_weight=variant['env_goal_reward_weight']
+            reward_type=variant['env_reward_type'],
+            goal_reward_weight=variant['env_goal_reward_weight'],
+            goal_radius=variant['env_goal_radius'],
+            ctrl_cost_coeff=variant['env_ctrl_cost_coeff'],
+            terminate_at_goal=variant['env_terminate_at_goal'],
         ))
         env = HierarchyProxyEnv(wrapped_env=random_goal_swimmer_env,
                                 low_level_policy=low_level_policy)
