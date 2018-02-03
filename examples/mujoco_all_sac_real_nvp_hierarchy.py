@@ -7,6 +7,8 @@ import numpy as np
 
 from rllab.envs.normalized_env import normalize
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
+from rllab.envs.mujoco.swimmer_env import SwimmerEnv
+from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.misc.instrument import VariantGenerator
 
 from sac.algos import SACV2
@@ -88,6 +90,17 @@ ENV_PARAMS = {
         'env_ctrl_cost_coeff': 1e-2,
         'env_terminate_at_goal': [True, False]
     },
+    'ant-resume-training': {  # 8 DoF
+        'prefix': 'ant',
+        'env_name': 'ant',
+        'max_path_length': 1000,
+        'n_epochs': 10000,
+        'scale_reward': [1.0, 3.0, 10.0],  # Haven't sweeped this yet.
+        'preprocessing_hidden_sizes': (128, 128, 16),
+        'policy_s_t_units': 8,
+
+        'snapshot_gap': 1000,
+    },
     'humanoid-resume-training': {  # 21 DoF
         'prefix': 'humanoid-resume-training',
         'env_name': 'humanoid-rllab',
@@ -149,7 +162,11 @@ def run_experiment(variant):
     low_level_policy = load_low_level_policy(
         policy_path=variant['low_level_policy_path'])
 
-    if variant['env_name'] == 'random-goal-swimmer':
+    if variant['env_name'] == 'ant':
+        ant_env = normalize(AntEnv())
+        env = HierarchyProxyEnv(wrapped_env=ant_env,
+                                low_level_policy=low_level_policy)
+    elif variant['env_name'] == 'random-goal-swimmer':
         random_goal_swimmer_env = normalize(RandomGoalSwimmerEnv(
             reward_type=variant['env_reward_type'],
             goal_reward_weight=variant['env_goal_reward_weight'],
