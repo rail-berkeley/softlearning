@@ -22,6 +22,8 @@ class RealNVPPolicy(NNPolicy, Serializable):
                  squash=True,
                  real_nvp_config=None,
                  observations_preprocessor=None,
+                 q_function=None,
+                 n_map_action_candidates=100,
                  name="real_nvp_policy"):
         """Initialize Real NVP policy.
 
@@ -32,6 +34,8 @@ class RealNVPPolicy(NNPolicy, Serializable):
                 configuration for real nvp distribution.
             squash (`bool`): If True, squash the action samples between
                 -1 and 1 with tanh.
+            n_map_action_candidates ('int'): Number of action candidates for
+            estimating the maximum a posteriori (deterministic) action.
         """
         Serializable.quick_init(self, locals())
 
@@ -39,6 +43,8 @@ class RealNVPPolicy(NNPolicy, Serializable):
         self._real_nvp_config = real_nvp_config
         self._mode = mode
         self._squash = squash
+        self._q_function = q_function
+        self._n_map_action_candidates=n_map_action_candidates
 
         self._Da = env_spec.action_space.flat_dim
         self._Ds = env_spec.observation_space.flat_dim
@@ -134,16 +140,25 @@ class RealNVPPolicy(NNPolicy, Serializable):
             name='latents',
         )
 
-        self._actions = self.actions_for(self._observations_ph)
+        self._actions, self._log_pis = self.actions_for(
+            self._observations_ph, with_log_pis=True)
         self._determistic_actions = self.actions_for(self._observations_ph,
                                                      self._latents_ph)
 
     def get_action(self, observation):
         """Sample single action based on the observations.
-
-        TODO: if self._is_deterministic
         """
-        return self.get_actions(observation[None])[0], {}
+
+        if self._is_deterministic and self._n_map_action_candidates > 1:
+            observations = np.tile(
+                observation[None], reps=(self._n_map_action_candidates, 1))
+            action_candidates = self.get_actions(observations)
+            q_values = self._q_function.eval(observations, action_candidates)
+            best_action_index = np.argmax(q_values)
+
+            return action_candidates[best_action_index], {}
+        else:
+            return self.get_actions(observation[None])[0], {}
 
     def get_actions(self, observations):
         """Sample batch of actions based on the observations"""

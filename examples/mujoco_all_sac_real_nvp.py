@@ -269,7 +269,10 @@ def run_experiment(variant):
         mode="train",
         squash=True,
         real_nvp_config=real_nvp_config,
-        observations_preprocessor=observations_preprocessor)
+        observations_preprocessor=observations_preprocessor,
+        q_function=qf,
+        n_map_action_candidates=variant['n_map_action_candidates']
+    )
 
     algorithm = SACV2(
         base_kwargs=base_kwargs,
