@@ -30,6 +30,7 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
         assert reward_type in REWARD_TYPES
 
         self._reward_type = reward_type
+        self.terminate_at_goal = terminate_at_goal
 
         self.goal_reward_weight = goal_reward_weight
         self.goal_radius = goal_radius
@@ -37,7 +38,7 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
         self.goal_angle_range = goal_angle_range
 
         self.ctrl_cost_coeff = ctrl_cost_coeff
-        self.terminate_at_goal = terminate_at_goal
+
         MujocoEnv.__init__(self, *args, **kwargs)
         Serializable.quick_init(self, locals())
 
