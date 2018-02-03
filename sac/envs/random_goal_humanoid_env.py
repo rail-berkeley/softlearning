@@ -23,7 +23,10 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
                  goal_radius=0.25,
                  goal_distance=5,
                  goal_angle_range=(0, 2*np.pi),
-                 # TODO
+                 vel_deviation_cost_coeff=1e-2,
+                 alive_bonus=0.2,
+                 ctrl_cost_coeff=1e-3,
+                 impact_cost_coeff=1e-5,
                  terminate_at_goal=True,
                  *args,
                  **kwargs):
@@ -37,7 +40,14 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
         self.goal_distance = goal_distance
         self.goal_angle_range = goal_angle_range
 
-        # TODO: attributes
+        self.ctrl_cost_coeff = ctrl_cost_coeff
+        self.contact_cost_coeff = contact_cost_coeff
+        self.survive_reward = survive_reward
+
+        self.vel_deviation_cost_coeff = vel_deviation_cost_coeff
+        self.alive_bonus = alive_bonus
+        self.ctrl_cost_coeff = ctrl_cost_coeff
+        self.impact_cost_coeff = impact_cost_coeff
 
         MujocoEnv.__init__(self, *args, **kwargs)
         Serializable.quick_init(self, locals())
@@ -65,8 +75,51 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
 
     @overrides
     def step(self, action):
-        # TODO: implement
-        pass
+        self.forward_dynamics(action)
+
+        xy_position = self.get_body_com('torso')[:2]
+        self.goal_distance = np.linalg.norm(xy_position - self.goal_position)
+
+        goal_reached = self.goal_distance < self.goal_radius
+
+        if self._reward_type == 'dense':
+            goal_reward = -self.goal_distance * self.goal_reward_weight
+        elif self._reward_type == 'sparse':
+            goal_reward = int(goal_reached) * self.goal_reward_weight
+
+
+
+
+        if self.ctrl_cost_coeff > 0:
+            lb, ub = self.action_bounds
+            scaling = (ub - lb) * 0.5
+            ctrl_cost = 0.5 * self.ctrl_cost_coeff * np.sum(
+                np.square(action / scaling))
+        else:
+            ctrl_cost = 0.0
+
+        if self.impact_cost_coeff > 0:
+            cfrc_ext = self.model.data.cfrc_ext
+            impact_cost = 0.5 * self.impact_cost_coeff * np.sum(
+                np.square(np.clip(data.cfrc_ext, -1, 1)))
+        else:
+            impact_cost = 0.0
+
+        if self.vel_deviation_cost_coeff > 0:
+            comvel = self.get_body_comvel("torso")
+            vel_deviation_cost = 0.5 * self.vel_deviation_cost_coeff * np.sum(
+                np.square(comvel[2:]))
+
+
+        reward = (goal_reward + self.alive_bonus
+                  - ctrl_cost - impact_cost - vel_deviation_cost)
+
+        is_healthy = 0.2 < self.model.data.qpos[2] < 0.8
+        done = not is_healthy or (self.terminate_at_goal and goal_reached)
+
+        next_observation = self.get_current_obs()
+        info = {'goal_position': self.goal_position}
+        return Step(next_observation, reward, done, **info)
 
     @overrides
     def log_diagnostics(self, paths, *args, **kwargs):
