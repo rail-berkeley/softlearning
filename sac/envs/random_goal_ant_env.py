@@ -19,6 +19,8 @@ class RandomGoalAntEnv(AntEnv):
                  reward_type='dense',
                  goal_reward_weight=1e-3,
                  goal_radius=0.25,
+                 goal_distance=5,
+                 goal_angle_range=(0, 2*np.pi),
                  ctrl_cost_coeff=1e-2,
                  contact_cost_coeff=1e-3,
                  survive_reward = 5e-2,
@@ -30,6 +32,8 @@ class RandomGoalAntEnv(AntEnv):
         self._reward_type = reward_type
         self.goal_reward_weight = goal_reward_weight
         self.goal_radius = goal_radius
+        self.goal_distance = goal_distance
+        self.goal_angle_range = goal_angle_range
         self.ctrl_cost_coeff = ctrl_cost_coeff
         self.contact_cost_coeff = contact_cost_coeff
         self.survive_reward = survive_reward
@@ -39,8 +43,9 @@ class RandomGoalAntEnv(AntEnv):
 
     def reset(self, goal_position=None, *args, **kwargs):
         if goal_position is None:
-            goal_position_x = 5.0
-            goal_position_y = np.random.uniform(low=-5.0, high=5.0)
+            angle = np.random.uniform(*self.goal_angle_range)
+            goal_position_x = np.cos(angle) * self.goal_distance
+            goal_position_y = np.sin(angle) * self.goal_distance
             goal_position = np.array([goal_position_x, goal_position_y])
 
         self.goal_position = goal_position
