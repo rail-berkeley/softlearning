@@ -10,7 +10,8 @@ from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
 
 from sac.algos import SACV2
-from sac.envs import RandomGoalSwimmerEnv, HierarchyProxyEnv
+from sac.envs import (
+    RandomGoalSwimmerEnv, RandomGoalAntEnv, HierarchyProxyEnv)
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
 from sac.policies import RealNVPPolicy
@@ -63,6 +64,23 @@ ENV_PARAMS = {
 
         'preprocessing_hidden_sizes': (128, 128, 4),
         'policy_s_t_units': 2,
+
+        'env_reward_type': ['dense', 'sparse'],
+        'env_goal_reward_weight': 3e-1,
+        'env_goal_radius': 0.25,
+        'env_ctrl_cost_coeff': 1e-2,
+        'env_terminate_at_goal': [True, False]
+    },
+    'random-goal-ant': { # 2 DoF
+        'prefix': 'random-goal-ant',
+        'env_name': 'random-goal-ant',
+        'epoch_length': 2000,
+        'max_path_length': 2000,
+        'n_epochs': 5002,
+        'scale_reward': 3.0,
+
+        'preprocessing_hidden_sizes': (128, 128, 12),
+        'policy_s_t_units': 6,
 
         'env_reward_type': ['dense', 'sparse'],
         'env_goal_reward_weight': 3e-1,
@@ -142,7 +160,18 @@ def run_experiment(variant):
         env = HierarchyProxyEnv(wrapped_env=random_goal_swimmer_env,
                                 low_level_policy=low_level_policy)
 
-    if variant['env_name'] == 'humanoid-rllab':
+    elif variant['env_name'] == 'random-goal-ant':
+        random_goal_ant_env = normalize(RandomGoalAntEnv(
+            reward_type=variant['env_reward_type'],
+            goal_reward_weight=variant['env_goal_reward_weight'],
+            goal_radius=variant['env_goal_radius'],
+            ctrl_cost_coeff=variant['env_ctrl_cost_coeff'],
+            terminate_at_goal=variant['env_terminate_at_goal'],
+        ))
+        env = HierarchyProxyEnv(wrapped_env=random_goal_ant_env,
+                                low_level_policy=low_level_policy)
+
+    elif variant['env_name'] == 'humanoid-rllab':
         humanoid_env = normalize(HumanoidEnv())
         env = HierarchyProxyEnv(wrapped_env=humanoid_env,
                                 low_level_policy=low_level_policy)
