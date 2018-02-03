@@ -39,8 +39,8 @@ COMMON_PARAMS = {
     'max_pool_size': 1e6,
     'n_train_repeat': [1, 4],
     'epoch_length': 1000,
-    'snapshot_mode': 'last',
-    'snapshot_gap': 100,
+    'snapshot_mode': 'gap',
+    'snapshot_gap': 1000,
     'sync_pkl': True,
     # real nvp configs
     'policy_coupling_layers': 2,
