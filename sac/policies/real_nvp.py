@@ -5,6 +5,7 @@ import numpy as np
 import tensorflow as tf
 
 from rllab.core.serializable import Serializable
+from rllab.misc import logger
 
 from sac.distributions import RealNVPBijector
 from sac.policies import NNPolicy
@@ -220,7 +221,10 @@ class RealNVPPolicy(NNPolicy, Serializable):
 
     def log_diagnostics(self, batch):
         """Record diagnostic information to the logger.
-
-        TODO: implement
         """
-        pass
+        feeds = {self._observations_ph: batch['observations']}
+        log_pis = tf.get_default_session().run(self._log_pis, feeds)
+
+        logger.record_tabular('policy-entropy-mean', -np.mean(log_pis))
+        logger.record_tabular('log-pi-min', np.min(log_pis))
+        logger.record_tabular('log-pi-max', np.max(log_pis))

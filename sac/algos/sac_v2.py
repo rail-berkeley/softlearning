@@ -339,8 +339,12 @@ class SAC(RLAlgorithm, Serializable):
             [self._qf_t, self._vf_t, self._td_loss_t], feed_dict)
 
         logger.record_tabular('qf-avg', np.mean(qf))
+        logger.record_tabular('qf-min', np.min(qf))
+        logger.record_tabular('qf-max', np.max(qf))
         logger.record_tabular('qf-std', np.std(qf))
         logger.record_tabular('vf-avg', np.mean(vf))
+        logger.record_tabular('vf-min', np.min(vf))
+        logger.record_tabular('vf-max', np.max(vf))
         logger.record_tabular('vf-std', np.std(vf))
         logger.record_tabular('mean-sq-bellman-error', td_loss)
 
