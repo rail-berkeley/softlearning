@@ -61,10 +61,11 @@ ENV_PARAMS = {
         'n_epochs': 4002,
         'scale_reward': 100.0,
 
-        "preprocessing_hidden_sizes": None,
+        'preprocessing_hidden_sizes': None,
 
-        "env_goal_reward_weight": 3e-1,
-        "terminate_at_goal": False
+
+        'env_goal_reward_weight': 3e-1,
+        'terminate_at_goal': False
     },
     'humanoid-resume-training': {  # 21 DoF
         'prefix': 'humanoid-resume-training',
