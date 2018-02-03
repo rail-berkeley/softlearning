@@ -86,6 +86,7 @@ class SAC(RLAlgorithm, Serializable):
             discount=0.99,
             tau=0.01,
             target_update_interval=1,
+            regularize_actions=False,
 
             save_full_state=False,
     ):
@@ -127,6 +128,7 @@ class SAC(RLAlgorithm, Serializable):
         self._discount = discount
         self._tau = tau
         self._target_update_interval = target_update_interval
+        self._regularize_actions = regularize_actions
 
         self._save_full_state = save_full_state
 
@@ -245,10 +247,13 @@ class SAC(RLAlgorithm, Serializable):
         self._vf_t = self._vf.get_output_for(self._obs_pl, reuse=True)  # N
         self._vf_params = self._vf.get_params_internal()
 
-        D_s = actions.shape.as_list()[-1]
-        policy_prior = tf.contrib.distributions.MultivariateNormalDiag(
-            loc=tf.zeros(D_s), scale_diag=tf.ones(D_s))
-        policy_prior_log_probs = policy_prior.log_prob(actions)
+        if self._regularize_actions:
+            D_s = actions.shape.as_list()[-1]
+            policy_prior = tf.contrib.distributions.MultivariateNormalDiag(
+                loc=tf.zeros(D_s), scale_diag=tf.ones(D_s))
+            policy_prior_log_probs = policy_prior.log_prob(actions)
+        else:
+            policy_prior_log_probs = 0.0
 
         log_target = self._qf.get_output_for(
             self._obs_pl, actions, reuse=True)  # N
