@@ -13,8 +13,12 @@ class MultiDirectionSwimmerEnv(SwimmerEnv):
         ctrl_cost = 0.5 * self.ctrl_cost_coeff * np.sum(
             np.square(action / scaling))
         xy_velocities = self.get_body_comvel("torso")[:2]
-        # rewards for speed on xy-plane (no matter which direction)
+
+        # rewards for speed on positive x direction
         xy_velocity = np.sqrt(np.sum(xy_velocities**2))
+        if xy_velocity[0] < 0:
+            xy_velocity *= -1.0
+
         reward = xy_velocity - ctrl_cost
         done = False
         return Step(next_obs, reward, done)
