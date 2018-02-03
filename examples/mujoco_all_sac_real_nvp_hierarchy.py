@@ -73,7 +73,7 @@ ENV_PARAMS = {
         'env_ctrl_cost_coeff': 1e-2,
         'env_terminate_at_goal': [True, False]
     },
-    'random-goal-ant': { # 2 DoF
+    'random-goal-ant': { # 8 DoF
         'prefix': 'random-goal-ant',
         'env_name': 'random-goal-ant',
         'epoch_length': 2000,
@@ -83,6 +83,23 @@ ENV_PARAMS = {
 
         'preprocessing_hidden_sizes': (128, 128, 12),
         'policy_s_t_units': 6,
+
+        'env_reward_type': ['dense', 'sparse'],
+        'env_goal_reward_weight': 3e-1,
+        'env_goal_radius': 0.25,
+        'env_ctrl_cost_coeff': 1e-2,
+        'env_terminate_at_goal': [True, False]
+    },
+    'random-goal-humanoid': { # 21 DoF
+        'prefix': 'humanoid',
+        'env_name': 'humanoid-rllab',
+        'max_path_length': 1000,
+        'n_epochs': 20000,
+        'preprocessing_hidden_sizes': (128, 128, 42),
+        'policy_s_t_units': 21,
+        'scale_reward': [1.0, 3.0, 10.0],
+
+        'snapshot_gap': 2000,
 
         'env_reward_type': ['dense', 'sparse'],
         'env_goal_reward_weight': 3e-1,
