@@ -15,8 +15,14 @@ REWARD_TYPES = ('dense', 'sparse')
 class RandomGoalHumanoidEnv(HumanoidEnv):
     """Implements humanoid env that is sparsely rewarded for reaching a goal"""
 
+    @autoargs.arg('vel_deviation_cost_coeff', type=float,
+                  help='cost coefficient for velocity deviation')
+    @autoargs.arg('alive_bonus', type=float,
+                  help='bonus reward for being alive')
     @autoargs.arg('ctrl_cost_coeff', type=float,
-                  help='cost coefficient for controls')
+                  help='cost coefficient for control inputs')
+    @autoargs.arg('impact_cost_coeff', type=float,
+                  help='cost coefficient for impact')
     def __init__(self,
                  reward_type='dense',
                  terminate_at_goal=True,
@@ -39,10 +45,6 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
         self.goal_radius = goal_radius
         self.goal_distance = goal_distance
         self.goal_angle_range = goal_angle_range
-
-        self.ctrl_cost_coeff = ctrl_cost_coeff
-        self.contact_cost_coeff = contact_cost_coeff
-        self.survive_reward = survive_reward
 
         self.vel_deviation_cost_coeff = vel_deviation_cost_coeff
         self.alive_bonus = alive_bonus
@@ -101,7 +103,7 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
         if self.impact_cost_coeff > 0:
             cfrc_ext = self.model.data.cfrc_ext
             impact_cost = 0.5 * self.impact_cost_coeff * np.sum(
-                np.square(np.clip(data.cfrc_ext, -1, 1)))
+                np.square(np.clip(cfrc_ext, -1, 1)))
         else:
             impact_cost = 0.0
 
