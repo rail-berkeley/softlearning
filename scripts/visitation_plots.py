@@ -21,7 +21,12 @@ def visitation_plots(args):
     runs = defaultdict(dict)
     for run_path in glob.iglob(args.run_glob):
         path_files = glob.iglob(os.path.join(run_path, "itr_*_path.pkl"))
-        path_file = list(sorted(path_files))[-1] # os.path.join(run_path, "itr_500_path.pkl")
+        sorted_path_files = list(sorted(path_files))
+        if not sorted_path_files:
+            path_files = glob.iglob(os.path.join(run_path, "params_path.pkl"))
+            sorted_path_files = list(sorted(path_files))
+
+        path_file = path_files[-1]
         variant_file = os.path.join(run_path, "variant.json")
         with open(variant_file, "r") as f:
             variant = json.load(f)
