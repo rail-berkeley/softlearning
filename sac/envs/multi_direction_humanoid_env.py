@@ -2,6 +2,9 @@ import numpy as np
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.overrides import overrides
 from rllab.envs.base import Step
+from rllab.misc import logger
+
+from .helpers import get_multi_direction_logs
 
 class MultiDirectionHumanoidEnv(HumanoidEnv):
     @overrides
@@ -28,3 +31,9 @@ class MultiDirectionHumanoidEnv(HumanoidEnv):
         done = data.qpos[2] < 0.8 or data.qpos[2] > 2.0
 
         return Step(next_obs, reward, done)
+
+    @overrides
+    def log_diagnostics(self, paths, *args, **kwargs):
+        logs = get_multi_direction_logs(paths)
+        for row in logs:
+            logger.record_tabular(*row)

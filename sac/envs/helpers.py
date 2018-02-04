@@ -51,3 +51,18 @@ def get_random_goal_logs(paths):
                 logs.append((fn_name.capitalize() + name, fn(series)))
 
     return logs
+
+def get_multi_direction_logs(paths):
+    progs = [
+        np.linalg.norm(path["observations"][-1][-3:-1]
+                       - path["observations"][0][-3:-1])
+        for path in paths
+    ]
+    logs = (
+        ('AverageProgress', np.mean(progs)),
+        ('MaxProgress', np.max(progs)),
+        ('MinProgress', np.min(progs)),
+        ('StdProgress', np.std(progs)),
+    )
+
+    return logs
