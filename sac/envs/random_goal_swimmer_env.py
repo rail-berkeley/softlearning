@@ -23,6 +23,7 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
                  goal_radius=0.25,
                  goal_distance=5,
                  goal_angle_range=(-0.25*np.pi, 0.25*np.pi),
+                 velocity_reward_weight=0,
                  terminate_at_goal=True,
                  ctrl_cost_coeff=1e-2,
                  *args,
@@ -36,6 +37,8 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
         self.goal_radius = goal_radius
         self.goal_distance = goal_distance
         self.goal_angle_range = goal_angle_range
+
+        self.velocity_reward_weight = velocity_reward_weight
 
         self.ctrl_cost_coeff = ctrl_cost_coeff
 
@@ -73,10 +76,23 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
 
         done = goal_distance < self.goal_radius
 
-        if self._reward_type == 'dense':
-            goal_reward = -goal_distance * self.goal_reward_weight
-        elif self._reward_type == 'sparse':
-            goal_reward = int(done) * self.goal_reward_weight
+        if self.goal_reward_weight > 0:
+            if self._reward_type == 'dense':
+                goal_reward = -goal_distance * self.goal_reward_weight
+            elif self._reward_type == 'sparse':
+                goal_reward = int(done) * self.goal_reward_weight
+        else:
+            goal_reward = 0
+
+        if self.velocity_reward_weight > 0:
+            xy_velocities = self.get_body_comvel("torso")[:2]
+            # rewards for speed on xy-plane (no matter which direction)
+            velocity_reward = (self.velocity_reward_weight
+                               * np.linalg.norm(xy_velocities**2))
+            if xy_velocities[0] < 0:
+                velocity_reward *= -1.0
+        else:
+            velocity_reward = 0
 
         # Add control cost
         if self.ctrl_cost_coeff > 0:
@@ -85,10 +101,10 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
             ctrl_cost = 0.5 * self.ctrl_cost_coeff * np.sum(
                 np.square(action / scaling))
 
-            reward = goal_reward - ctrl_cost
         else:
-            reward = goal_reward
+            ctrl_cost = 0
 
+        reward = goal_reward + velocity_reward - ctrl_cost
         if not self.terminate_at_goal:
             done = False
 

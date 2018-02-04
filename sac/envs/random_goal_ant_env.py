@@ -24,6 +24,7 @@ class RandomGoalAntEnv(AntEnv):
                  goal_radius=0.25,
                  goal_distance=5,
                  goal_angle_range=(0, 2*np.pi),
+                 velocity_reward_weight=0,
                  ctrl_cost_coeff=1e-2,
                  contact_cost_coeff=1e-3,
                  survive_reward=5e-2,
@@ -38,6 +39,8 @@ class RandomGoalAntEnv(AntEnv):
         self.goal_radius = goal_radius
         self.goal_distance = goal_distance
         self.goal_angle_range = goal_angle_range
+
+        self.velocity_reward_weight = velocity_reward_weight
 
         self.ctrl_cost_coeff = ctrl_cost_coeff
         self.contact_cost_coeff = contact_cost_coeff
@@ -76,10 +79,21 @@ class RandomGoalAntEnv(AntEnv):
 
         goal_reached = goal_distance < self.goal_radius
 
-        if self._reward_type == 'dense':
-            goal_reward = -goal_distance * self.goal_reward_weight
-        elif self._reward_type == 'sparse':
-            goal_reward = int(goal_reached) * self.goal_reward_weight
+        if self.goal_reward_weight > 0:
+            if self._reward_type == 'dense':
+                goal_reward = -goal_distance * self.goal_reward_weight
+            elif self._reward_type == 'sparse':
+                goal_reward = int(goal_reached) * self.goal_reward_weight
+        else:
+            goal_reward = 0
+
+        if self.velocity_reward_weight > 0:
+            xy_velocities = self.get_body_comvel("torso")[:2]
+            # rewards for speed on xy-plane (no matter which direction)
+            velocity_reward = (self.velocity_reward_weight
+                               * np.linalg.norm(xy_velocities**2))
+        else:
+            velocity_reward = 0
 
         if self.ctrl_cost_coeff > 0:
             lb, ub = self.action_bounds
@@ -95,7 +109,8 @@ class RandomGoalAntEnv(AntEnv):
         else:
             contact_cost = 0
 
-        reward = goal_reward + self.survive_reward - ctrl_cost - contact_cost
+        reward = (goal_reward + velocity_reward + self.survive_reward
+                  - ctrl_cost - contact_cost)
 
         is_healthy = (np.isfinite(self._state).all()
                       and 0.2 <= self._state[2] <= 1.0)

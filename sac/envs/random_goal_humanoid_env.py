@@ -30,6 +30,7 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
                  goal_radius=0.25,
                  goal_distance=5,
                  goal_angle_range=(0, 2*np.pi),
+                 velocity_reward_weight=0,
                  vel_deviation_cost_coeff=1e-2,
                  alive_bonus=0.2,
                  ctrl_cost_coeff=1e-3,
@@ -45,6 +46,8 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
         self.goal_radius = goal_radius
         self.goal_distance = goal_distance
         self.goal_angle_range = goal_angle_range
+
+        self.velocity_reward_weight = velocity_reward_weight
 
         self.vel_deviation_cost_coeff = vel_deviation_cost_coeff
         self.alive_bonus = alive_bonus
@@ -84,13 +87,21 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
 
         goal_reached = goal_distance < self.goal_radius
 
-        if self._reward_type == 'dense':
-            goal_reward = -goal_distance * self.goal_reward_weight
-        elif self._reward_type == 'sparse':
-            goal_reward = int(goal_reached) * self.goal_reward_weight
+        if self.goal_reward_weight > 0:
+            if self._reward_type == 'dense':
+                goal_reward = -goal_distance * self.goal_reward_weight
+            elif self._reward_type == 'sparse':
+                goal_reward = int(goal_reached) * self.goal_reward_weight
+        else:
+            goal_reward = 0
 
-
-
+        if self.velocity_reward_weight > 0:
+            xy_velocities = self.get_body_comvel("torso")[:2]
+            # rewards for speed on xy-plane (no matter which direction)
+            velocity_reward = (self.velocity_reward_weight
+                               * np.linalg.norm(xy_velocities**2))
+        else:
+            velocity_reward = 0
 
         if self.ctrl_cost_coeff > 0:
             lb, ub = self.action_bounds
@@ -113,7 +124,7 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
                 np.square(comvel[2:]))
 
 
-        reward = (goal_reward + self.alive_bonus
+        reward = (goal_reward + velocity_reward + self.alive_bonus
                   - ctrl_cost - impact_cost - vel_deviation_cost)
 
         is_healthy = 0.2 < self.model.data.qpos[2] < 0.8
