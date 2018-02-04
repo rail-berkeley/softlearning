@@ -94,7 +94,7 @@ ENV_PARAMS = {
         'env_terminate_at_goal': False,
         'env_goal_reward_weight': 3e-1,
         'env_goal_radius': 0.25,
-        'env_goal_distance': 5,
+        'env_goal_distance': 25,
         'env_goal_angle_range': (0, 2*np.pi),
     },
     'random-goal-humanoid': {  # 21 DoF
