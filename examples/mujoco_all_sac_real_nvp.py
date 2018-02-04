@@ -210,7 +210,7 @@ def run_experiment(variant):
     elif 'random-goal' in env_name:
         EnvClass = RANDOM_GOAL_ENVS[env_type]
         env_args = {
-            name.lstrip('env_'): value
+            name.replace('env_', '', 1): value
             for name, value in variant.items()
             if name.startswith('env_') and name != 'env_name'
         }
