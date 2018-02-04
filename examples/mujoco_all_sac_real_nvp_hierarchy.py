@@ -166,7 +166,8 @@ def get_variants(args):
     env_params = ENV_PARAMS[args.env]
     params = COMMON_PARAMS
     params.update(env_params)
-    params['low_level_policy_path'] = args.low_level_policy_path
+    if not params.get('low_level_policy_path'):
+        params['low_level_policy_path'] = args.low_level_policy_path
 
     vg = VariantGenerator()
     for key, val in params.items():
@@ -188,8 +189,16 @@ def load_low_level_policy(policy_path):
     return policy
 
 def run_experiment(variant):
-    low_level_policy = load_low_level_policy(
-        policy_path=variant['low_level_policy_path'])
+    if args.mode == 'local':
+        low_level_policy_path = os.path.join(os.getcwd(),
+                                             'sac/policies/trained_policies',
+                                             variant['low_level_policy_path'])
+    elif args.mode == 'ec2':
+        low_level_policy_path = os.path.join(
+            '/root/code/rllab/sac/policies/trained_policies',
+            variant['low_level_policy_path'])
+
+    low_level_policy = load_low_level_policy(policy_path=low_level_policy_path)
 
     if variant['env_name'] == 'ant':
         ant_env = normalize(AntEnv())
