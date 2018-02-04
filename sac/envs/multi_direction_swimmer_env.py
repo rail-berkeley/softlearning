@@ -16,7 +16,7 @@ class MultiDirectionSwimmerEnv(SwimmerEnv):
 
         # rewards for speed on positive x direction
         xy_velocity = np.sqrt(np.sum(xy_velocities**2))
-        if xy_velocity[0] < 0:
+        if xy_velocities[0] < 0:
             xy_velocity *= -1.0
 
         reward = xy_velocity - ctrl_cost
