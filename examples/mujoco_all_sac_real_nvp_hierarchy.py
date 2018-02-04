@@ -81,8 +81,8 @@ ENV_PARAMS = {
         'n_epochs': 5002,
         'scale_reward': 3.0,
 
-        'preprocessing_hidden_sizes': (128, 128, 12),
-        'policy_s_t_units': 6,
+        'preprocessing_hidden_sizes': (128, 128, 16),
+        'policy_s_t_units': 8,
 
         'env_reward_type': ['dense', 'sparse'],
         'env_goal_reward_weight': 3e-1,
