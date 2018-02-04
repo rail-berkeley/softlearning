@@ -6,14 +6,15 @@ import tensorflow as tf
 import numpy as np
 
 from rllab.envs.normalized_env import normalize
-from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.envs.mujoco.ant_env import AntEnv
+from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
 
 from sac.algos import SACV2
 from sac.envs import (
-    RandomGoalSwimmerEnv, RandomGoalAntEnv, HierarchyProxyEnv)
+    RandomGoalSwimmerEnv, RandomGoalAntEnv, RandomGoalHumanoidEnv,
+    HierarchyProxyEnv)
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
 from sac.policies import RealNVPPolicy
@@ -119,8 +120,8 @@ ENV_PARAMS = {
     },
     'ant-resume-training': {  # 8 DoF
         'seed': np.random.randint(1, 100, 1).tolist(),
-        'prefix': 'ant',
-        'env_name': 'ant',
+        'prefix': 'ant-resume-training',
+        'env_name': 'ant-rllab',
         'max_path_length': 1000,
         'n_epochs': int(5e3 + 1),
         'scale_reward': 3.0,
@@ -188,6 +189,17 @@ def load_low_level_policy(policy_path):
 
     return policy
 
+RANDOM_GOAL_ENVS = {
+    'swimmer': RandomGoalSwimmerEnv,
+    'ant': RandomGoalAntEnv,
+    'humanoid': RandomGoalHumanoidEnv,
+}
+
+RLLAB_ENVS = {
+    'ant-rllab': AntEnv,
+    'humanoid-rllab': HumanoidEnv
+}
+
 def run_experiment(variant):
     if args.mode == 'local':
         low_level_policy_path = os.path.join(os.getcwd(),
@@ -200,34 +212,24 @@ def run_experiment(variant):
 
     low_level_policy = load_low_level_policy(policy_path=low_level_policy_path)
 
-    if variant['env_name'] == 'ant':
-        ant_env = normalize(AntEnv())
-        env = HierarchyProxyEnv(wrapped_env=ant_env,
-                                low_level_policy=low_level_policy)
-    elif variant['env_name'] == 'random-goal-swimmer':
-        random_goal_swimmer_env = normalize(RandomGoalSwimmerEnv(
-            reward_type=variant['env_reward_type'],
-            goal_reward_weight=variant['env_goal_reward_weight'],
-            goal_radius=variant['env_goal_radius'],
-            terminate_at_goal=variant['env_terminate_at_goal'],
-        ))
-        env = HierarchyProxyEnv(wrapped_env=random_goal_swimmer_env,
-                                low_level_policy=low_level_policy)
+    env_name = variant['env_name']
+    env_type = env_name.split('-')[-1]
 
-    elif variant['env_name'] == 'random-goal-ant':
-        random_goal_ant_env = normalize(RandomGoalAntEnv(
-            reward_type=variant['env_reward_type'],
-            goal_reward_weight=variant['env_goal_reward_weight'],
-            goal_radius=variant['env_goal_radius'],
-            terminate_at_goal=variant['env_terminate_at_goal'],
-        ))
-        env = HierarchyProxyEnv(wrapped_env=random_goal_ant_env,
+    if 'random-goal' in env_name:
+        EnvClass = RANDOM_GOAL_ENVS[env_type]
+        env_args = {
+            name.replace('env_', '', 1): value
+            for name, value in variant.items()
+            if name.startswith('env_') and name != 'env_name'
+        }
+        env = normalize(EnvClass(**env_args))
+    elif 'rllab' in variant['env_name']:
+        EnvClass = RLLAB_ENVS[variant['env_name']]
+        base_env = normalize(EnvClass())
+        env = HierarchyProxyEnv(wrapped_env=base_env,
                                 low_level_policy=low_level_policy)
-
-    elif variant['env_name'] == 'humanoid-rllab':
-        humanoid_env = normalize(HumanoidEnv())
-        env = HierarchyProxyEnv(wrapped_env=humanoid_env,
-                                low_level_policy=low_level_policy)
+    else:
+        raise NotImplementedError
 
     pool = SimpleReplayBuffer(
         env_spec=env.spec,
