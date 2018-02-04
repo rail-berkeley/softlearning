@@ -70,8 +70,7 @@ ENV_PARAMS = {
         'env_reward_type': ['dense', 'sparse'],
         'env_goal_reward_weight': 3e-1,
         'env_goal_radius': 0.25,
-        'env_ctrl_cost_coeff': 1e-2,
-        'env_terminate_at_goal': [True, False]
+        'env_terminate_at_goal': [False]
     },
     'random-goal-ant': { # 8 DoF
         'prefix': 'random-goal-ant',
@@ -87,8 +86,7 @@ ENV_PARAMS = {
         'env_reward_type': ['dense', 'sparse'],
         'env_goal_reward_weight': 3e-1,
         'env_goal_radius': 0.25,
-        'env_ctrl_cost_coeff': 1e-2,
-        'env_terminate_at_goal': [True, False]
+        'env_terminate_at_goal': [False]
     },
     'random-goal-humanoid': { # 21 DoF
         'prefix': 'humanoid',
@@ -104,8 +102,7 @@ ENV_PARAMS = {
         'env_reward_type': ['dense', 'sparse'],
         'env_goal_reward_weight': 3e-1,
         'env_goal_radius': 0.25,
-        'env_ctrl_cost_coeff': 1e-2,
-        'env_terminate_at_goal': [True, False]
+        'env_terminate_at_goal': [False]
     },
     'ant-resume-training': {  # 8 DoF
         'prefix': 'ant',
@@ -188,7 +185,6 @@ def run_experiment(variant):
             reward_type=variant['env_reward_type'],
             goal_reward_weight=variant['env_goal_reward_weight'],
             goal_radius=variant['env_goal_radius'],
-            ctrl_cost_coeff=variant['env_ctrl_cost_coeff'],
             terminate_at_goal=variant['env_terminate_at_goal'],
         ))
         env = HierarchyProxyEnv(wrapped_env=random_goal_swimmer_env,
@@ -199,7 +195,6 @@ def run_experiment(variant):
             reward_type=variant['env_reward_type'],
             goal_reward_weight=variant['env_goal_reward_weight'],
             goal_radius=variant['env_goal_radius'],
-            ctrl_cost_coeff=variant['env_ctrl_cost_coeff'],
             terminate_at_goal=variant['env_terminate_at_goal'],
         ))
         env = HierarchyProxyEnv(wrapped_env=random_goal_ant_env,
