@@ -17,6 +17,10 @@ class RandomGoalAntEnv(AntEnv):
 
     @autoargs.arg('ctrl_cost_coeff', type=float,
                   help='cost coefficient for controls')
+    @autoargs.arg('survive_reward', type=float,
+                  help='bonus reward for being alive')
+    @autoargs.arg('contact_cost_coeff', type=float,
+                  help='cost coefficient for contact')
     def __init__(self,
                  reward_type='dense',
                  terminate_at_goal=True,
