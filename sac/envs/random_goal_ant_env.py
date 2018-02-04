@@ -72,12 +72,12 @@ class RandomGoalAntEnv(AntEnv):
         self.forward_dynamics(action)
 
         xy_position = self.get_body_com('torso')[:2]
-        self.goal_distance = np.linalg.norm(xy_position - self.goal_position)
+        goal_distance = np.linalg.norm(xy_position - self.goal_position)
 
-        goal_reached = self.goal_distance < self.goal_radius
+        goal_reached = goal_distance < self.goal_radius
 
         if self._reward_type == 'dense':
-            goal_reward = -self.goal_distance * self.goal_reward_weight
+            goal_reward = -goal_distance * self.goal_reward_weight
         elif self._reward_type == 'sparse':
             goal_reward = int(goal_reached) * self.goal_reward_weight
 

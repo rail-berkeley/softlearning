@@ -69,12 +69,12 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
         next_obs = self.get_current_obs()
 
         xy_position = self.get_body_com('torso')[:2]
-        self.goal_distance = np.linalg.norm(xy_position - self.goal_position)
+        goal_distance = np.linalg.norm(xy_position - self.goal_position)
 
-        done = self.goal_distance < self.goal_radius
+        done = goal_distance < self.goal_radius
 
         if self._reward_type == 'dense':
-            goal_reward = -self.goal_distance * self.goal_reward_weight
+            goal_reward = -goal_distance * self.goal_reward_weight
         elif self._reward_type == 'sparse':
             goal_reward = int(done) * self.goal_reward_weight
 
