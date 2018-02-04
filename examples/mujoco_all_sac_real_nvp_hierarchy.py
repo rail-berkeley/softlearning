@@ -48,6 +48,7 @@ COMMON_PARAMS = {
     'policy_coupling_layers': 2,
     'policy_s_t_layers': 1,
     'policy_scale_regularization': 0.0,
+    'regularize_actions': True,
     'preprocessing_hidden_sizes': None,
     'preprocessing_output_nonlinearity': 'relu',
 
@@ -288,6 +289,7 @@ def run_experiment(variant):
         discount=variant['discount'],
         tau=variant['tau'],
         target_update_interval=variant['target_update_interval'],
+        regularize_actions=variant['regularize_actions'],
 
         save_full_state=False,
     )
