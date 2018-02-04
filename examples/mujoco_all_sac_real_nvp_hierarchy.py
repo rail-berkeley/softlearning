@@ -56,53 +56,65 @@ COMMON_PARAMS = {
 
 
 ENV_PARAMS = {
-    'random-goal-swimmer': { # 2 DoF
+    'random-goal-swimmer': {  # 2 DoF
         'prefix': 'random-goal-swimmer',
         'env_name': 'random-goal-swimmer',
         'epoch_length': 2000,
         'max_path_length': 2000,
-        'n_epochs': 4002,
+        'n_epochs': 1e4 + 1,
         'scale_reward': 100.0,
 
         'preprocessing_hidden_sizes': (128, 128, 4),
         'policy_s_t_units': 2,
 
+        'snapshot_gap': 500,
+
         'env_reward_type': ['dense', 'sparse'],
+        'env_terminate_at_goal': False,
         'env_goal_reward_weight': 3e-1,
         'env_goal_radius': 0.25,
-        'env_terminate_at_goal': [False]
+        'env_goal_distance': 5,
+        'env_goal_angle_range': (-0.25*np.pi, 0.25*np.pi),
     },
-    'random-goal-ant': { # 8 DoF
+    'random-goal-ant': {  # 8 DoF
         'prefix': 'random-goal-ant',
         'env_name': 'random-goal-ant',
         'epoch_length': 2000,
         'max_path_length': 2000,
-        'n_epochs': 5002,
-        'scale_reward': 3.0,
+        'n_epochs': 1e5 + 1,
+        'scale_reward': 3.0,  # Haven't sweeped this yet.
 
         'preprocessing_hidden_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
 
+        'snapshot_gap': 1000,
+
         'env_reward_type': ['dense', 'sparse'],
+        'env_terminate_at_goal': False,
         'env_goal_reward_weight': 3e-1,
         'env_goal_radius': 0.25,
-        'env_terminate_at_goal': [False]
+        'env_goal_distance': 5,
+        'env_goal_angle_range': (0, 2*np.pi),
     },
-    'random-goal-humanoid': { # 21 DoF
-        'prefix': 'humanoid',
-        'env_name': 'humanoid-rllab',
-        'max_path_length': 1000,
-        'n_epochs': 20000,
+    'random-goal-humanoid': {  # 21 DoF
+        'prefix': 'random-goal-humanoid',
+        'env_name': 'random-goal-humanoid',
+        'epoch_length': 2000,
+        'max_path_length': 2000,
+        'n_epochs': 2e5 + 1,
+        'scale_reward': 3.0,  # Haven't sweeped this yet.
+
         'preprocessing_hidden_sizes': (128, 128, 42),
         'policy_s_t_units': 21,
-        'scale_reward': [1.0, 3.0, 10.0],
 
         'snapshot_gap': 2000,
 
         'env_reward_type': ['dense', 'sparse'],
+        'env_terminate_at_goal': False,
         'env_goal_reward_weight': 3e-1,
         'env_goal_radius': 0.25,
-        'env_terminate_at_goal': [False]
+        'env_goal_distance': 5,
+        'env_goal_angle_range': (0, 2*np.pi),
     },
     'ant-resume-training': {  # 8 DoF
         'prefix': 'ant',
