@@ -13,7 +13,7 @@ class MultiDirectionAntEnv(AntEnv):
 
         xy_velocities = self.get_body_comvel("torso")[:2]
         # rewards for speed on xy-plane (no matter which direction)
-        xy_velocity = np.sqrt(np.sum(xy_velocities**2))
+        xy_velocity = np.linalg.norm(xy_velocities**2)
 
         lb, ub = self.action_bounds
         scaling = (ub - lb) * 0.5
