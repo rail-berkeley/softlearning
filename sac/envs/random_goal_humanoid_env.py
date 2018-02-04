@@ -19,6 +19,7 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
                   help='cost coefficient for controls')
     def __init__(self,
                  reward_type='dense',
+                 terminate_at_goal=True,
                  goal_reward_weight=1e-3,
                  goal_radius=0.25,
                  goal_distance=5,
@@ -27,7 +28,6 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
                  alive_bonus=0.2,
                  ctrl_cost_coeff=1e-3,
                  impact_cost_coeff=1e-5,
-                 terminate_at_goal=True,
                  *args,
                  **kwargs):
         assert reward_type in REWARD_TYPES

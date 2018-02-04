@@ -19,14 +19,14 @@ class RandomGoalAntEnv(AntEnv):
                   help='cost coefficient for controls')
     def __init__(self,
                  reward_type='dense',
-                 goal_reward_weight=1e-3,
+                 terminate_at_goal=True,
+                 goal_reward_weight=3e-1,
                  goal_radius=0.25,
                  goal_distance=5,
                  goal_angle_range=(0, 2*np.pi),
                  ctrl_cost_coeff=1e-2,
                  contact_cost_coeff=1e-3,
-                 survive_reward = 5e-2,
-                 terminate_at_goal=True,
+                 survive_reward=5e-2,
                  *args,
                  **kwargs):
         assert reward_type in REWARD_TYPES

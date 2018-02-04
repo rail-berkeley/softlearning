@@ -19,12 +19,12 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
                   help='cost coefficient for controls')
     def __init__(self,
                  reward_type='dense',
-                 goal_reward_weight=1e-3,
+                 goal_reward_weight=3e-1,
                  goal_radius=0.25,
                  goal_distance=5,
                  goal_angle_range=(-0.25*np.pi, 0.25*np.pi),
-                 ctrl_cost_coeff=1e-2,
                  terminate_at_goal=True,
+                 ctrl_cost_coeff=1e-2,
                  *args,
                  **kwargs):
         assert reward_type in REWARD_TYPES
