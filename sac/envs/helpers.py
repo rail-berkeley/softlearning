@@ -1,7 +1,5 @@
 import numpy as np
 
-from rllab.misc import logger
-
 
 def random_point_on_circle(angle_range=(0, 2*np.pi), radius=5):
     angle = np.random.uniform(*angle_range)
@@ -9,17 +7,20 @@ def random_point_on_circle(angle_range=(0, 2*np.pi), radius=5):
     point = np.array([x, y])
     return point
 
-def log_random_goal_progress(paths):
+def get_random_goal_logs(paths):
+    logs = []
     if len(paths) > 0:
         progs = [
             np.linalg.norm(path["observations"][-1][-5:-3]
                            - path["observations"][0][-5:-3])
             for path in paths
         ]
-        logger.record_tabular('AverageProgress', np.mean(progs))
-        logger.record_tabular('MaxProgress', np.max(progs))
-        logger.record_tabular('MinProgress', np.min(progs))
-        logger.record_tabular('StdProgress', np.std(progs))
+        logs += [
+            ('AverageProgress', np.mean(progs)),
+            ('MaxProgress', np.max(progs)),
+            ('MinProgress', np.min(progs)),
+            ('StdProgress', np.std(progs)),
+        ]
 
         goal_positions, final_positions = zip(*[
             (p['observations'][-1][-2:], p['observations'][-1][-5:-3])
@@ -47,5 +48,6 @@ def log_random_goal_progress(paths):
                                  'ProgressTowardsGoal')):
             for fn_name in ('mean', 'std', 'min', 'max'):
                 fn = getattr(np, fn_name)
-                logger.record_tabular(fn_name.capitalize() + name,
-                                      fn(series))
+                logs.append((fn_name.capitalize() + name, fn(series)))
+
+    return logs

@@ -8,7 +8,7 @@ from rllab.envs.base import Step
 from rllab.envs.mujoco.mujoco_env import MujocoEnv
 from rllab.misc import logger, autoargs
 
-from .helpers import random_point_on_circle, log_random_goal_progress
+from .helpers import random_point_on_circle, get_random_goal_logs
 
 REWARD_TYPES = ('dense', 'sparse')
 
@@ -97,4 +97,6 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
 
     @overrides
     def log_diagnostics(self, paths, *args, **kwargs):
-        log_random_goal_progress(paths)
+        logs = get_random_goal_logs(paths)
+        for row in logs:
+            logger.record_tabular(*row)
