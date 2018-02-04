@@ -75,7 +75,7 @@ ENV_PARAMS = {
         'env_name': 'multi-direction-swimmer',
         'epoch_length': 1000,
         'max_path_length': 1000,
-        'n_epochs': int(1e3 + 1),
+        'n_epochs': int(5e2 + 1),
         'scale_reward': 300.0,
 
         "preprocessing_hidden_sizes": None,
@@ -85,7 +85,7 @@ ENV_PARAMS = {
         'env_name': 'random-goal-swimmer',
         'epoch_length': 2000,
         'max_path_length': 2000,
-        'n_epochs': int(1e4 + 1),
+        'n_epochs': int(5e3 + 1),
         'scale_reward': 300.0,  # TODO
 
         'preprocessing_hidden_sizes': (128, 128, 4),
