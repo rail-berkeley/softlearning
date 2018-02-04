@@ -13,7 +13,10 @@ from sac.envs import (
     MultiDirectionSwimmerEnv,
     MultiDirectionAntEnv,
     MultiDirectionHumanoidEnv,
-    RandomGoalSwimmerEnv)
+    RandomGoalSwimmerEnv,
+    RandomGoalAntEnv,
+    RandomGoalHumanoidEnv,
+)
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
 from sac.policies import RealNVPPolicy
@@ -54,7 +57,6 @@ COMMON_PARAMS = {
 
     "git_sha": git_rev
 }
-
 ENV_PARAMS = {
     'random-goal-swimmer': { # 2 DoF
         'prefix': 'random-goal-swimmer',
@@ -71,78 +73,67 @@ ENV_PARAMS = {
     'multi-direction-swimmer': { # 2 DoF
         'prefix': 'multi-direction-swimmer',
         'env_name': 'multi-direction-swimmer',
+        'epoch_length': 1000,
         'max_path_length': 1000,
-        'n_epochs': 1000,
+        'n_epochs': 1e3 + 1,
         'scale_reward': 100.0,
 
         "preprocessing_hidden_sizes": None,
     },
-    'swimmer': {  # 2 DoF
-        'prefix': 'swimmer',
-        'env_name': 'swimmer-rllab',
-        'max_path_length': 1000,
-        'n_epochs': 1000,
+    'random-goal-swimmer': {  # 2 DoF
+        'prefix': 'random-goal-swimmer',
+        'env_name': 'random-goal-swimmer',
+        'epoch_length': 2000,
+        'max_path_length': 2000,
+        'n_epochs': 1e4 + 1,
+        'scale_reward': 100.0,
+
         'preprocessing_hidden_sizes': (128, 128, 4),
         'policy_s_t_units': 2,
-        'scale_reward': 300,
+
+        'snapshot_gap': 500,
+
+        'env_reward_type': ['dense', 'sparse'],
+        'env_terminate_at_goal': False,
+        'env_goal_reward_weight': 3e-1,
+        'env_goal_radius': 0.25,
+        'env_goal_distance': 5,
+        'env_goal_angle_range': (-0.25*np.pi, 0.25*np.pi),
     },
-    'hopper': {  # 3 DoF
-        'prefix': 'hopper',
-        'env_name': 'Hopper-v1',
+    'multi-direction-ant': {  # 2 DoF
+        'prefix': 'multi-direction-ant',
+        'env_name': 'multi-direction-ant',
+        'epoch_length': 1000,
         'max_path_length': 1000,
-        'policy_s_t_units': 3,
-        'n_epochs': 2000,
-        'preprocessing_hidden_sizes': (128, 128, 6),
-        'scale_reward': 1,
-    },
-    'half-cheetah': {  # 6 DoF
-        'prefix': 'half-cheetah',
-        'env_name': 'HalfCheetah-v1',
-        'max_path_length': 1000,
-        'n_epochs': 10000,
-        'scale_reward': 3,
-        'preprocessing_hidden_sizes': (128, 128, 12),
-        'policy_s_t_units': 6,
-    },
-    'walker': {  # 6 DoF
-        'prefix': 'walker',
-        'env_name': 'Walker2d-v1',
-        'max_path_length': 1000,
-        'n_epochs': 5000,
-        'scale_reward': 3,
-        'preprocessing_hidden_sizes': (128, 128, 12),
-        'policy_s_t_units': 6,
-    },
-    'ant': {  # 8 DoF
-        'prefix': 'ant',
-        'env_name': 'Ant-v1',
-        'max_path_length': 1000,
-        'n_epochs': 10000,
-        'scale_reward': 10,  # Haven't sweeped this yet.
+        'n_epochs': 1e4 + 1,
+        'scale_reward': 3.0,  # Haven't sweeped this yet.
+
         'preprocessing_hidden_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
 
         'snapshot_gap': 1000,
     },
-    'multi-direction-ant': {  # 2 DoF
-        'prefix': 'multi-direction-ant',
-        'env_name': 'multi-direction-ant',
-        'max_path_length': 1000,
-        'n_epochs': 10000,
-        'scale_reward': [3.0, 10.0],  # Haven't sweeped this yet.
-        'preprocessing_hidden_sizes': (128, 128, 16),
+    'random-goal-ant': {  # 8 DoF
+        'prefix': 'random-goal-ant',
+        'env_name': 'random-goal-ant',
+        'epoch_length': 2000,
+        'max_path_length': 2000,
+        'n_epochs': 1e5 + 1,
+        'scale_reward': 3.0,  # Haven't sweeped this yet.
 
         'preprocessing_hidden_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
     },
-    'humanoid': {  # 21 DoF
-        'prefix': 'humanoid',
-        'env_name': 'humanoid-rllab',
+
+    'multi-direction-humanoid': {  # 21 DoF
+        'prefix': 'multi-direction-humanoid',
+        'env_name': 'multi-direction-humanoid',
+        'epoch_length': 1000,
         'max_path_length': 1000,
-        'n_epochs': 20000,
+        'n_epochs': 2e4 + 1,
         'preprocessing_hidden_sizes': (128, 128, 42),
         'policy_s_t_units': 21,
-        'scale_reward': [1.0, 3.0, 10.0],
+        'scale_reward': 3.0,
 
         'snapshot_gap': 2000,
     },
@@ -153,9 +144,15 @@ ENV_PARAMS = {
         'n_epochs': 20000,
         'preprocessing_hidden_sizes': (128, 128, 42),
         'policy_s_t_units': 21,
-        'scale_reward': [3.0, 10.0],
 
         'snapshot_gap': 2000,
+
+        'env_reward_type': ['dense', 'sparse'],
+        'env_terminate_at_goal': False,
+        'env_goal_reward_weight': 3e-1,
+        'env_goal_radius': 0.25,
+        'env_goal_distance': 5,
+        'env_goal_angle_range': (0, 2*np.pi),
     },
 }
 
@@ -190,25 +187,33 @@ def get_variants(args):
     return vg
 
 
+MULTI_DIRECTION_ENVS = {
+    'swimmer': MultiDirectionSwimmerEnv,
+    'ant': MultiDirectionAntEnv,
+    'humanoid': MultiDirectionHumanoidEnv,
+}
+
+RANDOM_GOAL_ENVS = {
+    'swimmer': RandomGoalSwimmerEnv,
+    'ant': RandomGoalAntEnv,
+    'humanoid': RandomGoalHumanoidEnv,
+}
+
 def run_experiment(variant):
-    if variant['env_name'] == 'humanoid-rllab':
-        from rllab.envs.mujoco.humanoid_env import HumanoidEnv
-        env = normalize(HumanoidEnv())
-    elif variant['env_name'] == 'swimmer-rllab':
-        from rllab.envs.mujoco.swimmer_env import SwimmerEnv
-        env = normalize(SwimmerEnv())
-    elif variant['env_name'] == 'multi-direction-swimmer':
-        env = normalize(MultiDirectionSwimmerEnv())
-    elif variant['env_name'] == 'random-goal-swimmer':
-        env = normalize(RandomGoalSwimmerEnv(
-            goal_reward_weight=variant['env_goal_reward_weight']
-        ))
-    elif variant['env_name'] == 'multi-direction-ant':
-        env = normalize(MultiDirectionAntEnv())
-    elif variant['env_name'] == 'multi-direction-humanoid':
-        env = normalize(MultiDirectionHumanoidEnv())
-    else:
-        env = normalize(GymEnv(variant['env_name']))
+    env_name = variant['env_name']
+    env_type = env_name.split('-')[-1]
+
+    if 'multi-direction' in env_name:
+        EnvClass = MULTI_DIRECTION_ENVS[env_type]
+        env = normalize(EnvClass())
+    elif 'random-goal' in env_name:
+        EnvClass = RANDOM_GOAL_ENVS[env_type]
+        env_args = {
+            name.lstrip('env_'): value
+            for name, value in variant.items()
+            if name.startswith('env_')
+        }
+        env = normalize(EnvClass(**env_args))
 
     pool = SimpleReplayBuffer(
         env_spec=env.spec,
