@@ -127,7 +127,7 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
         reward = (goal_reward + velocity_reward + self.alive_bonus
                   - ctrl_cost - impact_cost - vel_deviation_cost)
 
-        is_healthy = 0.2 < self.model.data.qpos[2] < 0.8
+        is_healthy = 0.8 < self.model.data.qpos[2] < 2.0
         done = not is_healthy or (self.terminate_at_goal and goal_reached)
 
         next_observation = self.get_current_obs()
