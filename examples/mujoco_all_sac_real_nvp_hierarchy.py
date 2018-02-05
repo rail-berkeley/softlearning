@@ -31,7 +31,7 @@ except:
     git_rev = None
 
 COMMON_PARAMS = {
-    'seed': [10, 11, 12, 13, 14],
+    'seed': np.random.randint(1, 100, 1).tolist(),
     'lr': 3e-4,
     'policy_lr': 3e-4,
     'discount': 0.99,
@@ -77,6 +77,14 @@ ENV_PARAMS = {
         'env_goal_radius': 0.25,
         'env_goal_distance': 5,
         'env_goal_angle_range': (-0.25*np.pi, 0.25*np.pi),
+
+        'low_level_policy_path': [
+            'multi-direction-swimmer-low-level-policy-2-02/itr_500.pkl',
+            'multi-direction-swimmer-low-level-policy-2-05/itr_500.pkl',
+            'multi-direction-swimmer-low-level-policy-2-08/itr_500.pkl',
+            'multi-direction-swimmer-low-level-policy-2-11/itr_500.pkl',
+            'multi-direction-swimmer-low-level-policy-2-14/itr_500.pkl',
+        ]
     },
     'random-goal-ant': {  # 8 DoF
         'prefix': 'random-goal-ant',
@@ -97,6 +105,14 @@ ENV_PARAMS = {
         'env_goal_radius': 0.25,
         'env_goal_distance': 25,
         'env_goal_angle_range': (0, 2*np.pi),
+
+        'low_level_policy_path': [
+            'multi-direction-ant-low-level-policy-2-00/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-2-01/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-2-02/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-2-03/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-2-04/itr_10000.pkl',
+        ]
     },
     'random-goal-humanoid': {  # 21 DoF
         'prefix': 'random-goal-humanoid',
@@ -117,28 +133,36 @@ ENV_PARAMS = {
         'env_goal_radius': 0.25,
         'env_goal_distance': 5,
         'env_goal_angle_range': (0, 2*np.pi),
+
+        'low_level_policy_path': [
+            'multi-direction-humanoid-low-level-policy-2-00/itr_20000.pkl',
+            'multi-direction-humanoid-low-level-policy-2-01/itr_20000.pkl',
+            'multi-direction-humanoid-low-level-policy-2-02/itr_20000.pkl',
+            'multi-direction-humanoid-low-level-policy-2-03/itr_20000.pkl',
+            'multi-direction-humanoid-low-level-policy-2-04/itr_20000.pkl',
+        ]
     },
     'ant-resume-training': {  # 8 DoF
-        'seed': np.random.randint(1, 100, 1).tolist(),
         'prefix': 'ant-resume-training',
         'env_name': 'ant-rllab',
         'max_path_length': 1000,
         'n_epochs': int(5e3 + 1),
         'scale_reward': 3.0,
+
         'preprocessing_hidden_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
 
         'snapshot_gap': 1000,
     },
     'humanoid-resume-training': {  # 21 DoF
-        'seed': np.random.randint(1, 100, 1).tolist(),
         'prefix': 'humanoid-resume-training',
         'env_name': 'humanoid-rllab',
         'max_path_length': 1000,
         'n_epochs': int(1e4 + 1),
+        'scale_reward': 3.0,
+
         'preprocessing_hidden_sizes': (128, 128, 42),
         'policy_s_t_units': 21,
-        'scale_reward': 3.0,
 
         'snapshot_gap': 2000,
     },
