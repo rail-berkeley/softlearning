@@ -165,6 +165,14 @@ ENV_PARAMS = {
         'policy_s_t_units': 21,
 
         'snapshot_gap': 2000,
+
+        'low_level_policy_path': [
+            'humanoid-real-nvp-final-01b-00/itr_10000.pkl',
+            'humanoid-real-nvp-final-01b-01/itr_10000.pkl',
+            'humanoid-real-nvp-final-01b-02/itr_10000.pkl',
+            'humanoid-real-nvp-final-01b-03/itr_10000.pkl',
+            'humanoid-real-nvp-final-01b-04/itr_10000.pkl',
+        ]
     },
 }
 
