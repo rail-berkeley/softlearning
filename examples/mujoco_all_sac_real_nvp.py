@@ -86,7 +86,7 @@ ENV_PARAMS = {
         'epoch_length': 2000,
         'max_path_length': 2000,
         'n_epochs': int(5e3 + 1),
-        'scale_reward': 300.0,  # TODO
+        'scale_reward': 100.0,
 
         'preprocessing_hidden_sizes': (128, 128, 4),
         'policy_s_t_units': 2,
@@ -119,7 +119,7 @@ ENV_PARAMS = {
         'epoch_length': 2000,
         'max_path_length': 2000,
         'n_epochs': int(1e5 + 1),
-        'scale_reward': 10.0,  # TODO
+        'scale_reward': 3.0,
 
         'preprocessing_hidden_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
