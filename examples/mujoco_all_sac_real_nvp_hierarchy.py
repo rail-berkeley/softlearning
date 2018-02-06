@@ -146,13 +146,21 @@ ENV_PARAMS = {
         'prefix': 'ant-resume-training',
         'env_name': 'ant-rllab',
         'max_path_length': 1000,
-        'n_epochs': int(5e3 + 1),
+        'n_epochs': int(4e3 + 1),
         'scale_reward': 3.0,
 
         'preprocessing_hidden_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
 
         'snapshot_gap': 1000,
+
+        'low_level_policy_path': [
+            'ant-rllab-real-nvp-final-00-00/itr_6000.pkl',
+            'ant-rllab-real-nvp-final-00-01/itr_6000.pkl',
+            'ant-rllab-real-nvp-final-00-02/itr_6000.pkl',
+            'ant-rllab-real-nvp-final-00-03/itr_6000.pkl',
+            'ant-rllab-real-nvp-final-00-04/itr_6000.pkl',
+        ]
     },
     'humanoid-resume-training': {  # 21 DoF
         'prefix': 'humanoid-resume-training',
