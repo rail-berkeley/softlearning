@@ -71,7 +71,7 @@ ENV_PARAMS = {
 
         'snapshot_gap': 500,
 
-        'env_reward_type': ['dense', 'sparse'],
+        'env_reward_type': ['dense'],
         'env_terminate_at_goal': False,
         'env_goal_reward_weight': 3e-1,
         'env_goal_radius': 0.25,
@@ -92,14 +92,14 @@ ENV_PARAMS = {
         'epoch_length': 2000,
         'max_path_length': 2000,
         'n_epochs': int(1e5 + 1),
-        'scale_reward': 3.0,
+        'scale_reward': 30,
 
         'preprocessing_hidden_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
 
         'snapshot_gap': 1000,
 
-        'env_reward_type': ['dense', 'sparse'],
+        'env_reward_type': ['dense'],
         'env_terminate_at_goal': False,
         'env_goal_reward_weight': 3e-1,
         'env_goal_radius': 0.25,
@@ -107,11 +107,11 @@ ENV_PARAMS = {
         'env_goal_angle_range': (0, 2*np.pi),
 
         'low_level_policy_path': [
-            'multi-direction-ant-low-level-policy-2-00/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-2-01/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-2-02/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-2-03/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-2-04/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-1-00/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-1-01/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-1-02/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-1-03/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-1-04/itr_10000.pkl',
         ]
     },
     'random-goal-humanoid': {  # 21 DoF
@@ -127,7 +127,7 @@ ENV_PARAMS = {
 
         'snapshot_gap': 2000,
 
-        'env_reward_type': ['dense', 'sparse'],
+        'env_reward_type': ['dense'],
         'env_terminate_at_goal': False,
         'env_goal_reward_weight': 3e-1,
         'env_goal_radius': 0.25,
