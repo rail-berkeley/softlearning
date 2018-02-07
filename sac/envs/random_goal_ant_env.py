@@ -85,7 +85,8 @@ class RandomGoalAntEnv(AntEnv):
 
         if self.goal_reward_weight > 0:
             if self._reward_type == 'dense':
-                goal_reward = -goal_distance * self.goal_reward_weight
+                goal_reward = ((self.goal_distance - goal_distance)
+                               * self.goal_reward_weight)
             elif self._reward_type == 'sparse':
                 goal_reward = int(goal_reached) * self.goal_reward_weight
         else:
