@@ -207,8 +207,16 @@ def get_variants(args):
     env_params = ENV_PARAMS[args.env]
     params = COMMON_PARAMS
     params.update(env_params)
-    if not params.get('low_level_policy_path'):
-        params['low_level_policy_path'] = args.low_level_policy_path
+
+    if args.mode == 'local':
+        trained_policies_base = os.path.join(os.getcwd(), 'sac/policies/trained_policies')
+    elif args.mode == 'ec2':
+        trained_policies_base = '/root/code/rllab/sac/policies/trained_policies'
+
+    params['low_level_policy_path'] = [
+      os.path.join(trained_policies_base, p)
+      for p in params['low_level_policy_path']
+    ]
 
     vg = VariantGenerator()
     for key, val in params.items():
@@ -241,16 +249,8 @@ RLLAB_ENVS = {
 }
 
 def run_experiment(variant):
-    if args.mode == 'local':
-        low_level_policy_path = os.path.join(os.getcwd(),
-                                             'sac/policies/trained_policies',
-                                             variant['low_level_policy_path'])
-    elif args.mode == 'ec2':
-        low_level_policy_path = os.path.join(
-            '/root/code/rllab/sac/policies/trained_policies',
-            variant['low_level_policy_path'])
-
-    low_level_policy = load_low_level_policy(policy_path=low_level_policy_path)
+    low_level_policy = load_low_level_policy(
+      policy_path=variant['low_level_policy_path'])
 
     env_name = variant['env_name']
     env_type = env_name.split('-')[-1]
