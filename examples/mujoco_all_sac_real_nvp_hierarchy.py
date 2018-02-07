@@ -61,8 +61,8 @@ ENV_PARAMS = {
     'random-goal-swimmer': {  # 2 DoF
         'prefix': 'random-goal-swimmer',
         'env_name': 'random-goal-swimmer',
-        'epoch_length': 2000,
-        'max_path_length': 2000,
+        'epoch_length': 1000,
+        'max_path_length': 1000,
         'n_epochs': int(5e3 + 1),
         'scale_reward': 100.0,
 
@@ -89,8 +89,8 @@ ENV_PARAMS = {
     'random-goal-ant': {  # 8 DoF
         'prefix': 'random-goal-ant',
         'env_name': 'random-goal-ant',
-        'epoch_length': 2000,
-        'max_path_length': 2000,
+        'epoch_length': 1000,
+        'max_path_length': 1000,
         'n_epochs': int(1e5 + 1),
         'scale_reward': 30,
 
@@ -117,8 +117,8 @@ ENV_PARAMS = {
     'random-goal-humanoid': {  # 21 DoF
         'prefix': 'random-goal-humanoid',
         'env_name': 'random-goal-humanoid',
-        'epoch_length': 2000,
-        'max_path_length': 2000,
+        'epoch_length': 1000,
+        'max_path_length': 1000,
         'n_epochs': int(2e5 + 1),
         'scale_reward': 3.0,
 

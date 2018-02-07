@@ -83,8 +83,8 @@ ENV_PARAMS = {
     'random-goal-swimmer': {  # 2 DoF
         'prefix': 'random-goal-swimmer',
         'env_name': 'random-goal-swimmer',
-        'epoch_length': 2000,
-        'max_path_length': 2000,
+        'epoch_length': 1000,
+        'max_path_length': 1000,
         'n_epochs': int(5e3 + 1),
         'scale_reward': 100.0,
 
@@ -116,8 +116,8 @@ ENV_PARAMS = {
     'random-goal-ant': {  # 8 DoF
         'prefix': 'random-goal-ant',
         'env_name': 'random-goal-ant',
-        'epoch_length': 2000,
-        'max_path_length': 2000,
+        'epoch_length': 1000,
+        'max_path_length': 1000,
         'n_epochs': int(1e5 + 1),
         'scale_reward': 3.0,
 
@@ -146,7 +146,7 @@ ENV_PARAMS = {
         'preprocessing_hidden_sizes': (128, 128, 42),
         'policy_s_t_units': 21,
 
-        'snapshot_gap': 2000,
+        'snapshot_gap': 4000,
 
         'env_reward_type': ['dense'],
         'env_terminate_at_goal': False,
