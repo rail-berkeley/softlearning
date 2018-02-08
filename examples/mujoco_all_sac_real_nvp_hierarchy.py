@@ -31,7 +31,7 @@ except:
     git_rev = None
 
 COMMON_PARAMS = {
-    'seed': np.random.randint(1, 100, 1).tolist(),
+    'seed': 'random',
     'lr': 3e-4,
     'policy_lr': 3e-4,
     'discount': 0.99,
@@ -356,6 +356,8 @@ def launch_experiments(variant_generator):
     print('Launching {} experiments.'.format(num_experiments))
 
     for i, variant in enumerate(variants):
+        if variant['seed'] == 'random':
+            variant['seed'] = np.random.randint(1, 100)
         print("Experiment: {}/{}".format(i, num_experiments))
         experiment_prefix = variant['prefix'] + '/' + args.exp_name
         experiment_name = (variant['prefix']
