@@ -69,7 +69,10 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
 
     def get_current_obs(self):
         proprioceptive_observation = super().get_current_obs()
-        exteroceptive_observation = self.goal_position
+        if self.goal_reward_weight > 0:
+            exteroceptive_observation = self.goal_position
+        else:
+            exteroceptive_observation = np.zeros_like(self.goal_position)
 
         observation = np.concatenate(
             [proprioceptive_observation,
@@ -123,6 +126,8 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
             comvel = self.get_body_comvel("torso")
             vel_deviation_cost = 0.5 * self.vel_deviation_cost_coeff * np.sum(
                 np.square(comvel[2:]))
+        else:
+            vel_deviation_cost = 0
 
 
         reward = (goal_reward + velocity_reward + self.alive_bonus

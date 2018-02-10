@@ -79,11 +79,11 @@ ENV_PARAMS = {
         'env_goal_angle_range': (-0.25*np.pi, 0.25*np.pi),
 
         'low_level_policy_path': [
-            'multi-direction-swimmer-low-level-policy-2-02/itr_500.pkl',
-            'multi-direction-swimmer-low-level-policy-2-05/itr_500.pkl',
-            'multi-direction-swimmer-low-level-policy-2-08/itr_500.pkl',
-            'multi-direction-swimmer-low-level-policy-2-11/itr_500.pkl',
-            'multi-direction-swimmer-low-level-policy-2-14/itr_500.pkl',
+            'multi-direction-swimmer-low-level-policy-3-00/itr_100.pkl',
+            'multi-direction-swimmer-low-level-policy-3-01/itr_100.pkl',
+            'multi-direction-swimmer-low-level-policy-3-02/itr_100.pkl',
+            'multi-direction-swimmer-low-level-policy-3-03/itr_100.pkl',
+            'multi-direction-swimmer-low-level-policy-3-04/itr_100.pkl',
         ]
     },
     'random-goal-ant': {  # 8 DoF
@@ -125,7 +125,7 @@ ENV_PARAMS = {
         'preprocessing_hidden_sizes': (128, 128, 42),
         'policy_s_t_units': 21,
 
-        'snapshot_gap': 2000,
+        'snapshot_gap': 1000,
 
         'env_reward_type': ['dense'],
         'env_terminate_at_goal': False,
@@ -250,7 +250,7 @@ RLLAB_ENVS = {
 
 def run_experiment(variant):
     low_level_policy = load_low_level_policy(
-      policy_path=variant['low_level_policy_path'])
+        policy_path=variant['low_level_policy_path'])
 
     env_name = variant['env_name']
     env_type = env_name.split('-')[-1]

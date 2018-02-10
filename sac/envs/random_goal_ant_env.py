@@ -65,7 +65,10 @@ class RandomGoalAntEnv(AntEnv):
 
     def get_current_obs(self):
         proprioceptive_observation = super().get_current_obs()
-        exteroceptive_observation = self.goal_position
+        if self.goal_reward_weight > 0:
+            exteroceptive_observation = self.goal_position
+        else:
+            exteroceptive_observation = np.zeros_like(self.goal_position)
 
         observation = np.concatenate(
             [proprioceptive_observation,
