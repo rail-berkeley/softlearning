@@ -26,7 +26,7 @@ def visitation_plots(args):
             path_files = glob.iglob(os.path.join(run_path, "params_path.pkl"))
             sorted_path_files = list(sorted(path_files))
 
-        path_file = path_files[-1]
+        path_file = sorted_path_files[-1]
         variant_file = os.path.join(run_path, "variant.json")
         with open(variant_file, "r") as f:
             variant = json.load(f)
@@ -35,7 +35,7 @@ def visitation_plots(args):
             run_data = pickle.load(f)
 
         run_id = variant["exp_name"].split("-")[-1]
-        key = (variant["tau"], variant["scale_reward"])
+        key = None
         runs[key][run_id] = run_data
 
     for key, variant_runs in runs.items():

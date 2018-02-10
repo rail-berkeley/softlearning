@@ -24,8 +24,13 @@ def parse_args():
 def visitation_plots(args):
     run_path = args.run_path
 
-    path_files = glob.iglob(os.path.join(run_path, "itr_*_hierarchy_path.pkl"))
-    path_file = list(sorted(path_files))[-1] # os.path.join(run_path, "itr_500_path.pkl")
+    path_files = glob.iglob(os.path.join(run_path, "itr_*_path.pkl"))
+    sorted_path_files = list(sorted(path_files))
+    if not sorted_path_files:
+        path_files = glob.iglob(os.path.join(run_path, "params_path.pkl"))
+        sorted_path_files = list(sorted(path_files))
+
+    path_file = sorted_path_files[-1] # os.path.join(run_path, "itr_500_path.pkl")
     variant_file = os.path.join(run_path, "variant.json")
 
     with open(variant_file, "r") as f:
