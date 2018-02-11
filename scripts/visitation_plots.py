@@ -9,7 +9,7 @@ from sac.misc.visualization import plot_visitations
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--run_glob',
+    parser.add_argument('--rollout_glob',
                         type=str,
                         help='Glob pattern for experiments to visualize')
 
@@ -19,19 +19,14 @@ def parse_args():
 
 def visitation_plots(args):
     runs = defaultdict(dict)
-    for run_path in glob.iglob(args.run_glob):
-        path_files = glob.iglob(os.path.join(run_path, "itr_*_path.pkl"))
-        sorted_path_files = list(sorted(path_files))
-        if not sorted_path_files:
-            path_files = glob.iglob(os.path.join(run_path, "params_path.pkl"))
-            sorted_path_files = list(sorted(path_files))
+    for rollout_path in glob.iglob(args.rollout_glob):
+        rollout_dir = os.path.dirname(rollout_path)
 
-        path_file = sorted_path_files[-1]
-        variant_file = os.path.join(run_path, "variant.json")
-        with open(variant_file, "r") as f:
+        variant_path = os.path.join(rollout_dir, "variant.json")
+        with open(variant_path, "r") as f:
             variant = json.load(f)
 
-        with open(path_file, "rb") as f:
+        with open(rollout_path, "rb") as f:
             run_data = pickle.load(f)
 
         run_id = variant["exp_name"].split("-")[-1]

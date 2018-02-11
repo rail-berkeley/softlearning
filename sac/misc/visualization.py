@@ -37,7 +37,10 @@ def plot_visitations(runs, suptitle=None, save_path=None):
             draw_rollout_path(h, rollout_path)
             plt.title("run_id={}".format(run_id))
 
-    plt.show()
+    if save_path is None:
+        plt.show()
+    else:
+        plt.savefig(save_path)
 
 def plot_hierarchy_visitations(paths):
     num_plots = len(paths)
