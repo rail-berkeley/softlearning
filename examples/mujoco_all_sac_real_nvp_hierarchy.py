@@ -255,22 +255,21 @@ def run_experiment(variant):
     env_name = variant['env_name']
     env_type = env_name.split('-')[-1]
 
+    env_args = {
+        name.replace('env_', '', 1): value
+        for name, value in variant.items()
+        if name.startswith('env_') and name != 'env_name'
+    }
     if 'random-goal' in env_name:
         EnvClass = RANDOM_GOAL_ENVS[env_type]
-        env_args = {
-            name.replace('env_', '', 1): value
-            for name, value in variant.items()
-            if name.startswith('env_') and name != 'env_name'
-        }
-        env = normalize(EnvClass(**env_args))
     elif 'rllab' in variant['env_name']:
         EnvClass = RLLAB_ENVS[variant['env_name']]
-        base_env = normalize(EnvClass())
-        env = HierarchyProxyEnv(wrapped_env=base_env,
-                                low_level_policy=low_level_policy)
     else:
         raise NotImplementedError
 
+    base_env = normalize(EnvClass(**env_args))
+    env = HierarchyProxyEnv(wrapped_env=base_env,
+                                low_level_policy=low_level_policy)
     pool = SimpleReplayBuffer(
         env_spec=env.spec,
         max_replay_buffer_size=variant['max_pool_size'],
