@@ -48,6 +48,8 @@ class SQL(RLAlgorithm, Serializable):
             kernel_update_ratio=0.5,
             discount=0.99,
             reward_scale=1,
+            use_saved_qf=False,
+            use_saved_policy=False,
             save_full_state=False,
     ):
         """
@@ -75,6 +77,10 @@ class SQL(RLAlgorithm, Serializable):
             reward_scale ('float'): A factor that scales the raw rewards.
                 Useful for adjusting the temperature of the optimal Boltzmann
                 distribution.
+            use_saved_qf ('boolean'): If true, use the initial parameters provided
+                in the Q-function instead of reinitializing.
+            use_saved_policy ('boolean'): If true, use the initial parameters provided
+                in the policy instead of reinitializing.
             save_full_state ('boolean'): If true, saves the full algorithm
                 state, including the replay buffer.
         """
@@ -113,8 +119,18 @@ class SQL(RLAlgorithm, Serializable):
         self._create_svgd_update()
         self._create_target_ops()
 
+        if use_saved_qf:
+            saved_qf_params = qf.get_param_values()
+        if use_saved_policy:
+            saved_policy_params = policy.get_param_values()
+
         self._sess = tf_utils.get_default_session()
         self._sess.run(tf.global_variables_initializer())
+
+        if use_saved_qf:
+            self.qf.set_param_values(saved_qf_params)
+        if use_saved_policy:
+            self.policy.set_param_values(saved_policy_params)
 
     def _create_placeholders(self):
         """Create all necessary placeholders."""
