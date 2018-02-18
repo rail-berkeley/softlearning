@@ -217,7 +217,8 @@ class RealNVPPolicy(NNPolicy, Serializable):
         return tf.trainable_variables(scope=self._scope_name)
 
     def reset(self, dones=None):
-        pass
+        if self._fix_h_on_reset:
+            self._fixed_h = self.sample_z.eval()
 
     def log_diagnostics(self, batch):
         """Record diagnostic information to the logger.

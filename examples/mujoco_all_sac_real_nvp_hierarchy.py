@@ -323,6 +323,7 @@ def run_experiment(variant):
         mode="train",
         squash=False,
         real_nvp_config=real_nvp_config,
+        fix_h_on_reset=variant.get('policy_fix_h_on_reset', False),
         observations_preprocessor=observations_preprocessor,
         name="high_level_policy"
     )
