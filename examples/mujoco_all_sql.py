@@ -2,6 +2,7 @@ import argparse
 
 from rllab.envs.normalized_env import normalize
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
+from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
 
@@ -71,6 +72,13 @@ ENV_PARAMS = {
         'n_epochs': 10000,
         'reward_scale': 300,
     },
+    'ant-rllab': {  # 8 DoF
+        'prefix': 'ant-rllab',
+        'env_name': 'ant-rllab',
+        'max_path_length': 1000,
+        'n_epochs': 10000,
+        'reward_scale': [1, 3, 10, 30, 100, 300]
+    },
     'humanoid': {  # 21 DoF
         'seed': [11, 12, 13, 14, 15],
         'prefix': 'humanoid',
@@ -116,6 +124,8 @@ def run_experiment(variant):
         env = normalize(HumanoidEnv())
     elif variant['env_name'] == 'swimmer-rllab':
         env = normalize(SwimmerEnv())
+    elif variant['env_name'] == 'ant-rllab':
+        env = normalize(AntEnv())
     else:
         env = normalize(GymEnv(variant['env_name']))
 
