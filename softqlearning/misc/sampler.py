@@ -94,7 +94,7 @@ class Sampler(object):
         self.env.terminate()
 
     def log_diagnostics(self):
-        raise NotImplementedError
+        logger.record_tabular('pool-size', self.pool.size)
 
 
 class SimpleSampler(Sampler):
@@ -141,8 +141,19 @@ class SimpleSampler(Sampler):
             self._current_observation = next_observation
 
     def log_diagnostics(self):
+        super(SimpleSampler, self).log_diagnostics()
         logger.record_tabular('max-path-return', self._max_path_return)
         logger.record_tabular('last-path-return', self._last_path_return)
-        logger.record_tabular('pool-size', self.pool.size)
         logger.record_tabular('episodes', self._n_episodes)
         logger.record_tabular('total-samples', self._total_samples)
+
+
+class DummySampler(Sampler):
+    def __init__(self, batch_size, max_path_length):
+        super(DummySampler, self).__init__(
+            max_path_length=max_path_length,
+            min_pool_size=0,
+            batch_size=batch_size)
+
+    def sample(self):
+        pass
