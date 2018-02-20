@@ -93,10 +93,12 @@ class RLAlgorithm(Algorithm):
                 time_itrs = gt.get_times().stamps.itrs
                 time_eval = time_itrs['eval'][-1]
                 time_total = gt.get_times().total
+                time_train = time_itrs.get('train', [0])[-1]
+                time_sample = time_itrs.get('sample', [0])[-1]
 
-                logger.record_tabular('time-train', time_itrs['train'][-1])
+                logger.record_tabular('time-train', time_train)
                 logger.record_tabular('time-eval', time_eval)
-                logger.record_tabular('time-sample', time_itrs['sample'][-1])
+                logger.record_tabular('time-sample', time_sample)
                 logger.record_tabular('time-total', time_total)
                 logger.record_tabular('epoch', epoch)
 
