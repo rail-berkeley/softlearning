@@ -1,22 +1,18 @@
 """Example script for training from an existing Q-function and Policy"""
 import argparse
-import tensorflow as tf
+
 import joblib
-
-from rllab.envs.normalized_env import normalize
+import tensorflow as tf
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
-from rllab.envs.mujoco.humanoid_env import HumanoidEnv
-from rllab.misc.instrument import VariantGenerator
+from rllab.envs.normalized_env import normalize
 
-from softqlearning.misc.instrument import run_sql_experiment
 from softqlearning.algorithms import SQL
+from softqlearning.misc.instrument import run_sql_experiment
 from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
+from softqlearning.misc.sampler import SimpleSampler
 from softqlearning.misc.utils import timestamp
 from softqlearning.replay_buffers import SimpleReplayBuffer
-from softqlearning.value_functions import NNQFunction
-from softqlearning.policies import StochasticNNPolicy
-from softqlearning.environments import GymEnv
-from softqlearning.misc.sampler import SimpleSampler
+
 
 def run_experiment(variant):
     env = normalize(SwimmerEnv())
@@ -26,7 +22,7 @@ def run_experiment(variant):
 
     sampler = SimpleSampler(
         max_path_length=1000,
-        min_pool_size=1000, # TODO: fix bugs and make this longer to stabilize early training
+        min_pool_size=1000,
         batch_size=128)
 
     base_kwargs = dict(
@@ -67,11 +63,13 @@ def run_experiment(variant):
 
         algorithm.train()
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('file', type=str, help='Path to the snapshot file.')
     args = parser.parse_args()
     return args
+
 
 def main():
     full_experiment_name = 'swimmer'
@@ -82,7 +80,7 @@ def main():
         run_experiment,
         mode='local',
         variant=dict(file=saved_file),
-        exp_prefix='swimmer' + '/' + 'reuse'  + '/' + timestamp(),
+        exp_prefix='swimmer' + '/' + 'reuse' + '/' + timestamp(),
         exp_name=full_experiment_name,
         n_parallel=1,
         seed=1,
@@ -92,6 +90,7 @@ def main():
         snapshot_gap=100,
         sync_s3_pkl=True)
     return
+
 
 if __name__ == "__main__":
     main()
