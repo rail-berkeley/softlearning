@@ -103,7 +103,7 @@ class RandomGoalHumanoidEnv(HumanoidEnv):
             xy_velocities = self.get_body_comvel("torso")[:2]
             # rewards for speed on xy-plane (no matter which direction)
             velocity_reward = (self.velocity_reward_weight
-                               * np.linalg.norm(xy_velocities**2))
+                               * np.linalg.norm(xy_velocities))
         else:
             velocity_reward = 0
 

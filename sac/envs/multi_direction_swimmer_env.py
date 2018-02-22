@@ -18,7 +18,7 @@ class MultiDirectionSwimmerEnv(SwimmerEnv):
         xy_velocities = self.get_body_comvel("torso")[:2]
 
         # rewards for speed on positive x direction
-        xy_velocity = np.sqrt(np.sum(xy_velocities**2))
+        xy_velocity = np.linalg.norm(xy_velocities)
         if xy_velocities[0] < 0:
             xy_velocity *= -1.0
 
