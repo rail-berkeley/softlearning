@@ -163,6 +163,8 @@ class SAC(RLAlgorithm, Serializable):
             - reward
             - terminals
         """
+        self._iteration_pl = tf.placeholder(
+            tf.int64, shape=None, name='iteration')
 
         self._obs_pl = tf.placeholder(
             tf.float32,
@@ -193,6 +195,16 @@ class SAC(RLAlgorithm, Serializable):
             name='terminals',
         )
 
+    @property
+    def scale_reward(self):
+        if callable(self._scale_reward):
+            return self._scale_reward(self._iteration_pl)
+        elif isinstance(self._scale_reward, Number):
+            return self._scale_reward
+
+        raise ValueError(
+            'scale_reward must be either callable or scalar')
+
     def _init_critic_update(self):
         """Create minimization operation for critic Q-function.
 
@@ -212,7 +224,7 @@ class SAC(RLAlgorithm, Serializable):
             self._vf_target_params = self._vf.get_params_internal()
 
         ys = tf.stop_gradient(
-            self._scale_reward * self._reward_pl +
+            self.scale_reward * self._reward_pl +
             (1 - self._terminal_pl) * self._discount * vf_next_target_t
         )  # N
 
@@ -305,17 +317,17 @@ class SAC(RLAlgorithm, Serializable):
         self._sess.run(self._target_ops)
 
     @overrides
-    def _do_training(self, itr, batch):
+    def _do_training(self, iteration, batch):
         """Runs the operations for updating training and target ops."""
 
-        feed_dict = self._get_feed_dict(batch)
+        feed_dict = self._get_feed_dict(iteration, batch)
         self._sess.run(self._training_ops, feed_dict)
 
-        if itr % self._target_update_interval == 0:
+        if iteration % self._target_update_interval == 0:
             # Run target ops here.
             self._sess.run(self._target_ops)
 
-    def _get_feed_dict(self, batch):
+    def _get_feed_dict(self, iteration, batch):
         """Construct TensorFlow feed_dict from sample batch."""
 
         feed_dict = {
@@ -326,10 +338,13 @@ class SAC(RLAlgorithm, Serializable):
             self._terminal_pl: batch['terminals'],
         }
 
+        if iteration is not None:
+            feed_dict[self._iteration_pl] = iteration
+
         return feed_dict
 
     @overrides
-    def log_diagnostics(self, batch):
+    def log_diagnostics(self, iteration, batch):
         """Record diagnostic information to the logger.
 
         Records mean and standard deviation of Q-function and state
@@ -339,7 +354,7 @@ class SAC(RLAlgorithm, Serializable):
         Also calls the `draw` method of the plotter, if plotter defined.
         """
 
-        feed_dict = self._get_feed_dict(batch)
+        feed_dict = self._get_feed_dict(iteration, batch)
         qf, vf, td_loss = self._sess.run(
             [self._qf_t, self._vf_t, self._td_loss_t], feed_dict)
 

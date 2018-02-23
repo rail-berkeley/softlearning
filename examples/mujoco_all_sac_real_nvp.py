@@ -280,6 +280,14 @@ def run_experiment(variant):
         n_map_action_candidates=variant['n_map_action_candidates']
     )
 
+    if variant['scale_reward'] == 'piecewise_constant':
+        boundaries = variant['scale_reward_boundaries']
+        values = variant['scale_reward_values']
+        scale_reward = lambda iteration: (
+            tf.train.piecewise_constant(iteration, boundaries, values))
+    else:
+        scale_reward = variant['scale_reward']
+
     algorithm = SACV2(
         base_kwargs=base_kwargs,
         env=env,
@@ -289,7 +297,7 @@ def run_experiment(variant):
         vf=vf,
         lr=variant['lr'],
         policy_lr=variant['policy_lr'],
-        scale_reward=variant['scale_reward'],
+        scale_reward=scale_reward,
         discount=variant['discount'],
         tau=variant['tau'],
         target_update_interval=variant['target_update_interval'],

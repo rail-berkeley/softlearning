@@ -180,11 +180,12 @@ class RLAlgorithm(Algorithm):
         if self._eval_render:
             self._eval_env.render(paths)
 
+        iteration = epoch*self._epoch_length
         batch = self._pool.random_batch(self._batch_size)
-        self.log_diagnostics(batch)
+        self.log_diagnostics(iteration, batch)
 
     @abc.abstractmethod
-    def log_diagnostics(self, batch):
+    def log_diagnostics(self, iteration, batch):
         raise NotImplementedError
 
     @abc.abstractmethod
