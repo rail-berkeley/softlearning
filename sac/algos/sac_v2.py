@@ -1,3 +1,5 @@
+from numbers import Number
+
 import numpy as np
 import tensorflow as tf
 
