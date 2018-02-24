@@ -78,6 +78,8 @@ def get_variants(args):
 
 def run_experiment(variant):
     if variant['env_name'] == 'pusher':
+        # TODO: assumes `pusher.xml` is located in `rllab/models/` when
+        # running on EC2.
         env = normalize(PusherEnv(goal=variant.get('goal')))
     else:
         raise ValueError
