@@ -34,10 +34,8 @@ class PusherEnv(MujocoEnv, Serializable):
         super(PusherEnv, self).__init__(file_path=self.FILE_PATH)
         Serializable.quick_init(self, locals())
 
-        goal = np.array(goal)
-
-        self._goal_mask = np.invert(goal == 'any')
-        self._goal = goal[self._goal_mask].astype(np.float32)
+        self._goal_mask = [coordinate != 'any' for coordinate in goal]
+        self._goal = np.array(goal)[self._goal_mask].astype(np.float32)
 
         self._arm_distance_coeff = arm_distance_coeff
         self._action_cost_coeff = 0.1
