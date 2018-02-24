@@ -18,7 +18,7 @@ from softqlearning.misc.sampler import DummySampler
 from softqlearning.misc.utils import PROJECT_PATH
 
 SHARED_PARAMS = {
-    'seed': [1, 2, 3],
+    'seed': 0,
     'policy_lr': 3E-4,
     'layer_size': 128,
     'batch_size': 128,
@@ -35,6 +35,7 @@ ENV_PARAMS = {
         'env_name': 'pusher',
         'max_path_length': 300,
         'n_epochs': 100,
+        'goal': (-1, -1),
     }
 }
 DEFAULT_ENV = 'pusher'
@@ -81,7 +82,7 @@ def load_buffer_and_qf(filename):
 
 
 def run_experiment(variant):
-    env = normalize(PusherEnv())
+    env = normalize(PusherEnv(goal=variant.get('goal')))
 
     buffer1, qf1 = load_buffer_and_qf(variant['snapshot1'])
     buffer2, qf2 = load_buffer_and_qf(variant['snapshot2'])
@@ -119,7 +120,8 @@ def run_experiment(variant):
         policy_lr=variant['policy_lr'],
         save_full_state=False,
         train_policy=True,
-        train_qf=False)
+        train_qf=False,
+        use_saved_qf=True)
 
     algorithm.train()
 
