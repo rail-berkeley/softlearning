@@ -100,16 +100,18 @@ def run_experiment(variant):
         eval_n_episodes=1,
         sampler=sampler)
 
+    task_id = np.random.randint(0, np.iinfo(np.int32).max)
+
     M = variant['layer_size']
     qf = NNQFunction(
         env_spec=env.spec,
         hidden_layer_sizes=(M, M),
-        name='qf_{i}'.format(i=variant['task_id']))
+        name='qf_{i}'.format(i=task_id))
 
     policy = StochasticNNPolicy(
         env_spec=env.spec,
         hidden_layer_sizes=(M, M),
-        name='policy_{i}'.format(i=variant['task_id']))
+        name='policy_{i}'.format(i=task_id))
 
     algorithm = SQL(
         base_kwargs=base_kwargs,
