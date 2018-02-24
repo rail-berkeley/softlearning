@@ -38,11 +38,9 @@ ENV_PARAMS = {
         'prefix': 'pusher',
         'env_name': 'pusher',
         'max_path_length': 300,
-        'n_epochs': 100,
+        'n_epochs': 500,
         'reward_scale': 1,
-        'task_id': 1,
-        'goal': [(-1, 'any'),
-                 ('any', -1)]
+        'goal': [(-1, 'any'), ('any', -1)]
     }
 }
 DEFAULT_ENV = 'pusher'

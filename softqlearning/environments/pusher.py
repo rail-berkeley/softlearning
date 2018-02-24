@@ -22,6 +22,9 @@ class PusherEnv(MujocoEnv, Serializable):
     PUCK_INDS = list(range(3, 5))
     TARGET_INDS = list(range(5, 7))
 
+    # TODO.before_release Fix target visualization (right now the target is
+    # always drawn in (-1, 0), regardless of the actual goal.
+
     def __init__(self, goal=(0, -1), arm_distance_coeff=0):
         """
         goal (`list`): List of two elements denoting the x and y coordinates of
@@ -104,8 +107,8 @@ class PusherEnv(MujocoEnv, Serializable):
             low=-0.1, high=0.1, size=self.model.nq) + self.init_qpos.squeeze()
         qpos[self.TARGET_INDS] = self.init_qpos.squeeze()[self.TARGET_INDS]
 
-        # TODO: Hack for reproducing the exact results we have in paper, remove
-        # before release.
+        # TODO.before_release: Hack for reproducing the exact results we have in
+        # paper, remove before release.
         while True:
             puck_position = np.random.uniform(
                 low=[0.3, -1.0], high=[1.0, -0.4]),
