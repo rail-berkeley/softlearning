@@ -135,8 +135,9 @@ def run_experiment(variant):
 
 def launch_experiments(variant_generator, args):
     variants = variant_generator.variants()
+    print('Launching {} experiments.'.format(len(variants)))
+
     for i, variant in enumerate(variants):
-        print('Launching {} experiments.'.format(len(variants)))
         full_experiment_name = variant['prefix']
         full_experiment_name += '-' + args.exp_name + '-' + str(i).zfill(2)
 

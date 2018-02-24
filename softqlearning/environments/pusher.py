@@ -11,7 +11,11 @@ from softqlearning.misc.utils import PROJECT_PATH
 
 
 class PusherEnv(MujocoEnv, Serializable):
+    """Pusher environment
 
+    Pusher is a two-dimensional 3-DoF manipulator. Task is to slide a cylinder-
+    shaped object, or a 'puck', to a target coordinates.
+    """
     FILE_PATH = osp.abspath(osp.join(PROJECT_PATH, 'models', 'pusher.xml'))
 
     JOINT_INDS = list(range(0, 3))
@@ -19,6 +23,14 @@ class PusherEnv(MujocoEnv, Serializable):
     TARGET_INDS = list(range(5, 7))
 
     def __init__(self, goal=(0, -1), arm_distance_coeff=0):
+        """
+        goal (`list`): List of two elements denoting the x and y coordinates of
+            the goal location. Either of the coordinate can also be a string
+            'any' to make the reward not to depend on the corresponding
+            coordinate.
+        arm_distance_coeff ('float'): Coefficient for the arm-to-object distance
+            cost.
+        """
         super(PusherEnv, self).__init__(file_path=self.FILE_PATH)
         Serializable.quick_init(self, locals())
 
@@ -53,9 +65,9 @@ class PusherEnv(MujocoEnv, Serializable):
         obj_pos = observations[:, -3:]
         obj_pos_masked = obj_pos[:, :2][:, self._goal_mask]
 
-        goal_dists = np.linalg.norm(self._goal[None] - obj_pos_masked, 1)
-        arm_dists = np.linalg.norm(arm_pos - obj_pos, 1)
-        ctrl_costs = np.sum(actions**2, 1)
+        goal_dists = np.linalg.norm(self._goal[None] - obj_pos_masked, axis=1)
+        arm_dists = np.linalg.norm(arm_pos - obj_pos, axis=1)
+        ctrl_costs = np.sum(actions**2, axis=1)
 
         rewards = -self._action_cost_coeff * ctrl_costs - goal_dists
         rewards -= self._arm_distance_coeff * arm_dists

@@ -76,11 +76,10 @@ class MeanQFunction(Serializable):
             self._observations_ph, self._actions_ph, reuse=True)
 
     def output_for(self, observations, actions, reuse=False):
-        outputs = []
-        for i, q_function in enumerate(self.q_functions):
-            outputs.append(
-                q_function.output_for(observations, actions, reuse=reuse))
-
+        outputs = [
+            qf.output_for(observations, actions, reuse=reuse)
+            for qf in self.q_functions
+        ]
         output = tf.add_n(outputs)
         return output
 
