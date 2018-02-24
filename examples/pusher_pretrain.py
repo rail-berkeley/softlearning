@@ -1,4 +1,5 @@
 import argparse
+import numpy as np
 
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
@@ -39,7 +40,9 @@ ENV_PARAMS = {
         'max_path_length': 300,
         'n_epochs': 100,
         'reward_scale': 1,
-        'task_id': 1
+        'task_id': 1,
+        'goal': [(-1, 'any'),
+                 ('any', -1)]
     }
 }
 DEFAULT_ENV = 'pusher'
@@ -75,7 +78,7 @@ def get_variants(args):
 
 def run_experiment(variant):
     if variant['env_name'] == 'pusher':
-        env = normalize(PusherEnv())
+        env = normalize(PusherEnv(goal=variant.get('goal')))
     else:
         raise ValueError
 

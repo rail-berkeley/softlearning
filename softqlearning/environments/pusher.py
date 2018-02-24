@@ -24,8 +24,8 @@ class PusherEnv(MujocoEnv, Serializable):
 
         goal = np.array(goal)
 
-        self._goal_mask = np.invert(np.isnan(goal))
-        self._goal = goal[self._goal_mask]
+        self._goal_mask = np.invert(goal == 'any')
+        self._goal = goal[self._goal_mask].astype(np.float32)
 
         self._arm_distance_coeff = arm_distance_coeff
         self._action_cost_coeff = 0.1
