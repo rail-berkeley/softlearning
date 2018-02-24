@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 from rllab.core.serializable import Serializable
 
@@ -90,3 +91,17 @@ class MeanQFunction(Serializable):
         }
 
         return tf_utils.get_default_session().run(self._output, feeds)
+
+    def get_param_values(self):
+        all_values_list = [qf.get_param_values() for qf in self.q_functions]
+
+        return np.concatenate(all_values_list)
+
+    def set_param_values(self, all_values):
+        param_sizes = [qf.get_param_values().size for qf in self.q_functions]
+        split_points = np.cumsum(param_sizes)[:-1]
+
+        all_values_list = np.split(all_values, split_points)
+
+        for values, qf in zip(all_values_list, self.q_functions):
+            qf.set_param_values(values)
