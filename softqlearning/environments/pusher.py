@@ -34,8 +34,7 @@ class PusherEnv(MujocoEnv, Serializable):
         self.model.stat.extent = 10
 
     def step(self, action):
-        reward, info = self.compute_reward(self.get_current_obs(), action,
-                                           True)
+        reward, info = self.compute_reward(self.get_current_obs(), action)
 
         self.forward_dynamics(action)
         observation = self.get_current_obs()
@@ -43,7 +42,7 @@ class PusherEnv(MujocoEnv, Serializable):
 
         return observation, reward, done, info
 
-    def compute_reward(self, observations, actions, return_env_info):
+    def compute_reward(self, observations, actions):
         is_batch = False
         if observations.ndim == 1:
             observations = observations[None]
@@ -66,11 +65,10 @@ class PusherEnv(MujocoEnv, Serializable):
             arm_dists = arm_dists.squeeze()
             goal_dists = goal_dists.squeeze()
 
-        if return_env_info:
-            return rewards, dict(
-                arm_distance=arm_dists, goal_distance=goal_dists)
-        else:
-            return rewards
+        return rewards, {
+            'arm_distance': arm_dists,
+            'goal_distance': goal_dists
+        }
 
     def viewer_setup(self):
         self.viewer.cam.trackbodyid = 0
