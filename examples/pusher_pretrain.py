@@ -1,5 +1,5 @@
 import argparse
-import numpy as np
+import pickle
 
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
@@ -100,7 +100,7 @@ def run_experiment(variant):
         eval_n_episodes=1,
         sampler=sampler)
 
-    task_id = np.random.randint(0, np.iinfo(np.int32).max)
+    task_id = abs(pickle.dumps(variant).__hash__())
 
     M = variant['layer_size']
     qf = NNQFunction(
