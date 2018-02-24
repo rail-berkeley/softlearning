@@ -11,7 +11,7 @@ from softqlearning.algorithms import SQL
 from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softqlearning.misc.utils import timestamp
 from softqlearning.replay_buffers import UnionBuffer
-from softqlearning.value_functions import MeanQFunction
+from softqlearning.value_functions import SumQFunction
 from softqlearning.policies import StochasticNNPolicy
 from softqlearning.environments.pusher import PusherEnv
 from softqlearning.misc.sampler import DummySampler
@@ -91,7 +91,7 @@ def run_experiment(variant):
         max_path_length=variant['max_path_length'])
     buffer = UnionBuffer(buffers=(buffer1, buffer2))
 
-    qf = MeanQFunction(env.spec, q_functions=(qf1, qf2))
+    qf = SumQFunction(env.spec, q_functions=(qf1, qf2))
 
     M = variant['layer_size']
     policy = StochasticNNPolicy(

@@ -59,7 +59,7 @@ class NNQFunction(MLPFunction):
         return super(NNQFunction, self)._eval((observations, actions))
 
 
-class MeanQFunction(Serializable):
+class SumQFunction(Serializable):
     def __init__(self, env_spec, q_functions):
         Serializable.quick_init(self, locals())
 

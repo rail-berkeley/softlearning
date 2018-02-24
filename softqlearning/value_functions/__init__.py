@@ -1,1 +1,1 @@
-from .value_function import NNVFunction, NNQFunction, MeanQFunction
+from .value_function import NNVFunction, NNQFunction, SumQFunction
