@@ -281,10 +281,11 @@ def run_experiment(variant):
     )
 
     if variant['scale_reward'] == 'piecewise_constant':
-        boundaries = variant['scale_reward_boundaries']
-        values = variant['scale_reward_values']
         scale_reward = lambda iteration: (
-            tf.train.piecewise_constant(iteration, boundaries, values))
+            tf.train.piecewise_constant(
+                iteration,
+                variant['scale_reward_boundaries'],
+                variant['scale_reward_values']))
     elif variant['scale_reward'] == 'polynomial_decay':
         default_decay_steps = variant['n_epochs'] * variant['epoch_length']
         scale_reward = lambda iteration: (
