@@ -224,7 +224,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
         if self._fix_h_on_reset:
             self._fixed_h = self.sample_z.eval()
 
-    def log_diagnostics(self, batch):
+    def log_diagnostics(self, iteration, batch):
         """Record diagnostic information to the logger.
         """
         feeds = {self._observations_ph: batch['observations']}

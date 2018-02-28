@@ -312,7 +312,7 @@ class SAC(RLAlgorithm, Serializable):
         return feed_dict
 
     @overrides
-    def log_diagnostics(self, batch):
+    def log_diagnostics(self, iteration, batch):
         """Record diagnostic information to the logger.
 
         Records mean and standard deviation of Q-function and state
@@ -332,7 +332,7 @@ class SAC(RLAlgorithm, Serializable):
         logger.record_tabular('vf-std', np.std(vf))
         logger.record_tabular('mean-sq-bellman-error', td_loss)
 
-        self._policy.log_diagnostics(batch)
+        self._policy.log_diagnostics(iteration, batch)
         if self._plotter:
             self._plotter.draw()
 

@@ -125,7 +125,7 @@ class GMMPolicy(NNPolicy, Serializable):
         yield
         self._is_deterministic = was_deterministic
 
-    def log_diagnostics(self, batch):
+    def log_diagnostics(self, iteration, batch):
         """Record diagnostic information to the logger.
 
         Records the mean, min, max, and standard deviation of the GMM

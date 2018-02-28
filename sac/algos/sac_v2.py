@@ -368,7 +368,7 @@ class SAC(RLAlgorithm, Serializable):
         logger.record_tabular('mean-sq-bellman-error', td_loss)
         logger.record_tabular('policy-regularization-loss', policy_regularization_loss)
 
-        self._policy.log_diagnostics(batch)
+        self._policy.log_diagnostics(iteration, batch)
         if self._plotter:
             self._plotter.draw()
 
