@@ -37,30 +37,64 @@ class GMMPolicy(NNPolicy, Serializable):
         self._K = K
         self._is_deterministic = False
         self._fixed_h = None
+        self._squash = squash
         self._qf = qf
         self._reg = reg
         self._reparameterize = reparameterize
 
-        self._obs_pl = tf.placeholder(
-            tf.float32,
-            shape=[None, self._Ds],
-            name='observation',
+        self.name = name
+        self.build()
+
+        self._scope_name = (
+            tf.get_variable_scope().name + "/" + name
+        ).lstrip("/")
+        super(NNPolicy, self).__init__(env_spec)
+
+    def actions_for(self, observations, latents=None,
+                    name=None, reuse=tf.AUTO_REUSE,
+                    with_log_pis=False, regularize=False):
+        name = name or self.name
+
+        # with tf.variable_scope('policy_distribution', reuse=reuse):
+        with tf.variable_scope(name, reuse=reuse):
+            distribution = GMM(
+                K=self._K,
+                hidden_layers_sizes=self._hidden_layers,
+                Dx=self._Da,
+                cond_t_lst=(observations,),
+                reg=self._reg
+            )
+
+        raw_actions = tf.stop_gradient(distribution.x_t)
+        actions = tf.tanh(raw_actions) if self._squash else raw_actions
+
+        # TODO: should always return same shape out
+        # Figure out how to make the interface for `log_pis` cleaner
+        if with_log_pis:
+            # TODO.code_consolidation: should come from log_pis_for
+            log_pis = distribution.log_p_t
+            return actions, log_pis
+
+        return actions
+
+    def build(self):
+        self._observations_ph = tf.placeholder(
+            dtype=tf.float32,
+            shape=(None, self._Ds),
+            name='observations',
         )
 
-        self._dist = self.get_distribution_for(self._obs_pl)
-
-        super(GMMPolicy, self).__init__(
-            env_spec,
-            self._obs_pl,
-            tf.tanh(self._dist.x_t) if squash else self._dist.x_t,
-            'policy'
+        self._latents_ph = tf.placeholder(
+            dtype=tf.float32,
+            shape=(None, self._Da),
+            name='latents',
         )
 
-    def get_distribution_for(self, obs_t, reuse=False):
-        """Create the actual GMM distribution instance."""
-
-        with tf.variable_scope('policy', reuse=reuse):
-            gmm = GMM(
+        # TODO.code_consolidation:
+        # self.distribution is used very differently compared to the
+        # `RealNVPPolicy`s distribution.
+        with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
+            self.distribution = GMM(
                 K=self._K,
                 hidden_layers_sizes=self._hidden_layers,
                 Dx=self._Da,
@@ -69,35 +103,50 @@ class GMMPolicy(NNPolicy, Serializable):
                 reparameterize=self._reparameterize
             )
 
-        return gmm
+        raw_actions = tf.stop_gradient(self.distribution.x_t)
+        self._actions = tf.tanh(raw_actions) if self._squash else raw_actions
+        # TODO.code_consolidation:
+        # This should be standardized with RealNVPPolicy/NNPolicy
+        # self._determistic_actions = self.actions_for(self._observations_ph,
+        #                                              self._latents_ph)
 
     @overrides
-    def get_action(self, obs):
-        """Sample action based on the observations.
+    def get_action(self, observation):
+        """Sample single action based on the observations.
+
+        TODO: Modify `NNPolicy.get_action` and remove this
+        """
+        return self.get_actions(observation[None])[0], {}
+
+    @overrides
+    def get_actions(self, obs):
+        """Sample actions based on the observations.
 
         If `self._is_deterministic` is True, returns a greedily sampled action
         for the observations. If False, return stochastically sampled action.
         """
+        feed_dict = {self._observations_ph: obs}
 
         if not self._is_deterministic:
-            return NNPolicy.get_action(self, obs)
+            actions = tf.get_default_session().run(self._actions, feed_dict)
+            return actions
 
         # Handle the deterministic case separately.
         if self._qf is None:
             raise AttributeError
 
-        # Get first the GMM means.
-        feeds = {self._obs_pl: obs[None]}
-        mus = tf.get_default_session().run(self._dist.mus_t, feeds)[0]  # K x Da
+        # TODO.code_consolidation: these shapes should be fixed
+        mus = tf.get_default_session().run(
+            self.distribution.mus_t, feed_dict)[0]  # K x Da
 
-        qs = self._qf.eval(obs[None], mus)
+        qs = self._qf.eval(obs, mus)[:, None]
 
         if self._fixed_h is not None:
-            h = self._fixed_h
+            h = self._fixed_h # TODO.code_consolidation: this needs to be tiled
         else:
-            h = np.argmax(qs)
+            h = np.argmax(qs, axis=1) # TODO.code_consolidation: check the axis
 
-        return mus[h, :], {}  # Da
+        return mus[h, :]  # Da
 
     @contextmanager
     def fix_h(self, h):
@@ -132,10 +181,14 @@ class GMMPolicy(NNPolicy, Serializable):
         means, component weights, and covariances.
         """
 
-        feeds = {self._obs_pl: batch['observations']}
+        feeds = {self._observations_ph: batch['observations']}
         sess = tf_utils.get_default_session()
         mus, log_sigs, log_ws = sess.run(
-            [self._dist.mus_t, self._dist.log_sigs_t, self._dist.log_ws_t],
+            (
+                self.distribution.mus_t,
+                self.distribution.log_sigs_t,
+                self.distribution.log_ws_t,
+            ),
             feeds
         )
 
