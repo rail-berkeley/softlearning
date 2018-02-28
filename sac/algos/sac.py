@@ -1,3 +1,5 @@
+from numbers import Number
+
 import numpy as np
 import tensorflow as tf
 
@@ -82,10 +84,13 @@ class SAC(RLAlgorithm, Serializable):
             pool,
             plotter=None,
 
+            policy_lr=None,
             lr=3E-3,
             scale_reward=1,
             discount=0.99,
             tau=0.01,
+            target_update_interval=1,
+            regularize_actions=False,
 
             reparameterize=True,
             save_full_state=False,
@@ -121,12 +126,14 @@ class SAC(RLAlgorithm, Serializable):
         self._pool = pool
         self._plotter = plotter
 
-        self._policy_lr = lr
+        self._policy_lr = policy_lr or lr
         self._qf_lr = lr
         self._vf_lr = lr
         self._scale_reward = scale_reward
         self._discount = discount
         self._tau = tau
+        self._target_update_interval = target_update_interval
+        self._regularize_actions = regularize_actions
 
         self._reparameterize = reparameterize
         self._save_full_state = save_full_state
@@ -141,7 +148,10 @@ class SAC(RLAlgorithm, Serializable):
         self._init_critic_update()
         self._init_target_ops()
 
-        self._sess.run(tf.global_variables_initializer())
+        self._sess.run(tf.variables_initializer([
+            variable for variable in tf.global_variables()
+            if 'low_level_policy' not in variable.name
+        ]))
 
     @overrides
     def train(self):
@@ -159,35 +169,47 @@ class SAC(RLAlgorithm, Serializable):
             - reward
             - terminals
         """
+        self._iteration_pl = tf.placeholder(
+            tf.int64, shape=None, name='iteration')
 
-        self._obs_pl = tf.placeholder(
+        self._observations_ph = tf.placeholder(
             tf.float32,
-            shape=[None, self._Do],
+            shape=(None, self._Do),
             name='observation',
         )
 
-        self._obs_next_pl = tf.placeholder(
+        self._next_observations_ph = tf.placeholder(
             tf.float32,
-            shape=[None, self._Do],
+            shape=(None, self._Do),
             name='next_observation',
         )
-        self._action_pl = tf.placeholder(
+        self._actions_ph = tf.placeholder(
             tf.float32,
-            shape=[None, self._Da],
+            shape=(None, self._Da),
             name='actions',
         )
 
-        self._reward_pl = tf.placeholder(
+        self._rewards_ph = tf.placeholder(
             tf.float32,
-            shape=[None],
+            shape=(None, ),
             name='rewards',
         )
 
-        self._terminal_pl = tf.placeholder(
+        self._terminals_ph = tf.placeholder(
             tf.float32,
-            shape=[None],
+            shape=(None, ),
             name='terminals',
         )
+
+    @property
+    def scale_reward(self):
+        if callable(self._scale_reward):
+            return self._scale_reward(self._iteration_pl)
+        elif isinstance(self._scale_reward, Number):
+            return self._scale_reward
+
+        raise ValueError(
+            'scale_reward must be either callable or scalar')
 
     def _init_critic_update(self):
         """Create minimization operation for critic Q-function.
@@ -201,15 +223,15 @@ class SAC(RLAlgorithm, Serializable):
         """
 
         self._qf_t = self._qf.get_output_for(
-            self._obs_pl, self._action_pl, reuse=True)  # N
+            self._observations_ph, self._actions_ph, reuse=True)  # N
 
         with tf.variable_scope('target'):
-            vf_next_target_t = self._vf.get_output_for(self._obs_next_pl)  # N
+            vf_next_target_t = self._vf.get_output_for(self._next_observations_ph)  # N
             self._vf_target_params = self._vf.get_params_internal()
 
         ys = tf.stop_gradient(
-            self._scale_reward * self._reward_pl +
-            (1 - self._terminal_pl) * self._discount * vf_next_target_t
+            self.scale_reward * self._rewards_ph +
+            (1 - self._terminals_ph) * self._discount * vf_next_target_t
         )  # N
 
         self._td_loss_t = 0.5 * tf.reduce_mean((ys - self._qf_t)**2)
@@ -237,16 +259,25 @@ class SAC(RLAlgorithm, Serializable):
         of the value function and policy function update rules.
         """
 
-        policy_dist = self._policy.get_distribution_for(
-            self._obs_pl, reuse=True)
-        log_pi_t = policy_dist.log_p_t  # N
+        actions, log_pi = self._policy.actions_for(observations=self._observations_ph,
+                                                   with_log_pis=True)
 
-        self._vf_t = self._vf.get_output_for(self._obs_pl, reuse=True)  # N
+        self._vf_t = self._vf.get_output_for(self._observations_ph, reuse=True)  # N
         self._vf_params = self._vf.get_params_internal()
 
-        log_target_t = self._qf.get_output_for(
-            self._obs_pl, tf.tanh(policy_dist.x_t), reuse=True)  # N
-        corr = self._squash_correction(policy_dist.x_t)
+        if self._regularize_actions:
+            D_s = actions.shape.as_list()[-1]
+            policy_prior = tf.contrib.distributions.MultivariateNormalDiag(
+                loc=tf.zeros(D_s), scale_diag=tf.ones(D_s))
+            policy_prior_log_probs = policy_prior.log_prob(actions)
+        else:
+            policy_prior_log_probs = 0.0
+
+        log_target = self._qf.get_output_for(
+            self._observations_ph, actions, reuse=True)  # N
+
+        policy_kl_loss = tf.reduce_mean(log_pi * tf.stop_gradient(
+            log_pi - log_target + self._vf_t - policy_prior_log_probs))
 
         if self._reparameterize:
             kl_loss_t = tf.reduce_mean(log_pi_t - log_target_t - corr)
@@ -254,8 +285,13 @@ class SAC(RLAlgorithm, Serializable):
             kl_loss_t = tf.reduce_mean(log_pi_t * tf.stop_gradient(
                 log_pi_t - log_target_t - corr + self._vf_t))
 
-        self._vf_loss_t = 0.5 * tf.reduce_mean(
-            (self._vf_t - tf.stop_gradient(log_target_t - log_pi_t + corr))**2)
+        policy_loss = (policy_kl_loss
+                       + policy_regularization_loss)
+
+        self._vf_loss_t = 0.5 * tf.reduce_mean((
+          self._vf_t
+          - tf.stop_gradient(log_target - log_pi + policy_prior_log_probs)
+        )**2)
 
         policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
             loss=kl_loss_t + policy_dist.reg_loss_t,
@@ -269,10 +305,6 @@ class SAC(RLAlgorithm, Serializable):
 
         self._training_ops.append(policy_train_op)
         self._training_ops.append(vf_train_op)
-
-    @staticmethod
-    def _squash_correction(t):
-        return tf.reduce_sum(tf.log(1 - tf.tanh(t) ** 2 + EPS), axis=1)
 
     def _init_target_ops(self):
         """Create tensorflow operations for updating target value function."""
@@ -291,23 +323,29 @@ class SAC(RLAlgorithm, Serializable):
         self._sess.run(self._target_ops)
 
     @overrides
-    def _do_training(self, itr, batch):
+    def _do_training(self, iteration, batch):
         """Runs the operations for updating training and target ops."""
 
-        feed_dict = self._get_feed_dict(batch)
+        feed_dict = self._get_feed_dict(iteration, batch)
         self._sess.run(self._training_ops, feed_dict)
-        self._sess.run(self._target_ops)
 
-    def _get_feed_dict(self, batch):
+        if iteration % self._target_update_interval == 0:
+            # Run target ops here.
+            self._sess.run(self._target_ops)
+
+    def _get_feed_dict(self, iteration, batch):
         """Construct TensorFlow feed_dict from sample batch."""
 
         feed_dict = {
-            self._obs_pl: batch['observations'],
-            self._action_pl: batch['actions'],
-            self._obs_next_pl: batch['next_observations'],
-            self._reward_pl: batch['rewards'],
-            self._terminal_pl: batch['terminals'],
+            self._observations_ph: batch['observations'],
+            self._actions_ph: batch['actions'],
+            self._next_observations_ph: batch['next_observations'],
+            self._rewards_ph: batch['rewards'],
+            self._terminals_ph: batch['terminals'],
         }
+
+        if iteration is not None:
+            feed_dict[self._iteration_pl] = iteration
 
         return feed_dict
 
@@ -322,9 +360,9 @@ class SAC(RLAlgorithm, Serializable):
         Also calls the `draw` method of the plotter, if plotter defined.
         """
 
-        feed_dict = self._get_feed_dict(batch)
+        feed_dict = self._get_feed_dict(iteration, batch)
         qf, vf, td_loss = self._sess.run(
-            [self._qf_t, self._vf_t, self._td_loss_t], feed_dict)
+            (self._qf_t, self._vf_t, self._td_loss_t), feed_dict)
 
         logger.record_tabular('qf-avg', np.mean(qf))
         logger.record_tabular('qf-std', np.std(qf))
@@ -346,18 +384,20 @@ class SAC(RLAlgorithm, Serializable):
         """
 
         if self._save_full_state:
-            return dict(
-                epoch=epoch,
-                algo=self
-            )
+            snapshot = {
+                'epoch': epoch,
+                'algo': self
+            }
         else:
-            return dict(
-                epoch=epoch,
-                policy=self._policy,
-                qf=self._qf,
-                vf=self._vf,
-                env=self._env,
-            )
+            snapshot = {
+                'epoch': epoch,
+                'policy': self._policy,
+                'qf': self._qf,
+                'vf': self._vf,
+                'env': self._env,
+            }
+
+        return snapshot
 
     def __getstate__(self):
         """Get Serializable state of the RLALgorithm instance."""

@@ -14,7 +14,7 @@ from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.envs.mujoco.gather.ant_gather_env import AntGatherEnv
 from rllab.misc.instrument import VariantGenerator
 
-from sac.algos import SACV2
+from sac.algos import SAC
 from sac.envs import (
     RandomGoalSwimmerEnv, RandomGoalAntEnv, RandomGoalHumanoidEnv,
     HierarchyProxyEnv, SimpleMazeAntEnv, CrossMazeAntEnv)
@@ -424,7 +424,7 @@ def run_experiment(variant):
         name="high_level_policy"
     )
 
-    algorithm = SACV2(
+    algorithm = SAC(
         base_kwargs=base_kwargs,
         env=env,
         policy=policy,

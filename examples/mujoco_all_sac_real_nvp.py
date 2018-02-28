@@ -8,7 +8,7 @@ from rllab.envs.normalized_env import normalize
 from rllab.envs.mujoco.gather.ant_gather_env import AntGatherEnv
 from rllab.misc.instrument import VariantGenerator
 
-from sac.algos import SACV2
+from sac.algos import SAC
 from sac.envs import (
     GymEnv,
     MultiDirectionSwimmerEnv,
@@ -403,7 +403,7 @@ def run_experiment(variant):
     else:
         scale_reward = variant['scale_reward']
 
-    algorithm = SACV2(
+    algorithm = SAC(
         base_kwargs=base_kwargs,
         env=env,
         policy=policy,

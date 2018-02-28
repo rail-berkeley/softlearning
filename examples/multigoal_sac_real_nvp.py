@@ -3,7 +3,6 @@ import numpy as np
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import run_experiment_lite
 from sac.algos import SAC
-from sac.algos import SACV2
 from sac.envs import MultiGoalEnv
 from sac.misc.plotter import QFPolicyPlotter
 from sac.misc.utils import timestamp
@@ -73,7 +72,7 @@ def run(*_):
         n_samples=100
     )
 
-    algorithm = SACV2(
+    algorithm = SAC(
         base_kwargs=base_kwargs,
         env=env,
         policy=policy,
