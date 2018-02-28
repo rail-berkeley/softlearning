@@ -163,32 +163,32 @@ class SAC(RLAlgorithm, Serializable):
         self._iteration_pl = tf.placeholder(
             tf.int64, shape=None, name='iteration')
 
-        self._obs_pl = tf.placeholder(
+        self._observations_ph = tf.placeholder(
             tf.float32,
-            shape=[None, self._Do],
+            shape=(None, self._Do),
             name='observation',
         )
 
-        self._obs_next_pl = tf.placeholder(
+        self._next_observations_ph = tf.placeholder(
             tf.float32,
-            shape=[None, self._Do],
+            shape=(None, self._Do),
             name='next_observation',
         )
-        self._action_pl = tf.placeholder(
+        self._actions_ph = tf.placeholder(
             tf.float32,
-            shape=[None, self._Da],
+            shape=(None, self._Da),
             name='actions',
         )
 
-        self._reward_pl = tf.placeholder(
+        self._rewards_ph = tf.placeholder(
             tf.float32,
-            shape=[None],
+            shape=(None, ),
             name='rewards',
         )
 
-        self._terminal_pl = tf.placeholder(
+        self._terminals_ph = tf.placeholder(
             tf.float32,
-            shape=[None],
+            shape=(None, ),
             name='terminals',
         )
 
@@ -214,15 +214,15 @@ class SAC(RLAlgorithm, Serializable):
         """
 
         self._qf_t = self._qf.get_output_for(
-            self._obs_pl, self._action_pl, reuse=True)  # N
+            self._observations_ph, self._actions_ph, reuse=True)  # N
 
         with tf.variable_scope('target'):
-            vf_next_target_t = self._vf.get_output_for(self._obs_next_pl)  # N
+            vf_next_target_t = self._vf.get_output_for(self._next_observations_ph)  # N
             self._vf_target_params = self._vf.get_params_internal()
 
         ys = tf.stop_gradient(
-            self.scale_reward * self._reward_pl +
-            (1 - self._terminal_pl) * self._discount * vf_next_target_t
+            self.scale_reward * self._rewards_ph +
+            (1 - self._terminals_ph) * self._discount * vf_next_target_t
         )  # N
 
         self._td_loss_t = 0.5 * tf.reduce_mean((ys - self._qf_t)**2)
@@ -253,7 +253,7 @@ class SAC(RLAlgorithm, Serializable):
         actions, log_pi = self._policy.actions_for(
             observations=self._obs_pl, with_log_pis=True, regularize=True)
 
-        self._vf_t = self._vf.get_output_for(self._obs_pl, reuse=True)  # N
+        self._vf_t = self._vf.get_output_for(self._observations_ph, reuse=True)  # N
         self._vf_params = self._vf.get_params_internal()
 
         if self._regularize_actions:
@@ -265,7 +265,7 @@ class SAC(RLAlgorithm, Serializable):
             policy_prior_log_probs = 0.0
 
         log_target = self._qf.get_output_for(
-            self._obs_pl, actions, reuse=True)  # N
+            self._observations_ph, actions, reuse=True)  # N
 
         policy_kl_loss = tf.reduce_mean(log_pi * tf.stop_gradient(
             log_pi - log_target + self._vf_t - policy_prior_log_probs))
@@ -330,11 +330,11 @@ class SAC(RLAlgorithm, Serializable):
         """Construct TensorFlow feed_dict from sample batch."""
 
         feed_dict = {
-            self._obs_pl: batch['observations'],
-            self._action_pl: batch['actions'],
-            self._obs_next_pl: batch['next_observations'],
-            self._reward_pl: batch['rewards'],
-            self._terminal_pl: batch['terminals'],
+            self._observations_ph: batch['observations'],
+            self._actions_ph: batch['actions'],
+            self._next_observations_ph: batch['next_observations'],
+            self._rewards_ph: batch['rewards'],
+            self._terminals_ph: batch['terminals'],
         }
 
         if iteration is not None:
@@ -355,7 +355,14 @@ class SAC(RLAlgorithm, Serializable):
 
         feed_dict = self._get_feed_dict(iteration, batch)
         policy_regularization_loss, qf, vf, td_loss = self._sess.run(
-            [self.policy_regularization_loss, self._qf_t, self._vf_t, self._td_loss_t], feed_dict)
+            (
+                self.policy_regularization_loss,
+                self._qf_t,
+                self._vf_t,
+                self._td_loss_t
+            ),
+            feed_dict
+        )
 
         logger.record_tabular('qf-avg', np.mean(qf))
         logger.record_tabular('qf-min', np.min(qf))
@@ -382,18 +389,20 @@ class SAC(RLAlgorithm, Serializable):
         """
 
         if self._save_full_state:
-            return dict(
-                epoch=epoch,
-                algo=self
-            )
+            snapshot = {
+                'epoch': epoch,
+                'algo': self
+            }
         else:
-            return dict(
-                epoch=epoch,
-                policy=self._policy,
-                qf=self._qf,
-                vf=self._vf,
-                env=self._env,
-            )
+            snapshot = {
+                'epoch': epoch,
+                'policy': self._policy,
+                'qf': self._qf,
+                'vf': self._vf,
+                'env': self._env,
+            }
+
+        return snapshot
 
     def __getstate__(self):
         """Get Serializable state of the RLALgorithm instance."""
