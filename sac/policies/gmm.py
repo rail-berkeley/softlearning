@@ -111,14 +111,6 @@ class GMMPolicy(NNPolicy, Serializable):
         #                                              self._latents_ph)
 
     @overrides
-    def get_action(self, observation):
-        """Sample single action based on the observations.
-
-        TODO: Modify `NNPolicy.get_action` and remove this
-        """
-        return self.get_actions(observation[None])[0], {}
-
-    @overrides
     def get_actions(self, obs):
         """Sample actions based on the observations.
 

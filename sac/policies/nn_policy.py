@@ -20,10 +20,12 @@ class NNPolicy(Policy, Serializable):
 
     @overrides
     def get_action(self, observation):
-        return self.get_actions(observation[None])[0], None
+        """Sample single action based on the observations."""
+        return self.get_actions(observation[None])[0], {}
 
     @overrides
     def get_actions(self, observations):
+        """Sample actions based on the observations."""
         feeds = {self._obs_pl: observations}
         actions = tf.get_default_session().run(self._actions, feeds)
         return actions
