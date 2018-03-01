@@ -8,6 +8,4 @@ from .cross_maze_ant_env import CrossMazeAntEnv
 from .simple_maze_ant_env import SimpleMazeAntEnv
 
 from .hierarchy_proxy_env import HierarchyProxyEnv
-from .multi_direction_ant_env import MultiDirectionAntEnv
-from .multi_direction_humanoid_env import MultiDirectionHumanoidEnv
 from .multigoal import MultiGoalEnv
