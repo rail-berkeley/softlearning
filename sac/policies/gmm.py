@@ -12,6 +12,7 @@ from sac.distributions import GMM
 from sac.policies import NNPolicy
 from sac.misc import tf_utils
 
+EPS = 1e-6
 
 class GMMPolicy(NNPolicy, Serializable):
     """Gaussian Mixture Model policy"""
@@ -48,6 +49,9 @@ class GMMPolicy(NNPolicy, Serializable):
         self._scope_name = (
             tf.get_variable_scope().name + "/" + name
         ).lstrip("/")
+
+        # TODO.code_consolidation: This should probably call
+        # `super(GMMPolicy, self).__init__`
         super(NNPolicy, self).__init__(env_spec)
 
     def actions_for(self, observations, latents=None,
@@ -55,7 +59,6 @@ class GMMPolicy(NNPolicy, Serializable):
                     with_log_pis=False, regularize=False):
         name = name or self.name
 
-        # with tf.variable_scope('policy_distribution', reuse=reuse):
         with tf.variable_scope(name, reuse=reuse):
             distribution = GMM(
                 K=self._K,
@@ -73,6 +76,8 @@ class GMMPolicy(NNPolicy, Serializable):
         if with_log_pis:
             # TODO.code_consolidation: should come from log_pis_for
             log_pis = distribution.log_p_t
+            if self._squash:
+                log_pis -= self._squash_correction(raw_actions)
             return actions, log_pis
 
         return actions
@@ -93,6 +98,8 @@ class GMMPolicy(NNPolicy, Serializable):
         # TODO.code_consolidation:
         # self.distribution is used very differently compared to the
         # `RealNVPPolicy`s distribution.
+        # This does not use `self.actions_for` because we need to manually
+        # access e.g. `self.distribution.mus_t`
         with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
             self.distribution = GMM(
                 K=self._K,
@@ -111,34 +118,43 @@ class GMMPolicy(NNPolicy, Serializable):
         #                                              self._latents_ph)
 
     @overrides
-    def get_actions(self, obs):
+    def get_actions(self, observations):
         """Sample actions based on the observations.
 
         If `self._is_deterministic` is True, returns a greedily sampled action
         for the observations. If False, return stochastically sampled action.
-        """
-        feed_dict = {self._observations_ph: obs}
 
+        TODO.code_consolidation: This should be somewhat similar with
+        `RealNVPPolicy.get_actions`.
+        """
         if not self._is_deterministic:
-            actions = tf.get_default_session().run(self._actions, feed_dict)
-            return actions
+            return super(GMMPolicy, self).get_actions(observations)
 
         # Handle the deterministic case separately.
         if self._qf is None:
             raise AttributeError
 
-        # TODO.code_consolidation: these shapes should be fixed
+        feed_dict = {self._observations_ph: observations}
+
+        # TODO.code_consolidation: these shapes should be double checked
+        # for case where `observations.shape[0] > 1`
         mus = tf.get_default_session().run(
             self.distribution.mus_t, feed_dict)[0]  # K x Da
 
-        qs = self._qf.eval(obs, mus)[:, None]
+        squashed_mus = np.tanh(mus) if self._squash else mus
+        qs = self._qf.eval(observations, squashed_mus)
 
         if self._fixed_h is not None:
             h = self._fixed_h # TODO.code_consolidation: this needs to be tiled
         else:
-            h = np.argmax(qs, axis=1) # TODO.code_consolidation: check the axis
+            h = np.argmax(qs) # TODO.code_consolidation: check the axis
 
-        return mus[h, :]  # Da
+        actions = squashed_mus[h, :][None]
+        return actions
+
+    def _squash_correction(self, actions):
+        if not self._squash: return 0
+        return tf.reduce_sum(tf.log(1 - tf.tanh(actions) ** 2 + EPS), axis=1)
 
     @contextmanager
     def fix_h(self, h):
