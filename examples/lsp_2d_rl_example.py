@@ -6,7 +6,7 @@ import tensorflow as tf
 
 import matplotlib.pyplot as plt
 
-from sac.policies import RealNVPPolicy
+from sac.policies import LatentSpacePolicy
 
 
 def generate_grid_data(x_min=-1, x_max=1, y_min=-1, y_max=1, nx=5, ny=5, density=200):
@@ -48,7 +48,7 @@ def _log_target(weights, means, variances, conditions, inputs):
     return tf.reduce_logsumexp(target_log_components, axis=1)  # N
 
 
-class RealNVP2dRlExample(object):
+class LSP2dRlExample(object):
     def __init__(self,
                  plt_subplots,
                  weights, means, variances,
@@ -83,7 +83,7 @@ class RealNVP2dRlExample(object):
                     weights, means, variances, observations, actions)
             return wraps
 
-        self.policy = RealNVPPolicy(
+        self.policy = LatentSpacePolicy(
             env_spec=env_spec,
             config=policy_config,
             qf=create_target_wrapper(weights, means, variances))
@@ -217,5 +217,5 @@ class RealNVP2dRlExample(object):
 
 
 if __name__ == '__main__':
-    example = RealNVP2dRlExample()
+    example = LSP2dRlExample()
     example.run()

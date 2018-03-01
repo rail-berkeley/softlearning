@@ -1,4 +1,4 @@
-"""Real NVP policy"""
+"""Latent Space Policy."""
 
 from contextlib import contextmanager
 import numpy as np
@@ -14,14 +14,14 @@ from sac.policies import NNPolicy
 EPS = 1e-6
 
 
-class RealNVPPolicy(NNPolicy, Serializable):
-    """Real NVP policy"""
+class LatentSpacePolicy(NNPolicy, Serializable):
+    """Latent Space Policy."""
 
     def __init__(self,
                  env_spec,
                  mode="train",
                  squash=True,
-                 real_nvp_config=None,
+                 bijector_config=None,
                  observations_preprocessor=None,
                  q_function=None,
                  n_map_action_candidates=100,
@@ -31,8 +31,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
         Args:
             env_spec (`rllab.EnvSpec`): Specification of the environment
                 to create the policy for.
-            real_nvp_config (`dict`): Parameter
-                configuration for real nvp distribution.
+            bijector_config (`dict`): Parameter configuration for bijector.
             squash (`bool`): If True, squash the action samples between
                 -1 and 1 with tanh.
             n_map_action_candidates ('int'): Number of action candidates for
@@ -41,7 +40,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
         Serializable.quick_init(self, locals())
 
         self._env_spec = env_spec
-        self._real_nvp_config = real_nvp_config
+        self._bijector_config = bijector_config
         self._mode = mode
         self._squash = squash
         self._q_function = q_function
@@ -115,12 +114,12 @@ class RealNVPPolicy(NNPolicy, Serializable):
 
     def build(self):
         ds = tf.contrib.distributions
-        real_nvp_config = self._real_nvp_config
+        config = self._bijector_config
         self.bijector = RealNVPBijector(
-            num_coupling_layers=real_nvp_config.get("num_coupling_layers"),
-            translation_hidden_sizes=real_nvp_config.get("translation_hidden_sizes"),
-            scale_hidden_sizes=real_nvp_config.get("scale_hidden_sizes"),
-            prior_regularization=real_nvp_config.get("prior_regularization"),
+            num_coupling_layers=config.get("num_coupling_layers"),
+            translation_hidden_sizes=config.get("translation_hidden_sizes"),
+            scale_hidden_sizes=config.get("scale_hidden_sizes"),
+            scale_regularization=config.get("scale_regularization"),
             event_ndims=self._Da)
 
         self.base_distribution = ds.MultivariateNormalDiag(
@@ -131,7 +130,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
         self.distribution = ds.ConditionalTransformedDistribution(
             distribution=self.base_distribution,
             bijector=self.bijector,
-            name="RealNVPPolicyDistribution")
+            name="lsp_distribution")
 
         self._observations_ph = tf.placeholder(
             dtype=tf.float32,

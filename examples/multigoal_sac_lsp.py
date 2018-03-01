@@ -6,7 +6,7 @@ from sac.algos import SAC
 from sac.envs import MultiGoalEnv
 from sac.misc.plotter import QFPolicyPlotter
 from sac.misc.utils import timestamp
-from sac.policies import RealNVPPolicy
+from sac.policies import LatentSpacePolicy
 from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
 
@@ -47,18 +47,18 @@ def run(*_):
         hidden_layer_sizes=[M, M]
     )
 
-    real_nvp_config = {
-        "prior_regularization": 0.0,
+    bijector_config = {
+        "scale_regularization": 0.0,
         "num_coupling_layers": 2,
         "translation_hidden_sizes": (M,),
         "scale_hidden_sizes": (M,),
     }
 
-    policy = RealNVPPolicy(
+    policy = LatentSpacePolicy(
         env_spec=env.spec,
         mode="train",
         squash=True,
-        real_nvp_config=real_nvp_config,
+        bijector_config=bijector_config,
         observations_preprocessor=None
     )
 

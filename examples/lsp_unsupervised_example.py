@@ -19,16 +19,16 @@ def generate_grid_data(x_min=-1, x_max=1, y_min=-1, y_max=1, nx=5, ny=5, density
         xs += np.linspace(min(xx), max(xx), density).tolist()
     return np.array([xs, ys]).swapaxes(0, 1)
 
-class HalfMoonRealNVP(object):
+class HalfMoonLSP(object):
     def __init__(self,
                  placeholders,
                  training_config=None,
-                 real_nvp_config=None):
+                 bijector_config=None):
 
         self.config = training_config
         ds = tf.contrib.distributions
         D_in = self.config["D_in"]
-        self.bijector = RealNVPBijector(config=real_nvp_config,
+        self.bijector = RealNVPBijector(config=bijector_config,
                                         event_ndims=D_in)
         self.base_distribution = ds.MultivariateNormalDiag(
             loc=tf.zeros(D_in), scale_diag=tf.ones(D_in))
@@ -36,7 +36,7 @@ class HalfMoonRealNVP(object):
         self.distribution = ds.TransformedDistribution(
             distribution=self.base_distribution,
             bijector=self.bijector,
-            name="RealNVPTransformedDistribution")
+            name="LSPTransformedDistribution")
 
         # Note: x and z directions are flipped in this example
         self.z = self.bijector.inverse(placeholders["x"])
@@ -54,12 +54,12 @@ class HalfMoonRealNVP(object):
         self.train_op = optimizer.minimize(loss=self.loss)
 
 
-class RealNVP2UnsupervisedExample(object):
+class LSP2UnsupervisedExample(object):
   def __init__(self,
                x_train,
                subplots,
                training_config=None,
-               real_nvp_config=None,
+               bijector_config=None,
                seed=None,
                batch_size=128,
                plot_every=100,
@@ -100,11 +100,11 @@ class RealNVP2UnsupervisedExample(object):
         "z": tf.placeholder(
             shape=(None, D_in), dtype=tf.float32, name="z_placeholder")
     }
-    self.real_nvp_config = real_nvp_config
+    self.bijector_config = bijector_config
     self.training_config = training_config
-    self.real_nvp = HalfMoonRealNVP(placeholders=self.placeholders,
+    self.lsp = HalfMoonLSP(placeholders=self.placeholders,
                                     training_config=training_config,
-                                    real_nvp_config=real_nvp_config)
+                                    bijector_config=bijector_config)
 
     self.session = tf.Session()
     self.session.run(tf.global_variables_initializer())
@@ -122,7 +122,7 @@ class RealNVP2UnsupervisedExample(object):
           x_batch = self.x_train[batch_idx, :]
 
           _, loss = self.session.run(
-            (self.real_nvp.train_op, self.real_nvp.loss),
+            (self.lsp.train_op, self.lsp.loss),
             feed_dict={self.placeholders["x"]: x_batch}
           )
 
@@ -146,11 +146,11 @@ class RealNVP2UnsupervisedExample(object):
       x_grid = self.x_grid
 
       z_samples = self.session.run(
-          self.real_nvp.z,
+          self.lsp.z,
           feed_dict={self.placeholders["x"]: x_samples}
       )
       z_grid = self.session.run(
-          self.real_nvp.z,
+          self.lsp.z,
           feed_dict={self.placeholders["x"]: x_grid}
       )
 
@@ -204,11 +204,11 @@ class RealNVP2UnsupervisedExample(object):
       z_grid = self.z_grid
 
       x_samples = self.session.run(
-          self.real_nvp.x,
+          self.lsp.x,
           feed_dict={self.placeholders["z"]: z_samples}
       )
       x_grid = self.session.run(
-          self.real_nvp.x,
+          self.lsp.x,
           feed_dict={self.placeholders["z"]: z_grid}
       )
 

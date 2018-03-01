@@ -24,7 +24,7 @@ from sac.envs import (
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
 from sac.misc import tf_utils
-from sac.policies import RealNVPPolicy
+from sac.policies import LatentSpacePolicy
 from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
 from sac.preprocessors import MLPPreprocessor
@@ -367,14 +367,14 @@ def run_experiment(variant):
     policy_s_t_units = variant['policy_s_t_units']
     s_t_hidden_sizes = [policy_s_t_units] * policy_s_t_layers
 
-    real_nvp_config = {
-        "prior_regularization": variant['policy_prior_regularization'],
+    bijector_config = {
+        "scale_regularization": variant['policy_scale_regularization'],
         "num_coupling_layers": variant['policy_coupling_layers'],
         "translation_hidden_sizes": s_t_hidden_sizes,
         "scale_hidden_sizes": s_t_hidden_sizes,
     }
 
-    policy = RealNVPPolicy(
+    policy = LatentSpacePolicy(
         env_spec=env.spec,
         mode="train",
         squash=True,

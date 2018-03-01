@@ -97,7 +97,7 @@ class GMMPolicy(NNPolicy, Serializable):
 
         # TODO.code_consolidation:
         # self.distribution is used very differently compared to the
-        # `RealNVPPolicy`s distribution.
+        # `LatentSpacePolicy`s distribution.
         # This does not use `self.actions_for` because we need to manually
         # access e.g. `self.distribution.mus_t`
         with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
@@ -113,7 +113,7 @@ class GMMPolicy(NNPolicy, Serializable):
         raw_actions = tf.stop_gradient(self.distribution.x_t)
         self._actions = tf.tanh(raw_actions) if self._squash else raw_actions
         # TODO.code_consolidation:
-        # This should be standardized with RealNVPPolicy/NNPolicy
+        # This should be standardized with LatentSpacePolicy/NNPolicy
         # self._determistic_actions = self.actions_for(self._observations_ph,
         #                                              self._latents_ph)
 
@@ -125,7 +125,7 @@ class GMMPolicy(NNPolicy, Serializable):
         for the observations. If False, return stochastically sampled action.
 
         TODO.code_consolidation: This should be somewhat similar with
-        `RealNVPPolicy.get_actions`.
+        `LatentSpacePolicy.get_actions`.
         """
         if not self._is_deterministic:
             return super(GMMPolicy, self).get_actions(observations)

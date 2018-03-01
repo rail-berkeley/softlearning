@@ -1,6 +1,4 @@
-import re
 import argparse
-import json
 import joblib
 import os
 
@@ -11,16 +9,15 @@ from rllab.envs.normalized_env import normalize
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
-from rllab.envs.mujoco.gather.ant_gather_env import AntGatherEnv
 from rllab.misc.instrument import VariantGenerator
 
 from sac.algos import SAC
 from sac.envs import (
     RandomGoalSwimmerEnv, RandomGoalAntEnv, RandomGoalHumanoidEnv,
-    HierarchyProxyEnv, SimpleMazeAntEnv, CrossMazeAntEnv)
+    HierarchyProxyEnv)
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
-from sac.policies import RealNVPPolicy
+from sac.policies import LatentSpacePolicy
 from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
 from sac.preprocessors import MLPPreprocessor
@@ -48,10 +45,10 @@ COMMON_PARAMS = {
     'snapshot_mode': 'gap',
     'snapshot_gap': 1000,
     'sync_pkl': True,
-    # real nvp configs
+    # lsp configs
     'policy_coupling_layers': 2,
     'policy_s_t_layers': 1,
-    'policy_prior_regularization': 0.0,
+    'policy_scale_regularization': 0.0,
     'regularize_actions': True,
     'preprocessing_hidden_sizes': None,
     'preprocessing_output_nonlinearity': 'relu',
@@ -94,34 +91,27 @@ ENV_PARAMS = {
         'env_name': 'random-goal-ant',
         'epoch_length': 1000,
         'max_path_length': 1000,
-        'n_epochs': int(10e3 + 1),
-        'scale_reward': 3,
+        'n_epochs': int(1e5 + 1),
+        'scale_reward': 30,
 
         'preprocessing_hidden_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
-        'policy_fix_h_on_reset': True,
 
-        'snapshot_gap': 2000,
+        'snapshot_gap': 1000,
 
-        'env_reward_type': ['sparse'],
-        'discount': 0.999,
-        'env_terminate_at_goal': True,
-        'env_goal_reward_weight': 1000,
-        'env_goal_radius': 5,
-        'env_velocity_reward_weight': 0,
-        'env_ctrl_cost_coeff': 0, # 1e-2,
-        'env_contact_cost_coeff': 0, # 1e-3,
-        'env_survive_reward': 0, # 5e-2,
-        'env_goal_distance': (5, 25),
+        'env_reward_type': ['dense'],
+        'env_terminate_at_goal': False,
+        'env_goal_reward_weight': 3e-1,
+        'env_goal_radius': 0.25,
+        'env_goal_distance': 25,
         'env_goal_angle_range': (0, 2*np.pi),
 
         'low_level_policy_path': [
-            'multi-direction-ant-low-level-policy-polynomial-decay-2-12/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-polynomial-decay-2-13/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-polynomial-decay-2-14/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-polynomial-decay-2-15/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-polynomial-decay-2-16/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-polynomial-decay-2-17/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-1-00/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-1-01/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-1-02/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-1-03/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-1-04/itr_10000.pkl',
         ]
     },
     'random-goal-humanoid': {  # 21 DoF
@@ -192,84 +182,7 @@ ENV_PARAMS = {
             'humanoid-real-nvp-final-01b-04/itr_10000.pkl',
         ]
     },
-
-    'simple-maze-ant-env': {  # 21 DoF
-        'prefix': 'simple-maze-ant-env',
-        'env_name': 'simple-maze-ant',
-
-        'epoch_length': 1000,
-        'max_path_length': 1000,
-        'n_epochs': int(10e3 + 1),
-        'scale_reward': 3,
-
-        'preprocessing_hidden_sizes': (128, 128, 16),
-        'policy_s_t_units': 8,
-        'policy_fix_h_on_reset': True,
-
-        'snapshot_gap': 2000,
-
-        'env_reward_type': ['sparse'],
-        'discount': [0.99],
-        'control_interval': [3],
-        'env_terminate_at_goal': True,
-        'env_goal_reward_weight': [1000],
-        'env_goal_radius': 2,
-        'env_velocity_reward_weight': 0,
-        'env_ctrl_cost_coeff': 0, # 1e-2,
-        'env_contact_cost_coeff': 0, # 1e-3,
-        'env_survive_reward': 0, # 5e-2,
-        'env_goal_distance': np.linalg.norm([6, -6]),
-        'env_goal_angle_range': (0, 2*np.pi),
-
-        'low_level_policy_path': [
-            'multi-direction-ant-low-level-policy-3-{:02}/itr_{}000.pkl'.format(i, j)
-            for i in [12,13,14,15,16,17]
-            for j in [4] # [2,4,6,8,10]
-        ]
-    },
-    'ant-gather-env': {  # 21 DoF
-        'prefix': 'ant-gather-env',
-        'env_name': 'ant-gather-env',
-
-        'epoch_length': 1000,
-        'max_path_length': 1000,
-        'n_epochs': int(10e3 + 1),
-        'scale_reward': [1, 10, 100],
-
-        'preprocessing_hidden_sizes': (128, 128, 16),
-        'policy_s_t_units': 8,
-        'policy_fix_h_on_reset': [False, True],
-
-        'snapshot_gap': 2000,
-
-        'discount': [0.99],
-        'regularize_actions': False,
-        'control_interval': [1,3,10],
-
-        'env_activity_range': 20,
-        'env_sensor_range': 20,
-        'env_n_bombs': 12,
-        'env_n_apples': 12,
-        'env_sensor_span': 2*np.pi,
-
-        'low_level_policy_path': [
-            'multi-direction-ant-low-level-policy-3-{:02}/itr_{}000.pkl'.format(i, j)
-            for i in [12,13]
-            for j in [10] # [2,4,6,8,10]
-        ]
-    },
 }
-
-ENV_PARAMS['cross-maze-ant-env'] = dict(
-    ENV_PARAMS['simple-maze-ant-env'],
-    **{
-        'prefix': 'cross-maze-ant-env',
-        'env_name': 'cross-maze-ant',
-        'env_goal_distance': 12,
-
-        'env_fixed_goal_position': [[6, -6], [6, 6], [12, 0]],
-    }
-)
 
 DEFAULT_ENV = 'random-goal-swimmer'
 AVAILABLE_ENVS = list(ENV_PARAMS.keys())
@@ -307,7 +220,7 @@ def get_variants(args):
 
     vg = VariantGenerator()
     for key, val in params.items():
-        if isinstance(val, list) or callable(val):
+        if isinstance(val, list):
             vg.add(key, val)
         else:
             vg.add(key, [val])
@@ -347,24 +260,16 @@ def run_experiment(variant):
         for name, value in variant.items()
         if name.startswith('env_') and name != 'env_name'
     }
-
     if 'random-goal' in env_name:
         EnvClass = RANDOM_GOAL_ENVS[env_type]
-    elif 'simple-maze-ant' == env_name:
-        EnvClass = SimpleMazeAntEnv
-    elif 'cross-maze-ant' == env_name:
-        EnvClass = CrossMazeAntEnv
-    elif 'ant-gather-env' == env_name:
-        EnvClass = AntGatherEnv
-    elif 'rllab' in env_name:
+    elif 'rllab' in variant['env_name']:
         EnvClass = RLLAB_ENVS[variant['env_name']]
     else:
         raise NotImplementedError
 
     base_env = normalize(EnvClass(**env_args))
     env = HierarchyProxyEnv(wrapped_env=base_env,
-                            low_level_policy=low_level_policy)
-
+                                low_level_policy=low_level_policy)
     pool = SimpleReplayBuffer(
         env_spec=env.spec,
         max_replay_buffer_size=variant['max_pool_size'],
@@ -376,7 +281,6 @@ def run_experiment(variant):
         n_epochs=variant['n_epochs'],
         max_path_length=variant['max_path_length'],
         batch_size=variant['batch_size'],
-        control_interval=variant.get('control_interval', 1),
         n_train_repeat=variant['n_train_repeat'],
         eval_render=False,
         eval_n_episodes=1,
@@ -407,18 +311,18 @@ def run_experiment(variant):
     policy_s_t_units = variant['policy_s_t_units']
     s_t_hidden_sizes = [policy_s_t_units] * policy_s_t_layers
 
-    real_nvp_config = {
-        "prior_regularization": 0.0,
+    bijector_config = {
+        "scale_regularization": 0.0,
         "num_coupling_layers": variant['policy_coupling_layers'],
         "translation_hidden_sizes": s_t_hidden_sizes,
         "scale_hidden_sizes": s_t_hidden_sizes,
     }
 
-    policy = RealNVPPolicy(
+    policy = LatentSpacePolicy(
         env_spec=env.spec,
         mode="train",
         squash=False,
-        real_nvp_config=real_nvp_config,
+        bijector_config=bijector_config,
         fix_h_on_reset=variant.get('policy_fix_h_on_reset', False),
         observations_preprocessor=observations_preprocessor,
         name="high_level_policy"
@@ -443,11 +347,6 @@ def run_experiment(variant):
         save_full_state=False,
     )
 
-    tf_utils.get_default_session().run(tf.variables_initializer([
-        variable for variable in tf.global_variables()
-        if 'low_level_policy' not in variable.name
-    ]))
-
     algorithm.train()
 
 def launch_experiments(variant_generator):
@@ -456,33 +355,10 @@ def launch_experiments(variant_generator):
     num_experiments = len(variants)
     print('Launching {} experiments.'.format(num_experiments))
 
-    seen_seeds = set()
     for i, variant in enumerate(variants):
-        print("Experiment: {}/{}".format(i, num_experiments))
-
         if variant['seed'] == 'random':
-            variant['seed'] = np.random.randint(1, 10000)
-            while  variant['seed'] in seen_seeds:
-                variant['seed'] = np.random.randint(1, 10000)
-            seen_seeds.add(variant['seed'])
-
-        variant['low_level_policy_path_short'] = '/'.join(
-            variant['low_level_policy_path'].split('/')[-2:])
-
-        local_trained_policies_base = os.path.join(os.getcwd(), 'sac/policies/trained_policies')
-        low_level_variant_path = os.path.join(
-            local_trained_policies_base,
-            os.path.basename(os.path.dirname(variant['low_level_policy_path'])),
-            'variant.json')
-
-        with open(low_level_variant_path, 'r') as f:
-            low_level_variant = json.load(f)
-        variant['low_level_variant'] = low_level_variant
-        variant['low_level_iterations'] = int(re.search(
-            r'(?<=itr_)(\d+)', variant['low_level_policy_path']).group())
-        variant['low_level_experiment'] = '-'.join(
-            low_level_variant['exp_name'].split('-')[:-1])
-
+            variant['seed'] = np.random.randint(1, 100)
+        print("Experiment: {}/{}".format(i, num_experiments))
         experiment_prefix = variant['prefix'] + '/' + args.exp_name
         experiment_name = (variant['prefix']
                            + '-' + args.exp_name
