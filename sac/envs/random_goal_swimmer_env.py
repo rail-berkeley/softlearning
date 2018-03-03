@@ -8,7 +8,7 @@ from rllab.envs.base import Step
 from rllab.envs.mujoco.mujoco_env import MujocoEnv
 from rllab.misc import logger, autoargs
 
-from .helpers import random_point_on_circle, get_random_goal_logs
+from .helpers import random_point_in_circle, get_random_goal_logs
 
 REWARD_TYPES = ('dense', 'sparse')
 
@@ -47,7 +47,7 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
 
     def reset(self, goal_position=None, *args, **kwargs):
         if goal_position is None:
-            goal_position = random_point_on_circle(
+            goal_position = random_point_in_circle(
                 angle_range=self.goal_angle_range,
                 radius=self.goal_distance)
 
@@ -78,7 +78,7 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
 
         if self.goal_reward_weight > 0:
             if self._reward_type == 'dense':
-                goal_reward = ((self.goal_distance - goal_distance)
+                goal_reward = ((np.max(self.goal_distance) - goal_distance)
                                * self.goal_reward_weight)
             elif self._reward_type == 'sparse':
                 goal_reward = int(done) * self.goal_reward_weight
