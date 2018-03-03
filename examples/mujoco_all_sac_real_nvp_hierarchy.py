@@ -93,19 +93,24 @@ ENV_PARAMS = {
         'env_name': 'random-goal-ant',
         'epoch_length': 1000,
         'max_path_length': 1000,
-        'n_epochs': int(1e5 + 1),
-        'scale_reward': 30,
+        'n_epochs': int(20e3 + 1),
+        'scale_reward': 3,
 
         'preprocessing_hidden_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
+        'policy_fix_h_on_reset': True,
 
-        'snapshot_gap': 1000,
+        'snapshot_gap': 2000,
 
-        'env_reward_type': ['dense'],
+        'env_reward_type': ['sparse'],
         'env_terminate_at_goal': False,
-        'env_goal_reward_weight': 3e-1,
-        'env_goal_radius': 0.25,
-        'env_goal_distance': 25,
+        'env_goal_reward_weight': [30],
+        'env_goal_radius': 5,
+        'env_velocity_reward_weight': 0,
+        'env_ctrl_cost_coeff': 0, # 1e-2,
+        'env_contact_cost_coeff': 0, # 1e-3,
+        'env_survive_reward': 0, # 5e-2,
+        'env_goal_distance': (10, 25),
         'env_goal_angle_range': (0, 2*np.pi),
 
         'low_level_policy_path': [
@@ -363,12 +368,15 @@ def launch_experiments(variant_generator):
         if variant['seed'] == 'random':
             variant['seed'] = np.random.randint(1, 100)
 
-        low_level_variant_path = os.path.join(
-            os.path.dirname(variant['low_level_policy_path']),
-            'variant.json')
-
         variant['low_level_policy_path_short'] = '/'.join(
             variant['low_level_policy_path'].split('/')[-2:])
+
+        local_trained_policies_base = os.path.join(os.getcwd(), 'sac/policies/trained_policies')
+        low_level_variant_path = os.path.join(
+            local_trained_policies_base,
+            os.path.basename(os.path.dirname(variant['low_level_policy_path'])),
+            'variant.json')
+
         with open(low_level_variant_path, 'r') as f:
             low_level_variant = json.load(f)
         variant['low_level_variant'] = low_level_variant
