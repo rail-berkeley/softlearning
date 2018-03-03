@@ -1,4 +1,6 @@
+import re
 import argparse
+import json
 import joblib
 import os
 
@@ -269,7 +271,7 @@ def run_experiment(variant):
 
     base_env = normalize(EnvClass(**env_args))
     env = HierarchyProxyEnv(wrapped_env=base_env,
-                                low_level_policy=low_level_policy)
+                            low_level_policy=low_level_policy)
     pool = SimpleReplayBuffer(
         env_spec=env.spec,
         max_replay_buffer_size=variant['max_pool_size'],
@@ -356,9 +358,25 @@ def launch_experiments(variant_generator):
     print('Launching {} experiments.'.format(num_experiments))
 
     for i, variant in enumerate(variants):
+        print("Experiment: {}/{}".format(i, num_experiments))
+
         if variant['seed'] == 'random':
             variant['seed'] = np.random.randint(1, 100)
-        print("Experiment: {}/{}".format(i, num_experiments))
+
+        low_level_variant_path = os.path.join(
+            os.path.dirname(variant['low_level_policy_path']),
+            'variant.json')
+
+        variant['low_level_policy_path_short'] = '/'.join(
+            variant['low_level_policy_path'].split('/')[-2:])
+        with open(low_level_variant_path, 'r') as f:
+            low_level_variant = json.load(f)
+        variant['low_level_variant'] = low_level_variant
+        variant['low_level_iterations'] = int(re.search(
+            r'(?<=itr_)(\d+)', variant['low_level_policy_path']).group())
+        variant['low_level_experiment'] = '-'.join(
+            low_level_variant['exp_name'].split('-')[:-1])
+
         experiment_prefix = variant['prefix'] + '/' + args.exp_name
         experiment_name = (variant['prefix']
                            + '-' + args.exp_name
