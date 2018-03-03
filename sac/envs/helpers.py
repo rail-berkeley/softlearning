@@ -8,7 +8,7 @@ def random_point_in_circle(angle_range=(0, 2*np.pi), radius=(0, 25)):
     point = np.array([x, y])
     return point
 
-def get_random_goal_logs(paths):
+def get_random_goal_logs(paths, goal_radius):
     logs = []
     if len(paths) > 0:
         progs = [
@@ -16,11 +16,28 @@ def get_random_goal_logs(paths):
                            - path["observations"][0][-5:-3])
             for path in paths
         ]
+
+        time_in_goals = [
+            np.sum(np.linalg.norm(
+                (
+                    path['observations'][:, -5:-3]
+                    - path['observations'][:, -2:]
+                )
+                , axis=1
+            ) < goal_radius)
+            for path in paths
+        ]
+
         logs += [
             ('AverageProgress', np.mean(progs)),
             ('MaxProgress', np.max(progs)),
             ('MinProgress', np.min(progs)),
             ('StdProgress', np.std(progs)),
+
+            ('AverageTimeInGoal', np.mean(time_in_goals)),
+            ('MaxTimeInGoal', np.max(time_in_goals)),
+            ('MinTimeInGoal', np.min(time_in_goals)),
+            ('StdTimeInGoal', np.std(time_in_goals)),
         ]
 
         goal_positions, final_positions = zip(*[

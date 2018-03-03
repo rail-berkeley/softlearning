@@ -114,6 +114,6 @@ class RandomGoalSwimmerEnv(SwimmerEnv):
 
     @overrides
     def log_diagnostics(self, paths, *args, **kwargs):
-        logs = get_random_goal_logs(paths)
+        logs = get_random_goal_logs(paths, self.goal_radius)
         for row in logs:
             logger.record_tabular(*row)
