@@ -231,6 +231,8 @@ def run_experiment(variant):
             if name.startswith('env_') and name != 'env_name'
         }
         env = normalize(EnvClass(**env_args))
+    elif env_name == 'random-wall-ant':
+        env = normalize(RandomWallAntEnv())
 
     pool = SimpleReplayBuffer(
         env_spec=env.spec,

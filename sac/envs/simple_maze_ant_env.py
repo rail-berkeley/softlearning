@@ -1,4 +1,4 @@
-"""Implements an ant whose goal is to reach target in a maze"""
+"""Implements an ant whose goal is to reach a target in a maze"""
 
 import os
 
@@ -12,7 +12,7 @@ from .random_goal_ant_env import RandomGoalAntEnv
 MODELS_PATH = os.path.abspath(os.path.join(PROJECT_PATH, 'models'))
 
 class SimpleMazeAntEnv(RandomGoalAntEnv, Serializable):
-    """Implements an ant whose goal is to reach target in a maze"""
+    """Implements an ant whose goal is to reach a target in a maze"""
 
     FILE_PATH = os.path.join(MODELS_PATH, 'simple_maze_ant.xml')
 
@@ -45,43 +45,8 @@ class SimpleMazeAntEnv(RandomGoalAntEnv, Serializable):
             *args,
             **kwargs)
 
-    def get_current_obs(self):
-        proprioceptive_observation = np.concatenate([
-            self.model.data.qpos.flat,
-            self.model.data.qvel.flat,
-            np.clip(self.model.data.cfrc_ext[:14, ...], -1, 1).flat,
-            self.get_body_xmat('torso').flat,
-            self.get_body_com('torso'),
-        ]).reshape(-1)
-
-        if self.goal_reward_weight > 0:
-            exteroceptive_observation = self.goal_position
-        else:
-            exteroceptive_observation = np.zeros_like(self.goal_position)
-
-        observation = np.concatenate(
-            [proprioceptive_observation,
-             exteroceptive_observation]
-        ).reshape(-1)
-
-        return observation
-
-    def reset(self, goal_position=None, *args, **kwargs):
-        observation = super().reset(goal_position, *args, **kwargs)
-
-        wall_names = ['wall-{}'.format(i) for i in range(4)]
-        wall_idx = [self.model.geom_names.index(wall_name) for wall_name in wall_names]
-        hide_idx = np.random.choice(wall_idx, 2, replace=False)
-        wall_positions = [
-            (0, 5, 0.5),
-            (5, 0, 0.5),
-            (0, -5, 0.5),
-            (-5, 0, 0.5),
-        ]
-
-        new_geom_pos = self.model.geom_pos.copy()
-        new_geom_pos[wall_idx, ...] = wall_positions
-        new_geom_pos[hide_idx, 2] = 20 # raise the wall in the air
-        self.model.geom_pos = new_geom_pos
+    def reset(self, *args, **kwargs):
+        observation = super(SimpleMazeAntEnv, self).reset(
+            goal_position=np.array([10, -10]), *args, **kwargs)
 
         return observation

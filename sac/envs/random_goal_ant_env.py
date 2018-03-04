@@ -10,6 +10,7 @@ from rllab.misc import logger, autoargs
 
 from .helpers import random_point_in_circle, get_random_goal_logs
 
+
 REWARD_TYPES = ('dense', 'sparse')
 
 class RandomGoalAntEnv(AntEnv):
@@ -60,6 +61,16 @@ class RandomGoalAntEnv(AntEnv):
                 radius=self.goal_distance)
 
         self.goal_position = goal_position
+
+        goal_geom_idx = self.model.geom_names.index('target')
+
+        new_geom_pos = self.model.geom_pos.copy()
+        new_geom_pos[goal_geom_idx] = np.concatenate([goal_position, [0]])
+        self.model.geom_pos = new_geom_pos
+
+        new_geom_size = self.model.geom_size.copy()
+        new_geom_size[goal_geom_idx] = np.array([self.goal_radius, 0, 0])
+        self.model.geom_size = new_geom_size
 
         return super().reset(*args, **kwargs)
 
