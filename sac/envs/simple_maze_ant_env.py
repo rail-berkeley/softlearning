@@ -30,7 +30,8 @@ class SimpleMazeAntEnv(RandomGoalAntEnv, Serializable):
                  survive_reward=5e-2,
                  *args,
                  **kwargs):
-        file_path = kwargs.pop('file_path', self.FILE_PATH)
+        file_path = self.__class__.FILE_PATH
+        kwargs.pop('file_path', None)
         super(SimpleMazeAntEnv, self).__init__(
             file_path=file_path,
             reward_type=reward_type,

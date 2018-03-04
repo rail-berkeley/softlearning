@@ -16,7 +16,8 @@ class RandomWallAntEnv(MultiDirectionAntEnv):
     FILE_PATH = os.path.join(MODELS_PATH, 'random_wall_ant.xml')
 
     def __init__(self, *args, **kwargs):
-        file_path = kwargs.pop('file_path', self.FILE_PATH)
+        file_path = self.__class__.FILE_PATH
+        kwargs.pop('file_path', None)
         super(RandomWallAntEnv, self).__init__(
             file_path=file_path, *args, **kwargs)
 
