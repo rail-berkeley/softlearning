@@ -67,13 +67,13 @@
       </body>
     </body>
 
-    <geom name="wall-0" pos="5 3 0.5" rgba="1. 1. 1. 1" type="box" size="9 1 1" density='0.00001' contype="1" conaffinity="1"/>
-    <geom name="wall-1" pos="13 -5 0.5" rgba="1. 1. 1. 1" type="box" size="1 9 1" density='0.00001' contype="1" conaffinity="1"/>
-    <geom name="wall-2" pos="10 -13 0.5" rgba="1. 1. 1. 1" type="box" size="4 1 1" density='0.00001' contype="1" conaffinity="1"/>
-    <geom name="wall-3" pos="7 -8 0.5" rgba="1. 1. 1. 1" type="box" size="1 6 1" density='0.00001' contype="1" conaffinity="1"/>
-    <geom name="wall-4" pos="2 -3 0.5" rgba="1. 1. 1. 1" type="box" size="6 1 1" density='0.00001' contype="1" conaffinity="1"/>
-    <geom name="wall-5" pos="-3 0 0.5" rgba="1. 1. 1. 1" type="box" size="1 4 1" density='0.00001' contype="1" conaffinity="1"/>
-    <geom name="target" pos="10 -10 0" rgba="0 1 0 0.2" type="sphere" size="2"/>
+    <geom name="wall-0" pos="3.5 2.5 0.5" rgba="1. 1. 1. 1" type="box" size="5.5 0.5 1" density='0.00001' contype="1" conaffinity="1"/>
+    <geom name="wall-1" pos="8.5 -2.5 0.5" rgba="1. 1. 1. 1" type="box" size="0.5 5.5 1" density='0.00001' contype="1" conaffinity="1"/>
+    <geom name="wall-2" pos="6 -7.5 0.5" rgba="1. 1. 1. 1" type="box" size="3 0.5 1" density='0.00001' contype="1" conaffinity="1"/>
+    <geom name="wall-3" pos="3.5 -5 0.5" rgba="1. 1. 1. 1" type="box" size="0.5 3 1" density='0.00001' contype="1" conaffinity="1"/>
+    <geom name="wall-4" pos="1 -2.5 0.5" rgba="1. 1. 1. 1" type="box" size="3 0.5 1" density='0.00001' contype="1" conaffinity="1"/>
+    <geom name="wall-5" pos="-1.5 0 0.5" rgba="1. 1. 1. 1" type="box" size="0.5 3 1" density='0.00001' contype="1" conaffinity="1"/>
+    <geom name="target" pos="6 -6 0" rgba="0 1 0 0.2" type="sphere" size="2"/>
 
   </worldbody>
   <actuator>

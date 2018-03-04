@@ -47,6 +47,6 @@ class SimpleMazeAntEnv(RandomGoalAntEnv, Serializable):
 
     def reset(self, *args, **kwargs):
         observation = super(SimpleMazeAntEnv, self).reset(
-            goal_position=np.array([10, -10]), *args, **kwargs)
+            goal_position=np.array([6, -6]), *args, **kwargs)
 
         return observation
