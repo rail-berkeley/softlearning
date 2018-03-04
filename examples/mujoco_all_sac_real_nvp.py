@@ -16,6 +16,8 @@ from sac.envs import (
     RandomGoalSwimmerEnv,
     RandomGoalAntEnv,
     RandomGoalHumanoidEnv,
+
+    RandomWallAntEnv,
 )
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
@@ -155,6 +157,20 @@ ENV_PARAMS = {
         'env_goal_distance': 5,
         'env_goal_angle_range': (0, 2*np.pi),
     },
+    'random-wall-ant': {
+        'prefix': 'random-wall-ant-env',
+        'env_name': 'random-wall-ant',
+
+        'epoch_length': 1000,
+        'max_path_length': 1000,
+        'n_epochs': int(1e4 + 1),
+        'scale_reward': 10.0,
+
+        'preprocessing_hidden_sizes': (128, 128, 16),
+        'policy_s_t_units': 8,
+
+        'snapshot_gap': 1000,
+    }
 }
 
 DEFAULT_ENV = 'swimmer'

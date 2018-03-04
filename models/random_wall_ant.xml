@@ -71,7 +71,6 @@
     <geom name="wall-1" pos="5 0 0.5" rgba="1. 1. 1. 1" type="box" size="1 5 1" density='0.00001' contype="1" conaffinity="1"/>
     <geom name="wall-2" pos="0 -5 0.5" rgba="1. 1. 1. 1" type="box" size="5 1 1" density='0.00001' contype="1" conaffinity="1"/>
     <geom name="wall-3" pos="-5 0 0.5" rgba="1. 1. 1. 1" type="box" size="1 5 1" density='0.00001' contype="1" conaffinity="1"/>
-    <geom name="target" pos="1 1 -2.5" rgba="0 1 0 0.1" type="sphere" size="5"/>
 
   </worldbody>
   <actuator>
