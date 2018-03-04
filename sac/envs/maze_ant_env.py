@@ -65,3 +65,23 @@ class SimpleMazeAntEnv(RandomGoalAntEnv, Serializable):
         ).reshape(-1)
 
         return observation
+
+    def reset(self, goal_position=None, *args, **kwargs):
+        observation = super().reset(goal_position, *args, **kwargs)
+
+        wall_names = ['wall-{}'.format(i) for i in range(4)]
+        wall_idx = [self.model.geom_names.index(wall_name) for wall_name in wall_names]
+        hide_idx = np.random.choice(wall_idx, 2, replace=False)
+        wall_positions = [
+            (0, 5, 0.5),
+            (5, 0, 0.5),
+            (0, -5, 0.5),
+            (-5, 0, 0.5),
+        ]
+
+        new_geom_pos = self.model.geom_pos.copy()
+        new_geom_pos[wall_idx, ...] = wall_positions
+        new_geom_pos[hide_idx, 2] = 20 # raise the wall in the air
+        self.model.geom_pos = new_geom_pos
+
+        return observation
