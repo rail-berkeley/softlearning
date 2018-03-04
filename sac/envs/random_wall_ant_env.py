@@ -7,7 +7,8 @@ import numpy as np
 from sac.misc.utils import PROJECT_PATH
 from .multi_direction_ant_env import MultiDirectionAntEnv
 
-MODELS_PATH = os.path.abspath(os.path.join(PROJECT_PATH, 'models'))
+MODELS_PATH = os.path.abspath(
+    os.path.join(PROJECT_PATH, 'sac/mujoco_models'))
 
 class RandomWallAntEnv(MultiDirectionAntEnv):
     """Implements a multi-direction ant with blocking walls"""
