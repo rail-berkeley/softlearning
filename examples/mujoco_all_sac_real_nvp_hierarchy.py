@@ -16,7 +16,7 @@ from rllab.misc.instrument import VariantGenerator
 from sac.algos import SACV2
 from sac.envs import (
     RandomGoalSwimmerEnv, RandomGoalAntEnv, RandomGoalHumanoidEnv,
-    HierarchyProxyEnv, SimpleMazeAntEnv)
+    HierarchyProxyEnv, SimpleMazeAntEnv, CrossMazeAntEnv)
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
 from sac.policies import RealNVPPolicy
@@ -93,7 +93,7 @@ ENV_PARAMS = {
         'env_name': 'random-goal-ant',
         'epoch_length': 1000,
         'max_path_length': 1000,
-        'n_epochs': int(20e3 + 1),
+        'n_epochs': int(10e3 + 1),
         'scale_reward': 3,
 
         'preprocessing_hidden_sizes': (128, 128, 16),
@@ -103,8 +103,9 @@ ENV_PARAMS = {
         'snapshot_gap': 2000,
 
         'env_reward_type': ['sparse'],
-        'env_terminate_at_goal': False,
-        'env_goal_reward_weight': [30],
+        'discount': 0.999,
+        'env_terminate_at_goal': True,
+        'env_goal_reward_weight': 1000,
         'env_goal_radius': 5,
         'env_velocity_reward_weight': 0,
         'env_ctrl_cost_coeff': 0, # 1e-2,
@@ -202,7 +203,7 @@ ENV_PARAMS = {
 
         'epoch_length': 1000,
         'max_path_length': 1000,
-        'n_epochs': int(20e3 + 1),
+        'n_epochs': int(10e3 + 1),
         'scale_reward': 3,
 
         'preprocessing_hidden_sizes': (128, 128, 16),
@@ -212,31 +213,35 @@ ENV_PARAMS = {
         'snapshot_gap': 2000,
 
         'env_reward_type': ['sparse'],
-        'env_terminate_at_goal': False,
-        'env_goal_reward_weight': [30],
-        'env_goal_radius': 5,
+        'discount': 0.999,
+        'env_terminate_at_goal': True,
+        'env_goal_reward_weight': 1000,
+        'env_goal_radius': 2,
         'env_velocity_reward_weight': 0,
         'env_ctrl_cost_coeff': 0, # 1e-2,
         'env_contact_cost_coeff': 0, # 1e-3,
         'env_survive_reward': 0, # 5e-2,
-        'env_goal_distance': (5, 25),
+        'env_goal_distance': np.linalg.norm([6, -6]),
         'env_goal_angle_range': (0, 2*np.pi),
 
         'low_level_policy_path': [
-            'multi-direction-ant-low-level-policy-3-12/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-13/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-14/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-15/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-16/itr_10000.pkl',
-
-            'multi-direction-ant-low-level-policy-3-18/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-19/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-21/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-22/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-23/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-polynomial-decay-2-12/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-polynomial-decay-2-13/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-polynomial-decay-2-14/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-polynomial-decay-2-15/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-polynomial-decay-2-16/itr_10000.pkl',
         ]
     },
 }
+
+ENV_PARAMS['cross-maze-ant-env'] = dict(
+    ENV_PARAMS['simple-maze-ant-env'],
+    **{
+        'prefix': 'cross-maze-ant-env',
+        'env_name': 'cross-maze-ant',
+        'env_goal_distance': (np.linalg.norm([6,-6]), 12),
+    }
+)
 
 DEFAULT_ENV = 'random-goal-swimmer'
 AVAILABLE_ENVS = list(ENV_PARAMS.keys())
@@ -302,10 +307,6 @@ RLLAB_ENVS = {
     'humanoid-rllab': HumanoidEnv
 }
 
-MAZE_ENVS = {
-    'ant': SimpleMazeAntEnv
-}
-
 def run_experiment(variant):
     low_level_policy = load_low_level_policy(
         policy_path=variant['low_level_policy_path'])
@@ -318,10 +319,13 @@ def run_experiment(variant):
         for name, value in variant.items()
         if name.startswith('env_') and name != 'env_name'
     }
+
     if 'random-goal' in env_name:
         EnvClass = RANDOM_GOAL_ENVS[env_type]
-    elif 'maze' in env_name:
-        EnvClass = MAZE_ENVS[env_type]
+    elif 'simple-maze-ant' == env_name:
+        EnvClass = SimpleMazeAntEnv
+    elif 'cross-maze-ant' == env_name:
+        EnvClass = CrossMazeAntEnv
     elif 'rllab' in env_name:
         EnvClass = RLLAB_ENVS[variant['env_name']]
     else:

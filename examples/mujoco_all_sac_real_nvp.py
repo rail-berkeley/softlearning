@@ -18,6 +18,7 @@ from sac.envs import (
     RandomGoalHumanoidEnv,
 
     RandomWallAntEnv,
+    CrossMazeAntEnv
 )
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
@@ -107,7 +108,7 @@ ENV_PARAMS = {
         'env_name': 'multi-direction-ant',
         'epoch_length': 1000,
         'max_path_length': 1000,
-        'n_epochs': int(2e4 + 1),
+        'n_epochs': int(1e3 + 1),
         'scale_reward': 10.0,
 
         'preprocessing_hidden_sizes': (128, 128, 16),
@@ -120,7 +121,7 @@ ENV_PARAMS = {
         'env_name': 'random-goal-ant',
         'epoch_length': 1000,
         'max_path_length': 1000,
-        'n_epochs': int(30e3 + 1),
+        'n_epochs': int(10e3 + 1),
         'scale_reward': 10.0,
 
         'preprocessing_hidden_sizes': (128, 128, 16),
@@ -170,8 +171,50 @@ ENV_PARAMS = {
         'policy_s_t_units': 8,
 
         'snapshot_gap': 1000,
-    }
+    },
+    'simple-maze-ant-env': {  # 21 DoF
+        'prefix': 'simple-maze-ant-env',
+        'env_name': 'simple-maze-ant',
+
+        'epoch_length': 1000,
+        'max_path_length': 1000,
+        'n_epochs': int(10e3 + 1),
+        'scale_reward': 10,
+
+        'preprocessing_hidden_sizes': (128, 128, 16),
+        'policy_s_t_units': 8,
+        'policy_fix_h_on_reset': True,
+
+        'snapshot_gap': 2000,
+
+        # 'env_reward_type': ['dense'],
+        # 'discount': [0.99],
+        # 'env_terminate_at_goal': False,
+        # 'env_goal_reward_weight': [0.1, 0.3, 1, 3],
+
+        'env_reward_type': ['sparse'],
+        'discount': [0.99, 0.999],
+        'env_terminate_at_goal': True,
+        'env_goal_reward_weight': [100, 300, 1000],
+
+        'env_goal_radius': 2,
+        'env_velocity_reward_weight': 1,
+        'env_ctrl_cost_coeff': 0, # 1e-2,
+        'env_contact_cost_coeff': 0, # 1e-3,
+        'env_survive_reward': 0, # 5e-2,
+        'env_goal_distance': np.linalg.norm([6,-6]),
+        'env_goal_angle_range': (0, 2*np.pi),
+    },
 }
+
+ENV_PARAMS['cross-maze-ant-env'] = dict(
+    ENV_PARAMS['simple-maze-ant-env'],
+    **{
+        'prefix': 'cross-maze-ant-env',
+        'env_name': 'cross-maze-ant',
+        'env_goal_distance': (np.linalg.norm([6,-6]), 12),
+    }
+)
 
 DEFAULT_ENV = 'swimmer'
 AVAILABLE_ENVS = list(ENV_PARAMS.keys())
@@ -231,6 +274,13 @@ def run_experiment(variant):
             if name.startswith('env_') and name != 'env_name'
         }
         env = normalize(EnvClass(**env_args))
+    elif 'cross-maze-ant' == env_name:
+        env_args = {
+            name.replace('env_', '', 1): value
+            for name, value in variant.items()
+            if name.startswith('env_') and name != 'env_name'
+        }
+        env = normalize(CrossMazeAntEnv(**env_args))
     elif env_name == 'random-wall-ant':
         env = normalize(RandomWallAntEnv())
 
