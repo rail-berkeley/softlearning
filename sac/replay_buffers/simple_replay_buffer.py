@@ -7,8 +7,8 @@ from .replay_buffer import ReplayBuffer
 
 class SimpleReplayBuffer(ReplayBuffer, Serializable):
     def __init__(self, env_spec, max_replay_buffer_size):
+        super(SimpleReplayBuffer, self).__init__()
         Serializable.quick_init(self, locals())
-        super(SimpleReplayBuffer, self).__init__(env_spec)
 
         max_replay_buffer_size = int(max_replay_buffer_size)
 
@@ -86,6 +86,5 @@ class SimpleReplayBuffer(ReplayBuffer, Serializable):
         self._actions = np.fromstring(d['a']).reshape(self._max_buffer_size, -1)
         self._rewards = np.fromstring(d['r']).reshape(self._max_buffer_size)
         self._terminals = np.fromstring(d['t'], dtype=np.uint8)
-        self._bottom = d['bottom']
         self._top = d['top']
         self._size = d['size']
