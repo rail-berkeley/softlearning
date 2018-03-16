@@ -97,7 +97,7 @@ class CouplingLayer(object):
                  parity,
                  translation_fn,
                  scale_fn,
-                 scale_regularization,
+                 prior_regularization,
                  event_ndims=0,
                  validate_args=False,
                  name="coupling_bijector"):
@@ -124,7 +124,7 @@ class CouplingLayer(object):
         self.parity = parity
         self.translation_fn = translation_fn
         self.scale_fn = scale_fn
-        self.scale_regularization = scale_regularization
+        self.prior_regularization = prior_regularization
 
         super().__init__(event_ndims=event_ndims,
                          validate_args=validate_args,
@@ -175,13 +175,13 @@ class CouplingLayer(object):
         outputs = tf.concat(to_concat, axis=1)
 
         if (condition_kwargs.get('regularize', False)
-            and self.scale_regularization > 0):
+            and self.prior_regularization > 0):
             prior = tf.contrib.distributions.MultivariateNormalDiag(
                 loc=tf.zeros(D), scale_diag=tf.ones(D))
             prior_log_probs = prior.log_prob(outputs)
             tf.add_to_collection(
                 tf.GraphKeys.REGULARIZATION_LOSSES,
-                self.scale_regularization * prior_log_probs)
+                self.prior_regularization * prior_log_probs)
 
         return outputs
 
@@ -252,13 +252,13 @@ class CouplingLayer(object):
         outputs = tf.concat(to_concat, axis=1)
 
         if (condition_kwargs.get('regularize', False)
-            and self.scale_regularization > 0):
+            and self.prior_regularization > 0):
             prior = tf.contrib.distributions.MultivariateNormalDiag(
                 loc=tf.zeros(D), scale_diag=tf.ones(D))
             prior_log_probs = prior.log_prob(outputs)
             tf.add_to_collection(
                 tf.GraphKeys.REGULARIZATION_LOSSES,
-                self.scale_regularization * prior_log_probs)
+                self.prior_regularization * prior_log_probs)
 
         return outputs
 
@@ -297,7 +297,7 @@ class RealNVPBijector(ConditionalBijector):
                  num_coupling_layers=2,
                  translation_hidden_sizes=(25,),
                  scale_hidden_sizes=(25,),
-                 scale_regularization=0,
+                 prior_regularization=0,
                  event_ndims=0,
                  validate_args=False,
                  name="real_nvp"):
@@ -321,7 +321,7 @@ class RealNVPBijector(ConditionalBijector):
         self._num_coupling_layers = num_coupling_layers
         self._translation_hidden_sizes = tuple(translation_hidden_sizes)
         self._scale_hidden_sizes = tuple(scale_hidden_sizes)
-        self._scale_regularization = scale_regularization
+        self._prior_regularization = prior_regularization
 
         self.build()
 
@@ -354,7 +354,7 @@ class RealNVPBijector(ConditionalBijector):
                 name="coupling_{i}".format(i=i),
                 translation_fn=translation_wrapper,
                 scale_fn=scale_wrapper,
-                scale_regularization=self._scale_regularization)
+                prior_regularization=self._prior_regularization)
             for i in range(1, num_coupling_layers + 1)
         ]
 

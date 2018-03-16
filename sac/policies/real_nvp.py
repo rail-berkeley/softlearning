@@ -120,7 +120,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
             num_coupling_layers=real_nvp_config.get("num_coupling_layers"),
             translation_hidden_sizes=real_nvp_config.get("translation_hidden_sizes"),
             scale_hidden_sizes=real_nvp_config.get("scale_hidden_sizes"),
-            scale_regularization=real_nvp_config.get("scale_regularization"),
+            prior_regularization=real_nvp_config.get("prior_regularization"),
             event_ndims=self._Da)
 
         self.base_distribution = ds.MultivariateNormalDiag(

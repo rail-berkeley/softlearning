@@ -49,7 +49,7 @@ def run(*_):
     )
 
     real_nvp_config = {
-        "scale_regularization": 0.0,
+        "prior_regularization": 0.0,
         "num_coupling_layers": 2,
         "translation_hidden_sizes": (M,),
         "scale_hidden_sizes": (M,),
