@@ -75,7 +75,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
 
             if latents is not None:
                 raw_actions = self.bijector.forward(
-                    latents, condition=conditions)
+                    latents, condition=conditions, regularize=regularize)
             else:
                 N = tf.shape(conditions)[0]
                 raw_actions = self.distribution.sample(

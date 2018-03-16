@@ -255,8 +255,8 @@ class SAC(RLAlgorithm, Serializable):
         of the value function and policy function update rules.
         """
 
-        actions, log_pi = self._policy.actions_for(observations=self._obs_pl,
-                                                   with_log_pis=True)
+        actions, log_pi = self._policy.actions_for(
+            observations=self._obs_pl, with_log_pis=True, regularize=True)
 
         self._vf_t = self._vf.get_output_for(self._obs_pl, reuse=True)  # N
         self._vf_params = self._vf.get_params_internal()
