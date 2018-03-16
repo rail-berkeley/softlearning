@@ -403,6 +403,7 @@ class SAC(RLAlgorithm, Serializable):
         d = Serializable.__getstate__(self)
         d.update({
             'qf-params': self._qf.get_param_values(),
+            'vf-params': self._vf.get_param_values(),
             'policy-params': self._policy.get_param_values(),
             'pool': self._pool.__getstate__(),
             'env': self._env.__getstate__(),
@@ -414,6 +415,7 @@ class SAC(RLAlgorithm, Serializable):
 
         Serializable.__setstate__(self, d)
         self._qf.set_param_values(d['qf-params'])
+        self._vf.set_param_values(d['vf-params'])
         self._policy.set_param_values(d['policy-params'])
         self._pool.__setstate__(d['pool'])
         self._env.__setstate__(d['env'])
