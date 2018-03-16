@@ -63,7 +63,7 @@ class RealNVPPolicy(NNPolicy, Serializable):
 
     def actions_for(self, observations, latents=None,
                     name=None, reuse=tf.AUTO_REUSE, with_log_pis=False,
-                    regularize=False):
+                    regularize=False, with_raw_actions=False):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
@@ -91,6 +91,10 @@ class RealNVPPolicy(NNPolicy, Serializable):
         if with_log_pis:
             log_pis = self.log_pis_for(
                 conditions, raw_actions, name=name, reuse=reuse)
+
+            if with_raw_actions:
+                return raw_actions, actions, log_pis
+
             return actions, log_pis
 
         return actions
