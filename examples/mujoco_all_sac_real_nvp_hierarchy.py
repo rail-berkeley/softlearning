@@ -412,6 +412,11 @@ def run_experiment(variant):
         save_full_state=False,
     )
 
+    tf_utils.get_default_session().run(tf.variables_initializer([
+        variable for variable in tf.global_variables()
+        if 'low_level_policy' not in variable.name
+    ]))
+
     algorithm.train()
 
 def launch_experiments(variant_generator):

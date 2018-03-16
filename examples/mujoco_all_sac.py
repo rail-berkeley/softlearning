@@ -187,6 +187,8 @@ def run_experiment(variant):
         save_full_state=False,
     )
 
+    tf_utils.get_default_session().run(tf.global_variables_initializer())
+
     algorithm.train()
 
 

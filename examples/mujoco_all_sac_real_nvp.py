@@ -22,6 +22,7 @@ from sac.envs import (
 )
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
+from sac.misc import tf_utils
 from sac.policies import RealNVPPolicy
 from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
@@ -108,7 +109,7 @@ ENV_PARAMS = {
         'env_name': 'multi-direction-ant',
         'epoch_length': 1000,
         'max_path_length': 1000,
-        'n_epochs': int(1e3 + 1),
+        'n_epochs': int(10e3 + 1),
         'scale_reward': 10.0,
 
         'preprocessing_hidden_sizes': (128, 128, 16),
@@ -382,6 +383,8 @@ def run_experiment(variant):
         target_update_interval=variant['target_update_interval'],
         save_full_state=False,
     )
+
+    tf_utils.get_default_session().run(tf.global_variables_initializer())
 
     algorithm.train()
 
