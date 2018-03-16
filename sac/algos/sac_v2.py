@@ -276,6 +276,8 @@ class SAC(RLAlgorithm, Serializable):
         policy_regularization_loss = tf.reduce_sum(
             policy_regularization_losses)
 
+        self.policy_regularization_loss = policy_regularization_loss
+
         policy_loss = (policy_kl_loss
                        + policy_regularization_loss)
 
@@ -352,8 +354,8 @@ class SAC(RLAlgorithm, Serializable):
         """
 
         feed_dict = self._get_feed_dict(iteration, batch)
-        qf, vf, td_loss = self._sess.run(
-            [self._qf_t, self._vf_t, self._td_loss_t], feed_dict)
+        policy_regularization_loss, qf, vf, td_loss = self._sess.run(
+            [self.policy_regularization_loss, self._qf_t, self._vf_t, self._td_loss_t], feed_dict)
 
         logger.record_tabular('qf-avg', np.mean(qf))
         logger.record_tabular('qf-min', np.min(qf))
@@ -364,6 +366,7 @@ class SAC(RLAlgorithm, Serializable):
         logger.record_tabular('vf-max', np.max(vf))
         logger.record_tabular('vf-std', np.std(vf))
         logger.record_tabular('mean-sq-bellman-error', td_loss)
+        logger.record_tabular('policy-regularization-loss', policy_regularization_loss)
 
         self._policy.log_diagnostics(batch)
         if self._plotter:
