@@ -175,13 +175,13 @@ class CouplingLayer(object):
         outputs = tf.concat(to_concat, axis=1)
 
         if (condition_kwargs.get('regularize', False)
-            and self.prior_regularization > 0):
+            and self.prior_regularization and self.prior_regularization > 0):
             prior = tf.contrib.distributions.MultivariateNormalDiag(
                 loc=tf.zeros(D), scale_diag=tf.ones(D))
             prior_log_probs = prior.log_prob(outputs)
             tf.add_to_collection(
                 tf.GraphKeys.REGULARIZATION_LOSSES,
-                self.prior_regularization * prior_log_probs)
+                self.prior_regularization * -prior_log_probs)
 
         return outputs
 
@@ -252,13 +252,13 @@ class CouplingLayer(object):
         outputs = tf.concat(to_concat, axis=1)
 
         if (condition_kwargs.get('regularize', False)
-            and self.prior_regularization > 0):
+            and self.prior_regularization and self.prior_regularization > 0):
             prior = tf.contrib.distributions.MultivariateNormalDiag(
                 loc=tf.zeros(D), scale_diag=tf.ones(D))
             prior_log_probs = prior.log_prob(outputs)
             tf.add_to_collection(
                 tf.GraphKeys.REGULARIZATION_LOSSES,
-                self.prior_regularization * prior_log_probs)
+                self.prior_regularization * -prior_log_probs)
 
         return outputs
 
