@@ -33,6 +33,7 @@ class RandomGoalAntEnv(AntEnv):
                  ctrl_cost_coeff=1e-2,
                  contact_cost_coeff=1e-3,
                  survive_reward=5e-2,
+                 fixed_goal_position=None,
                  *args,
                  **kwargs):
         assert reward_type in REWARD_TYPES
@@ -62,15 +63,16 @@ class RandomGoalAntEnv(AntEnv):
 
         self.goal_position = goal_position
 
-        goal_geom_idx = self.model.geom_names.index('target')
+        if 'target' in self.model.geom_names:
+            goal_geom_idx = self.model.geom_names.index('target')
 
-        new_geom_pos = self.model.geom_pos.copy()
-        new_geom_pos[goal_geom_idx] = np.concatenate([goal_position, [0]])
-        self.model.geom_pos = new_geom_pos
+            new_geom_pos = self.model.geom_pos.copy()
+            new_geom_pos[goal_geom_idx] = np.concatenate([goal_position, [0]])
+            self.model.geom_pos = new_geom_pos
 
-        new_geom_size = self.model.geom_size.copy()
-        new_geom_size[goal_geom_idx] = np.array([self.goal_radius, 0, 0])
-        self.model.geom_size = new_geom_size
+            new_geom_size = self.model.geom_size.copy()
+            new_geom_size[goal_geom_idx] = np.array([self.goal_radius, 0, 0])
+            self.model.geom_size = new_geom_size
 
         return super().reset(*args, **kwargs)
 
@@ -141,6 +143,9 @@ class RandomGoalAntEnv(AntEnv):
 
     @overrides
     def log_diagnostics(self, paths, *args, **kwargs):
-        logs = get_random_goal_logs(paths, self.goal_radius)
+        logs = get_random_goal_logs(
+            paths,
+            self.goal_radius,
+            fixed_goal_position=getattr(self, 'fixed_goal_position', False))
         for row in logs:
             logger.record_tabular(*row)

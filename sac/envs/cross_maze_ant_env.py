@@ -28,10 +28,13 @@ class CrossMazeAntEnv(RandomGoalAntEnv, Serializable):
                  ctrl_cost_coeff=1e-2,
                  contact_cost_coeff=1e-3,
                  survive_reward=5e-2,
+                 fixed_goal_position=None,
                  *args,
                  **kwargs):
         file_path = self.__class__.FILE_PATH
         kwargs.pop('file_path', None)
+        self.fixed_goal_position = fixed_goal_position
+
         super(CrossMazeAntEnv, self).__init__(
             file_path=file_path,
             reward_type=reward_type,
@@ -46,11 +49,28 @@ class CrossMazeAntEnv(RandomGoalAntEnv, Serializable):
             survive_reward=survive_reward,
             *args,
             **kwargs)
+        self._serializable_initialized = False
+        Serializable.quick_init(self, locals())
 
-    def reset(self, *args, **kwargs):
+    def reset(self, goal_position=None, *args, **kwargs):
         possible_goal_positions = [[6, -6], [6, 6], [12, 0]]
-        goal_position = possible_goal_positions[np.random.choice(3)]
+
+        if goal_position is None:
+            if self.fixed_goal_position is not None:
+                goal_position = self.fixed_goal_position
+            else:
+                goal_position = possible_goal_positions[
+                    np.random.choice(len(possible_goal_positions))]
+
         observation = super(CrossMazeAntEnv, self).reset(
             goal_position=np.array(goal_position), *args, **kwargs)
+
+        return observation
+
+    def get_current_obs(self):
+        observation = super().get_current_obs()
+
+        if self.fixed_goal_position is not None:
+            return observation[:-2]
 
         return observation
