@@ -15,7 +15,7 @@ from softqlearning.policies import StochasticNNPolicy
 from softqlearning.misc.sampler import SimpleSampler
 
 SHARED_PARAMS = {
-    'seed': [1, 2, 3],
+    'seed': 1,
     'policy_lr': 3E-4,
     'qf_lr': 3E-4,
     'discount': 0.99,
@@ -148,7 +148,7 @@ def launch_experiments(variant_generator, args):
             n_parallel=1,
             seed=variant['seed'],
             terminate_machine=True,
-            log_dir=args.log_dir,
+            log_dir=args.log_dir + '/' + str(i).zfill(2),
             snapshot_mode=variant['snapshot_mode'],
             snapshot_gap=variant['snapshot_gap'],
             sync_s3_pkl=True)
