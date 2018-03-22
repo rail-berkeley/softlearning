@@ -1,5 +1,5 @@
 # Soft Q-Learning
-Soft Q-learning (SQL) is a deep reinforcement learning framework for training maximum entropy policies in continous domains. The algorithm is based on the paper [Reinforcement Learning with Deep Energy-Based Policies](https://arxiv.org/abs/1702.08165) presented at the International Conference on Machine Learning (ICML), 2017.
+Soft Q-learning (SQL) is a deep reinforcement learning framework for training maximum entropy policies in continuous domains. The algorithm is based on the paper [Reinforcement Learning with Deep Energy-Based Policies](https://arxiv.org/abs/1702.08165) presented at the International Conference on Machine Learning (ICML), 2017.
 
 # Getting Started
 
@@ -112,11 +112,23 @@ usage: mujoco_all_sql.py [-h]
                          [--exp_name EXP_NAME] [--mode MODE]
                          [--log_dir LOG_DIR]
 ```
+### Training and combining policies
+It is also possible to merge two existing maximum entropy policies to form a new composed skill that approximately optimizes both constituent tasks simultaneously as discussed in [ Composable Deep Reinforcement Learning for Robotic Manipulation](https://arxiv.org/abs/1803.06773). To run the pusher experiment described in the paper, you can first train two policies for the constituent tasks ("push the object to the given x-coordinate" and "push the object to the given y-coordinate") by running 
+```
+python ./examples/pusher_pretrain.py --log_dir=/root/sql/data/pusher
+```
+You can then combine the two policies to form a combined skill ("push the object to the given x and y coordinates"), without collecting more experience form the environment, with
+```
+python ./examples/pusher_combine.py --log_dir=/root/sql/data/pusher/combined \
+--snapshot1=/root/sql/data/pusher/00/params.pkl \
+--snapshot2=/root/sql/data/pusher/01/params.pkl
+```
+
 
 # Credits
 The soft q-learning algorithm was developed by [Haoran Tang](https://math.berkeley.edu/~hrtang/) and [Tuomas Haarnoja](https://people.eecs.berkeley.edu/~haarnoja/) under the supervision of Prof. [Sergey Levine](https://people.eecs.berkeley.edu/~svlevine/) and Prof. [Pieter Abbeel](https://people.eecs.berkeley.edu/~pabbeel/) at UC Berkeley. Special thanks to [Vitchyr Pong](https://github.com/vitchyr), who wrote some parts of the code, and [Kristian Hartikainen](https://github.com/hartikainen) who helped testing, documenting, and polishing the code and streamlining the installation process. The work was supported by [Berkeley Deep Drive](https://deepdrive.berkeley.edu/).
 
-# Reference
+# References
 ```
 @article{haarnoja2017reinforcement,
   title={Reinforcement Learning with Deep Energy-Based Policies},
@@ -124,4 +136,11 @@ The soft q-learning algorithm was developed by [Haoran Tang](https://math.berkel
   booktitle={International Conference on Machine Learning},
   year={2017}
 }
+@article{haarnoja2018composable,
+  title={Composable Deep Reinforcement Learning for Robotic Manipulation},
+  author={Tuomas Haarnoja, Vitchyr Pong, Aurick Zhou, Murtaza Dalal, Pieter Abbeel, Sergey Levine},
+  booktitle={International Conference on Robotics and Automation},
+  year={2018}
+}
+
 ```
