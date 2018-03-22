@@ -1,0 +1,66 @@
+<mujoco model="arm3d">
+    <compiler inertiafromgeom="true" angle="radian" coordinate="local" />
+    <custom>
+        <numeric name="frame_skip" data="5" />
+    </custom>
+    <option timestep="0.01" gravity="0 0 0" iterations="20" integrator="Euler" />
+    
+    <default>
+        <joint armature='0.04' damping="1" limited="true"/>
+        <geom friction=".8 .1 .1" density="300" margin="0.002" condim="1" contype="1" conaffinity="1"/>
+    </default>
+    
+    <worldbody>
+        <light diffuse=".5 .5 .5" pos="0 0 3" dir="0 0 -1"/>
+        <geom type="plane" pos="0 0.5 -0.15" size="2 2 0.1" contype="1" conaffinity="1"/>
+
+        <body name="palm" pos="0 0 0">
+            <geom rgba="0. 1. 0. 1" type="capsule" fromto="0 0 -0.1 0 0 0.1" size="0.12"/>
+            <body name="proximal_1" pos="0 0 -0.075" axisangle="0 0 1 0.785">
+                <joint name="proximal_j_1" type="hinge" pos="0 0 0" axis="0 0 1" range="-2.5 2.5" damping="1.0" />
+                <geom rgba="0. 1. 0. 1" type="capsule"  fromto="0 0 0 0.4 0 0" size="0.06" contype="1" conaffinity="1"/>
+                <body name="distal_1" pos="0.4 0 0" axisangle="0 0 1 -0.785">
+                    <joint name="distal_j_1" type="hinge" pos="0 0 0" axis="0 0 1" range="-2.3213 2.3" damping="1.0"/>
+                    <geom rgba="0. 1. 0. 1" type="capsule"  fromto="0 0 0 0.4 0 0" size="0.06" contype="1" conaffinity="1"/>
+                    <body name="distal_2" pos="0.4 0 0" axisangle="0 0 1 -1.57">
+                        <joint name="distal_j_2" type="hinge" pos="0 0 0" axis="0 0 1" range="-2.3213 2.3" damping="1.0"/>
+                        <geom rgba="0. 1. 0. 1" type="capsule" fromto="0 0 0 0.4 0 0" size="0.06" contype="1" conaffinity="1"/>
+                        <body name="distal_4" pos="0.4 0 0">
+                            <site name="tip arml" pos="0.1 -0.2 0" size="0.01" />
+                            <site name="tip armr" pos="0.1 0.2 0" size="0.01" />
+                            <!--<joint name="distal_j_3" type="hinge" pos="0 0 0" axis="1 0 0" range="-3.3213 3.3" damping="0.5"/>-->
+                            <geom rgba="0. 1. 0. 1" type="capsule" fromto="0 -0.2 0 0 0.2 0" size="0.04" contype="1" conaffinity="1" />
+                            <geom rgba="0. 1. 0. 1" type="capsule" fromto="0 -0.2 0 0.2 -0.2 0" size="0.04" contype="1" conaffinity="1" />
+                            <geom rgba="0. 1. 0. 1" type="capsule" fromto="0 0.2 0 0.2 0.2 0" size="0.04" contype="1" conaffinity="1" />
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+        
+        <body name="object" pos="0 0 -0.1">
+            <!--<geom rgba="1. 1. 1. 1" type="box" size="0.05 0.05 0.05" density='0.00001' contype="1" conaffinity="1"/>-->
+            <geom rgba="1. 1. 1. 1" type="cylinder" size="0.1 0.1 0.1" density='0.00001' contype="1" conaffinity="1"/>
+            <joint name="obj_slidex" type="slide" pos="0.025 0.025 0.025" axis="1 0 0" range="-10.3213 10.3" damping="0.5"/>
+            <joint name="obj_slidey" type="slide" pos="0.025 0.025 0.025" axis="0 1 0" range="-10.3213 10.3" damping="0.5"/>
+        </body>
+
+        <body name="goal" pos="0 -1 -0.145">
+            <!--<body name="goal" pos="0.0 0.0 -0.1">-->
+            <!--<geom rgba="1. 0. 0. 1" type="box" size="0.1 0.1 0.1" density='0.00001' contype="0" conaffinity="0"/>-->
+            <geom rgba="1. 0. 0. 1" type="cylinder" size="0.17 0.005 0.2" density='0.00001' contype="0" conaffinity="0"/>
+            <!-- <geom rgba="1. 0. 0. 1" type="box" size="0.1 0.1 0.2" density='0.00001' contype="0" conaffinity="0"/>-->
+            <joint name="goal_slidex" type="slide" pos="0 0 0" axis="1 0 0" range="-10.3213 10.3" damping="0.5"/>
+            <joint name="goal_slidey" type="slide" pos="0 0 0" axis="0 1 0" range="-10.3213 10.3" damping="0.5"/>
+        </body>
+
+    <!-- <geom conaffinity="0" contype="0" density="0.00001" name="object0" pos="-0.384949 0.226851 -0.1" rgba="0.551315 0.719469 0.423106 1" size="0.1 0.1 0.1" type="cylinder" /><geom conaffinity="0" contype="0" density="0.00001" name="object1" pos="0.865376 0.684830 -0.1" rgba="0.480932 0.392118 0.343178 1" size="0.1 0.1 0.1" type="cylinder" /><geom conaffinity="0" contype="0" density="0.00001" name="object2" pos="0.412289 0.438572 -0.1" rgba="0.059678 0.398044 0.737995 1" size="0.1 0.1 0.1" type="cylinder" /><geom conaffinity="0" contype="0" density="0.00001" name="object3" pos="-0.571515 0.175452 -0.1" rgba="0.531551 0.531828 0.634401 1" size="0.1 0.1 0.1" type="cylinder" /><geom conaffinity="0" contype="0" density="0.00001" name="object4" pos="-0.71515 0.075452 -0.1" rgba="0.531551 0.531828 0.634401 1" size="0.1 0.1 0.1" type="cylinder" /> -->
+    </worldbody>
+
+    <actuator>
+        <motor joint="proximal_j_1" ctrlrange="-3 3" ctrllimited="true"/>
+        <motor joint="distal_j_1" ctrlrange="-3 3" ctrllimited="true"/>
+        <motor joint="distal_j_2" ctrlrange="-3 3" ctrllimited="true"/>
+        <!--<motor joint="distal_j_3" ctrlrange="-3 3" ctrllimited="true"/>-->
+    </actuator>
+</mujoco>

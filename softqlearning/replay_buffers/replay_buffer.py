@@ -1,7 +1,7 @@
 import abc
 
 
-class ReplayBuffer(object, metaclass=abc.ABCMeta):
+class ReplayBuffer(object):
     """
     A class used to save and replay data.
     """
@@ -57,15 +57,15 @@ class ReplayBuffer(object, metaclass=abc.ABCMeta):
             path["rewards"],
             path["next_observations"],
             path["terminals"],
-            path["agent_infos"],
-            path["env_infos"],
+            path.get("agent_infos", {}),
+            path.get("env_infos", {}),
         )):
             self.add_sample(
-                obs,
-                action,
-                reward,
-                next_obs,
-                terminal,
+                observation=obs,
+                action=action,
+                reward=reward,
+                next_observation=next_obs,
+                terminal=terminal,
                 agent_info=agent_info,
                 env_info=env_info,
             )

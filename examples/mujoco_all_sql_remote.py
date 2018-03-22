@@ -1,8 +1,15 @@
+"""Run SAC with asynchronous sampling.
+
+This script demonstrates how we can train a policy and collect new experience
+asynchronously using two processes. Asynchronous sampling is particularly
+important when working with physical hardware and data collection becomes a
+bottleneck. In that case, it is desirable to allocate all available compute to
+optimizers rather then waiting for new sample to arrive.
+"""
 import argparse
 
 from rllab.envs.normalized_env import normalize
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
-from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
 
@@ -13,11 +20,11 @@ from softqlearning.misc.utils import timestamp
 from softqlearning.replay_buffers import SimpleReplayBuffer
 from softqlearning.value_functions import NNQFunction
 from softqlearning.policies import StochasticNNPolicy
-from softqlearning.environments import GymEnv
-from softqlearning.misc.sampler import SimpleSampler
+from softqlearning.environments import GymEnv, DelayedEnv
+from softqlearning.misc.remote_sampler import RemoteSampler
 
 SHARED_PARAMS = {
-    'seed': [1, 2, 3],
+    'seed': 1,
     'policy_lr': 3E-4,
     'qf_lr': 3E-4,
     'discount': 0.99,
@@ -26,10 +33,6 @@ SHARED_PARAMS = {
     'max_pool_size': 1E6,
     'n_train_repeat': 1,
     'epoch_length': 1000,
-    'kernel_particles': 16,
-    'kernel_update_ratio': 0.5,
-    'value_n_particles': 16,
-    'td_target_update_interval': 1000,
     'snapshot_mode': 'last',
     'snapshot_gap': 100,
 }
@@ -40,15 +43,15 @@ ENV_PARAMS = {
         'prefix': 'swimmer',
         'env_name': 'swimmer-rllab',
         'max_path_length': 1000,
-        'n_epochs': 500,
-        'reward_scale': 30,
+        'n_epochs': 1000,
+        'reward_scale': 100,
     },
     'hopper': {  # 3 DoF
         'prefix': 'hopper',
         'env_name': 'Hopper-v1',
         'max_path_length': 1000,
-        'n_epochs': 2000,
-        'reward_scale': 30,
+        'n_epochs': 3000,
+        'reward_scale': 1,
     },
     'half-cheetah': {  # 6 DoF
         'prefix': 'half-cheetah',
@@ -63,30 +66,22 @@ ENV_PARAMS = {
         'env_name': 'Walker2d-v1',
         'max_path_length': 1000,
         'n_epochs': 5000,
-        'reward_scale': 10,
+        'reward_scale': 3,
     },
     'ant': {  # 8 DoF
         'prefix': 'ant',
         'env_name': 'Ant-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
-        'reward_scale': 300,
-    },
-    'ant-rllab': {  # 8 DoF
-        'prefix': 'ant-rllab',
-        'env_name': 'ant-rllab',
-        'max_path_length': 1000,
-        'n_epochs': 10000,
-        'reward_scale': [1, 3, 10, 30, 100, 300]
+        'reward_scale': 3,
     },
     'humanoid': {  # 21 DoF
-        'seed': [11, 12, 13, 14, 15],
         'prefix': 'humanoid',
         'env_name': 'humanoid-rllab',
         'max_path_length': 1000,
         'n_epochs': 20000,
-        'reward_scale': 100,
-    },
+        'reward_scale': 3,
+    }
 }
 DEFAULT_ENV = 'swimmer'
 AVAILABLE_ENVS = list(ENV_PARAMS.keys())
@@ -124,15 +119,15 @@ def run_experiment(variant):
         env = normalize(HumanoidEnv())
     elif variant['env_name'] == 'swimmer-rllab':
         env = normalize(SwimmerEnv())
-    elif variant['env_name'] == 'ant-rllab':
-        env = normalize(AntEnv())
     else:
         env = normalize(GymEnv(variant['env_name']))
+
+    env = DelayedEnv(env, delay=0.01)
 
     pool = SimpleReplayBuffer(
         env_spec=env.spec, max_replay_buffer_size=variant['max_pool_size'])
 
-    sampler = SimpleSampler(
+    sampler = RemoteSampler(
         max_path_length=variant['max_path_length'],
         min_pool_size=variant['max_path_length'],
         batch_size=variant['batch_size'])
@@ -157,10 +152,10 @@ def run_experiment(variant):
         qf=qf,
         policy=policy,
         kernel_fn=adaptive_isotropic_gaussian_kernel,
-        kernel_n_particles=variant['kernel_particles'],
-        kernel_update_ratio=variant['kernel_update_ratio'],
-        value_n_particles=variant['value_n_particles'],
-        td_target_update_interval=variant['td_target_update_interval'],
+        kernel_n_particles=32,
+        kernel_update_ratio=0.5,
+        value_n_particles=16,
+        td_target_update_interval=1000,
         qf_lr=variant['qf_lr'],
         policy_lr=variant['policy_lr'],
         discount=variant['discount'],

@@ -6,17 +6,13 @@ from sandbox.rocky.tf.core.parameterized import Parameterized
 from softqlearning.misc import tf_utils
 
 
-def feedforward_net(
-        *inputs,
-        layer_sizes,
-        activation_fn=tf.nn.relu,
-        output_nonlinearity=None):
-
+def feedforward_net(inputs,
+                    layer_sizes,
+                    activation_fn=tf.nn.relu,
+                    output_nonlinearity=None):
     def bias(n_units):
         return tf.get_variable(
-            name='bias',
-            shape=n_units,
-            initializer=tf.zeros_initializer())
+            name='bias', shape=n_units, initializer=tf.zeros_initializer())
 
     def linear(x, n_units, postfix=None):
         input_size = x.shape[-1].value
@@ -27,7 +23,7 @@ def feedforward_net(
             initializer=tf.contrib.layers.xavier_initializer())
 
         # `tf.tensordot` supports broadcasting
-        return tf.tensordot(x, weight, axes=[-1, 0])
+        return tf.tensordot(x, weight, axes=((-1, ), (0, )))
 
     out = 0
     for i, layer_size in enumerate(layer_sizes):
@@ -50,7 +46,7 @@ def feedforward_net(
 
 
 class MLPFunction(Parameterized, Serializable):
-    def __init__(self, *inputs, name, hidden_layer_sizes):
+    def __init__(self, inputs, name, hidden_layer_sizes):
         Parameterized.__init__(self)
         Serializable.quick_init(self, locals())
 
@@ -58,19 +54,18 @@ class MLPFunction(Parameterized, Serializable):
         self._inputs = inputs
         self._layer_sizes = list(hidden_layer_sizes) + [1]
 
-        self._output = self._output_for(*self._inputs)
+        self._output = self._output_for(self._inputs)
 
-    def _output_for(self, *inputs, reuse=tf.AUTO_REUSE):
+    def _output_for(self, inputs, reuse=False):
         with tf.variable_scope(self._name, reuse=reuse):
             out = feedforward_net(
-                *inputs,
+                inputs=inputs,
                 output_nonlinearity=None,
-                layer_sizes=self._layer_sizes,
-            )
+                layer_sizes=self._layer_sizes)
 
         return out[..., 0]
 
-    def _eval(self, *inputs):
+    def _eval(self, inputs):
         feeds = {pl: val for pl, val in zip(self._inputs, inputs)}
 
         return tf_utils.get_default_session().run(self._output, feeds)

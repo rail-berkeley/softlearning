@@ -1,11 +1,11 @@
 import numpy as np
 import tensorflow as tf
 
-from rllab.core.serializable import Serializable
 from rllab.misc import logger
 from rllab.misc.overrides import overrides
 
 from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
+from softqlearning.misc import tf_utils
 
 from .rl_algorithm import RLAlgorithm
 
@@ -18,7 +18,7 @@ def assert_shape(tensor, expected_shape):
     assert all([a == b for a, b in zip(tensor_shape, expected_shape)])
 
 
-class SQL(RLAlgorithm, Serializable):
+class SQL(RLAlgorithm):
     """Soft Q-learning (SQL).
 
     Example:
@@ -47,7 +47,11 @@ class SQL(RLAlgorithm, Serializable):
             kernel_update_ratio=0.5,
             discount=0.99,
             reward_scale=1,
+            use_saved_qf=False,
+            use_saved_policy=False,
             save_full_state=False,
+            train_qf=True,
+            train_policy=True,
     ):
         """
         Args:
@@ -74,11 +78,14 @@ class SQL(RLAlgorithm, Serializable):
             reward_scale ('float'): A factor that scales the raw rewards.
                 Useful for adjusting the temperature of the optimal Boltzmann
                 distribution.
+            use_saved_qf ('boolean'): If true, use the initial parameters provided
+                in the Q-function instead of reinitializing.
+            use_saved_policy ('boolean'): If true, use the initial parameters provided
+                in the policy instead of reinitializing.
             save_full_state ('boolean'): If true, saves the full algorithm
                 state, including the replay buffer.
         """
-        Serializable.quick_init(self, locals())
-        super().__init__(**base_kwargs)
+        super(SQL, self).__init__(**base_kwargs)
 
         self.env = env
         self.pool = pool
@@ -99,6 +106,8 @@ class SQL(RLAlgorithm, Serializable):
         self._kernel_update_ratio = kernel_update_ratio
 
         self._save_full_state = save_full_state
+        self._train_qf = train_qf
+        self._train_policy = train_policy
 
         self._observation_dim = self.env.observation_space.flat_dim
         self._action_dim = self.env.action_space.flat_dim
@@ -112,12 +121,18 @@ class SQL(RLAlgorithm, Serializable):
         self._create_svgd_update()
         self._create_target_ops()
 
+        if use_saved_qf:
+            saved_qf_params = qf.get_param_values()
+        if use_saved_policy:
+            saved_policy_params = policy.get_param_values()
+
+        self._sess = tf_utils.get_default_session()
         self._sess.run(tf.global_variables_initializer())
 
-    @overrides
-    def train(self):
-        """Start the Soft Q-Learning algorithm."""
-        self._train(self.env, self.policy, self.pool)
+        if use_saved_qf:
+            self.qf.set_param_values(saved_qf_params)
+        if use_saved_policy:
+            self.policy.set_param_values(saved_policy_params)
 
     def _create_placeholders(self):
         """Create all necessary placeholders."""
@@ -176,10 +191,11 @@ class SQL(RLAlgorithm, Serializable):
         # Equation 11:
         bellman_residual = 0.5 * tf.reduce_mean((ys - self._q_values)**2)
 
-        td_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
-            loss=bellman_residual, var_list=self.qf.get_params_internal())
+        if self._train_qf:
+            td_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
+                loss=bellman_residual, var_list=self.qf.get_params_internal())
+            self._training_ops.append(td_train_op)
 
-        self._training_ops.append(td_train_op)
         self._bellman_residual = bellman_residual
 
     def _create_svgd_update(self):
@@ -187,7 +203,8 @@ class SQL(RLAlgorithm, Serializable):
 
         actions = self.policy.actions_for(
             observations=self._observations_ph,
-            n_action_samples=self._kernel_n_particles)
+            n_action_samples=self._kernel_n_particles,
+            reuse=True)
         assert_shape(actions,
                      [None, self._kernel_n_particles, self._action_dim])
 
@@ -243,14 +260,18 @@ class SQL(RLAlgorithm, Serializable):
             for w, g in zip(self.policy.get_params_internal(), gradients)
         ])
 
-        optimizer = tf.train.AdamOptimizer(self._policy_lr)
-        svgd_training_op = optimizer.minimize(
-            loss=-surrogate_loss, var_list=self.policy.get_params_internal())
-
-        self._training_ops.append(svgd_training_op)
+        if self._train_policy:
+            optimizer = tf.train.AdamOptimizer(self._policy_lr)
+            svgd_training_op = optimizer.minimize(
+                loss=-surrogate_loss,
+                var_list=self.policy.get_params_internal())
+            self._training_ops.append(svgd_training_op)
 
     def _create_target_ops(self):
         """Create tensorflow operation for updating the target Q-function."""
+        if not self._train_qf:
+            return
+
         source_params = self.qf.get_params_internal()
         target_params = self.qf.get_params_internal(scope='target')
 
@@ -259,19 +280,22 @@ class SQL(RLAlgorithm, Serializable):
             for tgt, src in zip(target_params, source_params)
         ]
 
+    # TODO: do not pass, policy, and pool to `__init__` directly.
+    def train(self):
+        self._train(self.env, self.policy, self.pool)
+
     @overrides
-    def _init_training(self, env, policy, pool):
-        super()._init_training(env, policy, pool)
+    def _init_training(self):
         self._sess.run(self._target_ops)
 
     @overrides
-    def _do_training(self, itr, batch):
+    def _do_training(self, iteration, batch):
         """Run the operations for updating training and target ops."""
 
         feed_dict = self._get_feed_dict(batch)
         self._sess.run(self._training_ops, feed_dict)
 
-        if itr % self._qf_target_update_interval == 0:
+        if iteration % self._qf_target_update_interval == 0 and self._train_qf:
             self._sess.run(self._target_ops)
 
     def _get_feed_dict(self, batch):
@@ -314,38 +338,19 @@ class SQL(RLAlgorithm, Serializable):
     def get_snapshot(self, epoch):
         """Return loggable snapshot of the SQL algorithm.
 
-        If `self._save_full_state == True`, returns snapshot of the complete
-        SAC instance. If `self._save_full_state == False`, returns snapshot
+        If `self._save_full_state == True`, returns snapshot including the
+        replay buffer. If `self._save_full_state == False`, returns snapshot
         of policy, Q-function, and environment instances.
         """
 
-        if self._save_full_state:
-            return {'epoch': epoch, 'algo': self}
-
-        return {
+        state = {
             'epoch': epoch,
             'policy': self.policy,
             'qf': self.qf,
             'env': self.env,
         }
 
-    def __getstate__(self):
-        """Get Serializable state of the RLALgorithm instance."""
+        if self._save_full_state:
+            state.update({'replay_buffer': self.pool})
 
-        state = Serializable.__getstate__(self)
-        state.update({
-            'qf-params': self.qf.get_param_values(),
-            'policy-params': self.policy.get_param_values(),
-            'pool': self.pool.__getstate__(),
-            'env': self.env.__getstate__(),
-        })
         return state
-
-    def __setstate__(self, state):
-        """Set Serializable state fo the RLAlgorithm instance."""
-
-        Serializable.__setstate__(self, state)
-        self.qf.set_param_values(state['qf-params'])
-        self.policy.set_param_values(state['policy-params'])
-        self.pool.__setstate__(state['pool'])
-        self.env.__setstate__(state['env'])

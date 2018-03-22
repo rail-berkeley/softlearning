@@ -18,7 +18,7 @@ class MultiGoalEnv(Env, Serializable):
     """
     def __init__(self, goal_reward=10, actuation_cost_coeff=30,
                  distance_cost_coeff=1, init_sigma=0.1):
-        super().__init__()
+        super(MultiGoalEnv, self).__init__()
         Serializable.quick_init(self, locals())
 
         self.dynamics = PointDynamics(dim=2, sigma=0)
@@ -127,7 +127,7 @@ class MultiGoalEnv(Env, Serializable):
         self._env_lines = []
 
         for path in paths:
-            positions = path["env_infos"]["pos"]
+            positions = np.stack([info['pos'] for info in path['env_infos']])
             xx = positions[:, 0]
             yy = positions[:, 1]
             self._env_lines += self._ax.plot(xx, yy, 'b')

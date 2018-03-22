@@ -19,4 +19,5 @@ dependencies:
         - gym==0.8
         - mujoco_py==0.5.7
         - pyprind
+        - ray
         - tensorflow

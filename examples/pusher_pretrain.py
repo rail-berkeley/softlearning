@@ -1,11 +1,10 @@
 import argparse
+import pickle
 
 from rllab.envs.normalized_env import normalize
-from rllab.envs.mujoco.swimmer_env import SwimmerEnv
-from rllab.envs.mujoco.ant_env import AntEnv
-from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
 
+from softqlearning.environments.pusher import PusherEnv
 from softqlearning.misc.instrument import run_sql_experiment
 from softqlearning.algorithms import SQL
 from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
@@ -13,7 +12,6 @@ from softqlearning.misc.utils import timestamp
 from softqlearning.replay_buffers import SimpleReplayBuffer
 from softqlearning.value_functions import NNQFunction
 from softqlearning.policies import StochasticNNPolicy
-from softqlearning.environments import GymEnv
 from softqlearning.misc.sampler import SimpleSampler
 
 SHARED_PARAMS = {
@@ -32,63 +30,20 @@ SHARED_PARAMS = {
     'td_target_update_interval': 1000,
     'snapshot_mode': 'last',
     'snapshot_gap': 100,
+    'save_full_state': True,
 }
-
 
 ENV_PARAMS = {
-    'swimmer': {  # 2 DoF
-        'prefix': 'swimmer',
-        'env_name': 'swimmer-rllab',
-        'max_path_length': 1000,
+    'pusher': {
+        'prefix': 'pusher',
+        'env_name': 'pusher',
+        'max_path_length': 300,
         'n_epochs': 500,
-        'reward_scale': 30,
-    },
-    'hopper': {  # 3 DoF
-        'prefix': 'hopper',
-        'env_name': 'Hopper-v1',
-        'max_path_length': 1000,
-        'n_epochs': 2000,
-        'reward_scale': 30,
-    },
-    'half-cheetah': {  # 6 DoF
-        'prefix': 'half-cheetah',
-        'env_name': 'HalfCheetah-v1',
-        'max_path_length': 1000,
-        'n_epochs': 10000,
-        'reward_scale': 30,
-        'max_pool_size': 1E7,
-    },
-    'walker': {  # 6 DoF
-        'prefix': 'walker',
-        'env_name': 'Walker2d-v1',
-        'max_path_length': 1000,
-        'n_epochs': 5000,
-        'reward_scale': 10,
-    },
-    'ant': {  # 8 DoF
-        'prefix': 'ant',
-        'env_name': 'Ant-v1',
-        'max_path_length': 1000,
-        'n_epochs': 10000,
-        'reward_scale': 300,
-    },
-    'ant-rllab': {  # 8 DoF
-        'prefix': 'ant-rllab',
-        'env_name': 'ant-rllab',
-        'max_path_length': 1000,
-        'n_epochs': 10000,
-        'reward_scale': [1, 3, 10, 30, 100, 300]
-    },
-    'humanoid': {  # 21 DoF
-        'seed': [11, 12, 13, 14, 15],
-        'prefix': 'humanoid',
-        'env_name': 'humanoid-rllab',
-        'max_path_length': 1000,
-        'n_epochs': 20000,
-        'reward_scale': 100,
-    },
+        'reward_scale': 1,
+        'goal': [(-1, 'any'), ('any', -1)]
+    }
 }
-DEFAULT_ENV = 'swimmer'
+DEFAULT_ENV = 'pusher'
 AVAILABLE_ENVS = list(ENV_PARAMS.keys())
 
 
@@ -120,14 +75,12 @@ def get_variants(args):
 
 
 def run_experiment(variant):
-    if variant['env_name'] == 'humanoid-rllab':
-        env = normalize(HumanoidEnv())
-    elif variant['env_name'] == 'swimmer-rllab':
-        env = normalize(SwimmerEnv())
-    elif variant['env_name'] == 'ant-rllab':
-        env = normalize(AntEnv())
+    if variant['env_name'] == 'pusher':
+        # TODO: assumes `pusher.xml` is located in `rllab/models/` when
+        # running on EC2.
+        env = normalize(PusherEnv(goal=variant.get('goal')))
     else:
-        env = normalize(GymEnv(variant['env_name']))
+        raise ValueError
 
     pool = SimpleReplayBuffer(
         env_spec=env.spec, max_replay_buffer_size=variant['max_pool_size'])
@@ -145,10 +98,18 @@ def run_experiment(variant):
         eval_n_episodes=1,
         sampler=sampler)
 
-    M = variant['layer_size']
-    qf = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
+    task_id = abs(pickle.dumps(variant).__hash__())
 
-    policy = StochasticNNPolicy(env_spec=env.spec, hidden_layer_sizes=(M, M))
+    M = variant['layer_size']
+    qf = NNQFunction(
+        env_spec=env.spec,
+        hidden_layer_sizes=(M, M),
+        name='qf_{i}'.format(i=task_id))
+
+    policy = StochasticNNPolicy(
+        env_spec=env.spec,
+        hidden_layer_sizes=(M, M),
+        name='policy_{i}'.format(i=task_id))
 
     algorithm = SQL(
         base_kwargs=base_kwargs,
@@ -165,15 +126,16 @@ def run_experiment(variant):
         policy_lr=variant['policy_lr'],
         discount=variant['discount'],
         reward_scale=variant['reward_scale'],
-        save_full_state=False)
+        save_full_state=variant['save_full_state'])
 
     algorithm.train()
 
 
 def launch_experiments(variant_generator, args):
     variants = variant_generator.variants()
+    print('Launching {} experiments.'.format(len(variants)))
+
     for i, variant in enumerate(variants):
-        print('Launching {} experiments.'.format(len(variants)))
         full_experiment_name = variant['prefix']
         full_experiment_name += '-' + args.exp_name + '-' + str(i).zfill(2)
 

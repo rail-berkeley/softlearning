@@ -7,7 +7,7 @@ from .replay_buffer import ReplayBuffer
 
 class SimpleReplayBuffer(ReplayBuffer, Serializable):
     def __init__(self, env_spec, max_replay_buffer_size):
-        super().__init__()
+        super(SimpleReplayBuffer, self).__init__()
         Serializable.quick_init(self, locals())
 
         max_replay_buffer_size = int(max_replay_buffer_size)
@@ -50,13 +50,13 @@ class SimpleReplayBuffer(ReplayBuffer, Serializable):
 
     def random_batch(self, batch_size):
         indices = np.random.randint(0, self._size, batch_size)
-        return dict(
-            observations=self._observations[indices],
-            actions=self._actions[indices],
-            rewards=self._rewards[indices],
-            terminals=self._terminals[indices],
-            next_observations=self._next_obs[indices],
-        )
+        return {
+            'observations': self._observations[indices],
+            'actions': self._actions[indices],
+            'rewards': self._rewards[indices],
+            'terminals': self._terminals[indices],
+            'next_observations': self._next_obs[indices]
+        }
 
     @property
     def size(self):
@@ -64,15 +64,15 @@ class SimpleReplayBuffer(ReplayBuffer, Serializable):
 
     def __getstate__(self):
         buffer_state = super(SimpleReplayBuffer, self).__getstate__()
-        buffer_state.update(dict(
-            observations=self._observations.tobytes(),
-            actions=self._actions.tobytes(),
-            rewards=self._rewards.tobytes(),
-            terminals=self._terminals.tobytes(),
-            next_observations=self._next_obs.tobytes(),
-            top=self._top,
-            size=self._size,
-        ))
+        buffer_state.update({
+            'observations': self._observations.tobytes(),
+            'actions': self._actions.tobytes(),
+            'rewards': self._rewards.tobytes(),
+            'terminals': self._terminals.tobytes(),
+            'next_observations': self._next_obs.tobytes(),
+            'top': self._top,
+            'size': self._size,
+        })
         return buffer_state
 
     def __setstate__(self, buffer_state):
@@ -82,8 +82,8 @@ class SimpleReplayBuffer(ReplayBuffer, Serializable):
         flat_next_obs = np.fromstring(buffer_state['next_observations'])
         flat_actions = np.fromstring(buffer_state['actions'])
         flat_reward = np.fromstring(buffer_state['rewards'])
-        flat_terminals = np.fromstring(buffer_state['terminals'],
-                                       dtype=np.uint8)
+        flat_terminals = np.fromstring(
+            buffer_state['terminals'], dtype=np.uint8)
 
         self._observations = flat_obs.reshape(self._max_buffer_size, -1)
         self._next_obs = flat_next_obs.reshape(self._max_buffer_size, -1)
