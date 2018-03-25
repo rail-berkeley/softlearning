@@ -384,25 +384,6 @@ def run_experiment(variant):
         n_map_action_candidates=variant['n_map_action_candidates']
     )
 
-    if variant['scale_reward'] == 'piecewise_constant':
-        scale_reward = lambda iteration: (
-            tf.train.piecewise_constant(
-                iteration,
-                variant['scale_reward_boundaries'],
-                variant['scale_reward_values']))
-    elif variant['scale_reward'] == 'polynomial_decay':
-        default_decay_steps = variant['n_epochs'] * variant['epoch_length']
-        scale_reward = lambda iteration: (
-            tf.train.polynomial_decay(
-                variant['scale_reward_begin'],
-                iteration,
-                variant.get('scale_reward_decay_steps', default_decay_steps),
-                variant['scale_reward_end'],
-                # default to linear decay
-                power=variant.get('scale_reward_power', 1.0)))
-    else:
-        scale_reward = variant['scale_reward']
-
     algorithm = SAC(
         base_kwargs=base_kwargs,
         env=env,
@@ -411,7 +392,7 @@ def run_experiment(variant):
         qf=qf,
         vf=vf,
         lr=variant['lr'],
-        scale_reward=scale_reward,
+        scale_reward=variant['scale_reward'],
         discount=variant['discount'],
         tau=variant['tau'],
         target_update_interval=variant['target_update_interval'],
