@@ -95,6 +95,8 @@ class GMMPolicy(NNPolicy, Serializable):
             name='latents',
         )
 
+        self.sample_z = tf.random_uniform([], 0, self._K, dtype=tf.int32)
+
         # TODO.code_consolidation:
         # self.distribution is used very differently compared to the
         # `LatentSpacePolicy`s distribution.
@@ -171,8 +173,8 @@ class GMMPolicy(NNPolicy, Serializable):
         current = self._is_deterministic
         self._is_deterministic = set_deterministic
         if set_deterministic:
-            if h is None: h = self.sample_z.eval()
-            self._fixed_h = h
+            if latent is None: latent = self.sample_z.eval()
+            self._fixed_h = latent
 
         yield
 
