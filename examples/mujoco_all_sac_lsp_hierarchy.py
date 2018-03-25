@@ -33,7 +33,6 @@ except:
 COMMON_PARAMS = {
     'seed': 'random',
     'lr': 3e-4,
-    'policy_lr': 3e-4,
     'discount': 0.99,
     'target_update_interval': 1,
     'tau': 1e-2,
@@ -336,7 +335,6 @@ def run_experiment(variant):
         qf=qf,
         vf=vf,
 
-        policy_lr=variant["policy_lr"],
         lr=variant['lr'],
         scale_reward=variant['scale_reward'],
         discount=variant['discount'],

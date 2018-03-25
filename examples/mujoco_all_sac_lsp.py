@@ -411,7 +411,6 @@ def run_experiment(variant):
         qf=qf,
         vf=vf,
         lr=variant['lr'],
-        policy_lr=variant['policy_lr'],
         scale_reward=scale_reward,
         discount=variant['discount'],
         tau=variant['tau'],
