@@ -127,30 +127,28 @@ class GMMPolicy(NNPolicy, Serializable):
         TODO.code_consolidation: This should be somewhat similar with
         `LatentSpacePolicy.get_actions`.
         """
-        if not self._is_deterministic:
-            return super(GMMPolicy, self).get_actions(observations)
+        if self._is_deterministic: # Handle the deterministic case separately.
+            if self._qf is None: raise AttributeError
 
-        # Handle the deterministic case separately.
-        if self._qf is None:
-            raise AttributeError
+            feed_dict = {self._observations_ph: observations}
 
-        feed_dict = {self._observations_ph: observations}
+            # TODO.code_consolidation: these shapes should be double checked
+            # for case where `observations.shape[0] > 1`
+            mus = tf.get_default_session().run(
+                self.distribution.mus_t, feed_dict)[0]  # K x Da
 
-        # TODO.code_consolidation: these shapes should be double checked
-        # for case where `observations.shape[0] > 1`
-        mus = tf.get_default_session().run(
-            self.distribution.mus_t, feed_dict)[0]  # K x Da
+            squashed_mus = np.tanh(mus) if self._squash else mus
+            qs = self._qf.eval(observations, squashed_mus)
 
-        squashed_mus = np.tanh(mus) if self._squash else mus
-        qs = self._qf.eval(observations, squashed_mus)
+            if self._fixed_h is not None:
+                h = self._fixed_h # TODO.code_consolidation: this needs to be tiled
+            else:
+                h = np.argmax(qs) # TODO.code_consolidation: check the axis
 
-        if self._fixed_h is not None:
-            h = self._fixed_h # TODO.code_consolidation: this needs to be tiled
-        else:
-            h = np.argmax(qs) # TODO.code_consolidation: check the axis
+            actions = squashed_mus[h, :][None]
+            return actions
 
-        actions = squashed_mus[h, :][None]
-        return actions
+        return super(GMMPolicy, self).get_actions(observations)
 
     def _squash_correction(self, actions):
         if not self._squash: return 0

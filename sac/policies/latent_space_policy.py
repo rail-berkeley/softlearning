@@ -170,9 +170,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         feed_dict = { self._observations_ph: observations }
 
         if self._fixed_h is not None:
-            feed_dict.update({
-                self._latents_ph: self._fixed_h
-            })
+            feed_dict.update({ self._latents_ph: self._fixed_h })
             actions = tf.get_default_session().run(
                 self._determistic_actions,
                 feed_dict=feed_dict)
