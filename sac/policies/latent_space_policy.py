@@ -187,7 +187,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         return tf.reduce_sum(tf.log(1 - tf.tanh(actions) ** 2 + EPS), axis=1)
 
     @contextmanager
-    def deterministic(self, set_deterministic=True):
+    def deterministic(self, set_deterministic=True, h=None):
         """Context manager for changing the determinism of the policy.
 
         See `self.get_action` for further information about the effect of
@@ -199,21 +199,17 @@ class LatentSpacePolicy(NNPolicy, Serializable):
             value when the context exits.
         """
         was_deterministic = self._is_deterministic
+        old_fixed_h = self._fixed_h
+
         self._is_deterministic = set_deterministic
-        yield
-        self._is_deterministic = was_deterministic
+        if set_deterministic:
+            if h is None: h = self.sample_z.eval()
+            self._fixed_h = h
 
-    @contextmanager
-    def fix_h(self, h=None):
-        if h is None:
-            h = self.sample_z.eval()
-
-        was_deterministic = self._is_deterministic
-        self._is_deterministic = True
-        self._fixed_h = h
         yield
-        self._fixed_h = None
+
         self._is_deterministic = was_deterministic
+        self._fixed_h = old_fixed_h
 
     def get_params_internal(self, **tags):
         if tags: raise NotImplementedError

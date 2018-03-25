@@ -16,7 +16,7 @@ class HierarchyProxyEnv(ProxyEnv):
             if isinstance(self._wrapped_env, ProxyEnv)
             else self._wrapped_env.get_current_obs())
 
-        with self._low_level_policy.fix_h(h=high_level_action[None]):
+        with self._low_level_policy.deterministic(h=high_level_action[None]):
             action, _ = self._low_level_policy.get_action(
                 observation=current_observation[:self._low_level_policy._Ds])
 

@@ -157,16 +157,7 @@ class GMMPolicy(NNPolicy, Serializable):
         return tf.reduce_sum(tf.log(1 - tf.tanh(actions) ** 2 + EPS), axis=1)
 
     @contextmanager
-    def fix_h(self, h):
-        was_deterministic = self._is_deterministic
-        self._is_deterministic = True
-        self._fixed_h = h
-        yield
-        self._fixed_h = None
-        self._is_deterministic = was_deterministic
-
-    @contextmanager
-    def deterministic(self, set_deterministic=True):
+    def deterministic(self, set_deterministic=True, latent=None):
         """Context manager for changing the determinism of the policy.
 
         See `self.get_action` for further information about the effect of
@@ -174,13 +165,21 @@ class GMMPolicy(NNPolicy, Serializable):
 
         Args:
             set_deterministic (`bool`): Value to set the self._is_deterministic
-            to during the context. The value will be reset back to the previous
-            value when the context exits.
+                to during the context. The value will be reset back to the
+                previous value when the context exits.
+            latent (`Number`): Value to set the latent variable to over the
+                deterministic context.
         """
         current = self._is_deterministic
         self._is_deterministic = set_deterministic
+        if set_deterministic:
+            if h is None: h = self.sample_z.eval()
+            self._fixed_h = h
+
         yield
+
         self._is_deterministic = was_deterministic
+        self._fixed_h = old_fixed_h
 
     def log_diagnostics(self, iteration, batch):
         """Record diagnostic information to the logger.

@@ -51,7 +51,7 @@ def simulate_policy(snapshot_path,
 
         paths = []
         for i in range(num_simulations):
-            with policy.fix_h():
+            with policy.deterministic():
                 path = rollout(env, policy,
                                max_path_length=max_path_length,
                                animated=False)
