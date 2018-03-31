@@ -7,12 +7,12 @@ from sandbox.rocky.tf.policies.base import Policy
 
 
 class NNPolicy(Policy, Serializable):
-    def __init__(self, env_spec, obs_pl, action,
+    def __init__(self, env_spec, obs_pl, actions,
                  scope_name=None):
         Serializable.quick_init(self, locals())
 
         self._obs_pl = obs_pl
-        self._action = action
+        self._actions = actions
         self._scope_name = (
             tf.get_variable_scope().name if not scope_name else scope_name
         )
@@ -25,7 +25,7 @@ class NNPolicy(Policy, Serializable):
     @overrides
     def get_actions(self, observations):
         feeds = {self._obs_pl: observations}
-        actions = tf.get_default_session().run(self._action, feeds)
+        actions = tf.get_default_session().run(self._actions, feeds)
         return actions
 
     @overrides
