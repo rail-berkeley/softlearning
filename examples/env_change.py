@@ -51,8 +51,8 @@ COMMON_PARAMS = {
     # real nvp configs
     'policy_coupling_layers': 2,
     'policy_s_t_layers': 1,
-    'policy_prior_regularization': 0.0,
-    'regularize_actions': True,
+    'policy_prior_regularization': None,
+    'regularize_actions': False,
     'preprocessing_hidden_sizes': None,
     'preprocessing_output_nonlinearity': 'relu',
 
@@ -72,16 +72,17 @@ ENV_PARAMS = {
 
         'preprocessing_hidden_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
-        'policy_fix_h_on_reset': True,
+        'policy_fix_h_on_reset': False,
 
         'snapshot_gap': 2000,
 
         'env_reward_type': ['sparse'],
-        'discount': 0.999,
+        'discount': [0.99],
+        'control_interval': [1,3],
         'env_terminate_at_goal': True,
-        'env_goal_reward_weight': 1000,
+        'env_goal_reward_weight': [300,1000,3000,10000],
         'env_goal_radius': 2,
-        'env_velocity_reward_weight': 0,
+        'env_velocity_reward_weight': [0],
         'env_ctrl_cost_coeff': 0, # 1e-2,
         'env_contact_cost_coeff': 0, # 1e-3,
         'env_survive_reward': 0, # 5e-2,
@@ -89,12 +90,9 @@ ENV_PARAMS = {
         'env_goal_angle_range': (0, 2*np.pi),
 
         'pre_trained_policy_path': [
-            'random-goal-ant-ablation-single-level-low-level-1-00/itr_10000.pkl',
-            'random-goal-ant-ablation-single-level-low-level-1-01/itr_10000.pkl',
-            'random-goal-ant-ablation-single-level-low-level-1-02/itr_10000.pkl',
-            'random-goal-ant-ablation-single-level-low-level-1-03/itr_10000.pkl',
-            'random-goal-ant-ablation-single-level-low-level-1-04/itr_10000.pkl',
-            'random-goal-ant-ablation-single-level-low-level-1-05/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-3-{:02}/itr_{}000.pkl'.format(i, j)
+            for i in [12,13]
+            for j in [4]
         ]
     },
 }
@@ -104,7 +102,7 @@ ENV_PARAMS['cross-maze-ant-env'] = dict(
     **{
         'prefix': 'cross-maze-ant-env',
         'env_name': 'cross-maze-ant',
-        'env_goal_distance': 12, # np.linalg.norm([6,-6]), # (np.linalg.norm([6,-6]), 12),
+        'env_goal_distance': 12,
 
         'env_fixed_goal_position': [[6, -6], [6, 6], [12, 0]],
     }
@@ -168,6 +166,8 @@ def run_experiment(variant):
     policy, qf, vf = load_pre_trained_policy(
         policy_path=variant['pre_trained_policy_path'])
 
+    policy._fix_h_on_reset = variant['policy_fix_h_on_reset']
+
     env_name = variant['env_name']
 
     env_args = {
@@ -194,6 +194,7 @@ def run_experiment(variant):
         n_epochs=variant['n_epochs'],
         max_path_length=variant['max_path_length'],
         batch_size=variant['batch_size'],
+        control_interval=variant.get('control_interval', 1),
         n_train_repeat=variant['n_train_repeat'],
         eval_render=False,
         eval_n_episodes=1,
@@ -219,20 +220,16 @@ def run_experiment(variant):
         save_full_state=False,
     )
 
-    # algorithm._pool = pool
-    # algorithm._env = env
-    # algorithm._save_full_state = False
+    sess = tf_utils.get_default_session()
+    sess.run([
+        tf.assign(target, source)
+        for target, source in
+        zip(algorithm._vf_target_params, algorithm._vf_params)
+    ])
 
-    # with tf_utils.get_default_session().as_default():
-    #     uninitialized_vars = [
-    #         v for v in tf.global_variables()
-    #         if not tf.is_variable_initialized(v).eval()
-    #     ]
-
-    tf_utils.get_default_session().run(tf.variables_initializer([
+    sess.run(tf.variables_initializer([
         variable for variable in tf.global_variables()
         if ('Adam' in variable.name
-            or 'target/vf' in variable.name
             or 'beta1_power' in variable.name
             or 'beta2_power' in variable.name)
     ]))
@@ -245,11 +242,15 @@ def launch_experiments(variant_generator):
     num_experiments = len(variants)
     print('Launching {} experiments.'.format(num_experiments))
 
+    seen_seeds = set()
     for i, variant in enumerate(variants):
         print("Experiment: {}/{}".format(i, num_experiments))
 
         if variant['seed'] == 'random':
-            variant['seed'] = np.random.randint(1, 100)
+            variant['seed'] = np.random.randint(1, 10000)
+            while  variant['seed'] in seen_seeds:
+                variant['seed'] = np.random.randint(1, 10000)
+            seen_seeds.add(variant['seed'])
 
         variant['pre_trained_policy_path_short'] = '/'.join(
             variant['pre_trained_policy_path'].split('/')[-2:])
