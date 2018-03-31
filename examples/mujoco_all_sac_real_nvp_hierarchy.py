@@ -380,6 +380,7 @@ def run_experiment(variant):
         n_epochs=variant['n_epochs'],
         max_path_length=variant['max_path_length'],
         batch_size=variant['batch_size'],
+        control_interval=variant.get('control_interval', 1),
         n_train_repeat=variant['n_train_repeat'],
         eval_render=False,
         eval_n_episodes=1,
