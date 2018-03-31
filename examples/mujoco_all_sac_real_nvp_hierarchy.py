@@ -116,17 +116,12 @@ ENV_PARAMS = {
         'env_goal_angle_range': (0, 2*np.pi),
 
         'low_level_policy_path': [
-            'multi-direction-ant-low-level-policy-3-12/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-13/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-14/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-15/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-16/itr_10000.pkl',
-
-            'multi-direction-ant-low-level-policy-3-18/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-19/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-21/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-22/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-3-23/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-polynomial-decay-2-12/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-polynomial-decay-2-13/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-polynomial-decay-2-14/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-polynomial-decay-2-15/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-polynomial-decay-2-16/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-polynomial-decay-2-17/itr_10000.pkl',
         ]
     },
     'random-goal-humanoid': {  # 21 DoF
@@ -214,9 +209,10 @@ ENV_PARAMS = {
         'snapshot_gap': 2000,
 
         'env_reward_type': ['sparse'],
-        'discount': 0.999,
+        'discount': [0.99],
+        'control_interval': [3],
         'env_terminate_at_goal': True,
-        'env_goal_reward_weight': 1000,
+        'env_goal_reward_weight': [1000],
         'env_goal_radius': 2,
         'env_velocity_reward_weight': 0,
         'env_ctrl_cost_coeff': 0, # 1e-2,
@@ -226,11 +222,9 @@ ENV_PARAMS = {
         'env_goal_angle_range': (0, 2*np.pi),
 
         'low_level_policy_path': [
-            'multi-direction-ant-low-level-policy-polynomial-decay-2-12/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-polynomial-decay-2-13/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-polynomial-decay-2-14/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-polynomial-decay-2-15/itr_10000.pkl',
-            'multi-direction-ant-low-level-policy-polynomial-decay-2-16/itr_10000.pkl',
+            'multi-direction-ant-low-level-policy-3-{:02}/itr_{}000.pkl'.format(i, j)
+            for i in [12,13,14,15,16,17]
+            for j in [4] # [2,4,6,8,10]
         ]
     },
     'ant-gather-env': {  # 21 DoF
@@ -271,7 +265,9 @@ ENV_PARAMS['cross-maze-ant-env'] = dict(
     **{
         'prefix': 'cross-maze-ant-env',
         'env_name': 'cross-maze-ant',
-        'env_goal_distance': (np.linalg.norm([6,-6]), 12),
+        'env_goal_distance': 12,
+
+        'env_fixed_goal_position': [[6, -6], [6, 6], [12, 0]],
     }
 )
 
