@@ -459,11 +459,15 @@ def launch_experiments(variant_generator):
     num_experiments = len(variants)
     print('Launching {} experiments.'.format(num_experiments))
 
-    for i, variant in enumerate(variants):
+    seen_seeds = set()
+    for i, variant in enumerate(variants, 36):
         print("Experiment: {}/{}".format(i, num_experiments))
 
         if variant['seed'] == 'random':
-            variant['seed'] = np.random.randint(1, 100)
+            variant['seed'] = np.random.randint(1, 10000)
+            while  variant['seed'] in seen_seeds:
+                variant['seed'] = np.random.randint(1, 10000)
+            seen_seeds.add(variant['seed'])
 
         variant['low_level_policy_path_short'] = '/'.join(
             variant['low_level_policy_path'].split('/')[-2:])
