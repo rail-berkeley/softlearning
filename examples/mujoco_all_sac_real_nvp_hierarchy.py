@@ -11,6 +11,7 @@ from rllab.envs.normalized_env import normalize
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
+from rllab.envs.mujoco.gather.ant_gather_env import AntGatherEnv
 from rllab.misc.instrument import VariantGenerator
 
 from sac.algos import SACV2
@@ -232,6 +233,37 @@ ENV_PARAMS = {
             'multi-direction-ant-low-level-policy-polynomial-decay-2-16/itr_10000.pkl',
         ]
     },
+    'ant-gather-env': {  # 21 DoF
+        'prefix': 'ant-gather-env',
+        'env_name': 'ant-gather-env',
+
+        'epoch_length': 1000,
+        'max_path_length': 1000,
+        'n_epochs': int(10e3 + 1),
+        'scale_reward': [1, 10, 100],
+
+        'preprocessing_hidden_sizes': (128, 128, 16),
+        'policy_s_t_units': 8,
+        'policy_fix_h_on_reset': [False, True],
+
+        'snapshot_gap': 2000,
+
+        'discount': [0.99],
+        'regularize_actions': False,
+        'control_interval': [1,3,10],
+
+        'env_activity_range': 20,
+        'env_sensor_range': 20,
+        'env_n_bombs': 12,
+        'env_n_apples': 12,
+        'env_sensor_span': 2*np.pi,
+
+        'low_level_policy_path': [
+            'multi-direction-ant-low-level-policy-3-{:02}/itr_{}000.pkl'.format(i, j)
+            for i in [12,13]
+            for j in [10] # [2,4,6,8,10]
+        ]
+    },
 }
 
 ENV_PARAMS['cross-maze-ant-env'] = dict(
@@ -326,6 +358,8 @@ def run_experiment(variant):
         EnvClass = SimpleMazeAntEnv
     elif 'cross-maze-ant' == env_name:
         EnvClass = CrossMazeAntEnv
+    elif 'ant-gather-env' == env_name:
+        EnvClass = AntGatherEnv
     elif 'rllab' in env_name:
         EnvClass = RLLAB_ENVS[variant['env_name']]
     else:
