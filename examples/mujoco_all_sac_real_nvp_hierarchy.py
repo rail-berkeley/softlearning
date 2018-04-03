@@ -307,7 +307,7 @@ def get_variants(args):
 
     vg = VariantGenerator()
     for key, val in params.items():
-        if isinstance(val, list):
+        if isinstance(val, list) or callable(val):
             vg.add(key, val)
         else:
             vg.add(key, [val])
@@ -457,7 +457,7 @@ def launch_experiments(variant_generator):
     print('Launching {} experiments.'.format(num_experiments))
 
     seen_seeds = set()
-    for i, variant in enumerate(variants, 36):
+    for i, variant in enumerate(variants):
         print("Experiment: {}/{}".format(i, num_experiments))
 
         if variant['seed'] == 'random':

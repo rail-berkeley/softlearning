@@ -268,7 +268,7 @@ def get_variants(args):
 
     vg = VariantGenerator()
     for key, val in params.items():
-        if isinstance(val, list):
+        if isinstance(val, list) or callable(val):
             vg.add(key, val)
         else:
             vg.add(key, [val])
