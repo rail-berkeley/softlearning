@@ -110,12 +110,12 @@ ENV_PARAMS = {
         'epoch_length': 1000,
         'max_path_length': 1000,
         'n_epochs': int(10e3 + 1),
-        'scale_reward': 10.0,
+        'scale_reward': [3.0, 10.0],
 
         'preprocessing_hidden_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
 
-        'snapshot_gap': 1000,
+        'snapshot_gap': 2000,
     },
     'random-goal-ant': {  # 8 DoF
         'prefix': 'random-goal-ant',
