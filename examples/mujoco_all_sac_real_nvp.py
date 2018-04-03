@@ -5,6 +5,7 @@ import tensorflow as tf
 import numpy as np
 
 from rllab.envs.normalized_env import normalize
+from rllab.envs.mujoco.gather.ant_gather_env import AntGatherEnv
 from rllab.misc.instrument import VariantGenerator
 
 from sac.algos import SACV2
@@ -206,6 +207,33 @@ ENV_PARAMS = {
         'env_goal_distance': np.linalg.norm([6,-6]),
         'env_goal_angle_range': (0, 2*np.pi),
     },
+    'ant-gather-env': {  # 21 DoF
+        'prefix': 'ant-gather-env',
+        'env_name': 'ant-gather-env',
+
+        'epoch_length': 1000,
+        'max_path_length': 1000,
+        'n_epochs': int(30e3 + 1),
+        'scale_reward': [100, 300, 1000, 3000, 10000],
+
+        'preprocessing_hidden_sizes': (128, 128, 16),
+        'policy_s_t_units': 8,
+        'policy_fix_h_on_reset': [False],
+
+        'snapshot_gap': 2000,
+
+        'discount': [0.99],
+        'control_interval': [1],
+
+        'env_activity_range': 6, # 20, # 6
+        'env_sensor_range': 6, # 20, # 6
+        'env_n_bombs': 8, # 40, # 8
+        'env_n_apples': 8, # 40, # 8
+        'env_sensor_span': 2*np.pi,
+
+        'env_coef_inner_rew': lambda scale_reward: [10.0 / scale_reward],
+        'env_dying_cost': 0,
+    },
 }
 
 ENV_PARAMS['cross-maze-ant-env'] = dict(
@@ -275,6 +303,13 @@ def run_experiment(variant):
             if name.startswith('env_') and name != 'env_name'
         }
         env = normalize(EnvClass(**env_args))
+    elif 'ant-gather-env' == env_name:
+        env_args = {
+            name.replace('env_', '', 1): value
+            for name, value in variant.items()
+            if name.startswith('env_') and name != 'env_name'
+        }
+        env = normalize(AntGatherEnv(**env_args))
     elif 'cross-maze-ant' == env_name:
         env_args = {
             name.replace('env_', '', 1): value
