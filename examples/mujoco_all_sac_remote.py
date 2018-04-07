@@ -1,18 +1,15 @@
-from random import shuffle
 import argparse
 
 from rllab.envs.normalized_env import normalize
-from rllab.envs.mujoco.swimmer_env import SwimmerEnv
-from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
 from rllab import config
 
 from sac.algos import SAC
 from sac.envs.gym_env import GymEnv
-from sac.envs import MultiDirectionSwimmerEnv
+from sac.envs.delayed_env import DelayedEnv
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
-from sac.misc.sampler import SimpleSampler
+from sac.misc.remote_sampler import RemoteSampler
 from sac.policies.gmm import GMMPolicy
 from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
@@ -38,27 +35,12 @@ COMMON_PARAMS = {
 
 
 ENV_PARAMS = {
-    'multi-direction-swimmer': { # 2 DoF
-        'prefix': 'multi-direction-swimmer',
-        'env_name': 'multi-direction-swimmer',
-        'max_path_length': 1000,
-        'n_epochs': 202,
-        'scale_reward': 100.0,
-        'n_train_repeat': 4,
-    },
     'swimmer': { # 2 DoF
         'prefix': 'swimmer',
         'env_name': 'swimmer-rllab',
         'max_path_length': 1000,
         'n_epochs': 2000,
         'scale_reward': 100,
-    },
-    'multi-direction-swimmer': { # 2 DoF
-        'prefix': 'multi-direction-swimmer',
-        'env_name': 'multi-direction-swimmer',
-        'max_path_length': 1000,
-        'n_epochs': 201,
-        'scale_reward': [50, 100],
     },
     'hopper': { # 3 DoF
         'prefix': 'hopper',
@@ -131,20 +113,21 @@ def get_variants(args):
 
 def run_experiment(variant):
     if variant['env_name'] == 'humanoid-rllab':
+        from rllab.envs.mujoco.humanoid_env import HumanoidEnv
         env = normalize(HumanoidEnv())
     elif variant['env_name'] == 'swimmer-rllab':
+        from rllab.envs.mujoco.swimmer_env import SwimmerEnv
         env = normalize(SwimmerEnv())
-    elif variant['env_name'] == 'multi-direction-swimmer':
-        env = normalize(MultiDirectionSwimmerEnv())
     else:
         env = normalize(GymEnv(variant['env_name']))
+    env = DelayedEnv(env, delay=0.01)
 
     pool = SimpleReplayBuffer(
         env_spec=env.spec,
         max_replay_buffer_size=variant['max_pool_size'],
     )
 
-    sampler = SimplerSampler(
+    sampler = RemoteSampler(
         max_path_length=variant['max_path_length'],
         min_pool_size=variant['max_path_length'],
         batch_size=variant['batch_size']
@@ -196,15 +179,13 @@ def run_experiment(variant):
         save_full_state=False,
     )
 
-    tf_utils.get_default_session().run(tf.global_variables_initializer())
-
     algorithm.train()
 
 
 def launch_experiments(variant_generator):
     variants = variant_generator.variants()
-    shuffle(variants)
-    for i, variant in enumerate(variants, 1):
+
+    for i, variant in enumerate(variants):
         print('Launching {} experiments.'.format(len(variants)))
         run_sac_experiment(
             run_experiment,
@@ -216,6 +197,7 @@ def launch_experiments(variant_generator):
             seed=variant['seed'],
             terminate_machine=True,
             log_dir=args.log_dir,
+            use_cloudpickle=True,
             snapshot_mode=variant['snapshot_mode'],
             snapshot_gap=variant['snapshot_gap'],
             sync_s3_pkl=variant['sync_pkl'],

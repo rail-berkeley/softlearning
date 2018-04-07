@@ -20,12 +20,10 @@ class RLAlgorithm(Algorithm):
 
     def __init__(
             self,
-            batch_size=64,
+            sampler,
             n_epochs=1000,
             n_train_repeat=1,
             epoch_length=1000,
-            min_pool_size=10000,
-            max_path_length=1000,
             eval_n_episodes=10,
             eval_deterministic=True,
             eval_render=False,
@@ -33,25 +31,18 @@ class RLAlgorithm(Algorithm):
     ):
         """
         Args:
-            batch_size (`int`): Size of the sample batch to be used
-                for training.
             n_epochs (`int`): Number of epochs to run the training for.
             n_train_repeat (`int`): Number of times to repeat the training
                 for single time step.
             epoch_length (`int`): Epoch length.
-            min_pool_size (`int`): Minimum size of the sample pool before
-                running training.
-            max_path_length (`int`): Number of timesteps before resetting
-                environment and policy, and the number of paths used for
-                evaluation rollout.
-            scale_reward (`float`): Scaling factor for raw reward.
             eval_n_episodes (`int`): Number of rollouts to evaluate.
             eval_deterministic (`int`): Whether or not to run the policy in
                 deterministic mode when evaluating policy.
             eval_render (`int`): Whether or not to render the evaluation
                 environment.
         """
-        self._batch_size = batch_size
+        self.sampler = sampler
+
         self._n_epochs = n_epochs
         self._n_train_repeat = n_train_repeat
         self._epoch_length = epoch_length
@@ -71,16 +62,9 @@ class RLAlgorithm(Algorithm):
 
     def _train(self, env, policy, pool):
         self._init_training(env, policy, pool)
+        self.sampler.initialize(env, policy, pool)
 
         with self._sess.as_default():
-            observation = env.reset()
-            policy.reset()
-
-            path_length = 0
-            path_return = 0
-            last_path_return = 0
-            max_path_return = -np.inf
-            n_episodes = 0
             gt.rename_root('RLAlgorithm')
             gt.reset()
             gt.set_def_unique(False)
@@ -126,11 +110,10 @@ class RLAlgorithm(Algorithm):
                         observation = next_ob
                     gt.stamp('sample')
 
-                    if self._pool.size >= self._min_pool_size:
-                        for i in range(self._n_train_repeat):
-                            batch = self._pool.random_batch(self._batch_size)
-                            self._do_training(iteration, batch)
-
+                    for i in range(self._n_train_repeat):
+                        self._do_training(
+                            itr=t + epoch * self._epoch_length,
+                            batch=self.sampler.random_batch())
                     gt.stamp('train')
 
                 self._evaluate(epoch)
@@ -146,17 +129,15 @@ class RLAlgorithm(Algorithm):
                 logger.record_tabular('time-sample', times_itrs['sample'][-1])
                 logger.record_tabular('time-total', total_time)
                 logger.record_tabular('epoch', epoch)
-                logger.record_tabular('episodes', n_episodes)
-                logger.record_tabular('max-path-return', max_path_return)
-                logger.record_tabular('last-path-return', last_path_return)
-                logger.record_tabular('pool-size', self._pool.size)
+
+                self.sampler.log_diagnostics()
 
                 logger.dump_tabular(with_prefix=False)
                 logger.pop_prefix()
 
                 gt.stamp('eval')
 
-            env.terminate()
+            self.sampler.terminate()
 
     def _evaluate(self, epoch):
         """Perform evaluation for the current policy.
@@ -170,8 +151,8 @@ class RLAlgorithm(Algorithm):
 
         with self._policy.deterministic(self._eval_deterministic):
             paths = rollouts(self._eval_env, self._policy,
-                             self._max_path_length, self._eval_n_episodes,
-                             False)
+                             self.sampler._max_path_length, self._eval_n_episodes,
+                            )
 
         total_returns = [path['rewards'].sum() for path in paths]
         episode_lengths = [len(p['rewards']) for p in paths]
