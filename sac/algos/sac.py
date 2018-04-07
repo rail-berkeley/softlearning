@@ -128,7 +128,7 @@ class SAC(RLAlgorithm, Serializable):
         self._discount = discount
         self._tau = tau
 
-        self._reparameterize - reparameterize
+        self._reparameterize = reparameterize
         self._save_full_state = save_full_state
 
         self._Da = self._env.action_space.flat_dim
@@ -249,7 +249,7 @@ class SAC(RLAlgorithm, Serializable):
         corr = self._squash_correction(policy_dist.x_t)
 
         if self._reparameterize:
-            kl_loss_t = tf.reduce_mean(log_target_t + corr + log_pi_t)
+            kl_loss_t = tf.reduce_mean(log_pi_t - log_target_t - corr)
         else:
             kl_loss_t = tf.reduce_mean(log_pi_t * tf.stop_gradient(
                 log_pi_t - log_target_t - corr + self._vf_t))

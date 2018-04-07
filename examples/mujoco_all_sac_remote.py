@@ -28,6 +28,7 @@ COMMON_PARAMS = {
     "max_pool_size": 1E6,
     "n_train_repeat": 1,
     "epoch_length": 1000,
+    "reparameterize": True,
     "snapshot_mode": 'gap',
     "snapshot_gap": 100,
     "sync_pkl": True,
@@ -159,6 +160,7 @@ def run_experiment(variant):
         K=variant['K'],
         hidden_layer_sizes=[M, M],
         qf=qf,
+        reparameterize=variant['reparameterize'],
         reg=0.001,
     )
     
@@ -176,6 +178,7 @@ def run_experiment(variant):
         discount=variant['discount'],
         tau=variant['tau'],
 
+        reparameterize=variant['reparameterize'],
         save_full_state=False,
     )
 

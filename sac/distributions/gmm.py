@@ -16,6 +16,7 @@ class GMM(object):
             hidden_layers_sizes=(100, 100),
             reg=0.001,
             cond_t_lst=(),
+            reparameterize=True,
     ):
         self._cond_t_lst = cond_t_lst
         self._reg = reg
@@ -23,6 +24,7 @@ class GMM(object):
 
         self._Dx = Dx
         self._K = K
+        self._reparameterize = reparameterize
 
         self._create_placeholders()
         self._create_graph()
@@ -104,9 +106,9 @@ class GMM(object):
             xz_sig_t = tf.boolean_mask(xz_sigs_t, mask_t)  # N x Dx
 
             # Sample x.
-            x_t = tf.stop_gradient(
-                xz_mu_t + xz_sig_t * tf.random_normal((N_t, Dx))
-            )  # N x Dx
+            x_t = xz_mu_t + xz_sig_t * tf.random_normal((N_t, Dx))  # N x Dx
+            if not self._reparameterize:
+                x_t = tf.stop_gradient(x_t)
 
             # log p(x|z)
             log_p_xz_t = self._create_log_gaussian(
