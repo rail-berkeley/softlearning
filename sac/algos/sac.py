@@ -87,6 +87,7 @@ class SAC(RLAlgorithm, Serializable):
             discount=0.99,
             tau=0.01,
 
+            reparameterize=True,
             save_full_state=False,
     ):
         """
@@ -127,6 +128,7 @@ class SAC(RLAlgorithm, Serializable):
         self._discount = discount
         self._tau = tau
 
+        self._reparameterize - reparameterize
         self._save_full_state = save_full_state
 
         self._Da = self._env.action_space.flat_dim
@@ -246,14 +248,17 @@ class SAC(RLAlgorithm, Serializable):
             self._obs_pl, tf.tanh(policy_dist.x_t), reuse=True)  # N
         corr = self._squash_correction(policy_dist.x_t)
 
-        kl_surrogate_loss_t = tf.reduce_mean(log_pi_t * tf.stop_gradient(
-            log_pi_t - log_target_t - corr + self._vf_t))
+        if self._reparameterize:
+            kl_loss_t = tf.reduce_mean(log_target_t + corr + log_pi_t)
+        else:
+            kl_loss_t = tf.reduce_mean(log_pi_t * tf.stop_gradient(
+                log_pi_t - log_target_t - corr + self._vf_t))
 
         self._vf_loss_t = 0.5 * tf.reduce_mean(
             (self._vf_t - tf.stop_gradient(log_target_t - log_pi_t + corr))**2)
 
         policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
-            loss=kl_surrogate_loss_t + policy_dist.reg_loss_t,
+            loss=kl_loss_t + policy_dist.reg_loss_t,
             var_list=self._policy.get_params_internal()
         )
 

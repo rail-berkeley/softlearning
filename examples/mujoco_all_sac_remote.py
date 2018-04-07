@@ -197,7 +197,7 @@ def launch_experiments(variant_generator):
             seed=variant['seed'],
             terminate_machine=True,
             log_dir=args.log_dir,
-            use_cloudpickle=True,
+            # use_cloudpickle=True,
             snapshot_mode=variant['snapshot_mode'],
             snapshot_gap=variant['snapshot_gap'],
             sync_s3_pkl=variant['sync_pkl'],
