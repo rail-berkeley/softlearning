@@ -15,7 +15,7 @@ from sac.value_functions import NNQFunction, NNVFunction
 
 COMMON_PARAMS = {
     "seed": [1, 2, 3],
-    "lr": [3E-4],
+    "lr": 3E-4,
     "discount": 0.99,
     "tau": 0.01,
     "K": 4,
