@@ -107,7 +107,7 @@ class MultiDirectionSwimmerEnv(MultiDirectionBaseEnv, SwimmerEnv):
         velocity_reward = self._velocity_reward_weight * xy_velocity
         return velocity_reward
 
-class MultiDirectionAntEnv(AntEnv):
+class MultiDirectionAntEnv(MultiDirectionBaseEnv, AntEnv):
     def __init__(self,
                  ctrl_cost_coeff=1e-2,
                  contact_cost_coeff=1e-3,
