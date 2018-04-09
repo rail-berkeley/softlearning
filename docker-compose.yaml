@@ -11,13 +11,3 @@ services:
       - ${MUJOCO_LICENSE_PATH:-./.mujoco/mjkey.txt}:/root/rllab/vendor/mujoco/mjkey.txt
     environment:
       MUJOCO_PY_MJKEY_PATH: /root/rllab/vendor/mujoco/mjkey.txt
-  lsp-sandbox:
-    image: gcr.io/tensorflow/tensorflow:1.4.1-py3
-    container_name: sac-lsp
-    ports:
-      - "8888:8888"
-    expose:
-      - "8888"
-    volumes:
-      - ./:/sac
-    command: jupyter notebook --notebook-dir=/sac --allow-root
