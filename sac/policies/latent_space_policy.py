@@ -62,7 +62,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
     def actions_for(self, observations, latents=None,
                     name=None, reuse=tf.AUTO_REUSE, with_log_pis=False,
-                    regularize=False, with_raw_actions=False):
+                    with_raw_actions=False):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
@@ -74,12 +74,11 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
             if latents is not None:
                 raw_actions = self.bijector.forward(
-                    latents, condition=conditions, regularize=regularize)
+                    latents, condition=conditions)
             else:
                 N = tf.shape(conditions)[0]
                 raw_actions = self.distribution.sample(
-                    N, bijector_kwargs={"condition": conditions,
-                                        "regularize": regularize})
+                    N, bijector_kwargs={"condition": conditions})
 
             raw_actions = tf.stop_gradient(raw_actions)
 
@@ -99,13 +98,12 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         return actions
 
     def log_pis_for(self, conditions, raw_actions, name=None,
-                    reuse=tf.AUTO_REUSE, regularize=False):
+                    reuse=tf.AUTO_REUSE):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
             log_pis = self.distribution.log_prob(
-                raw_actions, bijector_kwargs={"condition": conditions,
-                                              "regularize": regularize})
+                raw_actions, bijector_kwargs={"condition": conditions})
 
         if self._squash:
             log_pis -= self._squash_correction(raw_actions)
@@ -119,7 +117,6 @@ class LatentSpacePolicy(NNPolicy, Serializable):
             num_coupling_layers=config.get("num_coupling_layers"),
             translation_hidden_sizes=config.get("translation_hidden_sizes"),
             scale_hidden_sizes=config.get("scale_hidden_sizes"),
-            prior_regularization=config.get("prior_regularization"),
             event_ndims=self._Da)
 
         self.base_distribution = ds.MultivariateNormalDiag(

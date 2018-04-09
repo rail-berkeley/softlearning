@@ -228,7 +228,6 @@ def run_experiment(variant):
         s_t_hidden_sizes = [policy_s_t_units] * policy_s_t_layers
 
         bijector_config = {
-            'prior_regularization': policy_params['prior_regularization'],
             'num_coupling_layers': policy_params['coupling_layers'],
             'translation_hidden_sizes': s_t_hidden_sizes,
             'scale_hidden_sizes': s_t_hidden_sizes,
