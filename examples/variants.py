@@ -103,6 +103,11 @@ ENV_PARAMS = {
     'walker': { # 6 DoF
     },
     'ant': { # 8 DoF
+        'resume-training': {
+            'low_level_policy_path': [
+                # 'ant-low-level-policy-00-00/itr_4000.pkl',
+            ]
+        },
         'cross-maze': {
             'terminate_at_goal': True,
             'goal_reward_weight': [1000],
@@ -111,13 +116,20 @@ ENV_PARAMS = {
             'ctrl_cost_coeff': 0, # 1e-2,
             'contact_cost_coeff': 0, # 1e-3,
             'survive_reward': 0, # 5e-2,
-            'goal_distance': np.linalg.norm([6, -6]),
+            'goal_distance': 12,
             'goal_angle_range': (0, 2*np.pi),
 
+            'env_fixed_goal_position': [[6, -6], [6, 6], [12, 0]],
+
             'pre_trained_policy_path': []
-        }
+        },
     },
     'humanoid': { # 21 DoF
+        'resume-training': {
+            'low_level_policy_path': [
+                # 'humanoid-low-level-policy-00-00/itr_4000.pkl',
+            ]
+        }
     }
 }
 
