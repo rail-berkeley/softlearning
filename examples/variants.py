@@ -7,7 +7,7 @@ LSP_POLICY_PARAMS_BASE = {
     'type': 'lsp',
     'coupling_layers': 2,
     's_t_layers': 1,
-    'scale_regularization': 0,
+    'prior_regularization': 0,
     # 'preprocessing_hidden_sizes': None,
     'preprocessing_output_nonlinearity': 'relu',
     'squash': True

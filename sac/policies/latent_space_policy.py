@@ -119,7 +119,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
             num_coupling_layers=config.get("num_coupling_layers"),
             translation_hidden_sizes=config.get("translation_hidden_sizes"),
             scale_hidden_sizes=config.get("scale_hidden_sizes"),
-            scale_regularization=config.get("scale_regularization"),
+            prior_regularization=config.get("prior_regularization"),
             event_ndims=self._Da)
 
         self.base_distribution = ds.MultivariateNormalDiag(
