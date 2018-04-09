@@ -7,7 +7,7 @@ LSP_POLICY_PARAMS_BASE = {
     'type': 'lsp',
     'coupling_layers': 2,
     's_t_layers': 1,
-    'prior_regularization': 0,
+    'action_prior': 'normal',
     # 'preprocessing_hidden_sizes': None,
     'preprocessing_output_nonlinearity': 'relu',
     'squash': True
@@ -44,6 +44,7 @@ GMM_POLICY_PARAMS_BASE = {
     'type': 'gmm',
     'K': 4,
     'reg': 1e-3,
+    'action_prior': 'uniform',
 }
 
 GMM_POLICY_PARAMS = {

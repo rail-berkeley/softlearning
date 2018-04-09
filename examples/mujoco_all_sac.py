@@ -283,6 +283,7 @@ def run_experiment(variant):
         discount=algorithm_params['discount'],
         tau=algorithm_params['tau'],
         target_update_interval=algorithm_params['target_update_interval'],
+        action_prior=policy_params['action_prior'],
         save_full_state=False,
     )
 
