@@ -4,11 +4,13 @@ from rllab.misc.instrument import VariantGenerator
 from sac.misc.utils import flatten, get_git_rev, deep_update
 
 LSP_POLICY_PARAMS_BASE = {
+    'type': 'lsp',
     'coupling_layers': 2,
     's_t_layers': 1,
     'scale_regularization': 0,
     # 'preprocessing_hidden_sizes': None,
-    'preprocessing_output_nonlinearity': 'relu'
+    'preprocessing_output_nonlinearity': 'relu',
+    'squash': True
 }
 
 LSP_POLICY_PARAMS = {
@@ -38,6 +40,12 @@ LSP_POLICY_PARAMS = {
     }
 }
 
+GMM_POLICY_PARAMS_BASE = {
+    'type': 'gmm',
+    'K': 4,
+    'reg': 1e-3,
+}
+
 GMM_POLICY_PARAMS = {
     'swimmer': { # 2 DoF
     },
@@ -58,7 +66,10 @@ POLICY_PARAMS = {
         k: dict(LSP_POLICY_PARAMS_BASE, **v)
         for k, v in LSP_POLICY_PARAMS.items()
     },
-    'gmm': GMM_POLICY_PARAMS,
+    'gmm': {
+        k: dict(GMM_POLICY_PARAMS_BASE, **v)
+        for k, v in GMM_POLICY_PARAMS.items()
+    },
 }
 
 VALUE_FUNCTION_PARAMS = {
