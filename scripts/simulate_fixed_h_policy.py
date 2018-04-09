@@ -6,7 +6,8 @@ import pickle
 import joblib
 import tensorflow as tf
 
-from rllab.sampler.utils import rollout
+# from rllab.sampler.utils import rollout
+from sac.misc.sampler import rollout
 import numpy as np
 
 def parse_args():
@@ -36,10 +37,17 @@ def default_path_save_path(snapshot_file_path):
     path_save_path = snapshot_file_name + "_path" + snapshot_file_extension
     return path_save_path
 
+
 def simulate_policy(snapshot_path,
                     num_simulations,
                     max_path_length,
                     path_save_path=None):
+    path_save_path = path_save_path or default_path_save_path(snapshot_path)
+
+    if os.path.isfile(path_save_path):
+        print("path {} already exists".format(path_save_path))
+        return
+
     with tf.Session() as sess:
         data = joblib.load(snapshot_path)
         if 'algo' in data.keys():
@@ -51,20 +59,27 @@ def simulate_policy(snapshot_path,
 
         paths = []
         for i in range(num_simulations):
-            with policy.deterministic():
+            with policy.fix_h():
+                # path = rollout(env, policy,
+                #                max_path_length=max_path_length,
+                #                animated=False)
                 path = rollout(env, policy,
-                               max_path_length=max_path_length,
-                               animated=False)
+                               path_length=max_path_length,
+                               render=True,
+                               render_mode='human',
+                               speedup=100)
                 paths.append(path)
-
-    path_save_path = path_save_path or default_path_save_path(snapshot_path)
 
     with open(path_save_path, "wb") as f:
         pickle.dump(paths, f)
 
 def simulate_policies(args):
-    for glob_path in args.glob_patterns:
-        for snapshot_path in glob.glob(glob_path):
+    for i, glob_path in enumerate(args.glob_patterns):
+        print('glob_path {}/{}'.format(i, len(args.glob_patterns)))
+        snapshot_paths = glob.glob(glob_path)
+        for j, snapshot_path in enumerate(snapshot_paths):
+            print('snapshot_path {}/{}'.format(j, len(snapshot_paths)))
+
             tf.reset_default_graph()
             simulate_policy(snapshot_path,
                             args.num_simulations,
