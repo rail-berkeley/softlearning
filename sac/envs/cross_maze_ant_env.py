@@ -50,7 +50,6 @@ class CrossMazeAntEnv(RandomGoalAntEnv, Serializable):
             *args,
             **kwargs)
         self._serializable_initialized = False
-        Serializable.quick_init(self, locals())
 
     def reset(self, goal_position=None, *args, **kwargs):
         possible_goal_positions = [[6, -6], [6, 6], [12, 0]]
@@ -74,3 +73,14 @@ class CrossMazeAntEnv(RandomGoalAntEnv, Serializable):
             return observation[:-2]
 
         return observation
+
+    def render(self, *args, **kwargs):
+        result = super(CrossMazeAntEnv, self).render(*args, **kwargs)
+        self.viewer.cam.elevation = -55
+        self.viewer.cam.lookat[0] = 7
+        self.viewer.cam.lookat[2] = 0
+        self.viewer.cam.distance = self.model.stat.extent * 0.9
+        self.viewer.cam.azimuth = 0
+        self.viewer.cam.trackbodyid = 0
+
+        return result
