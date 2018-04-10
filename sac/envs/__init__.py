@@ -4,6 +4,7 @@ from .random_goal_ant_env import RandomGoalAntEnv
 from .random_goal_humanoid_env import RandomGoalHumanoidEnv
 from .random_wall_ant_env import RandomWallAntEnv
 
+from .random_goal_ant_env import RandomGoalAntEnv
 from .cross_maze_ant_env import CrossMazeAntEnv
 from .hierarchy_proxy_env import HierarchyProxyEnv
 from .multigoal import MultiGoalEnv
