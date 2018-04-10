@@ -140,4 +140,3 @@ class GymEnv(Env, Serializable):
 
     ***************************
                 """ % self._log_dir)
-

@@ -159,6 +159,15 @@ ENV_PARAMS = {
         'env_goal_distance': 5,
         'env_goal_angle_range': (0, 2*np.pi),
     },
+    'hopper': {
+        'default': lambda: normalize(GymEnv('Hopper-v1'))
+    },
+    'half-cheetah': {
+        'default': lambda: normalize(GymEnv('HalfCheetah-v1'))
+    },
+    'walker': {
+        'default': lambda: normalize(GymEnv('Walker2d-v1'))
+    },
 }
 
 DEFAULT_DOMAIN = DEFAULT_ENV = 'swimmer'
