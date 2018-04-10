@@ -170,7 +170,7 @@ def parse_args():
     parser.add_argument('--domain',
                         type=str,
                         choices=AVAILABLE_DOMAINS,
-                        default=DEFAULT_DOMAIN)
+                        default=None)
     parser.add_argument('--task',
                         type=str,
                         choices=AVAILABLE_TASKS,
