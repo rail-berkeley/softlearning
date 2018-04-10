@@ -238,6 +238,7 @@ def run_experiment(variant):
             env_spec=env.spec,
             squash=policy_params['squash'],
             bijector_config=bijector_config,
+            q_function=qf,
             observations_preprocessor=observations_preprocessor)
     elif policy_params['type'] == 'gmm':
         policy = GMMPolicy(

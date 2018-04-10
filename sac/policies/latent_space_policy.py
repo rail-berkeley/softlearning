@@ -158,8 +158,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
             best_action_index = np.argmax(q_values)
 
             return action_candidates[best_action_index], {}
-        else:
-            return self.get_actions(observation[None])[0], {}
+        return self.get_actions(observation[None])[0], {}
 
     def get_actions(self, observations):
         """Sample batch of actions based on the observations"""
@@ -167,7 +166,9 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         feed_dict = { self._observations_ph: observations }
 
         if self._fixed_h is not None:
-            feed_dict.update({ self._latents_ph: self._fixed_h })
+            latents = np.tile(self._fixed_h,
+                              reps=(self._n_map_action_candidates, 1))
+            feed_dict.update({ self._latents_ph: latents })
             actions = tf.get_default_session().run(
                 self._determistic_actions,
                 feed_dict=feed_dict)
