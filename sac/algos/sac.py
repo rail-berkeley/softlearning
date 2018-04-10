@@ -26,7 +26,6 @@ class SAC(RLAlgorithm, Serializable):
         min_pool_size=1000,
         epoch_length=1000,
         n_epochs=1000,
-        max_path_length=1000,
         batch_size=64,
         scale_reward=1,
         n_train_repeat=1,

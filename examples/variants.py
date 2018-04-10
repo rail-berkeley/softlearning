@@ -140,10 +140,7 @@ ALGORITHM_PARAMS_BASE = {
     'tau': 1e-2,
 
     'base_kwargs': {
-        'min_pool_size': 1000,
         'epoch_length': 1000,
-        'max_path_length': 1000,
-        'batch_size': 128,
         'n_train_repeat': 1,
         'eval_render': False,
         'eval_n_episodes': 1,
@@ -192,6 +189,12 @@ ALGORITHM_PARAMS = {
 
 REPLAY_BUFFER_PARAMS = {
     'max_replay_buffer_size': 1e6,
+}
+
+SAMPLER_PARAMS = {
+    'max_path_length': 1000,
+    'min_pool_size': 1000,
+    'batch_size': 128,
 }
 
 RUN_PARAMS = {
@@ -244,22 +247,23 @@ def parse_domain_and_task(env_name):
     return domain, task
 
 def get_variants(domain, task, policy):
-    params = dict(
-        prefix='{}/{}'.format(domain, task),
-        domain=domain,
-        task=task,
-        git_sha=get_git_rev(),
+    params = {
+        'prefix': '{}/{}'.format(domain, task),
+        'domain': domain,
+        'task': task,
+        'git_sha': get_git_rev(),
 
-        env_params = ENV_PARAMS[domain].get(task, {}),
-        policy_params = POLICY_PARAMS[policy][domain],
-        value_fn_params = VALUE_FUNCTION_PARAMS,
-        algorithm_params = deep_update(
+        'env_params': ENV_PARAMS[domain].get(task, {}),
+        'policy_params': POLICY_PARAMS[policy][domain],
+        'value_fn_params': VALUE_FUNCTION_PARAMS,
+        'algorithm_params': deep_update(
             ALGORITHM_PARAMS_BASE,
             ALGORITHM_PARAMS[domain]
         ),
-        replay_buffer_params = REPLAY_BUFFER_PARAMS,
-        run_params=RUN_PARAMS,
-    )
+        'replay_buffer_params': REPLAY_BUFFER_PARAMS,
+        'sampler_params': SAMPLER_PARAMS,
+        'run_params': RUN_PARAMS,
+    }
 
     # TODO: Remove flatten. Our variant generator should support nested params
     params = flatten(params, separator='.')

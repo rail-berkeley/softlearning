@@ -193,6 +193,7 @@ def run_experiment(variant):
     value_fn_params = variant['value_fn_params']
     algorithm_params = variant['algorithm_params']
     replay_buffer_params = variant['replay_buffer_params']
+    sampler_params = variant['sampler_params']
 
     task = variant['task']
     domain = variant['domain']
