@@ -7,7 +7,7 @@ LSP_POLICY_PARAMS_BASE = {
     'type': 'lsp',
     'coupling_layers': 2,
     's_t_layers': 1,
-    'action_prior': 'normal',
+    'action_prior': 'uniform',
     # 'preprocessing_hidden_sizes': None,
     'preprocessing_output_nonlinearity': 'relu',
     'squash': True
@@ -197,11 +197,32 @@ SAMPLER_PARAMS = {
     'batch_size': 128,
 }
 
-RUN_PARAMS = {
+RUN_PARAMS_BASE = {
     'seed': [1,2,3,4,5],
     'snapshot_mode': 'gap',
     'snapshot_gap': 1000,
     'sync_pkl': True,
+}
+
+RUN_PARAMS = {
+    'swimmer': { # 2 DoF
+        'snapshot_gap': 200
+    },
+    'hopper': { # 3 DoF
+        'snapshot_gap': 600
+    },
+    'half-cheetah': { # 6 DoF
+        'snapshot_gap': 2000
+    },
+    'walker': { # 6 DoF
+        'snapshot_gap': 1000
+    },
+    'ant': { # 8 DoF
+        'snapshot_gap': 2000
+    },
+    'humanoid': { # 21 DoF
+        'snapshot_gap': 4000
+    }
 }
 
 
@@ -262,7 +283,7 @@ def get_variants(domain, task, policy):
         ),
         'replay_buffer_params': REPLAY_BUFFER_PARAMS,
         'sampler_params': SAMPLER_PARAMS,
-        'run_params': RUN_PARAMS,
+        'run_params': deep_update(RUN_PARAMS_BASE, RUN_PARAMS[domain]),
     }
 
     # TODO: Remove flatten. Our variant generator should support nested params
