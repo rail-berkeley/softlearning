@@ -36,7 +36,7 @@ ENVIRONMENTS = {
         'multi-direction': MultiDirectionSwimmerEnv,
     },
     'ant': {
-        'default': AntEnv,
+        'default': lambda: normalize(GymEnv('Ant-v1')),
         'multi-direction': MultiDirectionAntEnv,
         'cross-maze': CrossMazeAntEnv
     },
