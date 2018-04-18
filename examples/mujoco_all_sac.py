@@ -5,12 +5,11 @@ import tensorflow as tf
 import numpy as np
 
 from rllab.envs.normalized_env import normalize
-# from rllab.envs.mujoco.gather.ant_gather_env import AntGatherEnv
+from rllab.envs.mujoco.gather.ant_gather_env import AntGatherEnv
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
-# from rllab.envs.mujoco.ant_env import AntEnv
-# from rllab.envs.mujoco.humanoid_env import HumanoidEnv
+from rllab.envs.mujoco.ant_env import AntEnv
+from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
-from rllab import config
 
 from softlearning.algorithms import SAC
 from softlearning.environments import (
@@ -30,6 +29,7 @@ from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variants
 
+REPARAMETERIZE = True
 ENVIRONMENTS = {
     'swimmer': {
         'default': SwimmerEnv,
@@ -58,8 +58,6 @@ ENVIRONMENTS = {
 DEFAULT_DOMAIN = DEFAULT_ENV = 'swimmer'
 AVAILABLE_DOMAINS = set(ENVIRONMENTS.keys())
 AVAILABLE_TASKS = set(y for x in ENVIRONMENTS.values() for y in x.keys())
-
-REPARAMETERIZE = True
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -136,7 +134,8 @@ def run_experiment(variant):
             env_spec=env.spec,
             squash=policy_params['squash'],
             bijector_config=bijector_config,
-            reparameterize=REPARAMETERIZE, # policy_params['reparameterize'], q_function=qf,
+            reparameterize=REPARAMETERIZE, # policy_params['reparameterize']
+            q_function=qf,
             observations_preprocessor=observations_preprocessor)
     elif policy_params['type'] == 'gmm':
         policy = GMMPolicy(
@@ -199,7 +198,6 @@ def launch_experiments(variant_generator, args):
             snapshot_gap=run_params['snapshot_gap'],
             sync_s3_pkl=run_params['sync_pkl'],
         )
-        return
 
 
 def main():
