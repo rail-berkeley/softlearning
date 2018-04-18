@@ -5,11 +5,12 @@ import tensorflow as tf
 import numpy as np
 
 from rllab.envs.normalized_env import normalize
-from rllab.envs.mujoco.gather.ant_gather_env import AntGatherEnv
+# from rllab.envs.mujoco.gather.ant_gather_env import AntGatherEnv
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
-from rllab.envs.mujoco.ant_env import AntEnv
-from rllab.envs.mujoco.humanoid_env import HumanoidEnv
+# from rllab.envs.mujoco.ant_env import AntEnv
+# from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
+from rllab import config
 
 from softlearning.algorithms import SAC
 from softlearning.environments import (
@@ -27,7 +28,7 @@ from softlearning.misc.sampler import SimpleSampler
 from softlearning.replay_buffers import SimpleReplayBuffer
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
-from .variants import parse_domain_and_task, get_variants
+from examples.variants import parse_domain_and_task, get_variants
 
 ENVIRONMENTS = {
     'swimmer': {
@@ -57,6 +58,8 @@ ENVIRONMENTS = {
 DEFAULT_DOMAIN = DEFAULT_ENV = 'swimmer'
 AVAILABLE_DOMAINS = set(ENVIRONMENTS.keys())
 AVAILABLE_TASKS = set(y for x in ENVIRONMENTS.values() for y in x.keys())
+
+REPARAMETERIZE = True
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -133,7 +136,7 @@ def run_experiment(variant):
             env_spec=env.spec,
             squash=policy_params['squash'],
             bijector_config=bijector_config,
-            q_function=qf,
+            reparameterize=REPARAMETERIZE, # policy_params['reparameterize'], q_function=qf,
             observations_preprocessor=observations_preprocessor)
     elif policy_params['type'] == 'gmm':
         policy = GMMPolicy(
@@ -157,6 +160,7 @@ def run_experiment(variant):
         scale_reward=algorithm_params['scale_reward'],
         discount=algorithm_params['discount'],
         tau=algorithm_params['tau'],
+        reparameterize=REPARAMETERIZE,
         target_update_interval=algorithm_params['target_update_interval'],
         action_prior=policy_params['action_prior'],
         save_full_state=False,
@@ -195,6 +199,7 @@ def launch_experiments(variant_generator, args):
             snapshot_gap=run_params['snapshot_gap'],
             sync_s3_pkl=run_params['sync_pkl'],
         )
+        return
 
 
 def main():
