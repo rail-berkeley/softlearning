@@ -373,8 +373,8 @@ class SAC(RLAlgorithm, Serializable):
         """
 
         feed_dict = self._get_feed_dict(iteration, batch)
-        qf1, qf2, vf, td_loss = self._sess.run(
-            (self._qf1_t, self._qf2_t, self._vf_t, self._td_loss_t), feed_dict)
+        qf1, qf2, vf, td1_loss, td2_loss = self._sess.run(
+            (self._qf1_t, self._qf2_t, self._vf_t, self._td1_loss_t, self._td2_loss_t), feed_dict)
 
         logger.record_tabular('qf1-avg', np.mean(qf1))
         logger.record_tabular('qf1-std', np.std(qf1))
@@ -383,7 +383,8 @@ class SAC(RLAlgorithm, Serializable):
         logger.record_tabular('mean-qf-diff', np.mean(np.abs(qf1-qf2)))
         logger.record_tabular('vf-avg', np.mean(vf))
         logger.record_tabular('vf-std', np.std(vf))
-        logger.record_tabular('mean-sq-bellman-error', td_loss)
+        logger.record_tabular('mean-sq-bellman-error1', td_loss1)
+        logger.record_tabular('mean-sq-bellman-error2', td_loss2)
 
         self._policy.log_diagnostics(iteration, batch)
         if self._plotter:
