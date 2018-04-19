@@ -11,7 +11,7 @@ class NNVFunction(MLPFunction):
     def __init__(self,
                  env_spec,
                  hidden_layer_sizes=(128, 128),
-                 name='v_function'):
+                 name='vf'):
         Serializable.quick_init(self, locals())
 
         self._Do = env_spec.observation_space.flat_dim
@@ -33,7 +33,7 @@ class NNQFunction(MLPFunction):
     def __init__(self,
                  env_spec,
                  hidden_layer_sizes=(128, 128),
-                 name='q_function'):
+                 name='qf'):
         Serializable.quick_init(self, locals())
 
         self._Da = env_spec.action_space.flat_dim
