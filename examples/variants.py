@@ -1,4 +1,5 @@
 import numpy as np
+from ray import tune
 
 from rllab.misc.instrument import VariantGenerator
 from softlearning.misc.utils import flatten, get_git_rev, deep_update
@@ -175,7 +176,7 @@ ENV_PARAMS = {
         },
         'cross-maze': {
             'terminate_at_goal': True,
-            'goal_reward_weight': [1000],
+            'goal_reward_weight': 1000,
             'goal_radius': 2,
             'velocity_reward_weight': 0,
             'ctrl_cost_coeff': 0, # 1e-2,
@@ -184,7 +185,7 @@ ENV_PARAMS = {
             'goal_distance': 12,
             'goal_angle_range': (0, 2*np.pi),
 
-            'env_fixed_goal_position': [[6, -6], [6, 6], [12, 0]],
+            'env_fixed_goal_position': tune.grid_search([[6, -6], [6, 6], [12, 0]]),
 
             'pre_trained_policy_path': []
         },
@@ -294,7 +295,7 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS_BASE = {
-    'seed': [1,2,3,4,5],
+    'seed': tune.grid_search([1,2,3,4,5]),
     'snapshot_mode': 'gap',
     'snapshot_gap': 1000,
     'sync_pkl': True,
@@ -384,7 +385,7 @@ def parse_domain_and_task(env_name):
     return domain, task
 
 def get_variants(domain, task, policy):
-    params = {
+    variants = {
         'prefix': '{}/{}'.format(domain, task),
         'domain': domain,
         'task': task,
@@ -402,14 +403,4 @@ def get_variants(domain, task, policy):
         'run_params': deep_update(RUN_PARAMS_BASE, RUN_PARAMS[domain]),
     }
 
-    # TODO: Remove flatten. Our variant generator should support nested params
-    params = flatten(params, separator='.')
-
-    vg = VariantGenerator()
-    for key, val in params.items():
-        if isinstance(val, list) or callable(val):
-            vg.add(key, val)
-        else:
-            vg.add(key, [val])
-
-    return vg
+    return variants

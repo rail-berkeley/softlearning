@@ -169,10 +169,16 @@ class SAC(RLAlgorithm, Serializable):
         self._sess.run(tf.variables_initializer(uninit_vars))
 
     @overrides
-    def train(self):
+    def train(self, *args, **kwargs):
         """Initiate training of the SAC instance."""
 
-        self._train(self._env, self._policy, self._initial_exploration_policy, self._pool)
+        return self._train(
+            self._env,
+            self._policy,
+            self._initial_exploration_policy,
+            self._pool,
+            *args,
+            **kwargs)
 
     def _init_placeholders(self):
         """Create input placeholders for the SAC algorithm.

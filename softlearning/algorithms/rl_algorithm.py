@@ -70,7 +70,7 @@ class RLAlgorithm(Algorithm):
         self._policy = None
         self._pool = None
 
-    def _train(self, env, policy, initial_exploration_policy, pool):
+    def _train(self, env, policy, initial_exploration_policy, pool, as_iterable=False):
         """Perform RL training.
 
         Args:
@@ -118,8 +118,7 @@ class RLAlgorithm(Algorithm):
                             batch=self.sampler.random_batch())
                     gt.stamp('train')
 
-                self._evaluate(policy, evaluation_env, epoch)
-                gt.stamp('eval')
+                mean_returns = self._evaluate(epoch)
 
                 params = self.get_snapshot(epoch)
                 logger.save_itr_params(epoch, params)
@@ -140,6 +139,11 @@ class RLAlgorithm(Algorithm):
 
                 logger.dump_tabular(with_prefix=False)
                 logger.pop_prefix()
+
+                gt.stamp('eval')
+
+                if as_iterable:
+                    yield epoch, mean_returns
 
             self.sampler.terminate()
 
@@ -180,6 +184,8 @@ class RLAlgorithm(Algorithm):
         iteration = epoch * self._epoch_length
         batch = self.sampler.random_batch()
         self.log_diagnostics(iteration, batch)
+
+        return np.mean(total_returns)
 
     @abc.abstractmethod
     def log_diagnostics(self, iteration, batch):
