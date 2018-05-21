@@ -6,7 +6,7 @@ import numpy as np
 from softlearning.misc.nn import feedforward_net
 
 LOG_SIG_CAP_MAX = 2
-LOG_SIG_CAP_MIN = -5
+LOG_SIG_CAP_MIN = 20
 LOG_W_CAP_MIN = -10
 
 
@@ -17,11 +17,13 @@ class GMM(object):
             Dx,
             hidden_layers_sizes=(100, 100),
             reg=0.001,
+            reparameterize=True,
             cond_t_lst=(),
     ):
         self._cond_t_lst = cond_t_lst
         self._reg = reg
         self._layer_sizes = list(hidden_layers_sizes) + [K * (2 * Dx + 1)]
+        self._reparameterize = reparameterize
 
         self._Dx = Dx
         self._K = K
@@ -75,7 +77,6 @@ class GMM(object):
         log_sig_t = w_and_mu_and_logsig_t[..., 1+Dx:]
 
         log_sig_t = tf.clip_by_value(log_sig_t, LOG_SIG_CAP_MIN, LOG_SIG_CAP_MAX)
-
         log_w_t = tf.maximum(log_w_t, LOG_W_CAP_MIN)
 
         return log_w_t, mu_t, log_sig_t
@@ -108,7 +109,9 @@ class GMM(object):
             xz_sig_t = tf.boolean_mask(xz_sigs_t, mask_t)  # N x Dx
 
             # Sample x.
-            x_t = tf.stop_gradient(xz_mu_t + xz_sig_t * tf.random_normal((N_t, Dx)))  # N x Dx
+            x_t = xz_mu_t + xz_sig_t * tf.random_normal((N_t, Dx))  # N x Dx
+            if not self._reparameterize:
+                x_t = tf.stop_gradient(x_t)
 
             # log p(x|z)
             log_p_xz_t = self._create_log_gaussian(

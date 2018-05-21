@@ -12,6 +12,7 @@ from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
 
 # from softlearning.algorithms import SAC
+# move these into main SAC
 from softlearning.algorithms.sac_min_q_vf import SAC
 from softlearning.environments import (
     GymEnv,
@@ -30,7 +31,6 @@ from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variants
 
-REPARAMETERIZE = True
 ENVIRONMENTS = {
     'swimmer': {
         'default': SwimmerEnv,
@@ -136,7 +136,7 @@ def run_experiment(variant):
             env_spec=env.spec,
             squash=policy_params['squash'],
             bijector_config=bijector_config,
-            reparameterize=REPARAMETERIZE, # policy_params['reparameterize']
+            reparameterize=policy_params['reparameterize'],
             q_function=qf1,
             observations_preprocessor=observations_preprocessor)
     elif policy_params['type'] == 'gmm':
@@ -162,7 +162,7 @@ def run_experiment(variant):
         scale_reward=algorithm_params['scale_reward'],
         discount=algorithm_params['discount'],
         tau=algorithm_params['tau'],
-        reparameterize=REPARAMETERIZE,
+        reparameterize=algorithm_params['reparameterize'],
         target_update_interval=algorithm_params['target_update_interval'],
         action_prior=policy_params['action_prior'],
         save_full_state=False,

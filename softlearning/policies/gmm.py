@@ -67,7 +67,11 @@ class GMMPolicy(NNPolicy, Serializable):
                 reg=self._reg
             )
 
-        raw_actions = tf.stop_gradient(distribution.x_t)
+        if self._reparameterize:
+            raw_actions = distribution.x_t
+        else:
+            raw_actions = tf.stop_gradient(distribution.x_t)
+
         actions = tf.tanh(raw_actions) if self._squash else raw_actions
 
         # TODO: should always return same shape out

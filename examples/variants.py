@@ -3,6 +3,9 @@ import numpy as np
 from rllab.misc.instrument import VariantGenerator
 from softlearning.misc.utils import flatten, get_git_rev, deep_update
 
+M = 256
+REPARAMETERIZE = True
+
 LSP_POLICY_PARAMS_BASE = {
     'type': 'lsp',
     'coupling_layers': 2,
@@ -10,32 +13,33 @@ LSP_POLICY_PARAMS_BASE = {
     'action_prior': 'uniform',
     # 'preprocessing_layer_sizes': None,
     'preprocessing_output_nonlinearity': 'relu',
+    'reparameterize': REPARAMETERIZE,
     'squash': True
 }
 
 LSP_POLICY_PARAMS = {
     'swimmer': { # 2 DoF
-        'preprocessing_layer_sizes': (128, 128, 4),
+        'preprocessing_layer_sizes': (M, M, 4),
         's_t_units': 2,
     },
     'hopper': { # 3 DoF
-        'preprocessing_layer_sizes': (128, 128, 6),
+        'preprocessing_layer_sizes': (M, M, 6),
         's_t_units': 3,
     },
     'half-cheetah': { # 6 DoF
-        'preprocessing_layer_sizes': (128, 128, 12),
+        'preprocessing_layer_sizes': (M, M, 12),
         's_t_units': 6,
     },
     'walker': { # 6 DoF
-        'preprocessing_layer_sizes': (128, 128, 12),
+        'preprocessing_layer_sizes': (M, M, 12),
         's_t_units': 6,
     },
     'ant': { # 8 DoF
-        'preprocessing_layer_sizes': (128, 128, 16),
+        'preprocessing_layer_sizes': (M, M, 16),
         's_t_units': 8,
     },
-    'humanoid': { # 21 DoF
-        'preprocessing_layer_sizes': (128, 128, 42),
+    'humanoid': { # 21 DoF, change this if using gym humanoid
+        'preprocessing_layer_sizes': (M, M, 42),
         's_t_units': 21,
     }
 }
@@ -45,6 +49,7 @@ GMM_POLICY_PARAMS_BASE = {
     'K': 4,
     'reg': 1e-3,
     'action_prior': 'uniform',
+    'reparameterize': REPARAMETERIZE
 }
 
 GMM_POLICY_PARAMS = {
@@ -74,7 +79,7 @@ POLICY_PARAMS = {
 }
 
 VALUE_FUNCTION_PARAMS = {
-    'layer_size': 128,
+    'layer_size': M,
 
 }
 
@@ -134,10 +139,11 @@ ENV_PARAMS = {
 }
 
 ALGORITHM_PARAMS_BASE = {
-    'lr': 3e-4,
+    'lr': [3e-4],
     'discount': 0.99,
     'target_update_interval': 1,
-    'tau': 1e-2,
+    'tau': 1e-3,
+    'reparameterize': REPARAMETERIZE,
 
     'base_kwargs': {
         'epoch_length': 1000,
@@ -201,35 +207,35 @@ GMM_ALGORITHM_PARAMS = {
         }
     },
     'hopper': { # 3 DoF
-        'scale_reward': 1,
+        'scale_reward': [1,3,5,10],
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'eval_deterministic': True,
         }
     },
     'half-cheetah': { # 6 DoF
-        'scale_reward': 1,
+        'scale_reward': [1,3,5],
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
             'eval_deterministic': True,
         }
     },
     'walker': { # 6 DoF
-        'scale_reward': 3,
+        'scale_reward': [3,5,10],
         'base_kwargs': {
             'n_epochs': int(5e3 + 1),
             'eval_deterministic': True,
         }
     },
     'ant': { # 8 DoF
-        'scale_reward': 3,
+        'scale_reward': [3,5,10],
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
             'eval_deterministic': True,
         }
     },
     'humanoid': { # 21 DoF
-        'scale_reward': 3,
+        'scale_reward': [3,5,10,20],
         'base_kwargs': {
             'n_epochs': int(2e4 + 1),
             'eval_deterministic': True,
@@ -261,12 +267,12 @@ REPLAY_BUFFER_PARAMS = {
 SAMPLER_PARAMS = {
     'max_path_length': 1000,
     'min_pool_size': 1000,
-    'batch_size': 128,
+    'batch_size': 256,
 }
 
-RUN_PARAMS_BASE = {
-    'seed': [1,2,3,4,5],
-    'snapshot_mode': 'gap',
+RUN_PARAMS = {
+    'seed': [1,11,21],
+    'snapshot_mode': 'last',
     'snapshot_gap': 1000,
     'sync_pkl': True,
 }
@@ -299,7 +305,7 @@ DOMAINS = [
     'half-cheetah', # 6 DoF
     'walker', # 6 DoF
     'ant', # 8 DoF
-    'humanoid', # 21 DoF
+    'humanoid', # 21 DoF # add gym_humanoid
 ]
 
 TASKS = {
