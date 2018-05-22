@@ -16,12 +16,15 @@ dependencies:
   - chardet==3.0.4
   - click==6.7
   - colorama==0.3.7
+  - cryptography==2.2.2
   - cycler==0.10.0
+  - cython==0.28.2
   - docutils==0.14
   - flatbuffers==2015.12.22.1
   - funcsigs==1.0.2
   - future==0.16.0
   - gast==0.2.0
+  - google-python-api-client==1.6.7
   - grpcio==1.11.0
   - gtimer==1.0.0b5
   - gym==0.9.7
@@ -36,7 +39,6 @@ dependencies:
   - matplotlib==2.2.2
   - more-itertools==4.1.0
   - numpy==1.14.3
-  - opencv-python==3.4.0.12
   - path.py==11.0.1
   - pluggy==0.6.0
   - protobuf==3.5.2.post1
@@ -50,7 +52,7 @@ dependencies:
   - python-dateutil==2.6.1
   - pytz==2018.4
   - pyyaml==3.12
-  - ray==0.4.0
+  - "git+git://github.com/hartikainen/ray.git@35d946e15e8fdaa4e2a037ec4e40cef442b24373#subdirectory=python"
   - redis==2.10.6
   - requests==2.18.4
   - rsa==3.4.2
