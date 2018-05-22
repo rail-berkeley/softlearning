@@ -24,7 +24,7 @@ from softlearning.environments import (
 
 from softlearning.misc.instrument import launch_experiment
 from softlearning.misc.utils import timestamp, unflatten
-from softlearning.policies import LatentSpacePolicy, GMMPolicy
+from softlearning.policies import LatentSpacePolicy, GMMPolicy, UniformPolicy
 from softlearning.misc.sampler import SimpleSampler
 from softlearning.replay_buffers import SimpleReplayBuffer
 from softlearning.value_functions import NNQFunction, NNVFunction
@@ -105,6 +105,7 @@ def run_experiment(variant):
     qf1 = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M), name='qf1')
     qf2 = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M), name='qf2')
     vf = NNVFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
+    initial_exploration_policy = UniformPolicy(env_spec=env.spec)
 
     if policy_params['type'] == 'lsp':
         nonlinearity = {
@@ -154,6 +155,7 @@ def run_experiment(variant):
         base_kwargs=base_kwargs,
         env=env,
         policy=policy,
+        initial_exploration_policy=initial_exploration_policy,
         pool=pool,
         qf1=qf1,
         qf2=qf2,

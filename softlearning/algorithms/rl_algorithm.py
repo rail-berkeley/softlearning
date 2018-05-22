@@ -46,6 +46,7 @@ class RLAlgorithm(Algorithm):
         self._n_epochs = n_epochs
         self._n_train_repeat = n_train_repeat
         self._epoch_length = epoch_length
+        self._n_initial_exploration_steps = initial_exploration_steps
         if control_interval != 1:
             # TODO(hartikainen): we used to support control_interval in our old
             # SAC code, but it was removed because of the hacky implementation.
@@ -62,7 +63,11 @@ class RLAlgorithm(Algorithm):
 
         self._sess = tf_utils.get_default_session()
 
-    def _train(self, env, policy, pool):
+        self._env = None
+        self._policy = None
+        self._pool = None
+
+    def _train(self, env, policy, initial_exploration_policy, pool):
         """Perform RL training.
 
         Args:
@@ -71,7 +76,7 @@ class RLAlgorithm(Algorithm):
             pool (`PoolBase`): Sample pool to add samples to
         """
         self._init_training()
-        self.sampler.initialize(env, policy, pool)
+        self.sampler.initialize(env, inital_exploration_policy, pool)
 
         evaluation_env = deep_clone(env) if self._eval_n_episodes else None
 
@@ -85,6 +90,8 @@ class RLAlgorithm(Algorithm):
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
                 for t in range(self._epoch_length):
+                    if self._epoch_length * epoch >= self._n_initial_exploration_steps:
+                        self.sampler.set_policy(policy)
                     self.sampler.sample()
                     if not self.sampler.batch_ready():
                         continue

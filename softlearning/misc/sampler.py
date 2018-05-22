@@ -94,6 +94,9 @@ class Sampler(object):
         self.policy = policy
         self.pool = pool
 
+    def set_policy(self, policy):
+        self.policy = policy
+
     def sample(self):
         raise NotImplementedError
 
