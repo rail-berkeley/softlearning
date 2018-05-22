@@ -1,6 +1,7 @@
-name: sac
+name: sac-ray
 channels:
 - defaults
+- conda-forge
 dependencies:
 - python=3.6.5
 - pip:
