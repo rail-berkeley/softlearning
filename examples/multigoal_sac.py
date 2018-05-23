@@ -3,8 +3,7 @@ import numpy as np
 
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import run_experiment_lite
-
-from sac.algos.sac import SAC
+from sac.algos import SAC
 from sac.envs import MultiGoalEnv
 from sac.misc.plotter import QFPolicyPlotter
 from sac.misc.utils import timestamp

@@ -9,8 +9,6 @@ from rllab.misc.overrides import overrides
 
 from .base import RLAlgorithm
 
-EPS = 1E-6
-
 
 class SAC(RLAlgorithm, Serializable):
     """Soft Actor-Critic (SAC)
@@ -275,8 +273,11 @@ class SAC(RLAlgorithm, Serializable):
         policy_kl_loss = tf.reduce_mean(log_pi * tf.stop_gradient(
             log_pi - log_target + self._vf_t - policy_prior_log_probs))
 
-        kl_loss_t = tf.reduce_mean(log_pi_t * tf.stop_gradient(
-            log_pi_t - log_target_t - corr + self._vf_t))
+        policy_regularization_losses = tf.get_collection(
+            tf.GraphKeys.REGULARIZATION_LOSSES,
+            scope=self._policy.name)
+        policy_regularization_loss = tf.reduce_sum(
+            policy_regularization_losses)
 
         policy_loss = (policy_kl_loss
                        + policy_regularization_loss)
@@ -287,7 +288,7 @@ class SAC(RLAlgorithm, Serializable):
         )**2)
 
         policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
-            loss=kl_loss_t + policy_dist.reg_loss_t,
+            loss=policy_loss,
             var_list=self._policy.get_params_internal()
         )
 

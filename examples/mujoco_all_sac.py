@@ -23,141 +23,25 @@ from sac.envs import (
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp, unflatten
 from sac.policies import LatentSpacePolicy, GMMPolicy
+from sac.misc.sampler import SimpleSampler
 from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
 from sac.preprocessors import MLPPreprocessor
 from .variants import parse_domain_and_task, get_variants
 
-try:
-    import git
-    repo = git.Repo(os.getcwd())
-    git_rev = repo.active_branch.commit.name_rev
-except:
-    git_rev = None
-
-COMMON_PARAMS = {
-    "seed": np.random.randint(1, 100, 2).tolist(),
-    "lr": 3e-4,
-    "discount": 0.99,
-    "target_update_interval": 1,
-    "tau": 1e-2,
-    "layer_size": 128,
-    "batch_size": 128,
-    "max_pool_size": 1e6,
-    "n_train_repeat": [1],
-    "epoch_length": 1000,
-    "snapshot_mode": 'gap',
-    "snapshot_gap": 100,
-    "sync_pkl": True,
-
-    # real nvp configs
-    "policy_coupling_layers": [2],
-    "policy_s_t_layers": [1],
-    "policy_s_t_units": [128],
-    "policy_scale_regularization": 1e-3,
-
-    "preprocessing_hidden_sizes": None,
-    "preprocessing_output_nonlinearity": 'relu',
-
-    "git_sha": git_rev
-}
-ENV_PARAMS = {
-    'random-goal-swimmer': { # 2 DoF
-        'prefix': 'random-goal-swimmer',
-        'env_name': 'random-goal-swimmer',
-        'epoch_length': 2000,
-        'max_path_length': 2000,
-        'n_epochs': 4002,
-        'scale_reward': 100.0,
-
-        "preprocessing_hidden_sizes": None,
-        "env_goal_reward_weight": 1e-3,
-        'policy_s_t_units': 2,
+ENVIRONMENTS = {
+    'swimmer': {
+        'default': SwimmerEnv,
+        'multi-direction': MultiDirectionSwimmerEnv,
     },
-    'multi-direction-swimmer': { # 2 DoF
-        'prefix': 'multi-direction-swimmer',
-        'env_name': 'multi-direction-swimmer',
-        'epoch_length': 1000,
-        'max_path_length': 1000,
-        'n_epochs': int(5e2 + 1),
-        'scale_reward': 100.0,
-
-        "preprocessing_hidden_sizes": None,
+    'ant': {
+        'default': AntEnv,
+        'multi-direction': MultiDirectionAntEnv,
+        'cross-maze': CrossMazeAntEnv
     },
-    'random-goal-swimmer': {  # 2 DoF
-        'prefix': 'random-goal-swimmer',
-        'env_name': 'random-goal-swimmer',
-        'epoch_length': 1000,
-        'max_path_length': 1000,
-        'n_epochs': int(5e3 + 1),
-        'scale_reward': 100.0,
-
-        'preprocessing_hidden_sizes': (128, 128, 4),
-        'policy_s_t_units': 2,
-
-        'snapshot_gap': 500,
-
-        'env_reward_type': ['dense'],
-        'env_terminate_at_goal': False,
-        'env_goal_reward_weight': 3e-1,
-        'env_goal_radius': 0.25,
-        'env_goal_distance': 5,
-        'env_goal_angle_range': (-0.25*np.pi, 0.25*np.pi),
-    },
-    'multi-direction-ant': {  # 2 DoF
-        'prefix': 'multi-direction-ant',
-        'env_name': 'multi-direction-ant',
-        'epoch_length': 1000,
-        'max_path_length': 1000,
-        'n_epochs': int(10e3 + 1),
-        'scale_reward': [3.0, 10.0],
-
-        'preprocessing_hidden_sizes': (128, 128, 16),
-        'policy_s_t_units': 8,
-
-        'snapshot_gap': 2000,
-    },
-    'random-goal-ant': {  # 8 DoF
-        'prefix': 'random-goal-ant',
-        'env_name': 'random-goal-ant',
-        'epoch_length': 1000,
-        'max_path_length': 1000,
-        'n_epochs': int(10e3 + 1),
-        'scale_reward': 10.0,
-
-        'preprocessing_hidden_sizes': (128, 128, 16),
-        'policy_s_t_units': 8,
-    },
-
-    'multi-direction-humanoid': {  # 21 DoF
-        'prefix': 'multi-direction-humanoid',
-        'env_name': 'multi-direction-humanoid',
-        'epoch_length': 1000,
-        'max_path_length': 1000,
-        'n_epochs': int(2e4 + 1),
-        'scale_reward': 3.0,
-
-        'preprocessing_hidden_sizes': (128, 128, 42),
-        'policy_s_t_units': 21,
-
-        'snapshot_gap': 2000,
-    },
-    'multi-direction-humanoid': {  # 2 DoF
-        'prefix': 'multi-direction-humanoid',
-        'env_name': 'multi-direction-humanoid',
-        'max_path_length': 1000,
-        'n_epochs': 20000,
-        'preprocessing_hidden_sizes': (128, 128, 42),
-        'policy_s_t_units': 21,
-
-        'snapshot_gap': 4000,
-
-        'env_reward_type': ['dense'],
-        'env_terminate_at_goal': False,
-        'env_goal_reward_weight': 3e-1,
-        'env_goal_radius': 0.25,
-        'env_goal_distance': 5,
-        'env_goal_angle_range': (0, 2*np.pi),
+    'humanoid': {
+        'default': HumanoidEnv,
+        'multi-direction': MultiDirectionHumanoidEnv,
     },
     'hopper': {
         'default': lambda: normalize(GymEnv('Hopper-v1'))
@@ -211,7 +95,9 @@ def run_experiment(variant):
 
     pool = SimpleReplayBuffer(env_spec=env.spec, **replay_buffer_params)
 
-    base_kwargs = algorithm_params['base_kwargs']
+    sampler = SimpleSampler(**sampler_params)
+
+    base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
     M = value_fn_params['layer_size']
     qf = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
@@ -258,28 +144,7 @@ def run_experiment(variant):
             reg=1e-3,
         )
     else:
-        observations_preprocessor = None
-
-    policy_s_t_layers = policy_params['s_t_layers']
-    policy_s_t_units = policy_params['s_t_units']
-    s_t_hidden_sizes = [policy_s_t_units] * policy_s_t_layers
-
-    bijector_config = {
-        'scale_regularization': policy_params['scale_regularization'],
-        'num_coupling_layers': policy_params['coupling_layers'],
-        'translation_hidden_sizes': s_t_hidden_sizes,
-        'scale_hidden_sizes': s_t_hidden_sizes,
-    }
-
-    policy = LatentSpacePolicy(
-        env_spec=env.spec,
-        mode="train",
-        squash=True,
-        real_nvp_config=real_nvp_config,
-        observations_preprocessor=observations_preprocessor,
-        q_function=qf,
-        n_map_action_candidates=variant['n_map_action_candidates']
-    )
+        raise NotImplementedError(policy_params['type'])
 
     algorithm = SAC(
         base_kwargs=base_kwargs,

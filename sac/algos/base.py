@@ -59,6 +59,14 @@ class RLAlgorithm(Algorithm):
         self._pool = None
 
     def _train(self, env, policy, pool):
+        """Perform RL training.
+
+        Args:
+            env (`rllab.Env`): Environment used for training
+            policy (`Policy`): Policy used for training
+            pool (`PoolBase`): Sample pool to add samples to
+        """
+
         self._init_training(env, policy, pool)
         self.sampler.initialize(env, policy, pool)
 
@@ -71,41 +79,11 @@ class RLAlgorithm(Algorithm):
                                       save_itrs=True):
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
-                num_steps = int(np.ceil(self._epoch_length/self._control_interval))
-                for t in range(num_steps):
-                    iteration = t + epoch * self._epoch_length
-
-                    action, _ = policy.get_action(observation)
-
-                    for i in range(self._control_interval):
-                        next_ob, reward, terminal, info = env.step(action)
-
-                        path_length += 1
-                        path_return += reward
-
-                        if terminal or path_length >= self._max_path_length:
-                            break
-
-                    self._pool.add_sample(
-                        observation,
-                        action,
-                        reward,
-                        terminal,
-                        next_ob,
-                    )
-
-                    if terminal or path_length >= self._max_path_length:
-                        observation = env.reset()
-                        policy.reset()
-                        path_length = 0
-                        max_path_return = max(max_path_return, path_return)
-                        last_path_return = path_return
-
-                        path_return = 0
-                        n_episodes += 1
-
-                    else:
-                        observation = next_ob
+                for t in range(self._epoch_length):
+                    # TODO.codeconsolidation: Add control interval to sampler
+                    self.sampler.sample()
+                    if not self.sampler.batch_ready():
+                        continue
                     gt.stamp('sample')
 
                     for i in range(self._n_train_repeat):
@@ -169,7 +147,7 @@ class RLAlgorithm(Algorithm):
             self._eval_env.render(paths)
 
         iteration = epoch*self._epoch_length
-        batch = self._pool.random_batch(self._batch_size)
+        batch = self.sampler.random_batch()
         self.log_diagnostics(iteration, batch)
 
     @abc.abstractmethod

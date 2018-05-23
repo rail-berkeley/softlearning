@@ -16,8 +16,8 @@ EPS = 1e-6
 
 class GMMPolicy(NNPolicy, Serializable):
     """Gaussian Mixture Model policy"""
-    def __init__(self, env_spec, K=2, hidden_layer_sizes=(100, 100), reg=0.001,
-                 squash=True, qf=None):
+    def __init__(self, env_spec, K=2, hidden_layer_sizes=(100, 100), reg=1e-3,
+                 squash=True, qf=None, name='gmm_policy'):
         """
         Args:
             env_spec (`rllab.EnvSpec`): Specification of the environment
@@ -106,7 +106,7 @@ class GMMPolicy(NNPolicy, Serializable):
                 K=self._K,
                 hidden_layers_sizes=self._hidden_layers,
                 Dx=self._Da,
-                cond_t_lst=[obs_t],
+                cond_t_lst=(self._observations_ph,),
                 reg=self._reg,
             )
 
@@ -168,7 +168,9 @@ class GMMPolicy(NNPolicy, Serializable):
             latent (`Number`): Value to set the latent variable to over the
                 deterministic context.
         """
-        current = self._is_deterministic
+        was_deterministic = self._is_deterministic
+        old_fixed_h = self._fixed_h
+
         self._is_deterministic = set_deterministic
         if set_deterministic:
             if latent is None: latent = self.sample_z.eval()

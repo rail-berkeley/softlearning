@@ -23,10 +23,11 @@ class LatentSpacePolicy(NNPolicy, Serializable):
                  squash=True,
                  bijector_config=None,
                  observations_preprocessor=None,
+                 fix_h_on_reset=False,
                  q_function=None,
                  n_map_action_candidates=100,
-                 name="real_nvp_policy"):
-        """Initialize Real NVP policy.
+                 name="lsp_policy"):
+        """Initialize LatentSpacePolicy.
 
         Args:
             env_spec (`rllab.EnvSpec`): Specification of the environment
@@ -43,6 +44,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         self._bijector_config = bijector_config
         self._mode = mode
         self._squash = squash
+        self._fix_h_on_reset = fix_h_on_reset
         self._q_function = q_function
         self._n_map_action_candidates=n_map_action_candidates
 
@@ -141,8 +143,8 @@ class LatentSpacePolicy(NNPolicy, Serializable):
             name='latents',
         )
 
-        self._actions, self._log_pis = self.actions_for(
-            self._observations_ph, with_log_pis=True)
+        self._raw_actions, self._actions, self._log_pis = self.actions_for(
+            self._observations_ph, with_log_pis=True, with_raw_actions=True)
         self._determistic_actions = self.actions_for(self._observations_ph,
                                                      self._latents_ph)
 
@@ -216,11 +218,20 @@ class LatentSpacePolicy(NNPolicy, Serializable):
             self._fixed_h = self.sample_z.eval()
 
     def log_diagnostics(self, iteration, batch):
-        """Record diagnostic information to the logger.
-        """
-        feeds = {self._observations_ph: batch['observations']}
-        log_pis = tf.get_default_session().run(self._log_pis, feeds)
+        """Record diagnostic information to the logger."""
+
+        feeds = { self._observations_ph: batch['observations'] }
+        raw_actions, actions, log_pis = tf.get_default_session().run(
+            (self._raw_actions, self._actions, self._log_pis), feeds)
 
         logger.record_tabular('policy-entropy-mean', -np.mean(log_pis))
         logger.record_tabular('log-pi-min', np.min(log_pis))
         logger.record_tabular('log-pi-max', np.max(log_pis))
+
+        logger.record_tabular('actions-mean', np.mean(actions))
+        logger.record_tabular('actions-min', np.min(actions))
+        logger.record_tabular('actions-max', np.max(actions))
+
+        logger.record_tabular('raw-actions-mean', np.mean(raw_actions))
+        logger.record_tabular('raw-actions-min', np.min(raw_actions))
+        logger.record_tabular('raw-actions-max', np.max(raw_actions))
