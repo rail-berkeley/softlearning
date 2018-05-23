@@ -4,8 +4,6 @@ from rllab.core.serializable import Serializable
 from rllab.misc.overrides import overrides
 from sandbox.rocky.tf.policies.base import Policy
 
-from sandbox.rocky.tf.policies.base import Policy
-
 
 class NNPolicy(Policy, Serializable):
     def __init__(self, env_spec, obs_pl, action, scope_name=None):
@@ -16,16 +14,6 @@ class NNPolicy(Policy, Serializable):
         self._scope_name = (tf.get_variable_scope().name
                             if not scope_name else scope_name)
         super(NNPolicy, self).__init__(env_spec)
-
-    @overrides
-    def get_params_internal(self, **tags):
-        if len(tags) > 0:
-            raise NotImplementedError
-        scope = self._scope_name
-        # Add "/" to 'scope' unless it's empty (otherwise get_collection will
-        # return all parameters that start with 'scope'.
-        scope = scope if scope == '' else scope + '/'
-        return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope)
 
     @overrides
     def get_action(self, observation):
