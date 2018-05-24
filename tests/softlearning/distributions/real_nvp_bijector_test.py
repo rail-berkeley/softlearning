@@ -4,7 +4,7 @@ from tensorflow.python.platform import test
 import tensorflow as tf
 import numpy as np
 
-from sac.distributions.real_nvp_bijector import CouplingBijector
+from softlearning.distributions.real_nvp_bijector import CouplingBijector
 
 def TRANSLATION_FN_WITHOUT_BIAS(inputs):
     return 5 * inputs ** 2
