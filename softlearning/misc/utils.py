@@ -3,6 +3,8 @@ import datetime
 import dateutil.tz
 import os
 
+from rllab.core.serializable import Serializable
+
 PROJECT_PATH = os.path.dirname(
     os.path.realpath(os.path.join(__file__, '..', '..')))
 

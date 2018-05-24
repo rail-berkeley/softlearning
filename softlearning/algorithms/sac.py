@@ -216,11 +216,11 @@ class SAC(RLAlgorithm, Serializable):
         Q-function update rule.
         """
 
-        self._qf_t = self._qf.get_output_for(
+        self._qf_t = self._qf.output_for(
             self._observations_ph, self._actions_ph, reuse=True)  # N
 
         with tf.variable_scope('target'):
-            vf_next_target_t = self._vf.get_output_for(self._next_observations_ph)  # N
+            vf_next_target_t = self._vf.output_for(self._next_observations_ph)  # N
             self._vf_target_params = self._vf.get_params_internal()
 
         ys = tf.stop_gradient(
@@ -256,7 +256,7 @@ class SAC(RLAlgorithm, Serializable):
         actions, log_pi = self._policy.actions_for(observations=self._observations_ph,
                                                    with_log_pis=True)
 
-        self._vf_t = self._vf.get_output_for(self._observations_ph, reuse=True)  # N
+        self._vf_t = self._vf.output_for(self._observations_ph, reuse=True)  # N
         self._vf_params = self._vf.get_params_internal()
 
         if self._action_prior == 'normal':
@@ -267,7 +267,7 @@ class SAC(RLAlgorithm, Serializable):
         elif self._action_prior == 'uniform':
             policy_prior_log_probs = 0.0
 
-        log_target = self._qf.get_output_for(
+        log_target = self._qf.output_for(
             self._observations_ph, actions, reuse=True)  # N
 
         policy_kl_loss = tf.reduce_mean(log_pi * tf.stop_gradient(
@@ -312,8 +312,7 @@ class SAC(RLAlgorithm, Serializable):
         ]
 
     @overrides
-    def _init_training(self, env, policy, pool):
-        super(SAC, self)._init_training(env, policy, pool)
+    def _init_training(self):
         self._sess.run(self._target_ops)
 
     @overrides

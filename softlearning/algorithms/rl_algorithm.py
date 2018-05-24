@@ -60,6 +60,8 @@ class RLAlgorithm(Algorithm):
         self._eval_deterministic = eval_deterministic
         self._eval_render = eval_render
 
+        self._sess = tf_utils.get_default_session()
+
         self.env = None
         self.policy = None
         self.pool = None
@@ -77,7 +79,7 @@ class RLAlgorithm(Algorithm):
 
         evaluation_env = deep_clone(env) if self._eval_n_episodes else None
 
-        with tf_utils.get_default_session().as_default():
+        with self._sess.as_default():
             gt.rename_root('RLAlgorithm')
             gt.reset()
             gt.set_def_unique(False)

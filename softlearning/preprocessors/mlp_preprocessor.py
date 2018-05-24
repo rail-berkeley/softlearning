@@ -28,4 +28,4 @@ class MLPPreprocessor(MLPFunction):
         self._layer_sizes = layer_sizes
         self._output_nonlinearity = output_nonlinearity
 
-        self._output_t = self.get_output_for(obs_ph, reuse=tf.AUTO_REUSE)
+        self._output_t = self._output_for(obs_ph, reuse=tf.AUTO_REUSE)

@@ -7,6 +7,7 @@ from softlearning.algorithms import SAC
 from softlearning.environments import MultiGoalEnv
 from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.misc.utils import timestamp
+from softlearning.misc.sampler import SimpleSampler
 from softlearning.policies import GMMPolicy, LatentSpacePolicy
 from softlearning.replay_buffers import SimpleReplayBuffer
 from softlearning.value_functions import NNQFunction, NNVFunction
@@ -20,33 +21,24 @@ def run(variant):
         init_sigma=0.1,
     ))
 
-    pool = SimpleReplayBuffer(
-        max_replay_buffer_size=1e6,
-        env_spec=env.spec,
-    )
+    pool = SimpleReplayBuffer(max_replay_buffer_size=1e6, env_spec=env.spec)
 
-    base_kwargs = dict(
-        min_pool_size=30,
-        epoch_length=1000,
-        n_epochs=1000,
-        max_path_length=30,
-        batch_size=64,
-        n_train_repeat=1,
-        eval_render=True,
-        eval_n_episodes=10,
-        eval_deterministic=False
-    )
+    sampler = SimpleSampler(
+        max_path_length=30, min_pool_size=100, batch_size=64)
+
+    base_kwargs = {
+        'sampler': sampler,
+        'epoch_length': 100,
+        'n_epochs': 1000,
+        'n_train_repeat': 1,
+        'eval_render': True,
+        'eval_n_episodes': 10,
+        'eval_deterministic': False
+    }
 
     M = 128
-    qf = NNQFunction(
-        env_spec=env.spec,
-        hidden_layer_sizes=[M, M]
-    )
-
-    vf = NNVFunction(
-        env_spec=env.spec,
-        hidden_layer_sizes=[M, M]
-    )
+    qf = NNQFunction(env_spec=env.spec, hidden_layer_sizes=[M, M])
+    vf = NNVFunction(env_spec=env.spec, hidden_layer_sizes=[M, M])
 
     if variant['policy_type'] == 'gmm':
         policy = GMMPolicy(
@@ -100,6 +92,7 @@ def run(variant):
     )
     algorithm.train()
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -107,6 +100,7 @@ def parse_args():
     args = parser.parse_args()
 
     return args
+
 
 def main():
     args = parse_args()
@@ -124,7 +118,6 @@ def main():
         seed=1,
         mode='local',
     )
-
 
 
 if __name__ == "__main__":

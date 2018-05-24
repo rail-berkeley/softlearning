@@ -126,7 +126,6 @@ class SQL(RLAlgorithm):
         if use_saved_policy:
             saved_policy_params = policy.get_param_values()
 
-        self._sess = tf_utils.get_default_session()
         self._sess.run(tf.global_variables_initializer())
 
         if use_saved_qf:
