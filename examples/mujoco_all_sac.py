@@ -20,7 +20,7 @@ from softlearning.environments import (
     CrossMazeAntEnv,
 )
 
-from softlearning.misc.instrument import run_experiment
+from softlearning.misc.instrument import launch_experiment
 from softlearning.misc.utils import timestamp, unflatten
 from softlearning.policies import LatentSpacePolicy, GMMPolicy
 from softlearning.misc.sampler import SimpleSampler
@@ -183,7 +183,7 @@ def launch_experiments(variant_generator, args):
         experiment_name = '{prefix}-{exp_name}-{i:02}'.format(
             prefix=variant['prefix'], exp_name=args.exp_name, i=i)
 
-        run_experiment(
+        launch_experiment(
             run_experiment,
             mode=args.mode,
             variant=variant,

@@ -5,7 +5,7 @@ from rllab.misc.instrument import VariantGenerator
 
 from softlearning.algorithms import SAC
 from softlearning.environments import GymEnv, DelayedEnv
-from softlearning.misc.instrument import run_experiment
+from softlearning.misc.instrument import launch_experiment
 from softlearning.misc.utils import timestamp
 from softlearning.misc.remote_sampler import RemoteSampler
 from softlearning.policies.gmm import GMMPolicy
@@ -182,7 +182,7 @@ def launch_experiments(variant_generator):
 
     for i, variant in enumerate(variants):
         print('Launching {} experiments.'.format(len(variants)))
-        run_experiment(
+        launch_experiment(
             run_experiment,
             mode=args.mode,
             variant=variant,

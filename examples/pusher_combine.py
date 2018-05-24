@@ -6,7 +6,7 @@ from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
 
 from softlearning.misc import tf_utils
-from softlearning.misc.instrument import run_experiment
+from softlearning.misc.instrument import launch_experiment
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softlearning.misc.utils import timestamp
@@ -134,7 +134,7 @@ def launch_experiments(variant_generator, args):
         full_experiment_name = variant['prefix']
         full_experiment_name += '-' + args.exp_name + '-' + str(i).zfill(2)
 
-        run_experiment(
+        launch_experiment(
             run_experiment,
             mode=args.mode,
             variant=variant,

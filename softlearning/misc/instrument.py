@@ -20,7 +20,7 @@ def _create_symlink(folder):
     return include_path
 
 
-def run_experiment(main,
+def launch_experiment(main,
                    mode,
                    include_folders=None,
                    log_dir=None,

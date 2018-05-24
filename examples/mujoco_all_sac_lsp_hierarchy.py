@@ -15,7 +15,7 @@ from softlearning.algorithms import SAC
 from softlearning.environments import (
     RandomGoalSwimmerEnv, RandomGoalAntEnv, RandomGoalHumanoidEnv,
     HierarchyProxyEnv)
-from softlearning.misc.instrument import run_experiment
+from softlearning.misc.instrument import launch_experiment
 from softlearning.misc.utils import timestamp
 from softlearning.policies import LatentSpacePolicy
 from softlearning.replay_buffers import SimpleReplayBuffer
@@ -362,7 +362,7 @@ def launch_experiments(variant_generator):
                            + '-' + args.exp_name
                            + '-' + str(i).zfill(2))
 
-        run_experiment(
+        launch_experiment(
             run_experiment,
             mode=args.mode,
             variant=variant,
