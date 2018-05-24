@@ -7,7 +7,7 @@ from rllab.core.serializable import Serializable
 from rllab.misc import logger
 from rllab.misc.overrides import overrides
 
-from .base import RLAlgorithm
+from .rl_algorithm import RLAlgorithm
 
 
 class SAC(RLAlgorithm, Serializable):

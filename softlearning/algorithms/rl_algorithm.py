@@ -25,7 +25,9 @@ class RLAlgorithm(Algorithm):
             n_train_repeat=1,
             epoch_length=1000,
             eval_n_episodes=10,
+            eval_deterministic=True,
             eval_render=False,
+            control_interval=1
     ):
         """
         Args:
@@ -34,6 +36,8 @@ class RLAlgorithm(Algorithm):
                 for single time step.
             epoch_length (`int`): Epoch length.
             eval_n_episodes (`int`): Number of rollouts to evaluate.
+            eval_deterministic (`int`): Whether or not to run the policy in
+                deterministic mode when evaluating policy.
             eval_render (`int`): Whether or not to render the evaluation
                 environment.
         """
@@ -42,8 +46,18 @@ class RLAlgorithm(Algorithm):
         self._n_epochs = n_epochs
         self._n_train_repeat = n_train_repeat
         self._epoch_length = epoch_length
+        if control_interval != 1:
+            # TODO(hartikainen): we used to support control_interval in our old
+            # SAC code, but it was removed because of the hacky implementation.
+            # This functionality should be implemented as a part of the
+            # sampler. See `sac/algos/base.py@fe7dc7c` for the old
+            # implementation.
+            raise NotImplementedError(
+                "Control interval has been temporarily removed. See the"
+                " comments in RlAlgorithm.__init__ for more information.")
 
         self._eval_n_episodes = eval_n_episodes
+        self._eval_deterministic = eval_deterministic
         self._eval_render = eval_render
 
         self.env = None
@@ -84,14 +98,14 @@ class RLAlgorithm(Algorithm):
                             batch=self.sampler.random_batch())
                     gt.stamp('train')
 
-                self._evaluate(policy, evaluation_env)
+                self._evaluate(policy, evaluation_env, epoch)
                 gt.stamp('eval')
 
                 params = self.get_snapshot(epoch)
                 logger.save_itr_params(epoch, params)
 
                 time_itrs = gt.get_times().stamps.itrs
-                time_eval = time_itrs['eval'][-1]
+                time_eval = time_itrs.get('eval', [0])[-1]
                 time_total = gt.get_times().total
                 time_train = time_itrs.get('train', [0])[-1]
                 time_sample = time_itrs.get('sample', [0])[-1]
@@ -109,15 +123,17 @@ class RLAlgorithm(Algorithm):
 
             self.sampler.terminate()
 
-    def _evaluate(self, policy, evaluation_env):
+    def _evaluate(self, policy, evaluation_env, epoch):
         """Perform evaluation for the current policy."""
 
         if self._eval_n_episodes < 1:
             return
 
-        # TODO: max_path_length should be a property of environment.
-        paths = rollouts(evaluation_env, policy, self.sampler._max_path_length,
-                         self._eval_n_episodes)
+        with policy.deterministic(self._eval_deterministic):
+            # TODO: max_path_length should be a property of environment.
+            paths = rollouts(evaluation_env, policy,
+                             self.sampler._max_path_length,
+                             self._eval_n_episodes)
 
         total_returns = [path['rewards'].sum() for path in paths]
         episode_lengths = [len(p['rewards']) for p in paths]
@@ -135,12 +151,12 @@ class RLAlgorithm(Algorithm):
         if self._eval_render:
             evaluation_env.render(paths)
 
-        if self.sampler.batch_ready():
-            batch = self.sampler.random_batch()
-            self.log_diagnostics(batch)
+        iteration = epoch * self._epoch_length
+        batch = self.sampler.random_batch()
+        self.log_diagnostics(iteration, batch)
 
     @abc.abstractmethod
-    def log_diagnostics(self, batch):
+    def log_diagnostics(self, iteration, batch):
         raise NotImplementedError
 
     @abc.abstractmethod
