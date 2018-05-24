@@ -11,17 +11,17 @@ from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
 
-from sac.algos import SAC
-from sac.envs import (
+from softlearning.algorithms import SAC
+from softlearning.environments import (
     RandomGoalSwimmerEnv, RandomGoalAntEnv, RandomGoalHumanoidEnv,
     HierarchyProxyEnv)
-from sac.misc.instrument import run_experiment
-from sac.misc.utils import timestamp
-from sac.policies import LatentSpacePolicy
-from sac.replay_buffers import SimpleReplayBuffer
-from sac.value_functions import NNQFunction, NNVFunction
-from sac.preprocessors import MLPPreprocessor
-from sac.misc import tf_utils
+from softlearning.misc.instrument import run_experiment
+from softlearning.misc.utils import timestamp
+from softlearning.policies import LatentSpacePolicy
+from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.value_functions import NNQFunction, NNVFunction
+from softlearning.preprocessors import MLPPreprocessor
+from softlearning.misc import tf_utils
 
 try:
     import git
@@ -208,9 +208,9 @@ def get_variants(args):
     params.update(env_params)
 
     if args.mode == 'local':
-        trained_policies_base = os.path.join(os.getcwd(), 'sac/policies/trained_policies')
+        trained_policies_base = os.path.join(os.getcwd(), 'softlearning/policies/trained_policies')
     elif args.mode == 'ec2':
-        trained_policies_base = '/root/code/rllab/sac/policies/trained_policies'
+        trained_policies_base = '/root/code/rllab/softlearning/policies/trained_policies'
 
     params['low_level_policy_path'] = [
       os.path.join(trained_policies_base, p)

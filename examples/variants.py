@@ -1,7 +1,7 @@
 import numpy as np
 
 from rllab.misc.instrument import VariantGenerator
-from sac.misc.utils import flatten, get_git_rev, deep_update
+from softlearning.misc.utils import flatten, get_git_rev, deep_update
 
 LSP_POLICY_PARAMS_BASE = {
     'type': 'lsp',

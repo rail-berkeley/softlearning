@@ -3,7 +3,7 @@
 import tensorflow as tf
 import numpy as np
 
-from sac.misc.mlp import mlp
+from softlearning.misc.nn import feedforward_net
 
 LOG_SIG_CAP_MAX = 2
 
@@ -59,7 +59,7 @@ class GMM(object):
             )
 
         else:
-            w_and_mu_and_logsig_t = mlp(
+            w_and_mu_and_logsig_t = feedforward_net(
                 inputs=self._cond_t_lst,
                 layer_sizes=self._layer_sizes,
                 output_nonlinearity=None,

@@ -3,13 +3,13 @@ import numpy as np
 
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import run_experiment_lite
-from sac.algos import SAC
-from sac.envs import MultiGoalEnv
-from sac.misc.plotter import QFPolicyPlotter
-from sac.misc.utils import timestamp
-from sac.policies import GMMPolicy, LatentSpacePolicy
-from sac.replay_buffers import SimpleReplayBuffer
-from sac.value_functions import NNQFunction, NNVFunction
+from softlearning.algorithms import SAC
+from softlearning.environments import MultiGoalEnv
+from softlearning.misc.plotter import QFPolicyPlotter
+from softlearning.misc.utils import timestamp
+from softlearning.policies import GMMPolicy, LatentSpacePolicy
+from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.value_functions import NNQFunction, NNVFunction
 
 
 def run(variant):

@@ -8,9 +8,9 @@ from rllab.misc.overrides import overrides
 from rllab.misc import logger
 from rllab.core.serializable import Serializable
 
-from sac.distributions import GMM
-from sac.policies import NNPolicy
-from sac.misc import tf_utils
+from softlearning.distributions import GMM
+from softlearning.policies import NNPolicy
+from softlearning.misc import tf_utils
 
 EPS = 1e-6
 

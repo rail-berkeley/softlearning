@@ -3,15 +3,14 @@ import argparse
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
 
-from sac.algos import SAC
-from sac.envs.gym_env import GymEnv
-from sac.envs.delayed_env import DelayedEnv
-from sac.misc.instrument import run_experiment
-from sac.misc.utils import timestamp
-from sac.misc.remote_sampler import RemoteSampler
-from sac.policies.gmm import GMMPolicy
-from sac.replay_buffers import SimpleReplayBuffer
-from sac.value_functions import NNQFunction, NNVFunction
+from softlearning.algorithms import SAC
+from softlearning.environments import GymEnv, DelayedEnv
+from softlearning.misc.instrument import run_experiment
+from softlearning.misc.utils import timestamp
+from softlearning.misc.remote_sampler import RemoteSampler
+from softlearning.policies.gmm import GMMPolicy
+from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.value_functions import NNQFunction, NNVFunction
 
 COMMON_PARAMS = {
     "seed": [1, 2, 3],

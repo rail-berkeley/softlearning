@@ -7,8 +7,8 @@ import tensorflow as tf
 from rllab.core.serializable import Serializable
 from rllab.misc import logger
 
-from sac.distributions import RealNVPBijector
-from sac.policies import NNPolicy
+from softlearning.distributions import RealNVPBijector
+from softlearning.policies import NNPolicy
 
 
 EPS = 1e-6

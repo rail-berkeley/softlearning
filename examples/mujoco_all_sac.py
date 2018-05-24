@@ -11,8 +11,8 @@ from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
 
-from sac.algos import SAC
-from sac.envs import (
+from softlearning.algorithms import SAC
+from softlearning.environments import (
     GymEnv,
     MultiDirectionSwimmerEnv,
     MultiDirectionAntEnv,
@@ -20,13 +20,13 @@ from sac.envs import (
     CrossMazeAntEnv,
 )
 
-from sac.misc.instrument import run_experiment
-from sac.misc.utils import timestamp, unflatten
-from sac.policies import LatentSpacePolicy, GMMPolicy
-from sac.misc.sampler import SimpleSampler
-from sac.replay_buffers import SimpleReplayBuffer
-from sac.value_functions import NNQFunction, NNVFunction
-from sac.preprocessors import MLPPreprocessor
+from softlearning.misc.instrument import run_experiment
+from softlearning.misc.utils import timestamp, unflatten
+from softlearning.policies import LatentSpacePolicy, GMMPolicy
+from softlearning.misc.sampler import SimpleSampler
+from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.value_functions import NNQFunction, NNVFunction
+from softlearning.preprocessors import MLPPreprocessor
 from .variants import parse_domain_and_task, get_variants
 
 ENVIRONMENTS = {
