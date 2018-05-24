@@ -44,10 +44,10 @@ class ReplayBuffer(object):
         :param path: Dict like one outputted by railrl.samplers.util.rollout
         """
         for i, (
-                obs,
+                observation,
                 action,
                 reward,
-                next_obs,
+                next_observation,
                 terminal,
                 agent_info,
                 env_info
@@ -61,10 +61,10 @@ class ReplayBuffer(object):
             path.get("env_infos", {}),
         )):
             self.add_sample(
-                observation=obs,
+                observation=observation,
                 action=action,
                 reward=reward,
-                next_observation=next_obs,
+                next_observation=next_observation,
                 terminal=terminal,
                 agent_info=agent_info,
                 env_info=env_info,
