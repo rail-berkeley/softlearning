@@ -1,28 +1,33 @@
 import tensorflow as tf
 
 from rllab.core.serializable import Serializable
+
 from rllab.misc.overrides import overrides
 from sandbox.rocky.tf.policies.base import Policy
 
 
 class NNPolicy(Policy, Serializable):
-    def __init__(self, env_spec, obs_pl, action, scope_name=None):
+    def __init__(self, env_spec, observation_ph, actions,
+                 scope_name=None):
         Serializable.quick_init(self, locals())
 
-        self._obs_pl = obs_pl
-        self._action = action
-        self._scope_name = (tf.get_variable_scope().name
-                            if not scope_name else scope_name)
+        self._observations_ph = observation_ph
+        self._actions = actions
+        self._scope_name = (
+            tf.get_variable_scope().name if not scope_name else scope_name
+        )
         super(NNPolicy, self).__init__(env_spec)
 
     @overrides
     def get_action(self, observation):
-        return self.get_actions(observation[None])[0], None
+        """Sample single action based on the observations."""
+        return self.get_actions(observation[None])[0], {}
 
     @overrides
     def get_actions(self, observations):
-        feeds = {self._obs_pl: observations}
-        actions = tf.get_default_session().run(self._action, feeds)
+        """Sample actions based on the observations."""
+        feed_dict = {self._observations_ph: observations}
+        actions = tf.get_default_session().run(self._actions, feed_dict)
         return actions
 
     @overrides
@@ -31,7 +36,7 @@ class NNPolicy(Policy, Serializable):
 
     @overrides
     def get_params_internal(self, **tags):
-        # TODO: rewrite this using tensorflow collections
+        """TODO: rewrite this using tensorflow collections."""
         if tags:
             raise NotImplementedError
         scope = self._scope_name
