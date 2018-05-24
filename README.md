@@ -1,9 +1,11 @@
-# Soft Q-Learning
-Soft Q-learning (SQL) is a deep reinforcement learning framework for training maximum entropy policies in continuous domains. The algorithm is based on the paper [Reinforcement Learning with Deep Energy-Based Policies](https://arxiv.org/abs/1702.08165) presented at the International Conference on Machine Learning (ICML), 2017.
+# Soft Reinforcement Learning
+Soft Reinforcement Learning is a deep reinforcement learning framework for training maximum entropy policies in continuous domains. The algorithms are based on the following papers:
+- [Reinforcement Learning with Deep Energy-Based Policies](https://arxiv.org/abs/1702.08165) presented at the International Conference on Machine Learning (ICML), 2017.
+- [Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor](https://drive.google.com/file/d/0Bxz3x8U2LH_2QllDZVlUQ1BJVEJHeER2YU5mODNaeFZmc3dz/view) presented at the [Deep Reinforcement Learning Symposium](https://sites.google.com/view/deeprl-symposium-nips2017/), NIPS 2017.
 
 # Getting Started
 
-Soft Q-learning can be run either locally or through Docker.
+Soft Reinforcement Learning can be run either locally or through Docker.
 
 ## Prerequisites
 
@@ -25,12 +27,12 @@ Once that's done, you can run the Docker container with
 docker-compose up
 ```
 
-Docker compose creates a Docker container named `soft-q-learning` and automatically sets the needed environment variables and volumes.
+Docker compose creates a Docker container named `soft-TODO-learning` and automatically sets the needed environment variables and volumes.
 
 You can access the container with the typical Docker [exec](https://docs.docker.com/engine/reference/commandline/exec/)-command, i.e.
 
 ```
-docker exec -it soft-q-learning bash
+docker exec -it soft-TODO-learning bash
 ```
 
 See examples section for examples of how to train and simulate the agents.
@@ -113,7 +115,7 @@ usage: mujoco_all_sql.py [-h]
                          [--log_dir LOG_DIR]
 ```
 ### Training and combining policies
-It is also possible to merge two existing maximum entropy policies to form a new composed skill that approximately optimizes both constituent tasks simultaneously as discussed in [ Composable Deep Reinforcement Learning for Robotic Manipulation](https://arxiv.org/abs/1803.06773). To run the pusher experiment described in the paper, you can first train two policies for the constituent tasks ("push the object to the given x-coordinate" and "push the object to the given y-coordinate") by running 
+It is also possible to merge two existing maximum entropy policies to form a new composed skill that approximately optimizes both constituent tasks simultaneously as discussed in [ Composable Deep Reinforcement Learning for Robotic Manipulation](https://arxiv.org/abs/1803.06773). To run the pusher experiment described in the paper, you can first train two policies for the constituent tasks ("push the object to the given x-coordinate" and "push the object to the given y-coordinate") by running
 ```
 python ./examples/pusher_pretrain.py --log_dir=/root/sql/data/pusher
 ```
@@ -126,10 +128,19 @@ python ./examples/pusher_combine.py --log_dir=/root/sql/data/pusher/combined \
 
 
 # Credits
-The soft q-learning algorithm was developed by [Haoran Tang](https://math.berkeley.edu/~hrtang/) and [Tuomas Haarnoja](https://people.eecs.berkeley.edu/~haarnoja/) under the supervision of Prof. [Sergey Levine](https://people.eecs.berkeley.edu/~svlevine/) and Prof. [Pieter Abbeel](https://people.eecs.berkeley.edu/~pabbeel/) at UC Berkeley. Special thanks to [Vitchyr Pong](https://github.com/vitchyr), who wrote some parts of the code, and [Kristian Hartikainen](https://github.com/hartikainen) who helped testing, documenting, and polishing the code and streamlining the installation process. The work was supported by [Berkeley Deep Drive](https://deepdrive.berkeley.edu/).
+- The soft actor-critic algorithm was developed by: [Tuomas Haarnoja](https://people.eecs.berkeley.edu/~haarnoja/), [Aurick Zhou](https://github.com/azhou42), Prof. [Sergey Levine](https://people.eecs.berkeley.edu/~svlevine/), and Prof. [Pieter Abbeel](https://people.eecs.berkeley.edu/~pabbeel/)
+- The soft q-learning algorithm was developed by: [Haoran Tang](https://math.berkeley.edu/~hrtang/), [Tuomas Haarnoja](https://people.eecs.berkeley.edu/~haarnoja/), Prof. [Sergey Levine](https://people.eecs.berkeley.edu/~svlevine/), and Prof. [Pieter Abbeel](https://people.eecs.berkeley.edu/~pabbeel/)
+
+All the soft reinforcement learning algorithms in this package were developed at UC Berkeley. Special thanks to [Vitchyr Pong](https://github.com/vitchyr), who wrote some parts of the code, and [Kristian Hartikainen](https://github.com/hartikainen) who helped testing, documenting, and polishing the code and streamlining the installation process. The work was supported by [Berkeley Deep Drive](https://deepdrive.berkeley.edu/).
 
 # References
 ```
+@article{haarnoja2017soft,
+  title={Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor},
+  author={Haarnoja, Tuomas and Zhou, Aurick and Abbeel, Pieter and Levine, Sergey},
+  booktitle={Deep Reinforcement Learning Symposium},
+  year={2017}
+}
 @article{haarnoja2017reinforcement,
   title={Reinforcement Learning with Deep Energy-Based Policies},
   author={Haarnoja, Tuomas and Tang, Haoran and Abbeel, Pieter and Levine, Sergey},
