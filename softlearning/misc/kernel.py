@@ -1,4 +1,4 @@
-from distutils.version import StrictVersion
+from distutils.version import LooseVersion
 
 import numpy as np
 import tensorflow as tf
@@ -39,7 +39,9 @@ def adaptive_isotropic_gaussian_kernel(xs, ys, h_min=1e-3):
     diff = tf.expand_dims(xs, -2) - tf.expand_dims(ys, -3)
     # ... x Kx x Ky x D
 
-    if StrictVersion(tf.__version__) < StrictVersion('1.5.0'):
+
+    # TODO(hartikainen): This
+    if LooseVersion(tf.__version__) <= LooseVersion('1.6.0'):
         dist_sq = tf.reduce_sum(diff**2, axis=-1, keep_dims=False)
     else:
         dist_sq = tf.reduce_sum(diff**2, axis=-1, keepdims=False)

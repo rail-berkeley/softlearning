@@ -131,11 +131,17 @@ class RLAlgorithm(Algorithm):
         if self._eval_n_episodes < 1:
             return
 
-        with policy.deterministic(self._eval_deterministic):
-            # TODO: max_path_length should be a property of environment.
+        if hasattr(policy, 'deterministic'):
+            with policy.deterministic(self._eval_deterministic):
+                # TODO: max_path_length should be a property of environment.
+                paths = rollouts(evaluation_env, policy,
+                                 self.sampler._max_path_length,
+                                 self._eval_n_episodes)
+        else:
             paths = rollouts(evaluation_env, policy,
                              self.sampler._max_path_length,
                              self._eval_n_episodes)
+
 
         total_returns = [path['rewards'].sum() for path in paths]
         episode_lengths = [len(p['rewards']) for p in paths]
