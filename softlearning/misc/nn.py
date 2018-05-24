@@ -74,6 +74,7 @@ class MLPFunction(Parameterized, Serializable):
         if len(tags) > 0:
             raise NotImplementedError
 
-        scope += '/' + self._name if scope else self._name
+        scope = tf.get_variable_scope().name
+        scope += '/' + self._name + '/' if len(scope) else self._name + '/'
 
         return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)

@@ -13,7 +13,7 @@ from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
 
-from softlearning.misc.instrument import run_sql_experiment
+from softlearning.misc.instrument import run_experiment
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softlearning.misc.utils import timestamp
@@ -172,7 +172,7 @@ def launch_experiments(variant_generator, args):
         full_experiment_name = variant['prefix']
         full_experiment_name += '-' + args.exp_name + '-' + str(i).zfill(2)
 
-        run_sql_experiment(
+        run_experiment(
             run_experiment,
             mode=args.mode,
             variant=variant,

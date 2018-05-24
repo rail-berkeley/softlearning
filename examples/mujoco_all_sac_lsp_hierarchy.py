@@ -15,7 +15,7 @@ from sac.algos import SAC
 from sac.envs import (
     RandomGoalSwimmerEnv, RandomGoalAntEnv, RandomGoalHumanoidEnv,
     HierarchyProxyEnv)
-from sac.misc.instrument import run_sac_experiment
+from sac.misc.instrument import run_experiment
 from sac.misc.utils import timestamp
 from sac.policies import LatentSpacePolicy
 from sac.replay_buffers import SimpleReplayBuffer
@@ -362,7 +362,7 @@ def launch_experiments(variant_generator):
                            + '-' + args.exp_name
                            + '-' + str(i).zfill(2))
 
-        run_sac_experiment(
+        run_experiment(
             run_experiment,
             mode=args.mode,
             variant=variant,

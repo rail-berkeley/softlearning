@@ -20,7 +20,7 @@ from sac.envs import (
     CrossMazeAntEnv,
 )
 
-from sac.misc.instrument import run_sac_experiment
+from sac.misc.instrument import run_experiment
 from sac.misc.utils import timestamp, unflatten
 from sac.policies import LatentSpacePolicy, GMMPolicy
 from sac.misc.sampler import SimpleSampler
@@ -183,7 +183,7 @@ def launch_experiments(variant_generator, args):
         experiment_name = '{prefix}-{exp_name}-{i:02}'.format(
             prefix=variant['prefix'], exp_name=args.exp_name, i=i)
 
-        run_sac_experiment(
+        run_experiment(
             run_experiment,
             mode=args.mode,
             variant=variant,

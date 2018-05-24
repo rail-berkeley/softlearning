@@ -6,7 +6,7 @@ from rllab.misc.instrument import VariantGenerator
 from sac.algos import SAC
 from sac.envs.gym_env import GymEnv
 from sac.envs.delayed_env import DelayedEnv
-from sac.misc.instrument import run_sac_experiment
+from sac.misc.instrument import run_experiment
 from sac.misc.utils import timestamp
 from sac.misc.remote_sampler import RemoteSampler
 from sac.policies.gmm import GMMPolicy
@@ -157,7 +157,7 @@ def run_experiment(variant):
         qf=qf,
         reg=0.001,
     )
-    
+
 
     algorithm = SAC(
         base_kwargs=base_kwargs,
@@ -183,7 +183,7 @@ def launch_experiments(variant_generator):
 
     for i, variant in enumerate(variants):
         print('Launching {} experiments.'.format(len(variants)))
-        run_sac_experiment(
+        run_experiment(
             run_experiment,
             mode=args.mode,
             variant=variant,

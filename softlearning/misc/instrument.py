@@ -20,13 +20,13 @@ def _create_symlink(folder):
     return include_path
 
 
-def run_sql_experiment(main,
-                       mode,
-                       include_folders=None,
-                       log_dir=None,
-                       exp_prefix="experiment",
-                       exp_name=None,
-                       **kwargs):
+def run_experiment(main,
+                   mode,
+                   include_folders=None,
+                   log_dir=None,
+                   exp_prefix="experiment",
+                   exp_name=None,
+                   **kwargs):
     if exp_name is None:
         exp_name = timestamp()
 
@@ -39,6 +39,7 @@ def run_sql_experiment(main,
 
     if mode == 'ec2':
         include_folders.append('softlearning')
+        include_folders.append('models')
         all_symlinks = list()
 
         for folder in include_folders:

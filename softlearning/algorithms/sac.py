@@ -18,7 +18,7 @@ class SAC(RLAlgorithm, Serializable):
 
     env = normalize(SwimmerEnv())
 
-    pool = SimpleReplayPool(env_spec=env.spec, max_pool_size=1E6)
+    pool = SimpleReplayBuffer(env_spec=env.spec, max_pool_size=1E6)
 
     base_kwargs = dict(
         min_pool_size=1000,
