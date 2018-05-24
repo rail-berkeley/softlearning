@@ -3,14 +3,14 @@ import numpy as np
 
 from rllab.envs.normalized_env import normalize
 
-from softqlearning.algorithms import SQL
-from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softqlearning.environments import MultiGoalEnv
-from softqlearning.replay_buffers import SimpleReplayBuffer
-from softqlearning.value_functions import NNQFunction
-from softqlearning.misc.plotter import QFPolicyPlotter
-from softqlearning.policies import StochasticNNPolicy
-from softqlearning.misc.sampler import SimpleSampler
+from softlearning.algorithms import SQL
+from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
+from softlearning.environments import MultiGoalEnv
+from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.value_functions import NNQFunction
+from softlearning.misc.plotter import QFPolicyPlotter
+from softlearning.policies import StochasticNNPolicy
+from softlearning.misc.sampler import SimpleSampler
 
 
 def test():

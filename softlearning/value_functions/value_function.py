@@ -3,8 +3,8 @@ import numpy as np
 
 from rllab.core.serializable import Serializable
 
-from softqlearning.misc.nn import MLPFunction
-from softqlearning.misc import tf_utils
+from softlearning.misc.nn import MLPFunction
+from softlearning.misc import tf_utils
 
 
 class NNVFunction(MLPFunction):

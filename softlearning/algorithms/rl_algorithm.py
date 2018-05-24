@@ -6,9 +6,9 @@ import numpy as np
 from rllab.misc import logger
 from rllab.algos.base import Algorithm
 
-from softqlearning.misc.utils import deep_clone
-from softqlearning.misc import tf_utils
-from softqlearning.misc.sampler import rollouts
+from softlearning.misc.utils import deep_clone
+from softlearning.misc import tf_utils
+from softlearning.misc.sampler import rollouts
 
 
 class RLAlgorithm(Algorithm):

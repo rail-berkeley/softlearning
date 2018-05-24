@@ -73,15 +73,15 @@ rm -rf /tmp/mujoco_tmp
 cp <mujoco_key_folder>/mjkey.txt <installation_path_of_your_choice>/rllab/vendor/mujoco
 ```
 
-4. Clone `softqlearning`
+4. Clone `softlearning`
 ```
 cd <installation_path_of_your_choice>
-git clone https://github.com/haarnoja/softqlearning.git
+git clone https://github.com/haarnoja/softlearning.git
 ```
 
 5. Create and activate conda environment
 ```
-cd softqlearning
+cd softlearning
 conda env create -f environment.yml
 source activate sql
 ```

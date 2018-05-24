@@ -4,8 +4,8 @@ import tensorflow as tf
 from rllab.misc import logger
 from rllab.misc.overrides import overrides
 
-from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softqlearning.misc import tf_utils
+from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
+from softlearning.misc import tf_utils
 
 from .rl_algorithm import RLAlgorithm
 

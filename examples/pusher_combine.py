@@ -5,17 +5,17 @@ import os
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
 
-from softqlearning.misc import tf_utils
-from softqlearning.misc.instrument import run_sql_experiment
-from softqlearning.algorithms import SQL
-from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softqlearning.misc.utils import timestamp
-from softqlearning.replay_buffers import UnionBuffer
-from softqlearning.value_functions import SumQFunction
-from softqlearning.policies import StochasticNNPolicy
-from softqlearning.environments.pusher import PusherEnv
-from softqlearning.misc.sampler import DummySampler
-from softqlearning.misc.utils import PROJECT_PATH
+from softlearning.misc import tf_utils
+from softlearning.misc.instrument import run_sql_experiment
+from softlearning.algorithms import SQL
+from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
+from softlearning.misc.utils import timestamp
+from softlearning.replay_buffers import UnionBuffer
+from softlearning.value_functions import SumQFunction
+from softlearning.policies import StochasticNNPolicy
+from softlearning.environments.pusher import PusherEnv
+from softlearning.misc.sampler import DummySampler
+from softlearning.misc.utils import PROJECT_PATH
 
 SHARED_PARAMS = {
     'seed': 0,

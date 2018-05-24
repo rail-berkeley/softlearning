@@ -7,7 +7,7 @@ from rllab.envs.mujoco.mujoco_env import MujocoEnv
 from rllab.misc import logger
 from rllab.misc.overrides import overrides
 
-from softqlearning.misc.utils import PROJECT_PATH
+from softlearning.misc.utils import PROJECT_PATH
 
 
 class PusherEnv(MujocoEnv, Serializable):

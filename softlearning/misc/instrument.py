@@ -2,7 +2,7 @@ import os
 import uuid
 
 from rllab.misc.instrument import run_experiment_lite
-from softqlearning.misc.utils import timestamp, PROJECT_PATH
+from softlearning.misc.utils import timestamp, PROJECT_PATH
 
 DEFAULT_LOG_DIR = PROJECT_PATH + "/data"
 
@@ -38,7 +38,7 @@ def run_sql_experiment(main,
         include_folders = list()
 
     if mode == 'ec2':
-        include_folders.append('softqlearning')
+        include_folders.append('softlearning')
         all_symlinks = list()
 
         for folder in include_folders:
