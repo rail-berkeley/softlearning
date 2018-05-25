@@ -1,4 +1,6 @@
 import argparse
+import os
+from uuid import uuid4
 
 import tensorflow as tf
 import ray
@@ -79,7 +81,50 @@ def parse_args():
 
     return args
 
+DEFAULT_SNAPSHOT_DIR = '~/ray/results'
+DEFAULT_SNAPSHOT_MODE = 'none'
+DEFAULT_SNAPSHOT_GAP = 1000
+
+def setup_rllab_logger(variant):
+    """Temporary setup for rllab logger previously handled by run_experiment.
+
+    TODO.hartikainen: Remove this once we have gotten rid of rllab logger.
+    """
+
+    from rllab.misc import logger
+
+    run_params = variant['run_params']
+    # We would wan the trial.logdir here, but that seems unaccessible
+    log_dir = os.path.join(
+        os.path.expanduser(run_params['local_dir']),
+        str(uuid4()))
+
+    tabular_log_file = os.path.join(log_dir, 'progress.csv')
+    text_log_file = os.path.join(log_dir, 'debug.log')
+    params_log_file = os.path.join(log_dir, 'params.json')
+    variant_log_file = os.path.join(log_dir, 'variant.json')
+
+    logger.log_variant(variant_log_file, variant)
+    logger.add_text_output(text_log_file)
+    logger.add_tabular_output(tabular_log_file)
+
+    logger.set_snapshot_dir(log_dir)
+    logger.set_snapshot_mode(
+        run_params.get('snapshot_mode', DEFAULT_SNAPSHOT_MODE))
+    logger.set_snapshot_gap(
+        run_params.get('snapshot_gap', DEFAULT_SNAPSHOT_GAP))
+    logger.set_log_tabular_only(False)
+
+    # TODO.hartikainen: need to remove something, or push_prefix, pop_prefix?
+    # logger.push_prefix("[%s] " % args.exp_name)
+
+
 def run_experiment(variant, reporter):
+    # Setup the rllab logger manually
+    # TODO.hartikainen: We should change the logger to use some standard logger
+
+    setup_rllab_logger(variant)
+
     env_params = variant['env_params']
     policy_params = variant['policy_params']
     value_fn_params = variant['value_fn_params']
@@ -175,17 +220,22 @@ def main():
 
     variants = get_variants(domain=domain, task=task, policy=args.policy)
 
+    local_dir = '~/ray_results/{}/{}'.format(domain, task)
+    variants['run_params']['local_dir'] = local_dir
+
     tune.register_trainable('mujoco-runner', run_experiment)
-    # ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
-    ray.init(redis_address='localhost:6379')
+    if args.mode == 'local':
+        ray.init()
+    else:
+        ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
 
     tune.run_experiments({
         args.exp_name: {
             'run': 'mujoco-runner',
             'trial_resources': {'cpu': 8},
             'config': variants,
-            'local_dir': '/home/ubuntu/ray_results/{}/{}'.format(domain, task),
-            'upload_dir': 's3://sac-real-nvp/ray'
+            'local_dir': local_dir,
+            # 'upload_dir': 'gs://<your-bucket>/ray_results'
         }
     })
 
