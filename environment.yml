@@ -53,7 +53,7 @@ dependencies:
   - python-dateutil==2.6.1
   - pytz==2018.4
   - pyyaml==3.12
-  - "git+http://github.com/hartikainen/ray.git@dd8fc5f2c7a207d22352763532ff8b36a84f0cd2#subdirectory=python"
+  - "git+git://github.com/hartikainen/ray.git@3e7f91e55ca304d6e824457f3f2eb30903e0b33e#subdirectory=python"
   - redis==2.10.6
   - requests==2.18.4
   - rsa==3.4.2
