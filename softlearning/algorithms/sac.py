@@ -77,7 +77,8 @@ class SAC(RLAlgorithm, Serializable):
             env,
             policy,
             initial_exploration_policy,
-            qf,
+            qf1,
+            qf2,
             vf,
             pool,
             plotter=None,
@@ -118,7 +119,8 @@ class SAC(RLAlgorithm, Serializable):
         self._env = env
         self._policy = policy
         self._initial_exploration_policy = initial_exploration_policy
-        self._qf = qf
+        self._qf1 = qf1
+        self._qf2 = qf2
         self._vf = vf
         self._pool = pool
         self._plotter = plotter
@@ -223,7 +225,9 @@ class SAC(RLAlgorithm, Serializable):
         Q-function update rule.
         """
 
-        self._qf_t = self._qf.output_for(
+        self._qf1_t = self._qf1.get_output_for(
+            self._observations_ph, self._actions_ph, reuse=True)  # N
+        self._qf2_t = self._qf2.get_output_for(
             self._observations_ph, self._actions_ph, reuse=True)  # N
 
         with tf.variable_scope('target'):
@@ -235,14 +239,20 @@ class SAC(RLAlgorithm, Serializable):
             (1 - self._terminals_ph) * self._discount * vf_next_target_t
         )  # N
 
-        self._td_loss_t = 0.5 * tf.reduce_mean((ys - self._qf_t)**2)
+        self._td_loss1_t = 0.5 * tf.reduce_mean((ys - self._qf1_t)**2)
+        self._td_loss2_t = 0.5 * tf.reduce_mean((ys - self._qf2_t)**2)
 
-        qf_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
-            loss=self._td_loss_t,
-            var_list=self._qf.get_params_internal()
+        qf1_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
+            loss=self._td_loss1_t,
+            var_list=self._qf1.get_params_internal()
+        )
+        qf2_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
+            loss=self._td_loss2_t,
+            var_list=self._qf2.get_params_internal()
         )
 
-        self._training_ops.append(qf_train_op)
+        self._training_ops.append(qf1_train_op)
+        self._training_ops.append(qf2_train_op)
 
     def _init_actor_update(self):
         """Create minimization operations for policy and state value functions.
@@ -274,14 +284,17 @@ class SAC(RLAlgorithm, Serializable):
         elif self._action_prior == 'uniform':
             policy_prior_log_probs = 0.0
 
-        log_target = self._qf.output_for(
+        log_target1 = self._qf1.get_output_for(
             self._observations_ph, actions, reuse=True)  # N
+        log_target2 = self._qf2.get_output_for(
+            self._observations_ph, actions, reuse=True)  # N
+        min_log_target = tf.minimum(log_target1, log_target2)
 
         if self._reparameterize:
-            policy_kl_loss = tf.reduce_mean(log_pi - log_target - policy_prior_log_probs)
+            policy_kl_loss = tf.reduce_mean(log_pi - log_target1 - policy_prior_log_probs)
         else:
             policy_kl_loss = tf.reduce_mean(log_pi * tf.stop_gradient(
-                log_pi - log_target + self._vf_t - policy_prior_log_probs))
+                log_pi - log_target1 + self._vf_t - policy_prior_log_probs))
 
         policy_regularization_losses = tf.get_collection(
             tf.GraphKeys.REGULARIZATION_LOSSES,
@@ -294,8 +307,8 @@ class SAC(RLAlgorithm, Serializable):
 
         self._vf_loss_t = 0.5 * tf.reduce_mean((
           self._vf_t
-          - tf.stop_gradient(log_target - log_pi + policy_prior_log_probs)
-        )**2)
+          - tf.stop_gradient(min_log_target - log_pi + policy_prior_log_probs)
+        )**2) # TODO: shouldn't need to stop gradient anyways, since only trains vf
 
         policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
             loss=policy_loss,
@@ -364,14 +377,18 @@ class SAC(RLAlgorithm, Serializable):
         """
 
         feed_dict = self._get_feed_dict(iteration, batch)
-        qf, vf, td_loss = self._sess.run(
-            (self._qf_t, self._vf_t, self._td_loss_t), feed_dict)
+        qf1, qf2, vf, td_loss1, td_loss2 = self._sess.run(
+            (self._qf1_t, self._qf2_t, self._vf_t, self._td_loss1_t, self._td_loss2_t), feed_dict)
 
-        logger.record_tabular('qf-avg', np.mean(qf))
-        logger.record_tabular('qf-std', np.std(qf))
+        logger.record_tabular('qf1-avg', np.mean(qf1))
+        logger.record_tabular('qf1-std', np.std(qf1))
+        logger.record_tabular('qf2-avg', np.mean(qf1))
+        logger.record_tabular('qf2-std', np.std(qf1))
+        logger.record_tabular('mean-qf-diff', np.mean(np.abs(qf1-qf2)))
         logger.record_tabular('vf-avg', np.mean(vf))
         logger.record_tabular('vf-std', np.std(vf))
-        logger.record_tabular('mean-sq-bellman-error', td_loss)
+        logger.record_tabular('mean-sq-bellman-error1', td_loss1)
+        logger.record_tabular('mean-sq-bellman-error2', td_loss2)
 
         self._policy.log_diagnostics(iteration, batch)
         if self._plotter:
@@ -395,7 +412,8 @@ class SAC(RLAlgorithm, Serializable):
             snapshot = {
                 'epoch': epoch,
                 'policy': self._policy,
-                'qf': self._qf,
+                'qf1': self._qf1,
+                'qf2': self._qf2,
                 'vf': self._vf,
                 'env': self._env,
             }
@@ -407,7 +425,8 @@ class SAC(RLAlgorithm, Serializable):
 
         d = Serializable.__getstate__(self)
         d.update({
-            'qf-params': self._qf.get_param_values(),
+            'qf1-params': self._qf1.get_param_values(),
+            'qf2-params': self._qf2.get_param_values(),
             'vf-params': self._vf.get_param_values(),
             'policy-params': self._policy.get_param_values(),
             'pool': self._pool.__getstate__(),
@@ -419,7 +438,8 @@ class SAC(RLAlgorithm, Serializable):
         """Set Serializable state fo the RLAlgorithm instance."""
 
         Serializable.__setstate__(self, d)
-        self._qf.set_param_values(d['qf-params'])
+        self._qf1.set_param_values(d['qf1-params'])
+        self._qf2.set_param_values(d['qf2-params'])
         self._vf.set_param_values(d['vf-params'])
         self._policy.set_param_values(d['policy-params'])
         self._pool.__setstate__(d['pool'])

@@ -11,9 +11,7 @@ from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
 
-# from softlearning.algorithms import SAC
-# move these into main SAC
-from softlearning.algorithms.sac_min_q_vf import SAC
+from softlearning.algorithms import SAC
 from softlearning.environments import (
     GymEnv,
     MultiDirectionSwimmerEnv,
