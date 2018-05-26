@@ -172,22 +172,21 @@ LSP_ALGORITHM_PARAMS = {
     'half-cheetah': { # 6 DoF
         'scale_reward': 3,
         'base_kwargs': {
-            'n_epochs': int(1e4 + 1),
-            'eval_deterministic': False
+            'n_epochs': int(3e3 + 1),
+            'n_initial_exploration_steps': 10000,
         }
     },
     'walker': { # 6 DoF
         'scale_reward': 3,
         'base_kwargs': {
-            'n_epochs': int(5e3 + 1),
-            'eval_deterministic': False
+            'n_epochs': int(3e3 + 1),
         }
     },
     'ant': { # 8 DoF
-        'scale_reward': 3,
+        'scale_reward': [5,10],
         'base_kwargs': {
-            'n_epochs': int(1e4 + 1),
-            'eval_deterministic': False
+            'n_epochs': int(3e3 + 1),
+            'n_initial_exploration_steps': 10000,
         }
     },
     'humanoid': { # 21 DoF

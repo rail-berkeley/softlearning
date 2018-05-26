@@ -17,7 +17,7 @@ EPS = 1e-6
 class GMMPolicy(NNPolicy, Serializable):
     """Gaussian Mixture Model policy"""
     def __init__(self, env_spec, K=2, hidden_layer_sizes=(100, 100), reg=1e-3,
-                 squash=True, qf=None, name='gmm_policy'):
+                 squash=True, qf=None, reparameterize=True, name='gmm_policy'):
         """
         Args:
             env_spec (`rllab.EnvSpec`): Specification of the environment
@@ -39,6 +39,7 @@ class GMMPolicy(NNPolicy, Serializable):
         self._is_deterministic = False
         self._fixed_h = None
         self._squash = squash
+        self._reparameterize = reparameterize
         self._qf = qf
         self._reg = reg
 
