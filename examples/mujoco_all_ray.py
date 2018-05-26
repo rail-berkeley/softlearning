@@ -1,6 +1,5 @@
 import argparse
 import os
-from uuid import uuid4
 
 import tensorflow as tf
 import ray
@@ -94,10 +93,9 @@ def setup_rllab_logger(variant):
     from rllab.misc import logger
 
     run_params = variant['run_params']
-    # We would wan the trial.logdir here, but that seems unaccessible
-    log_dir = os.path.join(
-        os.path.expanduser(run_params['local_dir']),
-        str(uuid4()))
+
+    ray_log_dir = os.getcwd()
+    log_dir = os.path.join(ray_log_dir, 'rllab-logger')
 
     tabular_log_file = os.path.join(log_dir, 'progress.csv')
     text_log_file = os.path.join(log_dir, 'debug.log')
