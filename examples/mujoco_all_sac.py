@@ -110,11 +110,11 @@ def run_experiment(variant):
             'tanh': tf.nn.tanh
         }[policy_params['preprocessing_output_nonlinearity']]
 
-        preprocessing_hidden_sizes = policy_params.get('preprocessing_hidden_sizes')
-        if preprocessing_hidden_sizes is not None:
+        preprocessing_layer_sizes = policy_params.get('preprocessing_layer_sizes')
+        if preprocessing_layer_sizes is not None:
             observations_preprocessor = MLPPreprocessor(
                 env_spec=env.spec,
-                layer_sizes=preprocessing_hidden_sizes,
+                layer_sizes=preprocessing_layer_sizes,
                 output_nonlinearity=nonlinearity)
         else:
             observations_preprocessor = None

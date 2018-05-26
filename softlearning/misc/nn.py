@@ -46,13 +46,14 @@ def feedforward_net(inputs,
 
 
 class MLPFunction(Parameterized, Serializable):
-    def __init__(self, inputs, name, hidden_layer_sizes):
+    def __init__(self, inputs, name, layer_sizes, output_nonlinearity=None):
         Parameterized.__init__(self)
         Serializable.quick_init(self, locals())
 
         self._name = name
         self._inputs = inputs
-        self._layer_sizes = list(hidden_layer_sizes) + [1]
+        self._layer_sizes = list(layer_sizes)
+        self._output_nonlinearity = output_nonlinearity
 
         self._output = self._output_for(self._inputs)
 
@@ -60,7 +61,7 @@ class MLPFunction(Parameterized, Serializable):
         with tf.variable_scope(self._name, reuse=reuse):
             out = feedforward_net(
                 inputs=inputs,
-                output_nonlinearity=None,
+                output_nonlinearity=self._output_nonlinearity,
                 layer_sizes=self._layer_sizes)
 
         return out[..., 0]

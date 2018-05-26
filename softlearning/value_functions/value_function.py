@@ -18,10 +18,11 @@ class NNVFunction(MLPFunction):
         self._observations_ph = tf.placeholder(
             tf.float32, shape=[None, self._Do], name='observations')
 
+        layer_sizes = tuple(hidden_layer_sizes) + (1, )
         super(NNVFunction, self).__init__(
             inputs=(self._observations_ph, ),
             name=name,
-            hidden_layer_sizes=hidden_layer_sizes)
+            layer_sizes=layer_sizes)
 
     def eval(self, observations):
         return super(NNVFunction, self)._eval((observations, ))
@@ -46,10 +47,11 @@ class NNQFunction(MLPFunction):
         self._actions_ph = tf.placeholder(
             tf.float32, shape=[None, self._Da], name='actions')
 
+        layer_sizes = tuple(hidden_layer_sizes) + (1, )
         super(NNQFunction, self).__init__(
             inputs=(self._observations_ph, self._actions_ph),
             name=name,
-            hidden_layer_sizes=hidden_layer_sizes)
+            layer_sizes=layer_sizes)
 
     def output_for(self, observations, actions, reuse=False):
         return super(NNQFunction, self)._output_for(

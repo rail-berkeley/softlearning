@@ -24,8 +24,13 @@ class MLPPreprocessor(MLPFunction):
             name='observations',
         )
 
-        self._input_pls = (obs_ph, )
+        self._inputs = (obs_ph, )
         self._layer_sizes = layer_sizes
         self._output_nonlinearity = output_nonlinearity
 
-        self._output_t = self._output_for(obs_ph, reuse=tf.AUTO_REUSE)
+        self._output_t = self.output_for(obs_ph, reuse=tf.AUTO_REUSE)
+
+    def output_for(self, observations, reuse=False):
+        return super(MLPPreprocessor, self)._output_for(
+            (observations, ),
+            reuse=reuse)[..., None]

@@ -8,34 +8,34 @@ LSP_POLICY_PARAMS_BASE = {
     'coupling_layers': 2,
     's_t_layers': 1,
     'action_prior': 'uniform',
-    # 'preprocessing_hidden_sizes': None,
+    # 'preprocessing_layer_sizes': None,
     'preprocessing_output_nonlinearity': 'relu',
     'squash': True
 }
 
 LSP_POLICY_PARAMS = {
     'swimmer': { # 2 DoF
-        'preprocessing_hidden_sizes': (128, 128, 4),
+        'preprocessing_layer_sizes': (128, 128, 4),
         's_t_units': 2,
     },
     'hopper': { # 3 DoF
-        'preprocessing_hidden_sizes': (128, 128, 6),
+        'preprocessing_layer_sizes': (128, 128, 6),
         's_t_units': 3,
     },
     'half-cheetah': { # 6 DoF
-        'preprocessing_hidden_sizes': (128, 128, 12),
+        'preprocessing_layer_sizes': (128, 128, 12),
         's_t_units': 6,
     },
     'walker': { # 6 DoF
-        'preprocessing_hidden_sizes': (128, 128, 12),
+        'preprocessing_layer_sizes': (128, 128, 12),
         's_t_units': 6,
     },
     'ant': { # 8 DoF
-        'preprocessing_hidden_sizes': (128, 128, 16),
+        'preprocessing_layer_sizes': (128, 128, 16),
         's_t_units': 8,
     },
     'humanoid': { # 21 DoF
-        'preprocessing_hidden_sizes': (128, 128, 42),
+        'preprocessing_layer_sizes': (128, 128, 42),
         's_t_units': 21,
     }
 }
