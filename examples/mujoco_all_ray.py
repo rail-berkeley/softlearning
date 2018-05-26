@@ -233,7 +233,7 @@ def main():
             'trial_resources': {'cpu': 8},
             'config': variants,
             'local_dir': local_dir,
-            # 'upload_dir': 'gs://<your-bucket>/ray_results'
+            'upload_dir': 'gs://sac-ray-test/ray_results'
         }
     })
 
