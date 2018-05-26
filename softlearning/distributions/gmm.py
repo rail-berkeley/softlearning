@@ -6,7 +6,7 @@ import numpy as np
 from softlearning.misc.nn import feedforward_net
 
 LOG_SIG_CAP_MAX = 2
-LOG_SIG_CAP_MIN = 20
+LOG_SIG_CAP_MIN = -20
 LOG_W_CAP_MIN = -10
 
 
