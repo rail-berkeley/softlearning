@@ -14,10 +14,14 @@ from softlearning.misc.sampler import SimpleSampler
 
 
 def test():
+    env = normalize(MultiGoalEnv(
+        actuation_cost_coeff=1,
+        distance_cost_coeff=0.1,
+        goal_reward=1,
+        init_sigma=0.1,
+    ))
 
-    env = normalize(MultiGoalEnv())
-
-    pool = SimpleReplayBuffer(env_spec=env.spec, max_replay_buffer_size=1e6)
+    pool = SimpleReplayBuffer(max_replay_buffer_size=1e6, env_spec=env.spec)
 
     sampler = SimpleSampler(
         max_path_length=30, min_pool_size=100, batch_size=64)
