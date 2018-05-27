@@ -227,15 +227,18 @@ def main():
     else:
         ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
 
-    tune.run_experiments({
-        args.exp_name: {
-            'run': 'mujoco-runner',
-            'trial_resources': {'cpu': 8},
-            'config': variants,
-            'local_dir': local_dir,
-            'upload_dir': 'gs://sac-ray-test/ray_results'
-        }
-    })
+    tune.run_experiments(
+        {
+            args.exp_name: {
+                'run': 'mujoco-runner',
+                'trial_resources': {'cpu': 8},
+                'config': variants,
+                'local_dir': local_dir,
+                'upload_dir': 'gs://sac-ray-test/ray_results'
+            }
+        },
+        queue_trials=True
+    )
 
 if __name__ == '__main__':
     main()
