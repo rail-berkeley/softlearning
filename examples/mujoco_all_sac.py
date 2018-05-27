@@ -39,7 +39,10 @@ ENVIRONMENTS = {
         'multi-direction': MultiDirectionAntEnv,
         'cross-maze': CrossMazeAntEnv
     },
-    'humanoid': {
+    'humanoid-gym': {
+        'default': lambda: normalize(GymEnv('Humanoid-v1'))
+    },
+    'humanoid-rllab': {
         'default': HumanoidEnv,
         'multi-direction': MultiDirectionHumanoidEnv,
     },
