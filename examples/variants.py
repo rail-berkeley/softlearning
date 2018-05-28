@@ -18,8 +18,12 @@ LSP_POLICY_PARAMS_BASE = {
 }
 
 LSP_POLICY_PARAMS = {
-    'swimmer': { # 2 DoF
-        'preprocessing_layer_sizes': (M, M, 4),
+    'swimmer-gym': { # 2 DoF
+        'preprocessing_hidden_sizes': (M, M, 4),
+        's_t_units': 2,
+    },
+    'swimmer-rllab': { # 2 DoF
+        'preprocessing_hidden_sizes': (M, M, 4),
         's_t_units': 2,
     },
     'hopper': { # 3 DoF
@@ -57,7 +61,9 @@ GMM_POLICY_PARAMS_BASE = {
 }
 
 GMM_POLICY_PARAMS = {
-    'swimmer': { # 2 DoF
+    'swimmer-gym': { # 2 DoF
+    },
+    'swimmer-rllab': { # 2 DoF
     },
     'hopper': { # 3 DoF
     },
@@ -90,7 +96,9 @@ VALUE_FUNCTION_PARAMS = {
 }
 
 ENV_DOMAIN_PARAMS = {
-    'swimmer': { # 2 DoF
+    'swimmer-rllab': { # 2 DoF
+    },
+    'swimmer-gym': { # 2 DoF
     },
     'hopper': { # 3 DoF
     },
@@ -107,7 +115,9 @@ ENV_DOMAIN_PARAMS = {
 }
 
 ENV_PARAMS = {
-    'swimmer': { # 2 DoF
+    'swimmer-rllab': { # 2 DoF
+    },
+    'swimmer-gym': { # 2 DoF
     },
     'hopper': { # 3 DoF
     },
@@ -165,11 +175,17 @@ ALGORITHM_PARAMS_BASE = {
 }
 
 LSP_ALGORITHM_PARAMS = {
-    'swimmer': { # 2 DoF
-        'scale_reward': 300,
+    'swimmer-rllab': { # 2 DoF
+        'scale_reward': 100,
         'base_kwargs': {
             'n_epochs': int(5e2 + 1),
             'eval_deterministic': False
+        }
+    },
+    'swimmer-gym': { # 2 DoF
+        'scale_reward': [1,3,5,10,25,50,100,200],
+        'base_kwargs': {
+            'n_epochs': int(5e2 + 1),
         }
     },
     'hopper': { # 3 DoF
@@ -303,7 +319,8 @@ RUN_PARAMS = {
 
 
 DOMAINS = [
-    'swimmer', # 2 DoF
+    'swimmer-gym', # 2 DoF
+    'swimmer-rllab', # 2 DoF
     'hopper', # 3 DoF
     'half-cheetah', # 6 DoF
     'walker', # 6 DoF
@@ -313,7 +330,10 @@ DOMAINS = [
 ]
 
 TASKS = {
-    'swimmer': [
+    'swimmer-gym': [
+        'default',
+    ],
+    'swimmer-rllab': [
         'default',
         'multi-direction',
     ],

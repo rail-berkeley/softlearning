@@ -30,7 +30,10 @@ from softlearning.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variants
 
 ENVIRONMENTS = {
-    'swimmer': {
+    'swimmer-gym': {
+        'default': lambda: normalize(GymEnv('Swimmer-v1')),
+    },
+    'swimmer-rllab': {
         'default': SwimmerEnv,
         'multi-direction': MultiDirectionSwimmerEnv,
     },
