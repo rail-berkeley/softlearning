@@ -166,8 +166,7 @@ class SQL(RLAlgorithm):
             target_actions = tf.random_uniform(
                 (1, self._value_n_particles, self._action_dim), -1, 1)
             q_value_targets = self.qf.output_for(
-                observations=self._next_observations_ph[:, None, :],
-                actions=target_actions)
+                self._next_observations_ph[:, None, :], target_actions)
             assert_shape(q_value_targets, [None, self._value_n_particles])
 
         self._q_values = self.qf.output_for(

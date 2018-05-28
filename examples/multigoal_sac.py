@@ -61,7 +61,8 @@ def run(variant):
             mode="train",
             squash=True,
             bijector_config=bijector_config,
-            observations_preprocessor=None
+            observations_preprocessor=None,
+            q_function=qf
         )
 
     plotter = QFPolicyPlotter(

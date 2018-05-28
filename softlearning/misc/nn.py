@@ -55,19 +55,19 @@ class MLPFunction(Parameterized, Serializable):
         self._layer_sizes = list(layer_sizes)
         self._output_nonlinearity = output_nonlinearity
 
-        self._output = self._output_for(self._inputs)
+        self._output = self.output_for(*self._inputs)
 
-    def _output_for(self, inputs, reuse=False):
+    def output_for(self, *inputs, reuse=False):
         with tf.variable_scope(self._name, reuse=reuse):
             out = feedforward_net(
                 inputs=inputs,
                 output_nonlinearity=self._output_nonlinearity,
                 layer_sizes=self._layer_sizes)
 
-        return out[..., 0]
+        return out
 
-    def _eval(self, inputs):
-        feeds = {pl: val for pl, val in zip(self._inputs, inputs)}
+    def eval(self, *inputs):
+        feeds = {ph: val for ph, val in zip(self._inputs, inputs)}
 
         return tf_utils.get_default_session().run(self._output, feeds)
 
@@ -75,6 +75,7 @@ class MLPFunction(Parameterized, Serializable):
         if len(tags) > 0:
             raise NotImplementedError
 
-        scope += '/' + self._name if scope else self._name
+        scope = scope or tf.get_variable_scope().name
+        scope += '/' + self._name  if len(scope) else self._name
 
         return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)

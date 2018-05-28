@@ -162,8 +162,6 @@ def run_experiment(variant):
         save_full_state=False,
     )
 
-    algorithm._sess.run(tf.global_variables_initializer())
-
     algorithm.train()
 
 
