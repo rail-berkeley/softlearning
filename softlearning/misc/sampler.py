@@ -23,7 +23,7 @@ def rollout(env, policy, path_length, render=False, speedup=10, callback=None,
 
     t = 0  # To make edge case path_length=0 work.
     for t in range(path_length):
-        action, _ = policy.get_action(observation)
+        action, agent_info = policy.get_action(observation)
 
         if callback is not None:
             callback(observation, action)
@@ -76,6 +76,8 @@ def rollouts(env, policy, path_length, n_paths, render=False, render_mode='human
         rollout(env, policy, path_length, render, render_mode=render_mode)
         for i in range(n_paths)
     ]
+
+    return paths
 
 class Sampler(object):
     def __init__(self, max_path_length, min_pool_size, batch_size):
@@ -169,4 +171,3 @@ class DummySampler(Sampler):
 
     def sample(self):
         pass
-    return paths

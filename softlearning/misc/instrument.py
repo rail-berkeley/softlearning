@@ -8,7 +8,7 @@ DEFAULT_LOG_DIR = PROJECT_PATH + "/data"
 
 
 def _create_symlink(folder):
-    """Create a symbolic link that points to the sql folder."""
+    """Create a symbolic link that points to the softlearning folder."""
 
     # Unique filename for the symlink.
     include_path = os.path.join('/tmp/', str(uuid.uuid4()))
@@ -35,12 +35,11 @@ def launch_experiment(main,
                                exp_prefix.replace("_", "-"), exp_name)
 
     if include_folders is None:
-        include_folders = list()
+        include_folders = []
 
     if mode == 'ec2':
-        include_folders.append('softlearning')
-        include_folders.append('models')
-        all_symlinks = list()
+        include_folders += ['softlearning', 'models']
+        all_symlinks = []
 
         for folder in include_folders:
             all_symlinks.append(_create_symlink(folder))

@@ -55,7 +55,6 @@ class QFPolicyPlotter:
 
         for ax, obs in zip(self._ax_lst, self._obs_lst):
             qs = self._qf.eval(obs[None], actions)
-
             qs = qs.reshape(xgrid.shape)
 
             cs = ax.contour(xgrid, ygrid, qs, 20)
@@ -67,5 +66,6 @@ class QFPolicyPlotter:
         for ax, obs in zip(self._ax_lst, self._obs_lst):
             actions = self._policy.get_actions(
                 np.ones((self._n_samples, 1)) * obs[None, :])
+
             x, y = actions[:, 0], actions[:, 1]
             self._line_objects += ax.plot(x, y, 'b*')
