@@ -237,15 +237,8 @@ GMM_ALGORITHM_PARAMS = {
             'eval_deterministic': True,
         }
     },
-    'ant': { # 8 DoF
-        'scale_reward': [3,5,10],
-        'base_kwargs': {
-            'n_epochs': int(1e4 + 1),
-            'eval_deterministic': True,
-        }
-    },
-    'humanoid': { # 21 DoF
-        'scale_reward': [3,5,10,20],
+    'humanoid-rllab': { # 21 DoF
+        'scale_reward': [5,10,20,40],
         'base_kwargs': {
             'n_epochs': int(2e4 + 1),
             'eval_deterministic': True,
