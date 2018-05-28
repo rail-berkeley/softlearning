@@ -22,6 +22,7 @@ class FixedOptionPolicy(object):
         aug_obs_t = tf.concat([obs_t, z_one_hot], axis=1)
         return self._base_policy.get_distribution_for(aug_obs_t, reuse=reuse)
 
+
 class ScheduledOptionPolicy(object):
     def __init__(self, base_policy, num_skills, z_vec):
         self._z_vec = z_vec
@@ -55,6 +56,7 @@ class RandomOptionPolicy(object):
         aug_obs = concat_obs_z(obs, self._z, self._num_skills)
         return self._base_policy.get_action(aug_obs)
 
+
 class HierarchicalPolicy(object):
     def __init__(self, base_policy, num_skills, meta_policy, steps_per_option):
         self._steps_per_option = steps_per_option
@@ -74,6 +76,7 @@ class HierarchicalPolicy(object):
         self._t += 1
         aug_obs = concat_obs_z(obs, self._z, self._num_skills)
         return self._base_policy.get_action(aug_obs)
+
 
 class RandomHierarchicalPolicy(object):
 

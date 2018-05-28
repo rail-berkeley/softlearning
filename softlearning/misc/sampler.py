@@ -3,8 +3,11 @@ import time
 
 from rllab.misc import logger
 
+def rollout(env, policy, path_length, render=False, speedup=10, callback=None,
+            render_mode='human'):
 
-def rollout(env, policy, path_length, render=False, speedup=None):
+    ims = []
+
     Da = env.action_space.flat_dim
     Do = env.observation_space.flat_dim
 
@@ -18,10 +21,13 @@ def rollout(env, policy, path_length, render=False, speedup=None):
     agent_infos = []
     env_infos = []
 
-    t = 0
+    t = 0  # To make edge case path_length=0 work.
     for t in range(path_length):
+        action, _ = policy.get_action(observation)
 
-        action, agent_info = policy.get_action(observation)
+        if callback is not None:
+            callback(observation, action)
+
         next_obs, reward, terminal, env_info = env.step(action)
 
         agent_infos.append(agent_info)
@@ -35,9 +41,14 @@ def rollout(env, policy, path_length, render=False, speedup=None):
         observation = next_obs
 
         if render:
-            env.render()
-            time_step = 0.05
-            time.sleep(time_step / speedup)
+            if render_mode == 'rgb_array':
+                ims.append(env.render(
+                    mode=render_mode,
+                ))
+            else:
+                env.render(render_mode)
+                time_step = 0.05
+                time.sleep(time_step / speedup)
 
         if terminal:
             break
@@ -54,16 +65,17 @@ def rollout(env, policy, path_length, render=False, speedup=None):
         'env_infos': env_infos
     }
 
+
+    if render_mode == 'rgb_array':
+        path['ims'] = np.stack(ims, axis=0)
+
     return path
 
-
-def rollouts(env, policy, path_length, n_paths):
-    paths = list()
-    for i in range(n_paths):
-        paths.append(rollout(env, policy, path_length))
-
-    return paths
-
+def rollouts(env, policy, path_length, n_paths, render=False, render_mode='human'):
+    paths = [
+        rollout(env, policy, path_length, render, render_mode=render_mode)
+        for i in range(n_paths)
+    ]
 
 class Sampler(object):
     def __init__(self, max_path_length, min_pool_size, batch_size):
@@ -157,3 +169,4 @@ class DummySampler(Sampler):
 
     def sample(self):
         pass
+    return paths

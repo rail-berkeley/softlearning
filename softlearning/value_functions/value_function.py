@@ -61,6 +61,31 @@ class NNQFunction(MLPFunction):
         return super(NNQFunction, self)._eval((observations, actions))
 
 
+class NNDiscriminatorFunction(MLPFunction):
+    def __init__(self,
+                 env_spec,
+                 hidden_layer_sizes=(100, 100),
+                 num_skills=None,
+                 name='discriminator_function'):
+        assert num_skills is not None
+        Serializable.quick_init(self, locals())
+
+        self._Da = env_spec.action_space.flat_dim
+        self._Do = env_spec.observation_space.flat_dim
+
+        self._observations_ph = tf.placeholder(
+            tf.float32, shape=[None, self._Do], name='observations')
+        self._action_pl = tf.placeholder(
+            tf.float32, shape=[None, self._Da], name='actions')
+
+        layer_sizes = tuple(hidden_layer_sizes) + (num_skills, )
+        super(NNDiscriminatorFunction, self).__init__(
+            inputs=(self._observations_ph, self._actions_ph),
+            name=name,
+            layer_sizes=layer_sizes)
+
+        self._output_t = self._output
+
 class SumQFunction(Serializable):
     def __init__(self, env_spec, q_functions):
         Serializable.quick_init(self, locals())

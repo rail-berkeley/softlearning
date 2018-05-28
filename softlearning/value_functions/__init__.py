@@ -1,1 +1,2 @@
-from .value_function import NNVFunction, NNQFunction, SumQFunction
+from .value_function import (
+    NNVFunction, NNQFunction, SumQFunction, NNDiscriminatorFunction)
