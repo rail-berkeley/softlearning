@@ -8,13 +8,13 @@ from rllab.misc.instrument import VariantGenerator
 from rllab.envs.normalized_env import normalize
 from rllab import spaces
 
-from sac.algos import DIAYN
-from sac.envs.gym_env import GymEnv
-from sac.misc.instrument import run_sac_experiment
-from sac.misc.utils import timestamp
-from sac.policies.gmm import GMMPolicy
-from sac.replay_buffers import SimpleReplayBuffer
-from sac.value_functions import NNQFunction, NNVFunction, NNDiscriminatorFunction
+from softlearning.algorithms import DIAYN
+from softlearning.environments import GymEnv
+from softlearning.misc.instrument import run_sac_experiment
+from softlearning.misc.utils import timestamp
+from softlearning.policies.gmm import GMMPolicy
+from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.value_functions import NNQFunction, NNVFunction, NNDiscriminatorFunction
 
 import argparse
 import numpy as np

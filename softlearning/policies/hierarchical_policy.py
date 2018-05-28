@@ -1,4 +1,4 @@
-from sac.misc.utils import concat_obs_z
+from softlearning.misc.utils import concat_obs_z
 import numpy as np
 import tensorflow as tf
 

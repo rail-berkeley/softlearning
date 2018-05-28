@@ -6,14 +6,14 @@ Usage:
 
 from rllab.misc.instrument import VariantGenerator
 
-from sac.algos import SAC
-from sac.envs.meta_env import FixedOptionEnv
-from sac.misc.instrument import run_sac_experiment
-from sac.misc.sampler import rollouts
-from sac.misc.utils import timestamp
-from sac.policies.hierarchical_policy import FixedOptionPolicy
-from sac.replay_buffers import SimpleReplayBuffer
-from sac.value_functions import NNQFunction, NNVFunction
+from softlearning.algorithms import SAC
+from softlearning.environments import FixedOptionEnv
+from softlearning.misc.instrument import run_sac_experiment
+from softlearning.misc.sampler import rollouts
+from softlearning.misc.utils import timestamp
+from softlearning.policies.hierarchical_policy import FixedOptionPolicy
+from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.value_functions import NNQFunction, NNVFunction
 
 import argparse
 import joblib
