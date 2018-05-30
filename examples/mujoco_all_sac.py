@@ -77,7 +77,7 @@ def parse_args():
     parser.add_argument('--policy',
                         type=str,
                         choices=('lsp', 'gmm'),
-                        default='lsp')
+                        default='gmm')
     parser.add_argument('--env', type=str, default=DEFAULT_ENV)
     parser.add_argument('--exp_name', type=str, default=timestamp())
     parser.add_argument('--mode', type=str, default='local')
@@ -189,7 +189,7 @@ def launch_experiments(variant_generator, args):
         print("Experiment: {}/{}".format(i, num_experiments))
         run_params = variant['run_params']
 
-        experiment_prefix = 'sac_camera_ready/' + variant['prefix'] + '/' + args.exp_name
+        experiment_prefix = 'sac_camera_ready/final_runs/' + variant['prefix'] + '/' + args.exp_name
         experiment_name = '{prefix}-{exp_name}-{i:02}'.format(
             prefix=variant['prefix'], exp_name=args.exp_name, i=i)
 

@@ -189,75 +189,42 @@ LSP_ALGORITHM_PARAMS = {
         }
     },
     'hopper': { # 3 DoF
-        'scale_reward': 1,
+        'scale_reward': [5],
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'eval_deterministic': False
         }
     },
     'half-cheetah': { # 6 DoF
-        'scale_reward': 3,
+        'scale_reward': [5],
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': 10000,
         }
     },
     'walker': { # 6 DoF
-        'scale_reward': 3,
+        'scale_reward': [5],
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
         }
     },
     'ant': { # 8 DoF
-        'scale_reward': [5,10],
+        'scale_reward': [5],
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': 10000,
         }
     },
     'humanoid-gym': { # 21 DoF
-        'scale_reward': [3,5,10,20],
-        'base_kwargs': {
-            'n_epochs': int(2e4 + 1),
-            'eval_deterministic': False
-        }
-    }
-}
-
-GMM_ALGORITHM_PARAMS = {
-    'swimmer': { # 2 DoF
-        'scale_reward': 100,
-        'base_kwargs': {
-            'n_epochs': int(5e2 + 1),
-            'eval_deterministic': True,
-        }
-    },
-    'hopper': { # 3 DoF
-        'scale_reward': [1,3,5,10],
-        'base_kwargs': {
-            'n_epochs': int(3e3 + 1),
-            'eval_deterministic': True,
-        }
-    },
-    'half-cheetah': { # 6 DoF
-        'scale_reward': [1,3,5],
+        'scale_reward': [20],
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
-            'eval_deterministic': True,
         }
     },
-    'walker': { # 6 DoF
-        'scale_reward': [3,5,10],
+    'humanoid-rllab': { # ? DoF
+        'scale_reward': [10],
         'base_kwargs': {
-            'n_epochs': int(5e3 + 1),
-            'eval_deterministic': True,
-        }
-    },
-    'humanoid-rllab': { # 21 DoF
-        'scale_reward': [5,10,20,40],
-        'base_kwargs': {
-            'n_epochs': int(2e4 + 1),
-            'eval_deterministic': True,
+            'n_epochs': int(1e4 + 1),
         }
     }
 }
@@ -290,7 +257,7 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS = {
-    'seed': [1,11,21],
+    'seed': [2 + 10*i for i in range(10)],
     'snapshot_mode': 'last',
     'snapshot_gap': 1000,
     'sync_pkl': True,
