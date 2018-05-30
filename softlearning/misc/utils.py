@@ -86,6 +86,8 @@ def deep_clone(obj):
 
 
 def deep_update(d, u):
+    d = d.copy()
+    u = u.copy()
     for k, v in u.items():
         d[k] = (
             deep_update(d.get(k, {}), v)

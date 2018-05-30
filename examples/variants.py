@@ -148,11 +148,51 @@ ALGORITHM_PARAMS_BASE = {
     }
 }
 
-ALGORITHM_PARAMS = {
+LSP_ALGORITHM_PARAMS = {
     'swimmer': { # 2 DoF
         'scale_reward': 100,
         'base_kwargs': {
             'n_epochs': int(5e2 + 1),
+        }
+    },
+    'hopper': { # 3 DoF
+        'scale_reward': 1,
+        'base_kwargs': {
+            'n_epochs': int(3e3 + 1),
+        }
+    },
+    'half-cheetah': { # 6 DoF
+        'scale_reward': 3,
+        'base_kwargs': {
+            'n_epochs': int(1e4 + 1),
+        }
+    },
+    'walker': { # 6 DoF
+        'scale_reward': 3,
+        'base_kwargs': {
+            'n_epochs': int(5e3 + 1),
+        }
+    },
+    'ant': { # 8 DoF
+        'scale_reward': 3,
+        'base_kwargs': {
+            'n_epochs': int(1e4 + 1),
+        }
+    },
+    'humanoid': { # 21 DoF
+        'scale_reward': 3,
+        'base_kwargs': {
+            'n_epochs': int(2e4 + 1),
+        }
+    }
+}
+
+GMM_ALGORITHM_PARAMS = {
+    'swimmer': { # 2 DoF
+        'scale_reward': 100,
+        'base_kwargs': {
+            'n_epochs': int(5e2 + 1),
+            'n_train_repeat': 4
         }
     },
     'hopper': { # 3 DoF
@@ -174,7 +214,7 @@ ALGORITHM_PARAMS = {
         }
     },
     'ant': { # 8 DoF
-        'scale_reward': 10,
+        'scale_reward': 3,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
@@ -187,8 +227,25 @@ ALGORITHM_PARAMS = {
     }
 }
 
-REPLAY_BUFFER_PARAMS = {
+ALGORITHM_PARAMS = {
+    'lsp': {
+        k: deep_update(ALGORITHM_PARAMS_BASE, v)
+        for k, v in LSP_ALGORITHM_PARAMS.items()
+    },
+    'gmm': {
+        k: deep_update(ALGORITHM_PARAMS_BASE, v)
+        for k, v in GMM_ALGORITHM_PARAMS.items()
+    },
+}
+
+REPLAY_BUFFER_PARAMS_BASE = {
     'max_replay_buffer_size': 1e6,
+}
+
+REPLAY_BUFFER_PARAMS = {
+    'half-cheetah': {
+        'max_replay_buffer_size': 1e7,
+    }
 }
 
 SAMPLER_PARAMS = {
@@ -198,8 +255,8 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS_BASE = {
-    'seed': [1,2,3,4,5],
-    'snapshot_mode': 'gap',
+    'seed': [11,12,13],
+    'snapshot_mode': 'none',
     'snapshot_gap': 1000,
     'sync_pkl': True,
 }
@@ -277,11 +334,9 @@ def get_variants(domain, task, policy):
         'env_params': ENV_PARAMS[domain].get(task, {}),
         'policy_params': POLICY_PARAMS[policy][domain],
         'value_fn_params': VALUE_FUNCTION_PARAMS,
-        'algorithm_params': deep_update(
-            ALGORITHM_PARAMS_BASE,
-            ALGORITHM_PARAMS[domain]
-        ),
-        'replay_buffer_params': REPLAY_BUFFER_PARAMS,
+        'algorithm_params': ALGORITHM_PARAMS[policy][domain],
+        'replay_buffer_params': deep_update(REPLAY_BUFFER_PARAMS_BASE,
+                                            REPLAY_BUFFER_PARAMS.get(domain, {})),
         'sampler_params': SAMPLER_PARAMS,
         'run_params': deep_update(RUN_PARAMS_BASE, RUN_PARAMS[domain]),
     }

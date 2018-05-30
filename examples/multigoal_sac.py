@@ -33,7 +33,7 @@ def run(variant):
         'n_train_repeat': 1,
         'eval_render': True,
         'eval_n_episodes': 10,
-        'eval_deterministic': False
+        'eval_deterministic': True
     }
 
     M = 128

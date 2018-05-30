@@ -77,10 +77,9 @@ ENV_PARAMS = {
         'env_name': 'ant-rllab',
         'max_path_length': 1000,
         'n_epochs': 10000,
-        'reward_scale': [1, 3, 10, 30, 100, 300]
+        'reward_scale': 300
     },
     'humanoid': {  # 21 DoF
-        'seed': [11, 12, 13, 14, 15],
         'prefix': 'humanoid',
         'env_name': 'humanoid-rllab',
         'max_path_length': 1000,
