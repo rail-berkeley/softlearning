@@ -44,13 +44,13 @@ ENVIRONMENTS = {
         'multi-direction': MultiDirectionHumanoidEnv,
     },
     'hopper': {
-        'default': lambda: normalize(GymEnv('Hopper-v1'))
+        'default': lambda: GymEnv('Hopper-v1')
     },
     'half-cheetah': {
-        'default': lambda: normalize(GymEnv('HalfCheetah-v1'))
+        'default': lambda: GymEnv('HalfCheetah-v1')
     },
     'walker': {
-        'default': lambda: normalize(GymEnv('Walker2d-v1'))
+        'default': lambda: GymEnv('Walker2d-v1')
     },
 }
 
