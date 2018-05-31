@@ -143,46 +143,51 @@ ALGORITHM_PARAMS_BASE = {
         'epoch_length': 1000,
         'n_train_repeat': 1,
         'eval_render': False,
-        'eval_n_episodes': 1,
-        'eval_deterministic': True,
+        'eval_n_episodes': 1
     }
 }
 
 LSP_ALGORITHM_PARAMS = {
     'swimmer': { # 2 DoF
-        'scale_reward': 100,
+        'scale_reward': 300,
         'base_kwargs': {
             'n_epochs': int(5e2 + 1),
+            'eval_deterministic': False
         }
     },
     'hopper': { # 3 DoF
         'scale_reward': 1,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
+            'eval_deterministic': False
         }
     },
     'half-cheetah': { # 6 DoF
         'scale_reward': 3,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
+            'eval_deterministic': False
         }
     },
     'walker': { # 6 DoF
         'scale_reward': 3,
         'base_kwargs': {
             'n_epochs': int(5e3 + 1),
+            'eval_deterministic': False
         }
     },
     'ant': { # 8 DoF
-        'scale_reward': 3,
+        'scale_reward': 10,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
+            'eval_deterministic': False
         }
     },
     'humanoid': { # 21 DoF
-        'scale_reward': 3,
+        'scale_reward': 10,
         'base_kwargs': {
             'n_epochs': int(2e4 + 1),
+            'eval_deterministic': False
         }
     }
 }
@@ -192,37 +197,42 @@ GMM_ALGORITHM_PARAMS = {
         'scale_reward': 100,
         'base_kwargs': {
             'n_epochs': int(5e2 + 1),
-            'n_train_repeat': 4
+            'eval_deterministic': True,
         }
     },
     'hopper': { # 3 DoF
         'scale_reward': 1,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
+            'eval_deterministic': True,
         }
     },
     'half-cheetah': { # 6 DoF
         'scale_reward': 1,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
+            'eval_deterministic': True,
         }
     },
     'walker': { # 6 DoF
         'scale_reward': 3,
         'base_kwargs': {
             'n_epochs': int(5e3 + 1),
+            'eval_deterministic': True,
         }
     },
     'ant': { # 8 DoF
         'scale_reward': 3,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
+            'eval_deterministic': True,
         }
     },
     'humanoid': { # 21 DoF
         'scale_reward': 3,
         'base_kwargs': {
             'n_epochs': int(2e4 + 1),
+            'eval_deterministic': True,
         }
     }
 }
@@ -244,7 +254,7 @@ REPLAY_BUFFER_PARAMS_BASE = {
 
 REPLAY_BUFFER_PARAMS = {
     'half-cheetah': {
-        'max_replay_buffer_size': 1e7,
+        'max_replay_buffer_size': [1e6, 1e7],
     }
 }
 

@@ -62,10 +62,6 @@ class RLAlgorithm(Algorithm):
 
         self._sess = tf_utils.get_default_session()
 
-        self.env = None
-        self.policy = None
-        self.pool = None
-
     def _train(self, env, policy, pool):
         """Perform RL training.
 
