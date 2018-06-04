@@ -76,7 +76,9 @@ GMM_POLICY_PARAMS = {
     'humanoid-gym': { # 17 DoF
     },
     'humanoid-rllab': { # 21 DoF
-    }
+    },
+    'humanoid-standup-gym': { # 17 DoF
+    },
 }
 
 POLICY_PARAMS = {
@@ -111,7 +113,9 @@ ENV_DOMAIN_PARAMS = {
     'humanoid-gym': { # 17 DoF
     },
     'humanoid-rllab': { # 21 DoF
-    }
+    },
+    'humanoid-standup-gym': { # 17 DoF
+    },
 }
 
 ENV_PARAMS = {
@@ -155,6 +159,8 @@ ENV_PARAMS = {
         }
     },
     'humanoid-rllab': {
+    },
+    'humanoid-standup-gym': { # 17 DoF
     },
 }
 
@@ -226,7 +232,13 @@ LSP_ALGORITHM_PARAMS = {
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
-    }
+    },
+    'humanoid-standup-gym': { # 21 DoF
+        'scale_reward': [3, 10, 30, 100],
+        'base_kwargs': {
+            'n_epochs': int(1e4 + 1),
+        }
+    },
 }
 
 ALGORITHM_PARAMS = {
@@ -257,7 +269,7 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS = {
-    'seed': [2 + 10*i for i in range(10)],
+    'seed': [1 + 10*i for i in range(3)],
     'snapshot_mode': 'last',
     'snapshot_gap': 1000,
     'sync_pkl': True,
@@ -294,6 +306,7 @@ DOMAINS = [
     'ant', # 8 DoF
     'humanoid-gym', # 17 DoF
     'humanoid-rllab', # 21 DoF
+    'humanoid-standup-gym', # 17 DoF
 ]
 
 TASKS = {
@@ -325,6 +338,9 @@ TASKS = {
     'humanoid-rllab': [
         'default',
         'multi-direction'
+    ],
+    'humanoid-standup-gym': [
+        'default',
     ],
 }
 
