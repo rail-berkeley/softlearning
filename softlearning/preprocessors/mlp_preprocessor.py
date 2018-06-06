@@ -10,7 +10,7 @@ from softlearning.misc import tf_utils
 class MLPPreprocessor(MLPFunction):
     def __init__(self,
                  env_spec,
-                 layer_sizes=(128, 16),
+                 layer_sizes,
                  output_nonlinearity=None,
                  name='observations_preprocessor'):
 

@@ -177,14 +177,14 @@ LSP_ALGORITHM_PARAMS = {
         }
     },
     'ant': { # 8 DoF
-        'scale_reward': 10,
+        'scale_reward': 3,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
             'eval_deterministic': False
         }
     },
     'humanoid': { # 21 DoF
-        'scale_reward': 10,
+        'scale_reward': 3,
         'base_kwargs': {
             'n_epochs': int(2e4 + 1),
             'eval_deterministic': False
