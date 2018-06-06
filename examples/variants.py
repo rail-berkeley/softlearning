@@ -173,7 +173,7 @@ ALGORITHM_PARAMS_BASE = {
 
     'base_kwargs': {
         'epoch_length': 1000,
-        'n_train_repeat': 1,
+        'n_train_repeat': [2,4],
         'n_initial_exploration_steps': 1000,
         'eval_render': False,
         'eval_n_episodes': 1
@@ -182,10 +182,9 @@ ALGORITHM_PARAMS_BASE = {
 
 LSP_ALGORITHM_PARAMS = {
     'swimmer-rllab': { # 2 DoF
-        'scale_reward': 100,
+        'scale_reward': [25,50,100],
         'base_kwargs': {
-            'n_epochs': int(5e2 + 1),
-            'eval_deterministic': False
+            'n_epochs': int(1e3 + 1),
         }
     },
     'swimmer-gym': { # 2 DoF
@@ -202,7 +201,7 @@ LSP_ALGORITHM_PARAMS = {
         }
     },
     'half-cheetah': { # 6 DoF
-        'scale_reward': [5],
+        'scale_reward': [0.3, 1, 3, 10],
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': 10000,
@@ -215,7 +214,7 @@ LSP_ALGORITHM_PARAMS = {
         }
     },
     'ant': { # 8 DoF
-        'scale_reward': [5],
+        'scale_reward': [0.3, 1, 3, 10],
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': 10000,
@@ -269,7 +268,7 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS = {
-    'seed': [1 + 10*i for i in range(3)],
+    'seed': [2 + 10*i for i in range(5)],
     'snapshot_mode': 'last',
     'snapshot_gap': 1000,
     'sync_pkl': True,
