@@ -172,8 +172,7 @@ class GMMPolicy(NNPolicy, Serializable):
         old_fixed_h = self._fixed_h
 
         self._is_deterministic = set_deterministic
-        if set_deterministic:
-            if latent is None: latent = self.sample_z.eval()
+        if latent is not None:
             self._fixed_h = latent
 
         yield
