@@ -214,7 +214,7 @@ LSP_ALGORITHM_PARAMS = {
         }
     },
     'ant': { # 8 DoF
-        'scale_reward': [0.3, 1, 3, 10],
+        'scale_reward': [5],
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': 10000,
