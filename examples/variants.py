@@ -173,7 +173,7 @@ ALGORITHM_PARAMS_BASE = {
 
     'base_kwargs': {
         'epoch_length': 1000,
-        'n_train_repeat': [2,4],
+        'n_train_repeat': [8],
         'n_initial_exploration_steps': 1000,
         'eval_render': False,
         'eval_n_episodes': 1
