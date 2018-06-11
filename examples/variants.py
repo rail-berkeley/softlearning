@@ -173,7 +173,7 @@ ALGORITHM_PARAMS_BASE = {
 
     'base_kwargs': {
         'epoch_length': 1000,
-        'n_train_repeat': [1,2,4],
+        'n_train_repeat': [1],
         'n_initial_exploration_steps': 1000,
         'eval_render': False,
         'eval_n_episodes': 1
@@ -214,7 +214,7 @@ LSP_ALGORITHM_PARAMS = {
         }
     },
     'ant': { # 8 DoF
-        'scale_reward': [5, 10],
+        'scale_reward': [5],
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': 10000,
@@ -268,7 +268,7 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS = {
-    'seed': [2 + 10*i for i in range(5)],
+    'seed': [3 + 10*i for i in range(5)],
     'snapshot_mode': 'last',
     'snapshot_gap': 1000,
     'sync_pkl': True,

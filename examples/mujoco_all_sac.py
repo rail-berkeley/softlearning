@@ -195,7 +195,7 @@ def launch_experiments(variant_generator, args):
         if algo_params['target_update_interval'] == 1000:
             algo_params['target_update_interval'] = 1000 // algo_params['base_kwargs']['n_train_repeat']
 
-        experiment_prefix = 'sac_camera_ready/n_train_repeat/' + variant['prefix'] + '/' + args.exp_name
+        experiment_prefix = 'sac_camera_ready/sac_1step_softtau_final_runs/' + variant['prefix'] + '/' + args.exp_name
         experiment_name = '{prefix}-{exp_name}-{i:02}'.format(
             prefix=variant['prefix'], exp_name=args.exp_name, i=i)
 
