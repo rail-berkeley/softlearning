@@ -168,12 +168,12 @@ ALGORITHM_PARAMS_BASE = {
     'lr': [3e-4],
     'discount': 0.99,
     'target_update_interval': 1,
-    'tau': 1e-3,
+    'tau': 0.005,
     'reparameterize': REPARAMETERIZE,
 
     'base_kwargs': {
         'epoch_length': 1000,
-        'n_train_repeat': [8],
+        'n_train_repeat': [1,2,4],
         'n_initial_exploration_steps': 1000,
         'eval_render': False,
         'eval_n_episodes': 1
@@ -214,7 +214,7 @@ LSP_ALGORITHM_PARAMS = {
         }
     },
     'ant': { # 8 DoF
-        'scale_reward': [5],
+        'scale_reward': [5, 10],
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': 10000,
