@@ -167,8 +167,8 @@ ENV_PARAMS = {
 ALGORITHM_PARAMS_BASE = {
     'lr': [3e-4],
     'discount': 0.99,
-    'target_update_interval': 1,
-    'tau': 0.005,
+    'target_update_interval': [125, 250, 500, 1000, 2000, 4000],
+    'tau': 1,
     'reparameterize': REPARAMETERIZE,
 
     'base_kwargs': {
@@ -201,7 +201,7 @@ LSP_ALGORITHM_PARAMS = {
         }
     },
     'half-cheetah': { # 6 DoF
-        'scale_reward': [5],
+        'scale_reward': [0.3, 1, 3, 10, 30, 100],
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': 10000,
