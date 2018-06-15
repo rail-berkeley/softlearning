@@ -37,7 +37,7 @@ LSP_POLICY_PARAMS = {
     'walker': { # 6 DoF
         'preprocessing_layer_sizes': (M, M, 12),
         's_t_units': 6,
-    },
+   },
     'ant': { # 8 DoF
         'preprocessing_layer_sizes': (M, M, 16),
         's_t_units': 8,
@@ -167,8 +167,8 @@ ENV_PARAMS = {
 ALGORITHM_PARAMS_BASE = {
     'lr': [3e-4],
     'discount': 0.99,
-    'target_update_interval': [125, 250, 500, 1000, 2000, 4000],
-    'tau': 1,
+    'target_update_interval': 1,
+    'tau': 0.005,
     'reparameterize': REPARAMETERIZE,
 
     'base_kwargs': {
@@ -201,7 +201,7 @@ LSP_ALGORITHM_PARAMS = {
         }
     },
     'half-cheetah': { # 6 DoF
-        'scale_reward': [0.3, 1, 3, 10, 30, 100],
+        'scale_reward': [1, 3, 5, 10],
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': 10000,
@@ -214,7 +214,7 @@ LSP_ALGORITHM_PARAMS = {
         }
     },
     'ant': { # 8 DoF
-        'scale_reward': [5],
+        'scale_reward': [5, 10],
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': 10000,
@@ -268,7 +268,7 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS = {
-    'seed': [3 + 10*i for i in range(5)],
+    'seed': [3 + 10*i for i in range(3)],
     'snapshot_mode': 'last',
     'snapshot_gap': 1000,
     'sync_pkl': True,

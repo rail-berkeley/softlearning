@@ -286,7 +286,8 @@ class SAC(RLAlgorithm, Serializable):
         min_log_target = tf.minimum(log_target1, log_target2)
 
         if self._reparameterize:
-            policy_kl_loss = tf.reduce_mean(log_pi - log_target1 - policy_prior_log_probs)
+            # change this back to include log_pi
+            policy_kl_loss = tf.reduce_mean(- log_target1)
         else:
             policy_kl_loss = tf.reduce_mean(log_pi * tf.stop_gradient(
                 log_pi - log_target1 + self._vf_t - policy_prior_log_probs))

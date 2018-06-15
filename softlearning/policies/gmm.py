@@ -194,11 +194,12 @@ class GMMPolicy(NNPolicy, Serializable):
 
         feeds = {self._observations_ph: batch['observations']}
         sess = tf_utils.get_default_session()
-        mus, log_sigs, log_ws = sess.run(
+        mus, log_sigs, log_ws, log_pis = sess.run(
             (
                 self.distribution.mus_t,
                 self.distribution.log_sigs_t,
                 self.distribution.log_ws_t,
+                self.distribution.log_p_t,
             ),
             feeds
         )
@@ -215,3 +216,6 @@ class GMMPolicy(NNPolicy, Serializable):
         logger.record_tabular('gmm-log-sigs-min', np.min(log_sigs))
         logger.record_tabular('gmm-log-sigs-max', np.max(log_sigs))
         logger.record_tabular('gmm-log-sigs-std', np.std(log_sigs))
+        logger.record_tabular('log_pi_mean', np.mean(log_pis))
+        logger.record_tabular('log_pi_max', np.max(log_pis))
+        logger.record_tabular('log_pi_min', np.min(log_pis))
