@@ -20,7 +20,6 @@ class Normal(object):
     ):
         self._cond_t_lst = cond_t_lst
         self._reg = reg
-        print("init normal")
         self._layer_sizes = list(hidden_layers_sizes) + [2 * Dx]
         print(self._layer_sizes)
         self._reparameterize = reparameterize
@@ -41,7 +40,6 @@ class Normal(object):
         Dx = self._Dx
 
         if len(self._cond_t_lst) == 0:
-            1/0
             mu_and_logsig_t = tf.get_variable(
                 'params', self._layer_sizes[-1],
                 initializer=tf.random_normal_initializer(0, 0.1)
@@ -63,19 +61,11 @@ class Normal(object):
         if not self._reparameterize:
             x_t = tf.stop_gradient(x_t)
         log_pi_t = dist.log_prob(x_t)
-        print("normal dist here")
-        print(mu_and_logsig_t.shape.as_list())
-        print(self._mu_t.shape.as_list())
-        print(self._log_sig_t.shape.as_list())
-        print(x_t.shape.as_list())
-        print(log_pi_t.shape.as_list())
-        print("end normal dist")
 
         self._dist = dist
         self._x_t = x_t
         self._log_pi_t = log_pi_t
         
-
         reg_loss_t = self._reg * 0.5 * tf.reduce_mean(self._log_sig_t ** 2)
         reg_loss_t += self._reg * 0.5 * tf.reduce_mean(self._mu_t ** 2)
         self._reg_loss_t = reg_loss_t
