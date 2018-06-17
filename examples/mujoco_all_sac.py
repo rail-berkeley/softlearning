@@ -205,7 +205,7 @@ def launch_experiments(variant_generator, args):
             algo_params['target_update_interval'] = 1000 // algo_params['base_kwargs']['n_train_repeat']
         """
 
-        experiment_prefix = 'sac_camera_ready/targetupdateinterval2_finalsweeps/' + variant['prefix'] + '/' + args.exp_name
+        experiment_prefix = 'sac_test/' + variant['prefix'] + '/' + args.exp_name
         experiment_name = '{prefix}-{exp_name}-{i:02}'.format(
             prefix=variant['prefix'], exp_name=args.exp_name, i=i)
 
@@ -223,7 +223,6 @@ def launch_experiments(variant_generator, args):
             snapshot_gap=run_params['snapshot_gap'],
             sync_s3_pkl=run_params['sync_pkl'],
         )
-        return
 
 
 def main():
