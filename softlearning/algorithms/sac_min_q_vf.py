@@ -267,6 +267,8 @@ class SAC(RLAlgorithm, Serializable):
 
         actions, log_pi = self._policy.actions_for(observations=self._observations_ph,
                                                    with_log_pis=True)
+        print("actor update")
+        print(tf.shape(actions))
 
         self._vf_t = self._vf.get_output_for(self._observations_ph, reuse=True)  # N
         self._vf_params = self._vf.get_params_internal()

@@ -61,8 +61,32 @@ GMM_POLICY_PARAMS_BASE = {
 }
 
 GMM_POLICY_PARAMS = {
-    'swimmer-gym': { # 2 DoF
+    'swimmer-rllab': { # 2 DoF
     },
+    'hopper': { # 3 DoF
+    },
+    'half-cheetah': { # 6 DoF
+    },
+    'walker': { # 6 DoF
+    },
+    'ant': { # 8 DoF
+    },
+    'humanoid-gym': { # 17 DoF
+    },
+    'humanoid-rllab': { # 21 DoF
+    },
+    'humanoid-standup-gym': { # 17 DoF
+    },
+}
+
+GAUSSIAN_POLICY_PARAMS_BASE = {
+    'type': 'gaussian',
+    'reg': 1e-3,
+    'action_prior': 'uniform',
+    'reparameterize': REPARAMETERIZE
+}
+
+GAUSSIAN_POLICY_PARAMS = {
     'swimmer-rllab': { # 2 DoF
     },
     'hopper': { # 3 DoF
@@ -90,6 +114,10 @@ POLICY_PARAMS = {
         k: dict(GMM_POLICY_PARAMS_BASE, **v)
         for k, v in GMM_POLICY_PARAMS.items()
     },
+    'gaussian': {
+        k: dict(GAUSSIAN_POLICY_PARAMS_BASE, **v)
+        for k, v in GAUSSIAN_POLICY_PARAMS.items()
+    },
 }
 
 VALUE_FUNCTION_PARAMS = {
@@ -99,8 +127,6 @@ VALUE_FUNCTION_PARAMS = {
 
 ENV_DOMAIN_PARAMS = {
     'swimmer-rllab': { # 2 DoF
-    },
-    'swimmer-gym': { # 2 DoF
     },
     'hopper': { # 3 DoF
     },
@@ -120,8 +146,6 @@ ENV_DOMAIN_PARAMS = {
 
 ENV_PARAMS = {
     'swimmer-rllab': { # 2 DoF
-    },
-    'swimmer-gym': { # 2 DoF
     },
     'hopper': { # 3 DoF
     },
@@ -173,7 +197,7 @@ ALGORITHM_PARAMS_BASE = {
 
     'base_kwargs': {
         'epoch_length': 1000,
-        'n_train_repeat': [1],
+        'n_train_repeat': 1,
         'n_initial_exploration_steps': 1000,
         'eval_render': False,
         'eval_n_episodes': 1
@@ -182,58 +206,52 @@ ALGORITHM_PARAMS_BASE = {
 
 LSP_ALGORITHM_PARAMS = {
     'swimmer-rllab': { # 2 DoF
-        'scale_reward': [25,50,100],
+        'scale_reward': 25,
         'base_kwargs': {
             'n_epochs': int(1e3 + 1),
         }
     },
-    'swimmer-gym': { # 2 DoF
-        'scale_reward': [1,3,5,10,25,50,100,200],
-        'base_kwargs': {
-            'n_epochs': int(5e2 + 1),
-        }
-    },
     'hopper': { # 3 DoF
-        'scale_reward': [5],
+        'scale_reward': 5,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'eval_deterministic': False
         }
     },
     'half-cheetah': { # 6 DoF
-        'scale_reward': [1, 3, 5, 10],
+        'scale_reward': 5,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': 10000,
         }
     },
     'walker': { # 6 DoF
-        'scale_reward': [5],
+        'scale_reward': 5,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
         }
     },
     'ant': { # 8 DoF
-        'scale_reward': [5, 10],
+        'scale_reward': 5,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': 10000,
         }
     },
     'humanoid-gym': { # 21 DoF
-        'scale_reward': [20],
+        'scale_reward': 20,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
     },
     'humanoid-rllab': { # ? DoF
-        'scale_reward': [10],
+        'scale_reward': 10,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
     },
     'humanoid-standup-gym': { # 21 DoF
-        'scale_reward': [3, 10, 30, 100],
+        'scale_reward': 100,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
@@ -268,7 +286,7 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS = {
-    'seed': [3 + 10*i for i in range(3)],
+    'seed': [1 + 10*i for i in range(5)],
     'snapshot_mode': 'last',
     'snapshot_gap': 1000,
     'sync_pkl': True,
@@ -297,7 +315,6 @@ RUN_PARAMS = {
 
 
 DOMAINS = [
-    'swimmer-gym', # 2 DoF
     'swimmer-rllab', # 2 DoF
     'hopper', # 3 DoF
     'half-cheetah', # 6 DoF
@@ -309,9 +326,6 @@ DOMAINS = [
 ]
 
 TASKS = {
-    'swimmer-gym': [
-        'default',
-    ],
     'swimmer-rllab': [
         'default',
         'multi-direction',
