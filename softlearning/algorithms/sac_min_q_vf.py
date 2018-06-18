@@ -76,6 +76,7 @@ class SAC(RLAlgorithm, Serializable):
 
             env,
             policy,
+            initial_exploration_policy,
             qf1,
             qf2,
             vf,
@@ -99,8 +100,15 @@ class SAC(RLAlgorithm, Serializable):
 
             env (`rllab.Env`): rllab environment object.
             policy: (`rllab.NNPolicy`): A policy function approximator.
-            qf (`ValueFunction`): Q-function approximator.
+            initial_exploration_policy: ('Policy'): A policy that we use
+                for initial exploration which is not trained by the algorithm.
+
+            qf1 (`valuefunction`): First Q-function approximator.
+            qf2 (`valuefunction`): Second Q-function approximator. Usage of two
+                Q-functions improves performance by reducing overestimation
+                bias.
             vf (`ValueFunction`): Soft value function approximator.
+
             pool (`PoolBase`): Replay buffer to add gathered samples to.
             plotter (`QFPolicyPlotter`): Plotter instance to be used for
                 visualizing Q-function during training.
@@ -108,7 +116,12 @@ class SAC(RLAlgorithm, Serializable):
             lr (`float`): Learning rate used for the function approximators.
             discount (`float`): Discount factor for Q-function updates.
             tau (`float`): Soft value function target update weight.
+            target_update_interval ('int'): Frequency at which target network
+                updates occur in iterations.
 
+            reparameterize ('bool'): If True, we use a gradient estimator for
+                the policy derived using the reparameterization trick. We use
+                a likelihood ratio based estimator otherwise.
             save_full_state (`bool`): If True, save the full class in the
                 snapshot. See `self.get_snapshot` for more information.
         """
@@ -132,6 +145,10 @@ class SAC(RLAlgorithm, Serializable):
         self._tau = tau
         self._target_update_interval = target_update_interval
         self._action_prior = action_prior
+
+        # Reparameterize parameter must match between the algorithm and the
+        # policy actions are sampled from.
+        assert reparameterize == self._policy._reparameterize
         self._reparameterize = reparameterize
 
         self._save_full_state = save_full_state
@@ -286,8 +303,7 @@ class SAC(RLAlgorithm, Serializable):
         min_log_target = tf.minimum(log_target1, log_target2)
 
         if self._reparameterize:
-            # change this back to include log_pi
-            policy_kl_loss = tf.reduce_mean(- log_target1)
+            policy_kl_loss = tf.reduce_mean(log_pi - log_target1)
         else:
             policy_kl_loss = tf.reduce_mean(log_pi * tf.stop_gradient(
                 log_pi - log_target1 + self._vf_t - policy_prior_log_probs))
@@ -301,10 +317,12 @@ class SAC(RLAlgorithm, Serializable):
         policy_loss = (policy_kl_loss
                        + policy_regularization_loss)
 
+        # We update the vf towards the min of two Q-functions in order to
+        # reduce overestimation bias from function approximation error.
         self._vf_loss_t = 0.5 * tf.reduce_mean((
           self._vf_t
           - tf.stop_gradient(min_log_target - log_pi + policy_prior_log_probs)
-        )**2) # shouldn't need to stop gradient anyways, since only trains vf
+        )**2)
 
         policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
             loss=policy_loss,

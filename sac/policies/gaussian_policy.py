@@ -26,6 +26,8 @@ class GaussianPolicy(NNPolicy, Serializable):
             reg (`float`): Regularization coeffiecient for the Gaussian parameters.
             squash (`bool`): If True, squash the Gaussian the gmm action samples
                between -1 and 1 with tanh.
+            reparameterize ('bool'): If True, gradients will flow directly through
+                the action samples.
         """
         Serializable.quick_init(self, locals())
 
@@ -45,8 +47,6 @@ class GaussianPolicy(NNPolicy, Serializable):
             tf.get_variable_scope().name + "/" + name
         ).lstrip("/")
 
-        # TODO.code_consolidation: This should probably call
-        # `super(GMMPolicy, self).__init__`
         super(NNPolicy, self).__init__(env_spec)
 
     def actions_for(self, observations, latents=None,
@@ -76,6 +76,14 @@ class GaussianPolicy(NNPolicy, Serializable):
 
         return actions
 
+    def log_pis_for(self, actions):
+        if self._squash:
+           raw_actions = tf.atanh(actions)
+           log_pis = self._distribution.log_prob(raw_actions)
+           log_pis -= self._squash_correction(raw_actions)
+           return log_pis
+        return self._distribution.log_prob(raw_actions)
+
     def build(self):
         self._observations_ph = tf.placeholder(
             dtype=tf.float32,
@@ -83,11 +91,6 @@ class GaussianPolicy(NNPolicy, Serializable):
             name='observations',
         )
 
-        # TODO.code_consolidation:
-        # self.distribution is used very differently compared to the
-        # `LatentSpacePolicy`s distribution.
-        # This does not use `self.actions_for` because we need to manually
-        # access e.g. `self.distribution.mus_t`
         with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
             self.distribution = Normal(
                 hidden_layers_sizes=self._hidden_layers,
@@ -99,17 +102,13 @@ class GaussianPolicy(NNPolicy, Serializable):
 
         raw_actions = tf.stop_gradient(self.distribution.x_t)
         self._actions = tf.tanh(raw_actions) if self._squash else raw_actions
-        # TODO.code_consolidation:
-        # This should be standardized with LatentSpacePolicy/NNPolicy
-        # self._determistic_actions = self.actions_for(self._observations_ph,
-        #                                              self._latents_ph)
 
     @overrides
     def get_actions(self, observations):
         """Sample actions based on the observations.
 
-        If `self._is_deterministic` is True, returns a greedily sampled action
-        for the observations. If False, return stochastically sampled action.
+        If `self._is_deterministic` is True, returns the mean action for the
+        observations. If False, return stochastically sampled action.
 
         TODO.code_consolidation: This should be somewhat similar with
         `LatentSpacePolicy.get_actions`.
@@ -121,13 +120,13 @@ class GaussianPolicy(NNPolicy, Serializable):
             # TODO.code_consolidation: these shapes should be double checked
             # for case where `observations.shape[0] > 1`
             mu = tf.get_default_session().run(
-                self.distribution.mu_t, feed_dict)  # Da
+                self.distribution.mu_t, feed_dict)  # 1 x Da
             if self._squash:
                 mu = np.tanh(mu)
 
             return mu
 
-        return super(GMMPolicy, self).get_actions(observations)
+        return super(GaussianPolicy, self).get_actions(observations)
 
     def _squash_correction(self, actions):
         if not self._squash: return 0

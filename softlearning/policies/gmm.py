@@ -17,7 +17,7 @@ EPS = 1e-6
 class GMMPolicy(NNPolicy, Serializable):
     """Gaussian Mixture Model policy"""
     def __init__(self, env_spec, K=2, hidden_layer_sizes=(100, 100), reg=1e-3,
-                 squash=True, qf=None, reparameterize=True, name='gmm_policy'):
+                 squash=True, reparameterize=False, qf=None, name='gmm_policy'):
         """
         Args:
             env_spec (`rllab.EnvSpec`): Specification of the environment
@@ -39,9 +39,14 @@ class GMMPolicy(NNPolicy, Serializable):
         self._is_deterministic = False
         self._fixed_h = None
         self._squash = squash
-        self._reparameterize = reparameterize
         self._qf = qf
         self._reg = reg
+
+        # We can only reparameterize if there was one component in the GMM,
+        # in which case one should use sac.policies.GaussianPolicy
+        assert not reparameterize, "GMMPolicy can't be reparameterized."
+        self._reparameterize = reparameterize
+
 
         self.name = name
         self.build()
@@ -68,10 +73,7 @@ class GMMPolicy(NNPolicy, Serializable):
                 reg=self._reg
             )
 
-        if self._reparameterize:
-            raw_actions = distribution.x_t
-        else:
-            raw_actions = tf.stop_gradient(distribution.x_t)
+        raw_actions = tf.stop_gradient(distribution.x_t)
 
         actions = tf.tanh(raw_actions) if self._squash else raw_actions
 

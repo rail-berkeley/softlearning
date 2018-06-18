@@ -31,19 +31,19 @@ from examples.variants import parse_domain_and_task, get_variants
 
 ENVIRONMENTS = {
     'swimmer-gym': {
-        'default': lambda: normalize(GymEnv('Swimmer-v1')),
+        'default': lambda: GymEnv('Swimmer-v1'),
     },
     'swimmer-rllab': {
         'default': SwimmerEnv,
         'multi-direction': MultiDirectionSwimmerEnv,
     },
     'ant': {
-        'default': lambda: normalize(GymEnv('Ant-v1')),
+        'default': lambda: GymEnv('Ant-v1'),
         'multi-direction': MultiDirectionAntEnv,
         'cross-maze': CrossMazeAntEnv
     },
     'humanoid-gym': {
-        'default': lambda: normalize(GymEnv('Humanoid-v1'))
+        'default': lambda: GymEnv('Humanoid-v1')
     },
     'humanoid-rllab': {
         'default': HumanoidEnv,
@@ -59,7 +59,7 @@ ENVIRONMENTS = {
         'default': lambda: GymEnv('Walker2d-v1')
     },
     'humanoid-standup-gym': {
-        'default': lambda: normalize(GymEnv('HumanoidStandup-v1'))
+        'default': lambda: GymEnv('HumanoidStandup-v1')
     }
 }
 
@@ -79,7 +79,7 @@ def parse_args():
                         default='default')
     parser.add_argument('--policy',
                         type=str,
-                        choices=('lsp', 'gmm', 'gaussian'),
+                        choices=('gaussian', 'gmm', 'lsp'),
                         default='gaussian')
     parser.add_argument('--env', type=str, default=DEFAULT_ENV)
     parser.add_argument('--exp_name', type=str, default=timestamp())
@@ -155,11 +155,12 @@ def run_experiment(variant):
             q_function=qf1,
             observations_preprocessor=observations_preprocessor)
     elif policy_params['type'] == 'gmm':
-        # disallow reparameterization for GMMPolicies
+        # reparameterize should always be False if using a GMMPolicy
         policy = GMMPolicy(
             env_spec=env.spec,
             K=policy_params['K'],
             hidden_layer_sizes=(M, M),
+            reparameterize=policy_params['reparameterize'],
             qf=qf1,
             reg=1e-3,
         )
@@ -200,12 +201,8 @@ def launch_experiments(variant_generator, args):
         print("Experiment: {}/{}".format(i, num_experiments))
         run_params = variant['run_params']
         algo_params = variant['algorithm_params']
-        """
-        if algo_params['target_update_interval'] == 1000:
-            algo_params['target_update_interval'] = 1000 // algo_params['base_kwargs']['n_train_repeat']
-        """
 
-        experiment_prefix = 'sac_test/' + variant['prefix'] + '/' + args.exp_name
+        experiment_prefix = variant['prefix'] + '/' + args.exp_name
         experiment_name = '{prefix}-{exp_name}-{i:02}'.format(
             prefix=variant['prefix'], exp_name=args.exp_name, i=i)
 

@@ -35,6 +35,8 @@ class RLAlgorithm(Algorithm):
             n_epochs (`int`): Number of epochs to run the training for.
             n_train_repeat (`int`): Number of times to repeat the training
                 for single time step.
+            n_initial_exploration_steps: Number of steps in the beginning to
+                take using actions drawn from a separate exploration policy.
             epoch_length (`int`): Epoch length.
             eval_n_episodes (`int`): Number of rollouts to evaluate.
             eval_deterministic (`int`): Whether or not to run the policy in
@@ -75,7 +77,7 @@ class RLAlgorithm(Algorithm):
             env (`rllab.Env`): Environment used for training
             policy (`Policy`): Policy used for training
             initial_exploration_policy ('Policy'): Policy used for exploration
-                If None, then all exploration is done with policy
+                If None, then all exploration is done using policy
             pool (`PoolBase`): Sample pool to add samples to
         """
 
