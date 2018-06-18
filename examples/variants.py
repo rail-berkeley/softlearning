@@ -189,7 +189,7 @@ ENV_PARAMS = {
 }
 
 ALGORITHM_PARAMS_BASE = {
-    'lr': [3e-4],
+    'lr': 3e-4,
     'discount': 0.99,
     'target_update_interval': 1,
     'tau': 0.005,
@@ -200,11 +200,12 @@ ALGORITHM_PARAMS_BASE = {
         'n_train_repeat': 1,
         'n_initial_exploration_steps': 1000,
         'eval_render': False,
-        'eval_n_episodes': 1
+        'eval_n_episodes': 1,
+        'eval_deterministic': True,
     }
 }
 
-LSP_ALGORITHM_PARAMS = {
+ALGORITHM_PARAMS = {
     'swimmer-rllab': { # 2 DoF
         'scale_reward': 25,
         'base_kwargs': {
@@ -215,7 +216,6 @@ LSP_ALGORITHM_PARAMS = {
         'scale_reward': 5,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
-            'eval_deterministic': False
         }
     },
     'half-cheetah': { # 6 DoF
@@ -238,34 +238,23 @@ LSP_ALGORITHM_PARAMS = {
             'n_initial_exploration_steps': 10000,
         }
     },
-    'humanoid-gym': { # 21 DoF
+    'humanoid-gym': { # 17 DoF
         'scale_reward': 20,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
     },
-    'humanoid-rllab': { # ? DoF
+    'humanoid-rllab': { # 21 DoF
         'scale_reward': 10,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
     },
-    'humanoid-standup-gym': { # 21 DoF
+    'humanoid-standup-gym': { # 17 DoF
         'scale_reward': 100,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
-    },
-}
-
-ALGORITHM_PARAMS = {
-    'lsp': {
-        k: deep_update(ALGORITHM_PARAMS_BASE, v)
-        for k, v in LSP_ALGORITHM_PARAMS.items()
-    },
-    'gmm': {
-        k: deep_update(ALGORITHM_PARAMS_BASE, v)
-        for k, v in GMM_ALGORITHM_PARAMS.items()
     },
 }
 
@@ -285,9 +274,9 @@ SAMPLER_PARAMS = {
     'batch_size': 256,
 }
 
-RUN_PARAMS = {
-    'seed': [1 + 10*i for i in range(5)],
-    'snapshot_mode': 'last',
+RUN_PARAMS_BASE = {
+    'seed': [1,2,3,4,5],
+    'snapshot_mode': 'gap',
     'snapshot_gap': 1000,
     'sync_pkl': True,
 }
@@ -312,7 +301,6 @@ RUN_PARAMS = {
         'snapshot_gap': 4000
     }
 }
-
 
 DOMAINS = [
     'swimmer-rllab', # 2 DoF
@@ -373,7 +361,10 @@ def get_variants(domain, task, policy):
         'env_params': ENV_PARAMS[domain].get(task, {}),
         'policy_params': POLICY_PARAMS[policy][domain],
         'value_fn_params': VALUE_FUNCTION_PARAMS,
-        'algorithm_params': ALGORITHM_PARAMS[policy][domain],
+        'algorithm_params': deep_update(
+            ALGORITHM_PARAMS_BASE,
+            ALGORITHM_PARAMS[domain]
+        ),
         'replay_buffer_params': deep_update(REPLAY_BUFFER_PARAMS_BASE,
                                             REPLAY_BUFFER_PARAMS.get(domain, {})),
         'sampler_params': SAMPLER_PARAMS,
