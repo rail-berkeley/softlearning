@@ -1,6 +1,6 @@
-from sac.misc import utils
-from sac.misc.sampler import rollouts
-from sac.policies.hierarchical_policy import FixedOptionPolicy
+from softlearning.misc import utils
+from softlearning.misc.sampler import rollouts
+from softlearning.policies.hierarchical_policy import FixedOptionPolicy
 
 import argparse
 import joblib

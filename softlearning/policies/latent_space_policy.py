@@ -22,6 +22,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
                  mode="train",
                  squash=True,
                  bijector_config=None,
+                 reparameterize=False,
                  observations_preprocessor=None,
                  fix_h_on_reset=False,
                  q_function=None,

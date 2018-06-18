@@ -7,9 +7,9 @@ import numpy as np
 import joblib
 import tensorflow as tf
 import os
-from sac.misc import utils
-from sac.policies.hierarchical_policy import FixedOptionPolicy
-from sac.misc.sampler import rollouts
+from softlearning.misc import utils
+from softlearning.policies.hierarchical_policy import FixedOptionPolicy
+from softlearning.misc.sampler import rollouts
 
 
 if __name__ == "__main__":

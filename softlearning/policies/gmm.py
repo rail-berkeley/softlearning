@@ -43,7 +43,7 @@ class GMMPolicy(NNPolicy, Serializable):
         self._reg = reg
 
         # We can only reparameterize if there was one component in the GMM,
-        # in which case one should use sac.policies.GaussianPolicy
+        # in which case one should use softlearning.policies.GaussianPolicy
         assert not reparameterize, "GMMPolicy can't be reparameterized."
         self._reparameterize = reparameterize
 

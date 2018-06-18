@@ -4,7 +4,7 @@ from rllab.misc.instrument import VariantGenerator
 from softlearning.misc.utils import flatten, get_git_rev, deep_update
 
 M = 256
-REPARAMETERIZE = True
+REPARAMETERIZE = False
 
 LSP_POLICY_PARAMS_BASE = {
     'type': 'lsp',
@@ -54,7 +54,7 @@ LSP_POLICY_PARAMS = {
 
 GMM_POLICY_PARAMS_BASE = {
     'type': 'gmm',
-    'K': 4,
+    'K': 1,
     'reg': 1e-3,
     'action_prior': 'uniform',
     'reparameterize': REPARAMETERIZE
@@ -175,14 +175,14 @@ ENV_PARAMS = {
             'pre_trained_policy_path': []
         },
     },
-    'humanoid-gym': { # 21 DoF
+    'humanoid-gym': { # 17 DoF
         'resume-training': {
             'low_level_policy_path': [
                 # 'humanoid-low-level-policy-00-00/itr_4000.pkl',
             ]
         }
     },
-    'humanoid-rllab': {
+    'humanoid-rllab': { # 21 DOF
     },
     'humanoid-standup-gym': { # 17 DoF
     },
@@ -258,14 +258,8 @@ ALGORITHM_PARAMS = {
     },
 }
 
-REPLAY_BUFFER_PARAMS_BASE = {
-    'max_replay_buffer_size': 1e6,
-}
-
 REPLAY_BUFFER_PARAMS = {
-    'half-cheetah': {
-        'max_replay_buffer_size': [1e6, 1e7],
-    }
+    'max_replay_buffer_size': 1e6,
 }
 
 SAMPLER_PARAMS = {
@@ -365,8 +359,7 @@ def get_variants(domain, task, policy):
             ALGORITHM_PARAMS_BASE,
             ALGORITHM_PARAMS[domain]
         ),
-        'replay_buffer_params': deep_update(REPLAY_BUFFER_PARAMS_BASE,
-                                            REPLAY_BUFFER_PARAMS.get(domain, {})),
+        'replay_buffer_params': REPLAY_BUFFER_PARAMS,
         'sampler_params': SAMPLER_PARAMS,
         'run_params': deep_update(RUN_PARAMS_BASE, RUN_PARAMS[domain]),
     }

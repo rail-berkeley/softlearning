@@ -3,10 +3,11 @@
 import tensorflow as tf
 import numpy as np
 
-from sac.misc.mlp import mlp
+from softlearning.misc.nn import feedforward_net
 
 LOG_SIG_CAP_MAX = 2
 LOG_SIG_CAP_MIN = -20
+LOG_W_CAP_MIN = -10
 
 
 class Normal(object):
@@ -21,7 +22,6 @@ class Normal(object):
         self._cond_t_lst = cond_t_lst
         self._reg = reg
         self._layer_sizes = list(hidden_layers_sizes) + [2 * Dx]
-        print(self._layer_sizes)
         self._reparameterize = reparameterize
 
         self._Dx = Dx
@@ -45,14 +45,17 @@ class Normal(object):
                 initializer=tf.random_normal_initializer(0, 0.1)
             )
         else:
-            mu_and_logsig_t = mlp(
+            mu_and_logsig_t = feedforward_net(
                 inputs=self._cond_t_lst,
                 layer_sizes=self._layer_sizes,
                 output_nonlinearity=None,
-            )  # ... x K*Dx*2+K
+            )
 
-        self._mu_t = mu_and_logsig_t[..., :Dx]
-        self._log_sig_t = tf.clip_by_value(mu_and_logsig_t[..., Dx:], LOG_SIG_CAP_MIN, LOG_SIG_CAP_MAX)
+        self._mu_t = tf.maximum(
+            mu_and_logsig_t[..., :Dx], LOG_W_CAP_MIN)
+        self._log_sig_t = tf.clip_by_value(
+            mu_and_logsig_t[..., Dx:],
+            LOG_SIG_CAP_MIN, LOG_SIG_CAP_MAX)
 
         # Tensorflow's multivariate normal distribution supports reparameterization
         ds = tf.contrib.distributions
