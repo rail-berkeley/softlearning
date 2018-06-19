@@ -37,7 +37,8 @@ def run(variant):
     }
 
     M = 128
-    qf = NNQFunction(env_spec=env.spec, hidden_layer_sizes=[M, M])
+    qf1 = NNQFunction(env_spec=env.spec, hidden_layer_sizes=[M, M], name='qf1')
+    qf2 = NNQFunction(env_spec=env.spec, hidden_layer_sizes=[M, M], name='qf2')
     vf = NNVFunction(env_spec=env.spec, hidden_layer_sizes=[M, M])
 
     if variant['policy_type'] == 'gmm':
@@ -45,7 +46,7 @@ def run(variant):
             env_spec=env.spec,
             K=4,
             hidden_layer_sizes=[M, M],
-            qf=qf,
+            qf=qf1,
             reg=0.001
         )
     elif variant['policy_type'] == 'lsp':
@@ -62,11 +63,11 @@ def run(variant):
             squash=True,
             bijector_config=bijector_config,
             observations_preprocessor=None,
-            q_function=qf
+            q_function=qf1
         )
 
     plotter = QFPolicyPlotter(
-        qf=qf,
+        qf=qf1,
         policy=policy,
         obs_lst=np.array([[-2.5, 0.0],
                           [0.0, 0.0],
@@ -79,8 +80,10 @@ def run(variant):
         base_kwargs=base_kwargs,
         env=env,
         policy=policy,
+        initial_exploration_policy=None,
         pool=pool,
-        qf=qf,
+        qf1=qf1,
+        qf2=qf2,
         vf=vf,
         plotter=plotter,
 

@@ -57,7 +57,7 @@ GMM_POLICY_PARAMS_BASE = {
     'K': 1,
     'reg': 1e-3,
     'action_prior': 'uniform',
-    'reparameterize': REPARAMETERIZE
+    'reparameterize': False # GMM can't be parameterized
 }
 
 GMM_POLICY_PARAMS = {
