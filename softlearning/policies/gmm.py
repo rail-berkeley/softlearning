@@ -47,7 +47,6 @@ class GMMPolicy(NNPolicy, Serializable):
         assert not reparameterize, "GMMPolicy can't be reparameterized."
         self._reparameterize = reparameterize
 
-
         self.name = name
         self.build()
 

@@ -17,7 +17,7 @@ class GMM(object):
             Dx,
             hidden_layers_sizes=(100, 100),
             reg=0.001,
-            reparameterize=True,
+            reparameterize=False,
             cond_t_lst=(),
     ):
         self._cond_t_lst = cond_t_lst
