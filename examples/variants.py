@@ -19,11 +19,11 @@ LSP_POLICY_PARAMS_BASE = {
 
 LSP_POLICY_PARAMS = {
     'swimmer-gym': { # 2 DoF
-        'preprocessing_hidden_sizes': (M, M, 4),
+        'preprocessing_layer_sizes': (M, M, 4),
         's_t_units': 2,
     },
     'swimmer-rllab': { # 2 DoF
-        'preprocessing_hidden_sizes': (M, M, 4),
+        'preprocessing_layer_sizes': (M, M, 4),
         's_t_units': 2,
     },
     'hopper': { # 3 DoF
@@ -47,11 +47,11 @@ LSP_POLICY_PARAMS = {
         's_t_units': 8,
     },
     'humanoid-gym': { # 17 DoF
-        'preprocessing_hidden_sizes': (M, M, 34),
+        'preprocessing_layer_sizes': (M, M, 34),
         's_t_units': 17,
     },
     'humanoid-rllab': { # 21 DoF
-        'preprocessing_hidden_sizes': (M, M, 42),
+        'preprocessing_layer_sizes': (M, M, 42),
         's_t_units': 21,
     }
 }

@@ -17,12 +17,15 @@ from softlearning.environments import (
     MultiDirectionSwimmerEnv,
     MultiDirectionAntEnv,
     MultiDirectionHumanoidEnv,
-    CrossMazeAntEnv,
-)
+    CrossMazeAntEnv)
 
 from softlearning.misc.instrument import launch_experiment
 from softlearning.misc.utils import timestamp, unflatten
-from softlearning.policies import GaussianPolicy, LatentSpacePolicy, GMMPolicy, UniformPolicy
+from softlearning.policies import (
+    GaussianPolicy,
+    LatentSpacePolicy,
+    GMMPolicy,
+    UniformPolicy)
 from softlearning.misc.sampler import SimpleSampler
 from softlearning.replay_buffers import SimpleReplayBuffer
 from softlearning.value_functions import NNQFunction, NNVFunction
@@ -123,14 +126,15 @@ def run_experiment(variant):
                 reg=1e-3,
         )
     elif policy_params['type'] == 'lsp':
-        nonlinearity = {
-            None: None,
-            'relu': tf.nn.relu,
-            'tanh': tf.nn.tanh
-        }[policy_params['preprocessing_output_nonlinearity']]
-
-        preprocessing_layer_sizes = policy_params.get('preprocessing_layer_sizes')
+        preprocessing_layer_sizes = policy_params.get(
+            'preprocessing_layer_sizes')
         if preprocessing_layer_sizes is not None:
+            nonlinearity = {
+                None: None,
+                'relu': tf.nn.relu,
+                'tanh': tf.nn.tanh
+            }[policy_params['preprocessing_output_nonlinearity']]
+
             observations_preprocessor = MLPPreprocessor(
                 env_spec=env.spec,
                 layer_sizes=preprocessing_layer_sizes,
@@ -192,7 +196,7 @@ def run_experiment(variant):
 
 def launch_experiments(variant_generator, args):
     variants = variant_generator.variants()
-    # TODO: Remove unflatten. Our variant generator should support nested params
+    # TODO: Remove unflatten. Variant generator should support nested params
     variants = [unflatten(variant, separator='.') for variant in variants]
 
     num_experiments = len(variants)
@@ -230,7 +234,8 @@ def main():
     if (not domain) or (not task):
         domain, task = parse_domain_and_task(args.env)
 
-    variant_generator = get_variants(domain=domain, task=task, policy=args.policy)
+    variant_generator = get_variants(
+        domain=domain, task=task, policy=args.policy)
     launch_experiments(variant_generator, args)
 
 

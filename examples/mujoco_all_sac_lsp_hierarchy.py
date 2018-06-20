@@ -49,7 +49,7 @@ COMMON_PARAMS = {
     'policy_s_t_layers': 1,
     'policy_scale_regularization': 0.0,
     'regularize_actions': True,
-    'preprocessing_hidden_sizes': None,
+    'preprocessing_layer_sizes': None,
     'preprocessing_output_nonlinearity': 'relu',
 
     'git_sha': git_rev
@@ -65,7 +65,7 @@ ENV_PARAMS = {
         'n_epochs': int(5e3 + 1),
         'scale_reward': 100.0,
 
-        'preprocessing_hidden_sizes': (128, 128, 4),
+        'preprocessing_layer_sizes': (128, 128, 4),
         'policy_s_t_units': 2,
 
         'snapshot_gap': 500,
@@ -93,7 +93,7 @@ ENV_PARAMS = {
         'n_epochs': int(1e5 + 1),
         'scale_reward': 30,
 
-        'preprocessing_hidden_sizes': (128, 128, 16),
+        'preprocessing_layer_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
 
         'snapshot_gap': 1000,
@@ -121,7 +121,7 @@ ENV_PARAMS = {
         'n_epochs': int(2e5 + 1),
         'scale_reward': 3.0,
 
-        'preprocessing_hidden_sizes': (128, 128, 42),
+        'preprocessing_layer_sizes': (128, 128, 42),
         'policy_s_t_units': 21,
 
         'snapshot_gap': 1000,
@@ -148,7 +148,7 @@ ENV_PARAMS = {
         'n_epochs': int(4e3 + 1),
         'scale_reward': 3.0,
 
-        'preprocessing_hidden_sizes': (128, 128, 16),
+        'preprocessing_layer_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
 
         'snapshot_gap': 1000,
@@ -168,7 +168,7 @@ ENV_PARAMS = {
         'n_epochs': int(1e4 + 1),
         'scale_reward': 3.0,
 
-        'preprocessing_hidden_sizes': (128, 128, 42),
+        'preprocessing_layer_sizes': (128, 128, 42),
         'policy_s_t_units': 21,
 
         'snapshot_gap': 2000,
@@ -297,12 +297,12 @@ def run_experiment(variant):
         hidden_layer_sizes=[M, M],
     )
 
-    preprocessing_hidden_sizes = variant.get('preprocessing_hidden_sizes')
+    preprocessing_layer_sizes = variant.get('preprocessing_layer_sizes')
     observations_preprocessor = (
         MLPPreprocessor(env_spec=env.spec,
-                        layer_sizes=preprocessing_hidden_sizes,
+                        layer_sizes=preprocessing_layer_sizes,
                         name='high_level_observations_preprocessor')
-        if preprocessing_hidden_sizes is not None
+        if preprocessing_layer_sizes is not None
         else None
     )
 
