@@ -231,14 +231,17 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         raw_actions, actions, log_pis = tf.get_default_session().run(
             (self._raw_actions, self._actions, self._log_pis), feeds)
 
-        logger.record_tabular('policy-entropy-mean', -np.mean(log_pis))
+        logger.record_tabular('log-pi-mean', np.mean(log_pis))
         logger.record_tabular('log-pi-min', np.min(log_pis))
         logger.record_tabular('log-pi-max', np.max(log_pis))
+        logger.record_tabular('log-pi-std', np.std(log_pi))
 
         logger.record_tabular('actions-mean', np.mean(actions))
         logger.record_tabular('actions-min', np.min(actions))
         logger.record_tabular('actions-max', np.max(actions))
+        logger.record_tabular('actions-std', np.std(actions))
 
         logger.record_tabular('raw-actions-mean', np.mean(raw_actions))
         logger.record_tabular('raw-actions-min', np.min(raw_actions))
         logger.record_tabular('raw-actions-max', np.max(raw_actions))
+        logger.record_tabular('raw-actions-std', np.std(raw_actions))

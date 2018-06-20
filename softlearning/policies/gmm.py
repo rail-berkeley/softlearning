@@ -209,14 +209,18 @@ class GMMPolicy(NNPolicy, Serializable):
         logger.record_tabular('gmm-mus-min', np.min(mus))
         logger.record_tabular('gmm-mus-max', np.max(mus))
         logger.record_tabular('gmm-mus-std', np.std(mus))
+
         logger.record_tabular('gmm-log-w-mean', np.mean(log_ws))
         logger.record_tabular('gmm-log-w-min', np.min(log_ws))
         logger.record_tabular('gmm-log-w-max', np.max(log_ws))
         logger.record_tabular('gmm-log-w-std', np.std(log_ws))
+
         logger.record_tabular('gmm-log-sigs-mean', np.mean(log_sigs))
         logger.record_tabular('gmm-log-sigs-min', np.min(log_sigs))
         logger.record_tabular('gmm-log-sigs-max', np.max(log_sigs))
         logger.record_tabular('gmm-log-sigs-std', np.std(log_sigs))
+
         logger.record_tabular('log_pi_mean', np.mean(log_pis))
-        logger.record_tabular('log_pi_max', np.max(log_pis))
         logger.record_tabular('log_pi_min', np.min(log_pis))
+        logger.record_tabular('log_pi_max', np.max(log_pis))
+        logger.record_tabular('log_pi_std', np.std(log_pis))

@@ -4,7 +4,7 @@ from rllab.misc.instrument import VariantGenerator
 from softlearning.misc.utils import flatten, get_git_rev, deep_update
 
 M = 256
-REPARAMETERIZE = False
+REPARAMETERIZE = True
 
 LSP_POLICY_PARAMS_BASE = {
     'type': 'lsp',
@@ -222,13 +222,13 @@ ALGORITHM_PARAMS = {
     'swimmer-gym': { # 2 DoF
         'scale_reward': 25,
         'base_kwargs': {
-            'n_epochs': int(1e3 + 1),
+            'n_epochs': int(5e2 + 1),
         }
     },
     'swimmer-rllab': { # 2 DoF
         'scale_reward': 25,
         'base_kwargs': {
-            'n_epochs': int(1e3 + 1),
+            'n_epochs': int(5e2 + 1),
         }
     },
     'hopper': { # 3 DoF
