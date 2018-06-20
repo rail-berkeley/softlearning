@@ -38,7 +38,11 @@ LSP_POLICY_PARAMS = {
         'preprocessing_layer_sizes': (M, M, 12),
         's_t_units': 6,
    },
-    'ant': { # 8 DoF
+    'ant-gym': { # 8 DoF
+        'preprocessing_layer_sizes': (M, M, 16),
+        's_t_units': 8,
+    },
+    'ant-rllab': { # 8 DoF
         'preprocessing_layer_sizes': (M, M, 16),
         's_t_units': 8,
     },
@@ -61,6 +65,8 @@ GMM_POLICY_PARAMS_BASE = {
 }
 
 GMM_POLICY_PARAMS = {
+    'swimmer-gym': { # 2 DoF
+    },
     'swimmer-rllab': { # 2 DoF
     },
     'hopper': { # 3 DoF
@@ -69,13 +75,13 @@ GMM_POLICY_PARAMS = {
     },
     'walker': { # 6 DoF
     },
-    'ant': { # 8 DoF
+    'ant-gym': { # 8 DoF
+    },
+    'ant-rllab': { # 8 DoF
     },
     'humanoid-gym': { # 17 DoF
     },
     'humanoid-rllab': { # 21 DoF
-    },
-    'humanoid-standup-gym': { # 17 DoF
     },
 }
 
@@ -87,6 +93,8 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
 }
 
 GAUSSIAN_POLICY_PARAMS = {
+    'swimmer-gym': { # 2 DoF
+    },
     'swimmer-rllab': { # 2 DoF
     },
     'hopper': { # 3 DoF
@@ -95,13 +103,13 @@ GAUSSIAN_POLICY_PARAMS = {
     },
     'walker': { # 6 DoF
     },
-    'ant': { # 8 DoF
+    'ant-gym': { # 8 DoF
+    },
+    'ant-rllab': { # 8 DoF
     },
     'humanoid-gym': { # 17 DoF
     },
     'humanoid-rllab': { # 21 DoF
-    },
-    'humanoid-standup-gym': { # 17 DoF
     },
 }
 
@@ -126,6 +134,8 @@ VALUE_FUNCTION_PARAMS = {
 }
 
 ENV_DOMAIN_PARAMS = {
+    'swimmer-gym': { # 2 DoF
+    },
     'swimmer-rllab': { # 2 DoF
     },
     'hopper': { # 3 DoF
@@ -134,17 +144,19 @@ ENV_DOMAIN_PARAMS = {
     },
     'walker': { # 6 DoF
     },
-    'ant': { # 8 DoF
+    'ant-gym': { # 8 DoF
+    },
+    'ant-rllab': { # 8 DoF
     },
     'humanoid-gym': { # 17 DoF
     },
     'humanoid-rllab': { # 21 DoF
     },
-    'humanoid-standup-gym': { # 17 DoF
-    },
 }
 
 ENV_PARAMS = {
+    'swimmer-gym': { # 2 DoF
+    },
     'swimmer-rllab': { # 2 DoF
     },
     'hopper': { # 3 DoF
@@ -153,7 +165,9 @@ ENV_PARAMS = {
     },
     'walker': { # 6 DoF
     },
-    'ant': { # 8 DoF
+    'ant-gym': { # 8 DoF
+    },
+    'ant-rllab': { # 8 DoF
         'resume-training': {
             'low_level_policy_path': [
                 # 'ant-low-level-policy-00-00/itr_4000.pkl',
@@ -184,8 +198,6 @@ ENV_PARAMS = {
     },
     'humanoid-rllab': { # 21 DOF
     },
-    'humanoid-standup-gym': { # 17 DoF
-    },
 }
 
 ALGORITHM_PARAMS_BASE = {
@@ -194,11 +206,12 @@ ALGORITHM_PARAMS_BASE = {
     'target_update_interval': 1,
     'tau': 0.005,
     'reparameterize': REPARAMETERIZE,
+    'q_update_scale': [0.1, 0.3, 1, 3, 10, 30, 100],
 
     'base_kwargs': {
         'epoch_length': 1000,
         'n_train_repeat': 1,
-        'n_initial_exploration_steps': 1000,
+        'n_initial_exploration_steps': int(1e3),
         'eval_render': False,
         'eval_n_episodes': 1,
         'eval_deterministic': True,
@@ -206,6 +219,12 @@ ALGORITHM_PARAMS_BASE = {
 }
 
 ALGORITHM_PARAMS = {
+    'swimmer-gym': { # 2 DoF
+        'scale_reward': 25,
+        'base_kwargs': {
+            'n_epochs': int(1e3 + 1),
+        }
+    },
     'swimmer-rllab': { # 2 DoF
         'scale_reward': 25,
         'base_kwargs': {
@@ -222,7 +241,7 @@ ALGORITHM_PARAMS = {
         'scale_reward': 5,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
-            'n_initial_exploration_steps': 10000,
+            'n_initial_exploration_steps': int(1e4),
         }
     },
     'walker': { # 6 DoF
@@ -231,11 +250,18 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(3e3 + 1),
         }
     },
-    'ant': { # 8 DoF
+    'ant-gym': { # 8 DoF
         'scale_reward': 5,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
-            'n_initial_exploration_steps': 10000,
+            'n_initial_exploration_steps': int(1e4),
+        }
+    },
+    'ant-rllab': { # 8 DoF
+        'scale_reward': 5,
+        'base_kwargs': {
+            'n_epochs': int(3e3 + 1),
+            'n_initial_exploration_steps': int(1e4),
         }
     },
     'humanoid-gym': { # 17 DoF
@@ -276,7 +302,10 @@ RUN_PARAMS_BASE = {
 }
 
 RUN_PARAMS = {
-    'swimmer': { # 2 DoF
+    'swimmer-gym': { # 2 DoF
+        'snapshot_gap': 200
+    },
+    'swimmer-rllab': { # 2 DoF
         'snapshot_gap': 200
     },
     'hopper': { # 3 DoF
@@ -288,26 +317,36 @@ RUN_PARAMS = {
     'walker': { # 6 DoF
         'snapshot_gap': 1000
     },
-    'ant': { # 8 DoF
+    'ant-gym': { # 8 DoF
         'snapshot_gap': 2000
     },
-    'humanoid': { # 21 DoF
-        'snapshot_gap': 4000
-    }
+    'ant-rllab': { # 8 DoF
+        'snapshot_gap': 2000
+    },
+    'humanoid-gym': { # 21 DoF
+        'snapshot_gap': 2000
+    },
+    'humanoid-rllab': { # 21 DoF
+        'snapshot_gap': 2000
+    },
 }
 
 DOMAINS = [
+    'swimmer-gym', # 2 DoF
     'swimmer-rllab', # 2 DoF
     'hopper', # 3 DoF
     'half-cheetah', # 6 DoF
     'walker', # 6 DoF
-    'ant', # 8 DoF
+    'ant-gym', # 8 DoF
+    'ant-rllab', # 8 DoF
     'humanoid-gym', # 17 DoF
     'humanoid-rllab', # 21 DoF
-    'humanoid-standup-gym', # 17 DoF
 ]
 
 TASKS = {
+    'swimmer-gym': [
+        'default',
+    ],
     'swimmer-rllab': [
         'default',
         'multi-direction',
@@ -321,21 +360,21 @@ TASKS = {
     'walker': [
         'default',
     ],
-    'ant': [
+    'ant-gym': [
+        'default',
+    ],
+    'ant-rllab': [
         'default',
         'multi-direction',
         'cross-maze'
-
     ],
     'humanoid-gym': [
         'default',
+        'standup'
     ],
     'humanoid-rllab': [
         'default',
         'multi-direction'
-    ],
-    'humanoid-standup-gym': [
-        'default',
     ],
 }
 

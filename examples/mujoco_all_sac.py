@@ -37,13 +37,17 @@ ENVIRONMENTS = {
         'default': SwimmerEnv,
         'multi-direction': MultiDirectionSwimmerEnv,
     },
-    'ant': {
+    'ant-gym': {
         'default': lambda: GymEnv('Ant-v1'),
+    },
+    'ant-rllab': {
+        'default': AntEnv,
         'multi-direction': MultiDirectionAntEnv,
         'cross-maze': CrossMazeAntEnv
     },
     'humanoid-gym': {
-        'default': lambda: GymEnv('Humanoid-v1')
+        'default': lambda: GymEnv('Humanoid-v1'),
+        'standup': lambda: GymEnv('HumanoidStandup-v1')
     },
     'humanoid-rllab': {
         'default': HumanoidEnv,
@@ -58,12 +62,9 @@ ENVIRONMENTS = {
     'walker': {
         'default': lambda: GymEnv('Walker2d-v1')
     },
-    'humanoid-standup-gym': {
-        'default': lambda: GymEnv('HumanoidStandup-v1')
-    }
 }
 
-DEFAULT_DOMAIN = DEFAULT_ENV = 'swimmer'
+DEFAULT_DOMAIN = DEFAULT_ENV = 'swimmer-rllab'
 AVAILABLE_DOMAINS = set(ENVIRONMENTS.keys())
 AVAILABLE_TASKS = set(y for x in ENVIRONMENTS.values() for y in x.keys())
 
