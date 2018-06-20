@@ -181,7 +181,7 @@ def run_experiment(variant):
         scale_reward=algorithm_params['scale_reward'],
         discount=algorithm_params['discount'],
         tau=algorithm_params['tau'],
-        reparameterize=algorithm_params['reparameterize'],
+        reparameterize=policy_params['reparameterize'],
         target_update_interval=algorithm_params['target_update_interval'],
         action_prior=policy_params['action_prior'],
         save_full_state=False,

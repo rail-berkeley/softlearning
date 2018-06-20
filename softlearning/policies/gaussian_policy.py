@@ -100,7 +100,7 @@ class GaussianPolicy(NNPolicy, Serializable):
                 reg=self._reg,
             )
 
-        raw_actions = tf.stop_gradient(self.distribution.x_t)
+        raw_actions = self.distribution.x_t
         self._actions = tf.tanh(raw_actions) if self._squash else raw_actions
 
     @overrides

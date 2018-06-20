@@ -59,7 +59,10 @@ class Normal(object):
 
         # Tensorflow's multivariate normal distribution supports reparameterization
         ds = tf.contrib.distributions
-        dist = ds.MultivariateNormalDiag(loc=self._mu_t, scale_diag=tf.exp(self._log_sig_t))
+        dist = ds.MultivariateNormalDiag(
+            loc=self._mu_t,
+            scale_diag=tf.exp(self._log_sig_t))
+
         x_t = dist.sample()
         if not self._reparameterize:
             x_t = tf.stop_gradient(x_t)

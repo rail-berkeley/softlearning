@@ -144,8 +144,7 @@ class SAC(RLAlgorithm, Serializable):
 
         # Reparameterize parameter must match between the algorithm and the
         # policy actions are sampled from.
-        assert reparameterize == self._policy._reparameterize
-        self._reparameterize = reparameterize
+        self._reparameterize = self._policy._reparameterize
 
         self._save_full_state = save_full_state
 
