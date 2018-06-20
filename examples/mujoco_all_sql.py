@@ -6,15 +6,15 @@ from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.misc.instrument import VariantGenerator
 
-from softqlearning.misc.instrument import run_sql_experiment
-from softqlearning.algorithms import SQL
-from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softqlearning.misc.utils import timestamp
-from softqlearning.replay_buffers import SimpleReplayBuffer
-from softqlearning.value_functions import NNQFunction
-from softqlearning.policies import StochasticNNPolicy
-from softqlearning.environments import GymEnv
-from softqlearning.misc.sampler import SimpleSampler
+from softlearning.misc.instrument import launch_experiment
+from softlearning.algorithms import SQL
+from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
+from softlearning.misc.utils import timestamp
+from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.value_functions import NNQFunction
+from softlearning.policies import StochasticNNPolicy
+from softlearning.environments import GymEnv
+from softlearning.misc.sampler import SimpleSampler
 
 SHARED_PARAMS = {
     'seed': [1, 2, 3],
@@ -77,10 +77,9 @@ ENV_PARAMS = {
         'env_name': 'ant-rllab',
         'max_path_length': 1000,
         'n_epochs': 10000,
-        'reward_scale': [1, 3, 10, 30, 100, 300]
+        'reward_scale': 300
     },
     'humanoid': {  # 21 DoF
-        'seed': [11, 12, 13, 14, 15],
         'prefix': 'humanoid',
         'env_name': 'humanoid-rllab',
         'max_path_length': 1000,
@@ -177,7 +176,7 @@ def launch_experiments(variant_generator, args):
         full_experiment_name = variant['prefix']
         full_experiment_name += '-' + args.exp_name + '-' + str(i).zfill(2)
 
-        run_sql_experiment(
+        launch_experiment(
             run_experiment,
             mode=args.mode,
             variant=variant,

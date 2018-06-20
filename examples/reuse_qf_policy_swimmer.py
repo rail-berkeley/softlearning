@@ -6,12 +6,12 @@ import tensorflow as tf
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.envs.normalized_env import normalize
 
-from softqlearning.algorithms import SQL
-from softqlearning.misc.instrument import run_sql_experiment
-from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softqlearning.misc.sampler import SimpleSampler
-from softqlearning.misc.utils import timestamp
-from softqlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.algorithms import SQL
+from softlearning.misc.instrument import launch_experiment
+from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
+from softlearning.misc.sampler import SimpleSampler
+from softlearning.misc.utils import timestamp
+from softlearning.replay_buffers import SimpleReplayBuffer
 
 
 def run_experiment(variant):
@@ -76,7 +76,7 @@ def main():
     full_experiment_name += '-' + timestamp()
     args = parse_args()
     saved_file = args.file
-    run_sql_experiment(
+    launch_experiment(
         run_experiment,
         mode='local',
         variant=dict(file=saved_file),

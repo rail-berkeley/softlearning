@@ -3,6 +3,10 @@ Soft Reinforcement Learning is a deep reinforcement learning framework for train
 - [Reinforcement Learning with Deep Energy-Based Policies](https://arxiv.org/abs/1702.08165) presented at the International Conference on Machine Learning (ICML), 2017.
 - [Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor](https://drive.google.com/file/d/0Bxz3x8U2LH_2QllDZVlUQ1BJVEJHeER2YU5mODNaeFZmc3dz/view) presented at the [Deep Reinforcement Learning Symposium](https://sites.google.com/view/deeprl-symposium-nips2017/), NIPS 2017.
 
+This implementation uses Tensorflow. For a PyTorch implementation of soft actor-critic, take a look at [rlkit](https://github.com/vitchyr/rlkit) by [Vitchyr Pong](https://github.com/vitchyr).
+
+See the [DIAYN documentation](./DIAYN.md) for using SAC for learning diverse skills.
+
 # Getting Started
 
 Soft Reinforcement Learning can be run either locally or through Docker.
@@ -73,15 +77,15 @@ rm -rf /tmp/mujoco_tmp
 cp <mujoco_key_folder>/mjkey.txt <installation_path_of_your_choice>/rllab/vendor/mujoco
 ```
 
-4. Clone `softqlearning`
+4. Clone `softlearning`
 ```
 cd <installation_path_of_your_choice>
-git clone https://github.com/haarnoja/softqlearning.git
+git clone https://github.com/haarnoja/softlearning.git
 ```
 
 5. Create and activate conda environment
 ```
-cd softqlearning
+cd softlearning
 conda env create -f environment.yml
 source activate sql
 ```

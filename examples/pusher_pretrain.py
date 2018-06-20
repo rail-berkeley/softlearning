@@ -4,15 +4,15 @@ import pickle
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
 
-from softqlearning.environments.pusher import PusherEnv
-from softqlearning.misc.instrument import run_sql_experiment
-from softqlearning.algorithms import SQL
-from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softqlearning.misc.utils import timestamp
-from softqlearning.replay_buffers import SimpleReplayBuffer
-from softqlearning.value_functions import NNQFunction
-from softqlearning.policies import StochasticNNPolicy
-from softqlearning.misc.sampler import SimpleSampler
+from softlearning.environments.pusher import PusherEnv
+from softlearning.misc.instrument import launch_experiment
+from softlearning.algorithms import SQL
+from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
+from softlearning.misc.utils import timestamp
+from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.value_functions import NNQFunction
+from softlearning.policies import StochasticNNPolicy
+from softlearning.misc.sampler import SimpleSampler
 
 SHARED_PARAMS = {
     'seed': 1,
@@ -139,7 +139,7 @@ def launch_experiments(variant_generator, args):
         full_experiment_name = variant['prefix']
         full_experiment_name += '-' + args.exp_name + '-' + str(i).zfill(2)
 
-        run_sql_experiment(
+        launch_experiment(
             run_experiment,
             mode=args.mode,
             variant=variant,

@@ -3,13 +3,14 @@ import numpy as np
 
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import run_experiment_lite
-from sac.algos import SAC
-from sac.envs import MultiGoalEnv
-from sac.misc.plotter import QFPolicyPlotter
-from sac.misc.utils import timestamp
-from sac.policies import GMMPolicy, LatentSpacePolicy
-from sac.replay_buffers import SimpleReplayBuffer
-from sac.value_functions import NNQFunction, NNVFunction
+from softlearning.algorithms import SAC
+from softlearning.environments import MultiGoalEnv
+from softlearning.misc.plotter import QFPolicyPlotter
+from softlearning.misc.utils import timestamp
+from softlearning.misc.sampler import SimpleSampler
+from softlearning.policies import GMMPolicy, LatentSpacePolicy
+from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.value_functions import NNQFunction, NNVFunction
 
 
 def run(variant):
@@ -20,40 +21,32 @@ def run(variant):
         init_sigma=0.1,
     ))
 
-    pool = SimpleReplayBuffer(
-        max_replay_buffer_size=1e6,
-        env_spec=env.spec,
-    )
+    pool = SimpleReplayBuffer(max_replay_buffer_size=1e6, env_spec=env.spec)
 
-    base_kwargs = dict(
-        min_pool_size=30,
-        epoch_length=1000,
-        n_epochs=1000,
-        max_path_length=30,
-        batch_size=64,
-        n_train_repeat=1,
-        eval_render=True,
-        eval_n_episodes=10,
-        eval_deterministic=False
-    )
+    sampler = SimpleSampler(
+        max_path_length=30, min_pool_size=100, batch_size=64)
+
+    base_kwargs = {
+        'sampler': sampler,
+        'epoch_length': 100,
+        'n_epochs': 1000,
+        'n_train_repeat': 1,
+        'eval_render': True,
+        'eval_n_episodes': 10,
+        'eval_deterministic': False
+    }
 
     M = 128
-    qf = NNQFunction(
-        env_spec=env.spec,
-        hidden_layer_sizes=[M, M]
-    )
-
-    vf = NNVFunction(
-        env_spec=env.spec,
-        hidden_layer_sizes=[M, M]
-    )
+    qf1 = NNQFunction(env_spec=env.spec, hidden_layer_sizes=[M, M], name='qf1')
+    qf2 = NNQFunction(env_spec=env.spec, hidden_layer_sizes=[M, M], name='qf2')
+    vf = NNVFunction(env_spec=env.spec, hidden_layer_sizes=[M, M])
 
     if variant['policy_type'] == 'gmm':
         policy = GMMPolicy(
             env_spec=env.spec,
             K=4,
             hidden_layer_sizes=[M, M],
-            qf=qf,
+            qf=qf1,
             reg=0.001
         )
     elif variant['policy_type'] == 'lsp':
@@ -69,11 +62,12 @@ def run(variant):
             mode="train",
             squash=True,
             bijector_config=bijector_config,
-            observations_preprocessor=None
+            observations_preprocessor=None,
+            q_function=qf1
         )
 
     plotter = QFPolicyPlotter(
-        qf=qf,
+        qf=qf1,
         policy=policy,
         obs_lst=np.array([[-2.5, 0.0],
                           [0.0, 0.0],
@@ -86,8 +80,10 @@ def run(variant):
         base_kwargs=base_kwargs,
         env=env,
         policy=policy,
+        initial_exploration_policy=None,
         pool=pool,
-        qf=qf,
+        qf1=qf1,
+        qf2=qf2,
         vf=vf,
         plotter=plotter,
 
@@ -100,6 +96,7 @@ def run(variant):
     )
     algorithm.train()
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -107,6 +104,7 @@ def parse_args():
     args = parser.parse_args()
 
     return args
+
 
 def main():
     args = parse_args()
@@ -124,7 +122,6 @@ def main():
         seed=1,
         mode='local',
     )
-
 
 
 if __name__ == "__main__":

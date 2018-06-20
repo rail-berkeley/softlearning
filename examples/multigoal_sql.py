@@ -3,21 +3,25 @@ import numpy as np
 
 from rllab.envs.normalized_env import normalize
 
-from softqlearning.algorithms import SQL
-from softqlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softqlearning.environments import MultiGoalEnv
-from softqlearning.replay_buffers import SimpleReplayBuffer
-from softqlearning.value_functions import NNQFunction
-from softqlearning.misc.plotter import QFPolicyPlotter
-from softqlearning.policies import StochasticNNPolicy
-from softqlearning.misc.sampler import SimpleSampler
+from softlearning.algorithms import SQL
+from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
+from softlearning.environments import MultiGoalEnv
+from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.value_functions import NNQFunction
+from softlearning.misc.plotter import QFPolicyPlotter
+from softlearning.policies import StochasticNNPolicy
+from softlearning.misc.sampler import SimpleSampler
 
 
 def test():
+    env = normalize(MultiGoalEnv(
+        actuation_cost_coeff=1,
+        distance_cost_coeff=0.1,
+        goal_reward=1,
+        init_sigma=0.1,
+    ))
 
-    env = normalize(MultiGoalEnv())
-
-    pool = SimpleReplayBuffer(env_spec=env.spec, max_replay_buffer_size=1e6)
+    pool = SimpleReplayBuffer(max_replay_buffer_size=1e6, env_spec=env.spec)
 
     sampler = SimpleSampler(
         max_path_length=30, min_pool_size=100, batch_size=64)
