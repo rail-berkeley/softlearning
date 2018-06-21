@@ -182,7 +182,7 @@ def run_experiment(variant):
         qf2=qf2,
         vf=vf,
         lr=algorithm_params['lr'],
-        scale_reward=algorithm_params.get('scale_reward', 1),
+        target_entropy=algorithm_params['target_entropy'],
         discount=algorithm_params['discount'],
         tau=algorithm_params['tau'],
         reparameterize=policy_params['reparameterize'],

@@ -25,7 +25,7 @@ class SAC(RLAlgorithm, Serializable):
         epoch_length=1000,
         n_epochs=1000,
         batch_size=64,
-        scale_reward=1,
+        target_entropy=-1.0,
         n_train_repeat=1,
         eval_render=False,
         eval_n_episodes=1,
@@ -84,8 +84,7 @@ class SAC(RLAlgorithm, Serializable):
             plotter=None,
 
             lr=3e-3,
-            scale_reward=1,
-            target_entropy=1,
+            target_entropy=None,
             discount=0.99,
             tau=0.01,
             target_update_interval=1,
@@ -137,7 +136,6 @@ class SAC(RLAlgorithm, Serializable):
         self._policy_lr = lr
         self._qf_lr = lr
         self._vf_lr = lr
-        self._scale_reward = scale_reward
         self._target_entropy = target_entropy
 
         if self._target_entropy is None:
@@ -222,16 +220,6 @@ class SAC(RLAlgorithm, Serializable):
             name='terminals',
         )
 
-    @property
-    def scale_reward(self):
-        if callable(self._scale_reward):
-            return self._scale_reward(self._iteration_ph)
-        elif isinstance(self._scale_reward, Number):
-            return self._scale_reward
-
-        raise ValueError(
-            'scale_reward must be either callable or scalar')
-
     def _init_critic_update(self):
         """Create minimization operation for critic Q-function.
 
@@ -253,8 +241,8 @@ class SAC(RLAlgorithm, Serializable):
             self._vf_target_params = self._vf.get_params_internal()
 
         ys = tf.stop_gradient(
-            self.scale_reward * self._rewards_ph +
-            (1 - self._terminals_ph) * self._discount * vf_next_target_t
+            self._rewards_ph
+            + (1 - self._terminals_ph) * self._discount * vf_next_target_t
         )  # N
 
         self._td_loss1_t = 0.5 * tf.reduce_mean((ys - self._qf1_t)**2)

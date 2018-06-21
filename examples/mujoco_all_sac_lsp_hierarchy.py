@@ -63,7 +63,7 @@ ENV_PARAMS = {
         'epoch_length': 1000,
         'max_path_length': 1000,
         'n_epochs': int(5e3 + 1),
-        'scale_reward': 100.0,
+        'target_entropy': -2.0,
 
         'preprocessing_layer_sizes': (128, 128, 4),
         'policy_s_t_units': 2,
@@ -91,7 +91,7 @@ ENV_PARAMS = {
         'epoch_length': 1000,
         'max_path_length': 1000,
         'n_epochs': int(1e5 + 1),
-        'scale_reward': 30,
+        'target_entropy': -8.0,
 
         'preprocessing_layer_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
@@ -119,7 +119,7 @@ ENV_PARAMS = {
         'epoch_length': 1000,
         'max_path_length': 1000,
         'n_epochs': int(2e5 + 1),
-        'scale_reward': 3.0,
+        'target_entropy': -21.0,
 
         'preprocessing_layer_sizes': (128, 128, 42),
         'policy_s_t_units': 21,
@@ -146,7 +146,7 @@ ENV_PARAMS = {
         'env_name': 'ant-rllab',
         'max_path_length': 1000,
         'n_epochs': int(4e3 + 1),
-        'scale_reward': 3.0,
+        'target_entropy': -8.0,
 
         'preprocessing_layer_sizes': (128, 128, 16),
         'policy_s_t_units': 8,
@@ -166,7 +166,7 @@ ENV_PARAMS = {
         'env_name': 'humanoid-rllab',
         'max_path_length': 1000,
         'n_epochs': int(1e4 + 1),
-        'scale_reward': 3.0,
+        'target_entropy': -21.0,
 
         'preprocessing_layer_sizes': (128, 128, 42),
         'policy_s_t_units': 21,
@@ -336,7 +336,7 @@ def run_experiment(variant):
         vf=vf,
 
         lr=variant['lr'],
-        scale_reward=variant['scale_reward'],
+        target_entropy=variant['target_entropy'],
         discount=variant['discount'],
         tau=variant['tau'],
         target_update_interval=variant['target_update_interval'],

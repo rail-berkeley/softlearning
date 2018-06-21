@@ -88,7 +88,6 @@ def run(variant):
         plotter=plotter,
 
         lr=3e-4,
-        # scale_reward=3.0,
         target_entropy=-6.0,
         discount=0.99,
         tau=1e-4,
