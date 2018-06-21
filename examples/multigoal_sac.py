@@ -1,4 +1,5 @@
 import argparse
+
 import numpy as np
 
 from rllab.envs.normalized_env import normalize
