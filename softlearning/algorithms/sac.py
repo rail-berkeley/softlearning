@@ -84,7 +84,8 @@ class SAC(RLAlgorithm, Serializable):
             plotter=None,
 
             lr=3e-3,
-            target_entropy=None,
+            reward_scale=1.0,
+            target_entropy='auto',
             discount=0.99,
             tau=0.01,
             target_update_interval=1,
@@ -136,10 +137,12 @@ class SAC(RLAlgorithm, Serializable):
         self._policy_lr = lr
         self._qf_lr = lr
         self._vf_lr = lr
-        self._target_entropy = target_entropy
 
-        if self._target_entropy is None:
-            self._target_entropy = - self._env.action_space.flat_dim
+        self._reward_scale = reward_scale
+        self._target_entropy = (
+            -self._env.action_space.flat_dim
+            if target_entropy == 'auto'
+            else self._target_entropy)
 
         self._discount = discount
         self._tau = tau
@@ -241,7 +244,7 @@ class SAC(RLAlgorithm, Serializable):
             self._vf_target_params = self._vf.get_params_internal()
 
         ys = tf.stop_gradient(
-            self._rewards_ph
+            self._reward_scale * self._rewards_ph
             + (1 - self._terminals_ph) * self._discount * vf_next_target_t
         )  # N
 

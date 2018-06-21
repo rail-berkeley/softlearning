@@ -206,6 +206,7 @@ ALGORITHM_PARAMS_BASE = {
     'target_update_interval': 1,
     'tau': 0.005,
     'q_update_scale': [0.1, 0.3, 1, 3, 10, 30, 100],
+    'target_entropy': 'auto',
 
     'base_kwargs': {
         'epoch_length': 1000,
@@ -219,64 +220,54 @@ ALGORITHM_PARAMS_BASE = {
 
 ALGORITHM_PARAMS = {
     'swimmer-gym': { # 2 DoF
-        'target_entropy': -2,
         'base_kwargs': {
             'n_epochs': int(5e2 + 1),
         }
     },
     'swimmer-rllab': { # 2 DoF
-        'target_entropy': -2,
         'base_kwargs': {
             'n_epochs': int(5e2 + 1),
         }
     },
     'hopper': { # 3 DoF
-        'target_entropy': -3,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
         }
     },
     'half-cheetah': { # 6 DoF
-        'target_entropy': -6,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': int(1e4),
         }
     },
     'walker': { # 6 DoF
-        'target_entropy': -6,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
         }
     },
     'ant-gym': { # 8 DoF
-        'target_entropy': -8,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': int(1e4),
         }
     },
     'ant-rllab': { # 8 DoF
-        'target_entropy': -8,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': int(1e4),
         }
     },
     'humanoid-gym': { # 17 DoF
-        'target_entropy': -17,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
     },
     'humanoid-rllab': { # 21 DoF
-        'target_entropy': -21,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
     },
     'humanoid-standup-gym': { # 17 DoF
-        'target_entropy': -17,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
