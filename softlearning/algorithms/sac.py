@@ -140,8 +140,8 @@ class SAC(RLAlgorithm, Serializable):
         self._scale_reward = scale_reward
         self._target_entropy = target_entropy
 
-        if self._target_entropy is not None:
-            assert self._scale_reward == 1
+        if self._target_entropy is None:
+            self._target_entropy = - self._env.action_space.flat_dim
 
         self._discount = discount
         self._tau = tau
