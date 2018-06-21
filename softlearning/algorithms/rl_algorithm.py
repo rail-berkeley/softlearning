@@ -118,7 +118,7 @@ class RLAlgorithm(Algorithm):
                             batch=self.sampler.random_batch())
                     gt.stamp('train')
 
-                mean_returns = self._evaluate(epoch)
+                mean_returns = self._evaluate(policy, evaluation_env, epoch)
                 gt.stamp('eval')
 
                 params = self.get_snapshot(epoch)
