@@ -119,6 +119,7 @@ class RLAlgorithm(Algorithm):
                     gt.stamp('train')
 
                 mean_returns = self._evaluate(epoch)
+                gt.stamp('eval')
 
                 params = self.get_snapshot(epoch)
                 logger.save_itr_params(epoch, params)
@@ -139,8 +140,6 @@ class RLAlgorithm(Algorithm):
 
                 logger.dump_tabular(with_prefix=False)
                 logger.pop_prefix()
-
-                gt.stamp('eval')
 
                 if as_iterable:
                     yield epoch, mean_returns
