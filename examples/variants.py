@@ -206,7 +206,6 @@ ALGORITHM_PARAMS_BASE = {
     'discount': 0.99,
     'target_update_interval': 1,
     'tau': 0.005,
-    'q_update_scale': [0.1, 0.3, 1, 3, 10, 30, 100],
 
     'base_kwargs': {
         'epoch_length': 1000,
