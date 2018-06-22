@@ -142,7 +142,7 @@ class SAC(RLAlgorithm, Serializable):
         self._target_entropy = (
             -self._env.action_space.flat_dim
             if target_entropy == 'auto'
-            else self._target_entropy)
+            else target_entropy)
 
         self._discount = discount
         self._tau = tau
