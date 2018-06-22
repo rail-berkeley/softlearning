@@ -50,8 +50,7 @@ class Normal(object):
                 output_nonlinearity=None,
             )
 
-        self._mu_t = tf.maximum(
-            mu_and_logsig_t[..., :Dx], LOG_W_CAP_MIN)
+        self._mu_t = mu_and_logsig_t[..., :Dx]
         self._log_sig_t = tf.clip_by_value(
             mu_and_logsig_t[..., Dx:],
             LOG_SIG_CAP_MIN, LOG_SIG_CAP_MAX)
