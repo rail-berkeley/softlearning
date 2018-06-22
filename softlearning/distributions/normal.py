@@ -7,7 +7,6 @@ from softlearning.misc.nn import feedforward_net
 
 LOG_SIG_CAP_MAX = 2
 LOG_SIG_CAP_MIN = -20
-LOG_W_CAP_MIN = -10
 
 
 class Normal(object):
@@ -75,8 +74,6 @@ class Normal(object):
         reg_loss_t = self._reg * 0.5 * tf.reduce_mean(self._log_sig_t ** 2)
         reg_loss_t += self._reg * 0.5 * tf.reduce_mean(self._mu_t ** 2)
         self._reg_loss_t = reg_loss_t
-
-
 
     @property
     def log_p_t(self):

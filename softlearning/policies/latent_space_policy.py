@@ -45,10 +45,6 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         self._bijector_config = bijector_config
         self._mode = mode
         self._squash = squash
-        self._reparameterization_type = (
-            tf.distributions.FULLY_REPARAMETERIZED
-            if reparameterize
-            else tf.distributions.NOT_REPARAMETERIZED)
         self._reparameterize = reparameterize
         self._fix_h_on_reset = fix_h_on_reset
         self._q_function = q_function
