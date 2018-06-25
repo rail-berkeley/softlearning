@@ -2,7 +2,8 @@ import argparse
 import pickle
 
 from rllab.envs.normalized_env import normalize
-from rllab.misc.instrument import VariantGenerator
+
+from ray.tune.variant_generator import generate_variants
 
 from softlearning.environments.pusher import PusherEnv
 from softlearning.misc.instrument import launch_experiment
@@ -57,21 +58,6 @@ def parse_args():
     args = parser.parse_args()
 
     return args
-
-
-def get_variants(args):
-    env_params = ENV_PARAMS[args.env]
-    params = SHARED_PARAMS
-    params.update(env_params)
-
-    vg = VariantGenerator()
-    for key, val in params.items():
-        if isinstance(val, list):
-            vg.add(key, val)
-        else:
-            vg.add(key, [val])
-
-    return vg
 
 
 def run_experiment(variant):
@@ -131,11 +117,14 @@ def run_experiment(variant):
     algorithm.train()
 
 
-def launch_experiments(variant_generator, args):
-    variants = variant_generator.variants()
-    print('Launching {} experiments.'.format(len(variants)))
+def launch_experiments(variants, args):
+    num_experiments = len(variants)
+
+    print('Launching {} experiments.'.format(num_experiments))
 
     for i, variant in enumerate(variants):
+        print("Experiment: {}/{}".format(i, num_experiments))
+
         full_experiment_name = variant['prefix']
         full_experiment_name += '-' + args.exp_name + '-' + str(i).zfill(2)
 
@@ -156,8 +145,12 @@ def launch_experiments(variant_generator, args):
 
 def main():
     args = parse_args()
-    variant_generator = get_variants(args)
-    launch_experiments(variant_generator, args)
+
+    variant_spec = dict(
+        SHARED_PARAMS,
+        **ENV_PARAMS[args.env])
+    variants = [x[1] for x in generate_variants(variant_spec)]
+    launch_experiments(variants, args)
 
 
 if __name__ == '__main__':

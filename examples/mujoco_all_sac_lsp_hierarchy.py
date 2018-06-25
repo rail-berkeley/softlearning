@@ -9,7 +9,8 @@ from rllab.envs.normalized_env import normalize
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
-from rllab.misc.instrument import VariantGenerator
+
+from ray.tune.variant_generator import generate_variants
 
 from softlearning.algorithms import SAC
 from softlearning.environments import (
@@ -22,13 +23,12 @@ from softlearning.replay_buffers import SimpleReplayBuffer
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
 from softlearning.misc import tf_utils
+from softlearning.misc.utils import get_git_rev
 
-try:
-    import git
-    repo = git.Repo(os.getcwd())
-    git_rev = repo.active_branch.commit.name_rev
-except:
-    git_rev = None
+
+LOCAL_POLICIES_PATH = os.path.join(
+    os.getcwd(), 'softlearning/trained_policies')
+RLLAB_MOUNT_POLICIES_PATH = '/root/code/rllab/trained_policies'
 
 COMMON_PARAMS = {
     'seed': 'random',
@@ -52,7 +52,7 @@ COMMON_PARAMS = {
     'preprocessing_layer_sizes': None,
     'preprocessing_output_nonlinearity': 'relu',
 
-    'git_sha': git_rev
+    'git_sha': get_git_rev()
 }
 
 
@@ -202,31 +202,6 @@ def parse_args():
     return args
 
 
-def get_variants(args):
-    env_params = ENV_PARAMS[args.env]
-    params = COMMON_PARAMS
-    params.update(env_params)
-
-    if args.mode == 'local':
-        trained_policies_base = os.path.join(os.getcwd(), 'softlearning/policies/trained_policies')
-    elif args.mode == 'ec2':
-        trained_policies_base = '/root/code/rllab/softlearning/policies/trained_policies'
-
-    params['low_level_policy_path'] = [
-      os.path.join(trained_policies_base, p)
-      for p in params['low_level_policy_path']
-    ]
-
-    vg = VariantGenerator()
-    for key, val in params.items():
-        if isinstance(val, list):
-            vg.add(key, val)
-        else:
-            vg.add(key, [val])
-
-    return vg
-
-
 def load_low_level_policy(policy_path):
     with tf_utils.get_default_session().as_default():
         with tf.variable_scope("low_level_policy", reuse=False):
@@ -347,10 +322,9 @@ def run_experiment(variant):
 
     algorithm.train()
 
-def launch_experiments(variant_generator):
-    variants = variant_generator.variants()
-
+def launch_experiments(variants, args):
     num_experiments = len(variants)
+
     print('Launching {} experiments.'.format(num_experiments))
 
     for i, variant in enumerate(variants):
@@ -377,7 +351,28 @@ def launch_experiments(variant_generator):
             sync_s3_pkl=variant['sync_pkl'],
         )
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
-    variant_generator = get_variants(args)
-    launch_experiments(variant_generator)
+
+    variant_spec = dict(
+        COMMON_PARAMS,
+        **ENV_PARAMS[args.env],
+    )
+
+    trained_policies_path = (
+        LOCAL_POLICIES_PATH
+        if args.mode == 'local'
+        else RLLAB_MOUNT_POLICIES_PATH
+    )
+
+    variant_spec['low_level_policy_path'] = tune.grid_search([
+        os.path.join(trained_policies_path, p)
+        for p in variant_spec['low_level_policy_path']
+    ])
+
+    variants = [x[1] for x in generate_variants(variant_spec)]
+    launch_experiments(variants, args)
+
+
+if __name__ == '__main__':
+    main()

@@ -9,7 +9,8 @@ from rllab.envs.mujoco.gather.ant_gather_env import AntGatherEnv
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
-from rllab.misc.instrument import VariantGenerator
+
+from ray.tune.variant_generator import generate_variants
 
 from softlearning.algorithms import SAC
 from softlearning.environments import (
@@ -20,7 +21,7 @@ from softlearning.environments import (
     CrossMazeAntEnv)
 
 from softlearning.misc.instrument import launch_experiment
-from softlearning.misc.utils import timestamp, unflatten
+from softlearning.misc.utils import timestamp
 from softlearning.policies import (
     GaussianPolicy,
     LatentSpacePolicy,
@@ -30,7 +31,7 @@ from softlearning.misc.sampler import SimpleSampler
 from softlearning.replay_buffers import SimpleReplayBuffer
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
-from examples.variants import parse_domain_and_task, get_variants
+from examples.variants import parse_domain_and_task, get_variant_spec
 
 ENVIRONMENTS = {
     'swimmer-gym': {
@@ -194,12 +195,9 @@ def run_experiment(variant):
     algorithm.train()
 
 
-def launch_experiments(variant_generator, args):
-    variants = variant_generator.variants()
-    # TODO: Remove unflatten. Variant generator should support nested params
-    variants = [unflatten(variant, separator='.') for variant in variants]
-
+def launch_experiments(variants, args):
     num_experiments = len(variants)
+
     print('Launching {} experiments.'.format(num_experiments))
 
     for i, variant in enumerate(variants):
@@ -234,9 +232,10 @@ def main():
     if (not domain) or (not task):
         domain, task = parse_domain_and_task(args.env)
 
-    variant_generator = get_variants(
+    variant_spec = get_variant_spec(
         domain=domain, task=task, policy=args.policy)
-    launch_experiments(variant_generator, args)
+    variants = [x[1] for x in generate_variants(variant_spec)]
+    launch_experiments(variants, args)
 
 
 if __name__ == '__main__':

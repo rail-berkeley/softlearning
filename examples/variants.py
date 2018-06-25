@@ -1,8 +1,7 @@
 import numpy as np
 from ray import tune
 
-from rllab.misc.instrument import VariantGenerator
-from softlearning.misc.utils import flatten, get_git_rev, deep_update
+from softlearning.misc.utils import get_git_rev, deep_update
 
 M = 256
 REPARAMETERIZE = True
@@ -383,8 +382,8 @@ def parse_domain_and_task(env_name):
     task = next((task for task in domain_tasks if task in env_name), 'default')
     return domain, task
 
-def get_variants(domain, task, policy):
-    variants = {
+def get_variant_spec(domain, task, policy):
+    variant_spec = {
         'prefix': '{}/{}'.format(domain, task),
         'domain': domain,
         'task': task,
@@ -402,4 +401,4 @@ def get_variants(domain, task, policy):
         'run_params': deep_update(RUN_PARAMS_BASE, RUN_PARAMS[domain]),
     }
 
-    return variants
+    return variant_spec

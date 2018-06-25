@@ -21,7 +21,7 @@ from softlearning.environments import (
     CrossMazeAntEnv)
 
 from softlearning.misc.instrument import launch_experiment
-from softlearning.misc.utils import timestamp, unflatten
+from softlearning.misc.utils import timestamp
 from softlearning.policies import (
     GaussianPolicy,
     LatentSpacePolicy,
@@ -31,7 +31,7 @@ from softlearning.misc.sampler import SimpleSampler
 from softlearning.replay_buffers import SimpleReplayBuffer
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
-from examples.variants import parse_domain_and_task, get_variants
+from examples.variants import parse_domain_and_task, get_variant_spec
 
 ENVIRONMENTS = {
     'swimmer-gym': {
@@ -243,7 +243,7 @@ def main():
     if (not domain) or (not task):
         domain, task = parse_domain_and_task(args.env)
 
-    variants = get_variants(domain=domain, task=task, policy=args.policy)
+    variants = get_variant_spec(domain=domain, task=task, policy=args.policy)
 
     local_dir = '~/ray_results/{}/{}'.format(domain, task)
     variants['run_params']['local_dir'] = local_dir

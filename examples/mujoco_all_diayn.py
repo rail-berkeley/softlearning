@@ -4,9 +4,10 @@ Usage:
     python mujoco_all_diayn.py --env=point --log_dir=/dev/null
 """
 from rllab.envs.env_spec import EnvSpec
-from rllab.misc.instrument import VariantGenerator
 from rllab.envs.normalized_env import normalize
 from rllab import spaces
+
+from ray.tune.variant_generator import generate_variants
 
 from softlearning.algorithms import DIAYN
 from softlearning.environments import GymEnv
@@ -148,21 +149,6 @@ def parse_args():
     return args
 
 
-def get_variants(args):
-    env_params = ENV_PARAMS[args.env]
-    params = SHARED_PARAMS
-    params.update(env_params)
-
-    vg = VariantGenerator()
-    for key, val in params.items():
-        if isinstance(val, list):
-            vg.add(key, val)
-        else:
-            vg.add(key, [val])
-
-    return vg
-
-
 def run_experiment(variant):
     if variant['env_name'] == 'humanoid-rllab':
         from rllab.envs.mujoco.humanoid_env import HumanoidEnv
@@ -244,9 +230,7 @@ def run_experiment(variant):
     algorithm.train()
 
 
-def launch_experiments(variant_generator):
-    variants = variant_generator.variants()
-
+def launch_experiments(variants, args):
     for i, variant in enumerate(variants):
         tag = '__'.join(['%s_%s' % (key, variant[key]) for key in TAG_KEYS])
         log_dir = os.path.join(args.log_dir, tag)
@@ -267,7 +251,15 @@ def launch_experiments(variant_generator):
             sync_s3_pkl=variant['sync_pkl'],
         )
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
-    variant_generator = get_variants(args)
-    launch_experiments(variant_generator)
+
+    variant_spec = dict(
+        SHARED_PARAMS,
+        **ENV_PARAMS[args.env])
+    variants = [x[1] for x in generate_variants(variant_spec)]
+    launch_experiments(variants, args)
+
+
+if __name__ == '__main__':
+    main()

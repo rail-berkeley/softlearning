@@ -4,7 +4,8 @@ Usage:
     python mujoco_all_diayn.py --env=point --snapshot_dir=<snapshot_dir> --log_dir=/dev/null
 """
 
-from rllab.misc.instrument import VariantGenerator
+
+from ray.tune.variant_generator import generate_variants
 
 from softlearning.algorithms import SAC
 from softlearning.environments import FixedOptionEnv
@@ -153,21 +154,6 @@ def parse_args():
 
     return args
 
-def get_variants(args):
-    env_params = ENV_PARAMS[args.env]
-    params = SHARED_PARAMS
-    params.update(env_params)
-
-    vg = VariantGenerator()
-    for key, val in params.items():
-        if isinstance(val, list):
-            vg.add(key, val)
-        else:
-            vg.add(key, [val])
-    vg.add('snapshot_filename', [args.snapshot])
-    return vg
-
-
 
 def get_best_skill(policy, env, num_skills, max_path_length):
     tf.logging.info('Finding best skill to finetune...')
@@ -256,9 +242,7 @@ def run_experiment(variant):
         algorithm.train()
 
 
-def launch_experiments(variant_generator):
-    variants = variant_generator.variants()
-
+def launch_experiments(variants, args):
     for i, variant in enumerate(variants):
         tag = 'finetune__'
         print(variant['snapshot_filename'])
@@ -284,7 +268,12 @@ def launch_experiments(variant_generator):
             sync_s3_pkl=variant['sync_pkl'],
         )
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
-    variant_generator = get_variants(args)
-    launch_experiments(variant_generator)
+
+    variant_spec = dict(
+        COMMON_PARAMS,
+        **ENV_PARAMS[args.env],
+        **{'snapshot_filename': args.snapshot})
+    variants = [x[1] for x in generate_variants(variant_spec)]
+    launch_experiments(variants, args)

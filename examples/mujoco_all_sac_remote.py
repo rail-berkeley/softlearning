@@ -1,7 +1,9 @@
 import argparse
 
 from rllab.envs.normalized_env import normalize
-from rllab.misc.instrument import VariantGenerator
+
+from ray import tune
+from ray.tune.variant_generator import generate_variants
 
 from softlearning.algorithms import SAC
 from softlearning.environments import GymEnv, DelayedEnv
@@ -13,7 +15,7 @@ from softlearning.replay_buffers import SimpleReplayBuffer
 from softlearning.value_functions import NNQFunction, NNVFunction
 
 COMMON_PARAMS = {
-    "seed": [1, 2, 3],
+    "seed": tune.grid_search([1,2,3]),
     "lr": 3E-4,
     "discount": 0.99,
     "tau": 0.01,
@@ -91,21 +93,6 @@ def parse_args():
     return args
 
 
-def get_variants(args):
-    env_params = ENV_PARAMS[args.env]
-    params = COMMON_PARAMS
-    params.update(env_params)
-
-    vg = VariantGenerator()
-    for key, val in params.items():
-        if isinstance(val, list):
-            vg.add(key, val)
-        else:
-            vg.add(key, [val])
-
-    return vg
-
-
 def run_experiment(variant):
     if variant['env_name'] == 'humanoid-rllab':
         from rllab.envs.mujoco.humanoid_env import HumanoidEnv
@@ -177,11 +164,14 @@ def run_experiment(variant):
     algorithm.train()
 
 
-def launch_experiments(variant_generator):
-    variants = variant_generator.variants()
+def launch_experiments(variants, args):
+    num_experiments = len(variants)
+
+    print('Launching {} experiments.'.format(num_experiments))
 
     for i, variant in enumerate(variants):
-        print('Launching {} experiments.'.format(len(variants)))
+        print("Experiment: {}/{}".format(i, num_experiments))
+
         launch_experiment(
             run_experiment,
             mode=args.mode,
@@ -198,7 +188,15 @@ def launch_experiments(variant_generator):
             sync_s3_pkl=variant['sync_pkl'],
         )
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
-    variant_generator = get_variants(args)
-    launch_experiments(variant_generator)
+
+    variant_spec = dict(
+        COMMON_PARAMS,
+        **ENV_PARAMS[args.env])
+    variants = [x[1] for x in generate_variants(variant_spec)]
+    launch_experiments(variants, args)
+
+
+if __name__ == '__main__':
+    main()
