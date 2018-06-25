@@ -70,8 +70,8 @@ class RLAlgorithm(Algorithm):
         self._policy = None
         self._pool = None
 
-    def _train(self, env, policy, initial_exploration_policy, pool, as_iterable=False):
-        """Perform RL training.
+    def _train(self, env, policy, initial_exploration_policy, pool):
+        """Return a generator that performs RL training.
 
         Args:
             env (`rllab.Env`): Environment used for training
@@ -141,8 +141,7 @@ class RLAlgorithm(Algorithm):
                 logger.dump_tabular(with_prefix=False)
                 logger.pop_prefix()
 
-                if as_iterable:
-                    yield epoch, mean_returns
+                yield epoch, mean_returns
 
             self.sampler.terminate()
 

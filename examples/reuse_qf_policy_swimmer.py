@@ -61,7 +61,9 @@ def run_experiment(variant):
             use_saved_policy=True,
             save_full_state=False)
 
-        algorithm.train()
+        # Do the training
+        for epoch, mean_return in algorithm.train():
+            pass
 
 
 def parse_args():

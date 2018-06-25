@@ -153,7 +153,9 @@ def run_experiment(variant):
         reward_scale=variant['reward_scale'],
         save_full_state=False)
 
-    algorithm.train()
+    # Do the training
+    for epoch, mean_return in algorithm.train():
+        pass
 
 
 def launch_experiments(variants, args):

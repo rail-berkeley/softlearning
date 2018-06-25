@@ -95,7 +95,9 @@ def run(variant):
 
         save_full_state=True
     )
-    algorithm.train()
+    # Do the training
+    for epoch, mean_return in algorithm.train():
+        pass
 
 
 def parse_args():

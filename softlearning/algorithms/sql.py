@@ -280,7 +280,7 @@ class SQL(RLAlgorithm):
 
     # TODO: do not pass, policy, and pool to `__init__` directly.
     def train(self):
-        self._train(self.env, self.policy, self.pool)
+        return self._train(self.env, self.policy, self.pool)
 
     @overrides
     def _init_training(self):

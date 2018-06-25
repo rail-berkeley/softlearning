@@ -106,7 +106,9 @@ def run_experiment(variant):
         train_qf=False,
         use_saved_qf=True)
 
-    algorithm.train()
+    # Do the training
+    for epoch, mean_return in algorithm.train():
+        pass
 
 
 def launch_experiments(variants, args):
