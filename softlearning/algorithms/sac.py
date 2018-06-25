@@ -177,8 +177,8 @@ class SAC(RLAlgorithm, Serializable):
         return self._train(
             self._env,
             self._policy,
-            self._initial_exploration_policy,
             self._pool,
+            initial_exploration_policy=self._initial_exploration_policy,
             *args,
             **kwargs)
 

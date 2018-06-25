@@ -70,7 +70,7 @@ class RLAlgorithm(Algorithm):
         self._policy = None
         self._pool = None
 
-    def _train(self, env, policy, initial_exploration_policy, pool):
+    def _train(self, env, policy, pool, initial_exploration_policy=None):
         """Return a generator that performs RL training.
 
         Args:
