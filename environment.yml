@@ -28,12 +28,14 @@ dependencies:
   - google-api-python-client==1.6.7
   - grpcio==1.11.0
   - gtimer==1.0.0b5
-  - gym==0.9.7
+  - gym==0.9.2
   - html5lib==0.9999999
   - idna==2.6
   - jmespath==0.9.3
   - joblib==0.11
   - kiwisolver==1.0.1
+  - git+https://github.com/Lasagne/Lasagne.git@a61b76fd991f84c50acdb7bea02118899b5fefe1#egg=Lasagne
+  - git+https://github.com/plotly/plotly.py.git@2594076e29584ede2d09f2aa40a8a195b3f3fc66#egg=plotly
   - mako==1.0.7
   - markdown==2.6.11
   - markupsafe==1.0
