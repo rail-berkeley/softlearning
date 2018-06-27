@@ -220,7 +220,7 @@ class GMMPolicy(NNPolicy, Serializable):
         logger.record_tabular('gmm-log-sigs-max', np.max(log_sigs))
         logger.record_tabular('gmm-log-sigs-std', np.std(log_sigs))
 
-        logger.record_tabular('log_pi_mean', np.mean(log_pis))
-        logger.record_tabular('log_pi_min', np.min(log_pis))
-        logger.record_tabular('log_pi_max', np.max(log_pis))
-        logger.record_tabular('log_pi_std', np.std(log_pis))
+        logger.record_tabular('entropy-mean', np.mean(-log_pis))
+        logger.record_tabular('entropy-min', np.min(-log_pis))
+        logger.record_tabular('entropy-max', np.max(-log_pis))
+        logger.record_tabular('entropy-std', np.std(-log_pis))
