@@ -279,8 +279,8 @@ class SAC(RLAlgorithm, Serializable):
         of the value function and policy function update rules.
         """
 
-        actions, log_pi = self._policy.actions_for(observations=self._observations_ph,
-                                                   with_log_pis=True)
+        actions, log_pi = self._policy.actions_for(
+            observations=self._observations_ph, with_log_pis=True)
 
 
         log_alpha = tf.get_variable(
@@ -289,9 +289,9 @@ class SAC(RLAlgorithm, Serializable):
             initializer=0.0)
         alpha = tf.exp(log_alpha)
 
-        if self._target_entropy:
-            alpha_loss = tf.reduce_mean(
-                (log_alpha * tf.stop_gradient(-log_pi - self._target_entropy)))
+        if isinstance(self._target_entropy, Number):
+            alpha_loss = -tf.reduce_mean(
+                log_alpha * tf.stop_gradient(log_pi + self._target_entropy))
 
             self._alpha_optimizer = tf.train.AdamOptimizer(self._policy_lr)
             self._alpha_train_op = self._alpha_optimizer.minimize(
@@ -320,13 +320,13 @@ class SAC(RLAlgorithm, Serializable):
         if self._reparameterize:
             policy_kl_loss = tf.reduce_mean(
                 alpha * log_pi
-                - log_target1
+                - min_log_target
                 - policy_prior_log_probs)
         else:
             policy_kl_loss = tf.reduce_mean(
                 log_pi * tf.stop_gradient(
                     alpha * log_pi
-                    - log_target1
+                    - min_log_target
                     + self._vf_t
                     - policy_prior_log_probs))
 
