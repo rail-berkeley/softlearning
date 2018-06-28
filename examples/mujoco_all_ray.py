@@ -2,9 +2,9 @@ import argparse
 import os
 
 import tensorflow as tf
+import numpy as np
 import ray
 from ray import tune
-import numpy as np
 
 from rllab.envs.normalized_env import normalize
 from rllab.envs.mujoco.gather.ant_gather_env import AntGatherEnv
@@ -71,6 +71,7 @@ ENVIRONMENTS = {
 DEFAULT_DOMAIN = DEFAULT_ENV = 'swimmer-rllab'
 AVAILABLE_DOMAINS = set(ENVIRONMENTS.keys())
 AVAILABLE_TASKS = set(y for x in ENVIRONMENTS.values() for y in x.keys())
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -225,7 +226,7 @@ def run_experiment(variant, reporter):
         qf2=qf2,
         vf=vf,
         lr=algorithm_params['lr'],
-        scale_reward=algorithm_params.get('scale_reward', 1),
+        target_entropy=algorithm_params['target_entropy'],
         discount=algorithm_params['discount'],
         tau=algorithm_params['tau'],
         reparameterize=policy_params['reparameterize'],
@@ -245,27 +246,26 @@ def main():
 
     variants = get_variant_spec(domain=domain, task=task, policy=args.policy)
 
-    local_dir = '~/ray_results/{}/{}'.format(domain, task)
-    variants['run_params']['local_dir'] = local_dir
-
     tune.register_trainable('mujoco-runner', run_experiment)
     if args.mode == 'local':
         ray.init()
+        local_dir_base = './data/ray/results'
     else:
         ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
+        local_dir_base = '~/ray_results'
 
-    tune.run_experiments(
-        {
-            args.exp_name: {
-                'run': 'mujoco-runner',
-                'trial_resources': {'cpu': 8},
-                'config': variants,
-                'local_dir': local_dir,
-                # 'upload_dir': 'gs://sac-ray-test/ray_results'
-            }
-        },
-        queue_trials=True
-    )
+    local_dir = '{}/{}/{}'.format(local_dir_base, domain, task)
+    variants['run_params']['local_dir'] = local_dir
+
+    tune.run_experiments({
+        args.exp_name: {
+            'run': 'mujoco-runner',
+            'trial_resources': {'cpu': 8},
+            'config': variants,
+            'local_dir': local_dir,
+            'upload_dir': 'gs://sac-ray-test/ray/results'
+        }
+    })
 
 if __name__ == '__main__':
     main()

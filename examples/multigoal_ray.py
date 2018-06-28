@@ -91,7 +91,7 @@ def run(variant, reporter):
         plotter=plotter,
 
         lr=3e-4,
-        scale_reward=3.0,
+        target_entropy=-6.0,
         discount=0.99,
         tau=1e-4,
 
@@ -119,14 +119,20 @@ def main():
     tune.register_trainable('multigoal-runner', run)
     if args.mode == 'local':
         ray.init()
+        local_dir_base = './data/ray/results'
     else:
         ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
+        local_dir_base = '~/ray_results'
+
+    local_dir = '{}/multigoal/default'.format(local_dir_base)
+    variants['local_dir'] = local_dir
 
     tune.run_experiments({
         'multigoal-' + timestamp(): {
             'run': 'multigoal-runner',
+            'trial_resources': {'cpu': 2},
             'config': variants,
-            'local_dir': '~/ray_results'
+            'local_dir': local_dir
         }
     })
 

@@ -72,6 +72,7 @@ DEFAULT_DOMAIN = DEFAULT_ENV = 'swimmer-rllab'
 AVAILABLE_DOMAINS = set(ENVIRONMENTS.keys())
 AVAILABLE_TASKS = set(y for x in ENVIRONMENTS.values() for y in x.keys())
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--domain',
