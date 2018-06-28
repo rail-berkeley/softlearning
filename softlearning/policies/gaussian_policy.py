@@ -35,7 +35,6 @@ class GaussianPolicy(NNPolicy, Serializable):
         self._Da = env_spec.action_space.flat_dim
         self._Ds = env_spec.observation_space.flat_dim
         self._is_deterministic = False
-        self._fixed_h = None
         self._squash = squash
         self._reparameterize = reparameterize
         self._reg = reg
@@ -75,14 +74,6 @@ class GaussianPolicy(NNPolicy, Serializable):
             return actions, log_pis
 
         return actions
-
-    def log_pis_for(self, actions):
-        if self._squash:
-           raw_actions = tf.atanh(actions)
-           log_pis = self._distribution.log_prob(raw_actions)
-           log_pis -= self._squash_correction(raw_actions)
-           return log_pis
-        return self._distribution.log_prob(raw_actions)
 
     def build(self):
         self._observations_ph = tf.placeholder(
@@ -133,7 +124,7 @@ class GaussianPolicy(NNPolicy, Serializable):
         return tf.reduce_sum(tf.log(1 - tf.tanh(actions) ** 2 + EPS), axis=1)
 
     @contextmanager
-    def deterministic(self, set_deterministic=True, latent=None):
+    def deterministic(self, set_deterministic=True):
         """Context manager for changing the determinism of the policy.
 
         See `self.get_action` for further information about the effect of
@@ -143,8 +134,6 @@ class GaussianPolicy(NNPolicy, Serializable):
             set_deterministic (`bool`): Value to set the self._is_deterministic
                 to during the context. The value will be reset back to the
                 previous value when the context exits.
-            latent (`Number`): Value to set the latent variable to over the
-                deterministic context.
         """
         was_deterministic = self._is_deterministic
 
@@ -167,7 +156,9 @@ class GaussianPolicy(NNPolicy, Serializable):
             (
                 self.distribution.mu_t,
                 self.distribution.log_sig_t,
-                self.distribution.log_p_t,
+                # TODO: Move log_pi and correction under self.log_pi_for()
+                (self.distribution.log_p_t
+                 - self._squash_correction(self.distribution.x_t)),
             ),
             feeds
         )
@@ -182,7 +173,7 @@ class GaussianPolicy(NNPolicy, Serializable):
         logger.record_tabular('log-sigs-max', np.max(log_sig))
         logger.record_tabular('log-sigs-std', np.std(log_sig))
 
-        logger.record_tabular('log-pi-mean', np.mean(log_pi))
-        logger.record_tabular('log-pi-max', np.max(log_pi))
-        logger.record_tabular('log-pi-min', np.min(log_pi))
-        logger.record_tabular('log-pi-std', np.std(log_pi))
+        logger.record_tabular('-log-pi-mean', np.mean(-log_pi))
+        logger.record_tabular('-log-pi-max', np.max(-log_pi))
+        logger.record_tabular('-log-pi-min', np.min(-log_pi))
+        logger.record_tabular('-log-pi-std', np.std(-log_pi))

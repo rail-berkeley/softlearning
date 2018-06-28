@@ -89,7 +89,7 @@ ENV_PARAMS = {
         'layer_size': 32,
         'max_path_length': 100,
         'n_epochs': 50,
-        'scale_reward': 1,
+        'target_entropy': -1,
     },
     'inverted-pendulum': {
         'prefix': 'inverted-pendulum',

@@ -45,10 +45,6 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         self._bijector_config = bijector_config
         self._mode = mode
         self._squash = squash
-        self._reparameterization_type = (
-            tf.distributions.FULLY_REPARAMETERIZED
-            if reparameterize
-            else tf.distributions.NOT_REPARAMETERIZED)
         self._reparameterize = reparameterize
         self._fix_h_on_reset = fix_h_on_reset
         self._q_function = q_function
@@ -231,10 +227,10 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         raw_actions, actions, log_pis = tf.get_default_session().run(
             (self._raw_actions, self._actions, self._log_pis), feeds)
 
-        logger.record_tabular('log-pi-mean', np.mean(log_pis))
-        logger.record_tabular('log-pi-min', np.min(log_pis))
-        logger.record_tabular('log-pi-max', np.max(log_pis))
-        logger.record_tabular('log-pi-std', np.std(log_pis))
+        logger.record_tabular('-log-pi-mean', np.mean(-log_pis))
+        logger.record_tabular('-log-pi-min', np.min(-log_pis))
+        logger.record_tabular('-log-pi-max', np.max(-log_pis))
+        logger.record_tabular('-log-pi-std', np.std(-log_pis))
 
         logger.record_tabular('actions-mean', np.mean(actions))
         logger.record_tabular('actions-min', np.min(actions))

@@ -205,6 +205,7 @@ ALGORITHM_PARAMS_BASE = {
     'discount': 0.99,
     'target_update_interval': 1,
     'tau': 0.005,
+    'target_entropy': 'auto',
 
     'base_kwargs': {
         'epoch_length': 1000,
@@ -218,64 +219,54 @@ ALGORITHM_PARAMS_BASE = {
 
 ALGORITHM_PARAMS = {
     'swimmer-gym': { # 2 DoF
-        'scale_reward': 25,
         'base_kwargs': {
             'n_epochs': int(5e2 + 1),
         }
     },
     'swimmer-rllab': { # 2 DoF
-        'scale_reward': 25,
         'base_kwargs': {
             'n_epochs': int(5e2 + 1),
         }
     },
     'hopper': { # 3 DoF
-        'scale_reward': 5,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
         }
     },
     'half-cheetah': { # 6 DoF
-        'scale_reward': 5,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': int(1e4),
         }
     },
     'walker': { # 6 DoF
-        'scale_reward': 5,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
         }
     },
     'ant-gym': { # 8 DoF
-        'scale_reward': 5,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': int(1e4),
         }
     },
     'ant-rllab': { # 8 DoF
-        'scale_reward': 5,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': int(1e4),
         }
     },
     'humanoid-gym': { # 17 DoF
-        'scale_reward': 20,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
     },
     'humanoid-rllab': { # 21 DoF
-        'scale_reward': 10,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
     },
     'humanoid-standup-gym': { # 17 DoF
-        'scale_reward': 100,
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }

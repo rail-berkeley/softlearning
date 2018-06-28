@@ -37,21 +37,21 @@ ENV_PARAMS = {
         'env_name': 'swimmer-rllab',
         'max_path_length': 1000,
         'n_epochs': 2000,
-        'scale_reward': 100,
+        'target_entropy': -2.0,
     },
     'hopper': { # 3 DoF
         'prefix': 'hopper',
         'env_name': 'Hopper-v1',
         'max_path_length': 1000,
         'n_epochs': 3000,
-        'scale_reward': 1,
+        'target_entropy': -3.0,
     },
     'half-cheetah': { # 6 DoF
         'prefix': 'half-cheetah',
         'env_name': 'HalfCheetah-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
-        'scale_reward': 1,
+        'target_entropy': -6.0,
         'max_pool_size': 1E7,
     },
     'walker': { # 6 DoF
@@ -59,21 +59,21 @@ ENV_PARAMS = {
         'env_name': 'Walker2d-v1',
         'max_path_length': 1000,
         'n_epochs': 5000,
-        'scale_reward': 3,
+        'target_entropy': -6.0,
     },
     'ant': { # 8 DoF
         'prefix': 'ant',
         'env_name': 'Ant-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
-        'scale_reward': 3,
+        'target_entropy': -8.0,
     },
     'humanoid': { # 21 DoF
         'prefix': 'humanoid',
         'env_name': 'humanoid-rllab',
         'max_path_length': 1000,
         'n_epochs': 20000,
-        'scale_reward': 3,
+        'target_entropy': -21.0,
     },
 }
 DEFAULT_ENV = 'swimmer'
@@ -154,7 +154,7 @@ def run_experiment(variant):
         vf=vf,
 
         lr=variant['lr'],
-        scale_reward=variant['scale_reward'],
+        target_entropy=variant['target_entropy'],
         discount=variant['discount'],
         tau=variant['tau'],
 
