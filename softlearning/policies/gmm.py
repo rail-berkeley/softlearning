@@ -200,6 +200,7 @@ class GMMPolicy(NNPolicy, Serializable):
                 self.distribution.mus_t,
                 self.distribution.log_sigs_t,
                 self.distribution.log_ws_t,
+                # TODO: Move log_pi and correction under self.log_pi_for()
                 (self.distribution.log_p_t
                  - self._squash_correction(self.distribution.x_t)),
             ),

@@ -156,6 +156,7 @@ class GaussianPolicy(NNPolicy, Serializable):
             (
                 self.distribution.mu_t,
                 self.distribution.log_sig_t,
+                # TODO: Move log_pi and correction under self.log_pi_for()
                 (self.distribution.log_p_t
                  - self._squash_correction(self.distribution.x_t)),
             ),
