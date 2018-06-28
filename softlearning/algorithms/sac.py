@@ -282,7 +282,6 @@ class SAC(RLAlgorithm, Serializable):
         actions, log_pi = self._policy.actions_for(
             observations=self._observations_ph, with_log_pis=True)
 
-
         log_alpha = tf.get_variable(
             'log_alpha',
             dtype=tf.float32,

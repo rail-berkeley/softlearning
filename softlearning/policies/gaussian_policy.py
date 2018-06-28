@@ -156,7 +156,8 @@ class GaussianPolicy(NNPolicy, Serializable):
             (
                 self.distribution.mu_t,
                 self.distribution.log_sig_t,
-                self.distribution.log_p_t,
+                (self.distribution.log_p_t
+                 - self._squash_correction(self.distribution.x_t)),
             ),
             feeds
         )
