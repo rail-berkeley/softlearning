@@ -98,7 +98,7 @@ def run(variant, reporter):
         save_full_state=True
     )
 
-    for epoch, mean_return in algorithm.train(as_iterable=True):
+    for epoch, mean_return in algorithm.train():
         reporter(timesteps_total=epoch, mean_accuracy=mean_return)
 
 def parse_args():

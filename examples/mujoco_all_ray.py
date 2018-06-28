@@ -233,7 +233,7 @@ def run_experiment(variant, reporter):
         action_prior=policy_params['action_prior'],
         save_full_state=False)
 
-    for epoch, mean_return in algorithm.train(as_iterable=True):
+    for epoch, mean_return in algorithm.train():
         reporter(timesteps_total=epoch, mean_accuracy=mean_return)
 
 def main():
