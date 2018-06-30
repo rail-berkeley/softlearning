@@ -9,7 +9,7 @@ from rllab.misc.instrument import VariantGenerator
 from softlearning.algorithms import SAC
 from softlearning.environments import FixedOptionEnv
 from softlearning.misc.instrument import run_sac_experiment
-from softlearning.misc.sampler import rollouts
+from softlearning.samplers import rollouts
 from softlearning.misc.utils import timestamp
 from softlearning.policies.hierarchical_policy import FixedOptionPolicy
 from softlearning.replay_pools import SimpleReplayPool

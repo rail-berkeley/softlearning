@@ -9,7 +9,7 @@ from rllab.envs.normalized_env import normalize
 from softlearning.algorithms import SQL
 from softlearning.misc.instrument import launch_experiment
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softlearning.misc.sampler import SimpleSampler
+from softlearning.samplers import SimpleSampler
 from softlearning.misc.utils import timestamp
 from softlearning.replay_pools import SimpleReplayPool
 

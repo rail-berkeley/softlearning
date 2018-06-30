@@ -26,7 +26,7 @@ from softlearning.policies import (
     LatentSpacePolicy,
     GMMPolicy,
     UniformPolicy)
-from softlearning.misc.sampler import SimpleSampler, ImageSampler
+from softlearning.samplers import SimpleSampler, ImageSampler
 from softlearning.replay_pools import SimpleReplayPool, ImageReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor

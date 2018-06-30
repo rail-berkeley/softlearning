@@ -6,7 +6,7 @@ from rllab.misc.overrides import overrides
 
 from softlearning.algorithms.sac import SAC
 from softlearning.misc import tf_utils, utils
-from softlearning.misc.sampler import rollouts
+from softlearning.samplers import rollouts
 from softlearning.policies.hierarchical_policy import FixedOptionPolicy
 
 from collections import deque

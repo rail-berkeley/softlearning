@@ -7,7 +7,7 @@ from softlearning.algorithms import SAC
 from softlearning.environments import MultiGoalEnv
 from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.misc.utils import timestamp
-from softlearning.misc.sampler import SimpleSampler
+from softlearning.samplers import SimpleSampler
 from softlearning.policies import GMMPolicy, LatentSpacePolicy
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction

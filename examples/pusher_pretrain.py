@@ -12,7 +12,7 @@ from softlearning.misc.utils import timestamp
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction
 from softlearning.policies import StochasticNNPolicy
-from softlearning.misc.sampler import SimpleSampler
+from softlearning.samplers import SimpleSampler
 
 SHARED_PARAMS = {
     'seed': 1,

@@ -21,7 +21,7 @@ from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction
 from softlearning.policies import StochasticNNPolicy
 from softlearning.environments import GymEnv, DelayedEnv
-from softlearning.misc.remote_sampler import RemoteSampler
+from softlearning.samplers import RemoteSampler
 
 SHARED_PARAMS = {
     'seed': 1,

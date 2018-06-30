@@ -10,7 +10,7 @@ from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction
 from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.policies import StochasticNNPolicy
-from softlearning.misc.sampler import SimpleSampler
+from softlearning.samplers import SimpleSampler
 
 
 def test():

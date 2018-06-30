@@ -8,7 +8,7 @@ from rllab.algos.base import Algorithm
 
 from softlearning.misc.utils import deep_clone
 from softlearning.misc import tf_utils
-from softlearning.misc.sampler import rollouts
+from softlearning.samplers import rollouts
 
 
 class RLAlgorithm(Algorithm):

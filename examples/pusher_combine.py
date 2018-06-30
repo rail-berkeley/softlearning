@@ -14,7 +14,7 @@ from softlearning.replay_pools import UnionPool
 from softlearning.value_functions import SumQFunction
 from softlearning.policies import StochasticNNPolicy
 from softlearning.environments.pusher import PusherEnv
-from softlearning.misc.sampler import DummySampler
+from softlearning.samplers import DummySampler
 from softlearning.misc.utils import PROJECT_PATH
 
 SHARED_PARAMS = {

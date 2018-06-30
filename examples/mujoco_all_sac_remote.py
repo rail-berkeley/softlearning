@@ -7,7 +7,7 @@ from softlearning.algorithms import SAC
 from softlearning.environments import GymEnv, DelayedEnv
 from softlearning.misc.instrument import launch_experiment
 from softlearning.misc.utils import timestamp
-from softlearning.misc.remote_sampler import RemoteSampler
+from softlearning.samplers import RemoteSampler
 from softlearning.policies.gmm import GMMPolicy
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
