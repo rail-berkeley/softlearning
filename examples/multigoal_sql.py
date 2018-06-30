@@ -6,7 +6,7 @@ from rllab.envs.normalized_env import normalize
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softlearning.environments import MultiGoalEnv
-from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction
 from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.policies import StochasticNNPolicy
@@ -21,7 +21,7 @@ def test():
         init_sigma=0.1,
     ))
 
-    pool = SimpleReplayBuffer(max_replay_buffer_size=1e6, env_spec=env.spec)
+    pool = SimpleReplayPool(max_size=1e6, env_spec=env.spec)
 
     sampler = SimpleSampler(
         max_path_length=30, min_pool_size=100, batch_size=64)

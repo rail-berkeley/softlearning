@@ -11,14 +11,13 @@ from softlearning.misc.instrument import launch_experiment
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softlearning.misc.sampler import SimpleSampler
 from softlearning.misc.utils import timestamp
-from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.replay_pools import SimpleReplayPool
 
 
 def run_experiment(variant):
     env = normalize(SwimmerEnv())
 
-    pool = SimpleReplayBuffer(
-        env_spec=env.spec, max_replay_buffer_size=1e6)
+    pool = SimpleReplayPool(env_spec=env.spec, max_size=1e6)
 
     sampler = SimpleSampler(
         max_path_length=1000,

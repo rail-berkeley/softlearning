@@ -51,7 +51,7 @@ class DIAYN(SAC):
             discriminator: (`rllab.NNPolicy`): A discriminator for z.
             qf (`ValueFunction`): Q-function approximator.
             vf (`ValueFunction`): Soft value function approximator.
-            pool (`PoolBase`): Replay buffer to add gathered samples to.
+            pool (`PoolBase`): Replay pool to add gathered samples to.
             plotter (`QFPolicyPlotter`): Plotter instance to be used for
                 visualizing Q-function during training.
             lr (`float`): Learning rate used for the function approximators.

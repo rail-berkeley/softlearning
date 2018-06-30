@@ -9,7 +9,7 @@ from softlearning.misc.instrument import launch_experiment
 from softlearning.misc.utils import timestamp
 from softlearning.misc.remote_sampler import RemoteSampler
 from softlearning.policies.gmm import GMMPolicy
-from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 
 COMMON_PARAMS = {
@@ -20,7 +20,7 @@ COMMON_PARAMS = {
     "K": 4,
     "layer_size": 128,
     "batch_size": 128,
-    "max_pool_size": 1E6,
+    "max_size": 1E6,
     "n_train_repeat": 1,
     "epoch_length": 1000,
     "snapshot_mode": 'gap',
@@ -50,7 +50,7 @@ ENV_PARAMS = {
         'max_path_length': 1000,
         'n_epochs': 10000,
         'target_entropy': -6.0,
-        'max_pool_size': 1E7,
+        'max_size': 1E7,
     },
     'walker': { # 6 DoF
         'prefix': 'walker',
@@ -117,9 +117,9 @@ def run_experiment(variant):
         env = normalize(GymEnv(variant['env_name']))
     env = DelayedEnv(env, delay=0.01)
 
-    pool = SimpleReplayBuffer(
+    pool = SimpleReplayPool(
         env_spec=env.spec,
-        max_replay_buffer_size=variant['max_pool_size'],
+        max_size=variant['max_size'],
     )
 
     sampler = RemoteSampler(

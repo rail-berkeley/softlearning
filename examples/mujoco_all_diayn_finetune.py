@@ -12,7 +12,7 @@ from softlearning.misc.instrument import run_sac_experiment
 from softlearning.misc.sampler import rollouts
 from softlearning.misc.utils import timestamp
 from softlearning.policies.hierarchical_policy import FixedOptionPolicy
-from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 
 import argparse
@@ -29,7 +29,7 @@ SHARED_PARAMS = {
     'tau': 0.01,
     'layer_size': 300,
     'batch_size': 128,
-    'max_pool_size': 1E6,
+    'max_size': 1E6,
     'n_train_repeat': 1,
     'epoch_length': 1000,
     'snapshot_mode': 'gap',
@@ -61,7 +61,7 @@ ENV_PARAMS = {
         'max_path_length': 1000,
         'n_epochs': 1000,
         'target_entropy': -6,
-        'max_pool_size': 1E7,
+        'max_size': 1E7,
     },
     'walker': { # 6 DoF
         'prefix': 'walker',
@@ -201,9 +201,9 @@ def run_experiment(variant):
 
         tf.logging.info('Finetuning best skill...')
 
-        pool = SimpleReplayBuffer(
+        pool = SimpleReplayPool(
             env_spec=fixed_z_env.spec,
-            max_replay_buffer_size=variant['max_pool_size'],
+            max_size=variant['max_size'],
         )
 
         base_kwargs = dict(

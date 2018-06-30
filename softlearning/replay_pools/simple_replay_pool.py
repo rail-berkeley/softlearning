@@ -2,11 +2,11 @@ import numpy as np
 
 from rllab.core.serializable import Serializable
 
-from .replay_buffer import ReplayBuffer
+from .replay_pool import ReplayPool
 from .flexible_replay_pool import FlexibleReplayPool
 
 
-class SimpleReplayBuffer(FlexibleReplayPool, Serializable):
+class SimpleReplayPool(FlexibleReplayPool, Serializable):
     def __init__(self, env_spec, *args, **kwargs):
         Serializable.quick_init(self, locals())
 
@@ -41,22 +41,22 @@ class SimpleReplayBuffer(FlexibleReplayPool, Serializable):
             },
         }
 
-        super(SimpleReplayBuffer, self).__init__(*args, fields=fields, **kwargs)
+        super(SimpleReplayPool, self).__init__(*args, fields=fields, **kwargs)
 
     def terminate_episode(self):
         pass
 
     def _advance(self):
-        self._pointer = (self._pointer + 1) % self._max_buffer_size
-        if self._size < self._max_buffer_size:
+        self._pointer = (self._pointer + 1) % self._max_size
+        if self._size < self._max_size:
             self._size += 1
 
     def batch_indices(self, batch_size):
         return np.random.randint(0, self._size, batch_size)
 
     def __getstate__(self):
-        buffer_state = super(SimpleReplayBuffer, self).__getstate__()
-        buffer_state.update({
+        pool_state = super(SimpleReplayPool, self).__getstate__()
+        pool_state.update({
             'observations': self._observations.tobytes(),
             'actions': self._actions.tobytes(),
             'rewards': self._rewards.tobytes(),
@@ -65,22 +65,22 @@ class SimpleReplayBuffer(FlexibleReplayPool, Serializable):
             'top': self._top,
             'size': self._size,
         })
-        return buffer_state
+        return pool_state
 
-    def __setstate__(self, buffer_state):
-        super(SimpleReplayBuffer, self).__setstate__(buffer_state)
+    def __setstate__(self, pool_state):
+        super(SimpleReplayPool, self).__setstate__(pool_state)
 
-        flat_obs = np.fromstring(buffer_state['observations'])
-        flat_next_obs = np.fromstring(buffer_state['next_observations'])
-        flat_actions = np.fromstring(buffer_state['actions'])
-        flat_reward = np.fromstring(buffer_state['rewards'])
+        flat_obs = np.fromstring(pool_state['observations'])
+        flat_next_obs = np.fromstring(pool_state['next_observations'])
+        flat_actions = np.fromstring(pool_state['actions'])
+        flat_reward = np.fromstring(pool_state['rewards'])
         flat_terminals = np.fromstring(
-            buffer_state['terminals'], dtype=np.uint8)
+            pool_state['terminals'], dtype=np.uint8)
 
-        self._observations = flat_obs.reshape(self._max_buffer_size, -1)
-        self._next_obs = flat_next_obs.reshape(self._max_buffer_size, -1)
-        self._actions = flat_actions.reshape(self._max_buffer_size, -1)
-        self._rewards = flat_reward.reshape(self._max_buffer_size)
-        self._terminals = flat_terminals.reshape(self._max_buffer_size)
-        self._top = buffer_state['top']
-        self._size = buffer_state['size']
+        self._observations = flat_obs.reshape(self._max_size, -1)
+        self._next_obs = flat_next_obs.reshape(self._max_size, -1)
+        self._actions = flat_actions.reshape(self._max_size, -1)
+        self._rewards = flat_reward.reshape(self._max_size)
+        self._terminals = flat_terminals.reshape(self._max_size)
+        self._top = pool_state['top']
+        self._size = pool_state['size']

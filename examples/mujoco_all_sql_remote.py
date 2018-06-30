@@ -17,7 +17,7 @@ from softlearning.misc.instrument import launch_experiment
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softlearning.misc.utils import timestamp
-from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction
 from softlearning.policies import StochasticNNPolicy
 from softlearning.environments import GymEnv, DelayedEnv
@@ -30,7 +30,7 @@ SHARED_PARAMS = {
     'discount': 0.99,
     'layer_size': 128,
     'batch_size': 128,
-    'max_pool_size': 1E6,
+    'max_size': 1E6,
     'n_train_repeat': 1,
     'epoch_length': 1000,
     'snapshot_mode': 'last',
@@ -59,7 +59,7 @@ ENV_PARAMS = {
         'max_path_length': 1000,
         'n_epochs': 10000,
         'reward_scale': 30,
-        'max_pool_size': 1E7,
+        'max_size': 1E7,
     },
     'walker': {  # 6 DoF
         'prefix': 'walker',
@@ -124,8 +124,8 @@ def run_experiment(variant):
 
     env = DelayedEnv(env, delay=0.01)
 
-    pool = SimpleReplayBuffer(
-        env_spec=env.spec, max_replay_buffer_size=variant['max_pool_size'])
+    pool = SimpleReplayPool(
+        env_spec=env.spec, max_size=variant['max_size'])
 
     sampler = RemoteSampler(
         max_path_length=variant['max_path_length'],

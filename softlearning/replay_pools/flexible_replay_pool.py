@@ -3,21 +3,21 @@ from abc import abstractmethod
 import numpy as np
 
 from rllab.core.serializable import Serializable
-from .replay_buffer import ReplayBuffer
+from .replay_pool import ReplayPool
 
 
-class FlexibleReplayPool(ReplayBuffer, Serializable):
-    def __init__(self, max_replay_buffer_size, fields):
+class FlexibleReplayPool(ReplayPool, Serializable):
+    def __init__(self, max_size, fields):
         super(FlexibleReplayPool, self).__init__()
         Serializable.quick_init(self, locals())
 
-        max_replay_buffer_size = int(max_replay_buffer_size)
-        self._max_buffer_size = max_replay_buffer_size
+        max_size = int(max_size)
+        self._max_size = max_size
         self.fields = fields
         self.field_names = list(fields.keys())
 
         for field_name, field_attrs in fields.items():
-            field_shape = [max_replay_buffer_size] + list(field_attrs['shape'])
+            field_shape = [max_size] + list(field_attrs['shape'])
             setattr(self, field_name, np.zeros(field_shape))
 
         self._pointer = 0
@@ -36,32 +36,32 @@ class FlexibleReplayPool(ReplayBuffer, Serializable):
         self._advance()
 
     def __getstate__(self):
-        buffer_state = super(FlexibleReplayPool, self).__getstate__()
-        buffer_state.update({
+        pool_state = super(FlexibleReplayPool, self).__getstate__()
+        pool_state.update({
             field_name: getattr(self, field_name).tobytes()
             for field_name in self.field_names
         })
 
-        buffer_state.update({
+        pool_state.update({
             '_pointer': self._pointer,
             '_size': self._size
         })
 
-        return buffer_state
+        return pool_state
 
-    def __setstate__(self, buffer_state):
-        super(FlexibleReplayPool, self).__setstate__(buffer_state)
+    def __setstate__(self, pool_state):
+        super(FlexibleReplayPool, self).__setstate__(pool_state)
 
         for field_name in self.field_names:
             field = self.fields[field_name]
             flat_values = np.fromstring(
-                buffer_state[field_name], dtype=field['dtype'])
+                pool_state[field_name], dtype=field['dtype'])
             values = flat_values.reshape(
-                [self._max_buffer_size] + field['shape'])
+                [self._max_size] + field['shape'])
             setattr(self, field_name, values)
 
-        self._pointer = buffer_state['_pointer']
-        self._size = buffer_state['_size']
+        self._pointer = pool_state['_pointer']
+        self._size = pool_state['_size']
 
     @abstractmethod
     def batch_indices(self, batch_size):

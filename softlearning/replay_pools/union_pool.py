@@ -1,15 +1,15 @@
 import numpy as np
 
-from .replay_buffer import ReplayBuffer
+from .replay_pool import ReplayPool
 
 
-class UnionBuffer(ReplayBuffer):
-    def __init__(self, buffers):
-        buffer_sizes = np.array([b.size for b in buffers])
-        self._total_size = sum(buffer_sizes)
-        self._normalized_buffer_sizes = buffer_sizes / self._total_size
+class UnionPool(ReplayPool):
+    def __init__(self, pools):
+        pool_sizes = np.array([b.size for b in pools])
+        self._total_size = sum(pool_sizes)
+        self._normalized_pool_sizes = pool_sizes / self._total_size
 
-        self.buffers = buffers
+        self.pools = pools
 
     def add_sample(self, *args, **kwargs):
         raise NotImplementedError
@@ -27,13 +27,13 @@ class UnionBuffer(ReplayBuffer):
     def random_batch(self, batch_size):
 
         # TODO: Hack
-        partial_batch_sizes = self._normalized_buffer_sizes * batch_size
+        partial_batch_sizes = self._normalized_pool_sizes * batch_size
         partial_batch_sizes = partial_batch_sizes.astype(int)
         partial_batch_sizes[0] = batch_size - sum(partial_batch_sizes[1:])
 
         partial_batches = [
-            buffer.random_batch(partial_batch_size) for buffer,
-            partial_batch_size in zip(self.buffers, partial_batch_sizes)
+            pool.random_batch(partial_batch_size) for pool,
+            partial_batch_size in zip(self.pools, partial_batch_sizes)
         ]
 
         def all_values(key):

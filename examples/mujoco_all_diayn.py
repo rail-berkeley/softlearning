@@ -13,7 +13,7 @@ from softlearning.environments import GymEnv
 from softlearning.misc.instrument import run_sac_experiment
 from softlearning.misc.utils import timestamp
 from softlearning.policies.gmm import GMMPolicy
-from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction, NNDiscriminatorFunction
 
 import argparse
@@ -29,7 +29,7 @@ SHARED_PARAMS = {
     'K': 4,
     'layer_size': 300,
     'batch_size': 128,
-    'max_pool_size': 1E6,
+    'max_size': 1E6,
     'n_train_repeat': 1,
     'epoch_length': 1000,
     'snapshot_mode': 'gap',
@@ -62,7 +62,7 @@ ENV_PARAMS = {
         'env_name': 'HalfCheetah-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
-        'max_pool_size': 1E7,
+        'max_size': 1E7,
     },
     'walker': { # 6 DoF
         'prefix': 'walker',
@@ -179,9 +179,9 @@ def run_experiment(variant):
     high = np.hstack([obs_space.high, np.full(variant['num_skills'], 1)])
     aug_obs_space = spaces.Box(low=low, high=high)
     aug_env_spec = EnvSpec(aug_obs_space, env.spec.action_space)
-    pool = SimpleReplayBuffer(
+    pool = SimpleReplayPool(
         env_spec=aug_env_spec,
-        max_replay_buffer_size=variant['max_pool_size'],
+        max_size=variant['max_size'],
     )
 
     base_kwargs = dict(
