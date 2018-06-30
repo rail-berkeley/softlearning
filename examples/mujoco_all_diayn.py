@@ -29,7 +29,7 @@ SHARED_PARAMS = {
     'K': 4,
     'layer_size': 300,
     'batch_size': 128,
-    'max_size': 1E6,
+    'max_pool_size': 1E6,
     'n_train_repeat': 1,
     'epoch_length': 1000,
     'snapshot_mode': 'gap',
@@ -62,7 +62,7 @@ ENV_PARAMS = {
         'env_name': 'HalfCheetah-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
-        'max_size': 1E7,
+        'max_pool_size': 1E7,
     },
     'walker': { # 6 DoF
         'prefix': 'walker',
@@ -181,7 +181,7 @@ def run_experiment(variant):
     aug_env_spec = EnvSpec(aug_obs_space, env.spec.action_space)
     pool = SimpleReplayPool(
         env_spec=aug_env_spec,
-        max_size=variant['max_size'],
+        max_size=variant['max_pool_size'],
     )
 
     base_kwargs = dict(

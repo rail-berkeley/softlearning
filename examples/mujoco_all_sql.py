@@ -23,7 +23,7 @@ SHARED_PARAMS = {
     'discount': 0.99,
     'layer_size': 128,
     'batch_size': 128,
-    'max_size': 1E6,
+    'max_pool_size': 1E6,
     'n_train_repeat': 1,
     'epoch_length': 1000,
     'kernel_particles': 16,
@@ -56,7 +56,7 @@ ENV_PARAMS = {
         'max_path_length': 1000,
         'n_epochs': 10000,
         'reward_scale': 30,
-        'max_size': 1E7,
+        'max_pool_size': 1E7,
     },
     'walker': {  # 6 DoF
         'prefix': 'walker',
@@ -129,7 +129,7 @@ def run_experiment(variant):
         env = normalize(GymEnv(variant['env_name']))
 
     pool = SimpleReplayPool(
-        env_spec=env.spec, max_size=variant['max_size'])
+        env_spec=env.spec, max_size=variant['max_pool_size'])
 
     sampler = SimpleSampler(
         max_path_length=variant['max_path_length'],
