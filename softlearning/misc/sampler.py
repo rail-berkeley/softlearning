@@ -137,11 +137,11 @@ class SimpleSampler(Sampler):
         self._total_samples += 1
 
         self.pool.add_sample(
-            observation=self._current_observation,
-            action=action,
-            reward=reward,
-            terminal=terminal,
-            next_observation=next_observation)
+            observations=self._current_observation,
+            actions=action,
+            rewards=reward,
+            terminals=terminal,
+            next_observations=next_observation)
 
         if terminal or self._path_length >= self._max_path_length:
             self.policy.reset()
