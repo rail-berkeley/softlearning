@@ -53,34 +53,3 @@ class SimpleReplayPool(FlexibleReplayPool, Serializable):
 
     def batch_indices(self, batch_size):
         return np.random.randint(0, self._size, batch_size)
-
-    def __getstate__(self):
-        pool_state = super(SimpleReplayPool, self).__getstate__()
-        pool_state.update({
-            'observations': self._observations.tobytes(),
-            'actions': self._actions.tobytes(),
-            'rewards': self._rewards.tobytes(),
-            'terminals': self._terminals.tobytes(),
-            'next_observations': self._next_obs.tobytes(),
-            'top': self._top,
-            'size': self._size,
-        })
-        return pool_state
-
-    def __setstate__(self, pool_state):
-        super(SimpleReplayPool, self).__setstate__(pool_state)
-
-        flat_obs = np.fromstring(pool_state['observations'])
-        flat_next_obs = np.fromstring(pool_state['next_observations'])
-        flat_actions = np.fromstring(pool_state['actions'])
-        flat_reward = np.fromstring(pool_state['rewards'])
-        flat_terminals = np.fromstring(
-            pool_state['terminals'], dtype=np.uint8)
-
-        self._observations = flat_obs.reshape(self._max_size, -1)
-        self._next_obs = flat_next_obs.reshape(self._max_size, -1)
-        self._actions = flat_actions.reshape(self._max_size, -1)
-        self._rewards = flat_reward.reshape(self._max_size)
-        self._terminals = flat_terminals.reshape(self._max_size)
-        self._top = pool_state['top']
-        self._size = pool_state['size']
