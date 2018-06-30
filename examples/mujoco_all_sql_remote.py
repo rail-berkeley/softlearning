@@ -31,7 +31,7 @@ SHARED_PARAMS = {
     'discount': 0.99,
     'layer_size': 128,
     'batch_size': 128,
-    'max_pool_size': 1E6,
+    'max_size': 1E6,
     'n_train_repeat': 1,
     'epoch_length': 1000,
     'snapshot_mode': 'last',
@@ -60,7 +60,7 @@ ENV_PARAMS = {
         'max_path_length': 1000,
         'n_epochs': 10000,
         'reward_scale': 30,
-        'max_pool_size': 1E7,
+        'max_size': 1E7,
     },
     'walker': {  # 6 DoF
         'prefix': 'walker',
@@ -111,7 +111,7 @@ def run_experiment(variant):
     env = DelayedEnv(env, delay=0.01)
 
     pool = SimpleReplayPool(
-        env_spec=env.spec, max_size=variant['max_pool_size'])
+        env_spec=env.spec, max_size=variant['max_size'])
 
     sampler = RemoteSampler(
         max_path_length=variant['max_path_length'],

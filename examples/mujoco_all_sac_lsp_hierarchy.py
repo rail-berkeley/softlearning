@@ -38,7 +38,7 @@ COMMON_PARAMS = {
     'tau': 1e-2,
     'layer_size': 128,
     'batch_size': 128,
-    'max_pool_size': 1e6,
+    'max_size': 1e6,
     'n_train_repeat': 1,
     'epoch_length': 1000,
     'snapshot_mode': 'gap',
@@ -246,7 +246,7 @@ def run_experiment(variant):
                                 low_level_policy=low_level_policy)
     pool = SimpleReplayPool(
         env_spec=env.spec,
-        max_size=variant['max_pool_size'],
+        max_size=variant['max_size'],
     )
 
     base_kwargs = dict(
