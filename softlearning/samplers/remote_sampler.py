@@ -7,7 +7,7 @@ from rllab.misc.overrides import overrides
 from rllab.misc import logger
 
 from softlearning.misc import tf_utils
-from .sampler import Sampler, rollout
+from . import Sampler, rollout
 
 
 class RemoteSampler(Sampler):

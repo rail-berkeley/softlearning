@@ -1,6 +1,11 @@
+import time
+
 import numpy as np
 
-from .sampler import Sampler, SimpleSampler, ImageSampler
+from .sampler import Sampler
+from .dummy_sampler import DummySampler
+from .simple_sampler import SimpleSampler
+from .image_sampler import ImageSampler
 
 
 def rollout(env, policy, path_length, render=False, speedup=10, callback=None,
@@ -71,7 +76,9 @@ def rollout(env, policy, path_length, render=False, speedup=10, callback=None,
 
     return path
 
-def rollouts(env, policy, path_length, n_paths, render=False, render_mode='human'):
+
+def rollouts(env, policy, path_length, n_paths, render=False,
+             render_mode='human'):
     paths = [
         rollout(env, policy, path_length, render, render_mode=render_mode)
         for i in range(n_paths)
