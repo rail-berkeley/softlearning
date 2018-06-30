@@ -13,12 +13,10 @@ class FlexibleReplayPool(ReplayPool, Serializable):
 
         max_size = int(max_size)
         self._max_size = max_size
-        self.fields = fields
-        self.field_names = list(fields.keys())
 
-        for field_name, field_attrs in fields.items():
-            field_shape = [max_size] + list(field_attrs['shape'])
-            setattr(self, field_name, np.zeros(field_shape))
+        self.fields = {}
+        self.field_names = []
+        self.add_fields(fields)
 
         self._pointer = 0
         self._size = 0
@@ -26,6 +24,14 @@ class FlexibleReplayPool(ReplayPool, Serializable):
     @property
     def size(self):
         return self._size
+
+    def add_fields(self, fields):
+        self.fields.update(fields)
+        self.field_names += list(fields.keys())
+
+        for field_name, field_attrs in fields.items():
+            field_shape = [self._max_size] + list(field_attrs['shape'])
+            setattr(self, field_name, np.zeros(field_shape))
 
     def add_sample(self, **kwargs):
         for field_name in self.field_names:
