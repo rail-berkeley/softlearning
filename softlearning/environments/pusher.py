@@ -1,7 +1,6 @@
 import os.path as osp
 
 import numpy as np
-from skimage.transform import resize
 
 from rllab.core.serializable import Serializable
 from rllab.envs.mujoco.mujoco_env import MujocoEnv
@@ -84,6 +83,21 @@ class PusherEnv(MujocoEnv, Serializable):
             'goal_distance': goal_dists
         }
 
+    def viewer_setup(self):
+        self.viewer.cam.trackbodyid = 0
+        self.viewer.cam.distance = 4.0
+        rotation_angle = np.random.uniform(low=-0, high=360)
+        if hasattr(self, "_kwargs") and 'vp' in self._kwargs:
+            rotation_angle = self._kwargs['vp']
+        cam_dist = 4
+        cam_pos = np.array([0, 0, 0, cam_dist, -45, rotation_angle])
+        for i in range(3):
+            self.viewer.cam.lookat[i] = cam_pos[i]
+        self.viewer.cam.distance = cam_pos[3]
+        self.viewer.cam.elevation = cam_pos[4]
+        self.viewer.cam.azimuth = cam_pos[5]
+        self.viewer.cam.trackbodyid = -1
+
     def reset(self, init_state=None):
         if init_state:
             super(PusherEnv, self).reset(init_state)
@@ -119,37 +133,12 @@ class PusherEnv(MujocoEnv, Serializable):
 
     @overrides
     def get_current_obs(self):
-        image = self.render(mode='rgb_array',)
-        resized_image = resize(image, output_shape=(16,16,3))
         return np.concatenate([
-            resized_image.reshape(-1),
             self.model.data.qpos.flat[self.JOINT_INDS],
             self.model.data.qvel.flat[self.JOINT_INDS],
+            self.get_body_com("distal_4"),
+            self.get_body_com("object"),
         ]).reshape(-1)
-
-        # return np.concatenate([
-        #     self.model.data.qpos.flat[self.JOINT_INDS],
-        #     self.model.data.qvel.flat[self.JOINT_INDS],
-        #     self.get_body_com("distal_4"),
-        #     self.get_body_com("object"),
-        # ]).reshape(-1)
-
-    def viewer_setup(self):
-        self.viewer.cam.trackbodyid = 0
-        self.viewer.cam.distance = 4.0
-        cam_dist = 4
-        cam_pos = np.array([0, 0, 0, cam_dist, -90, 0])
-        self.viewer.cam.lookat[:3] = cam_pos[:3]
-        self.viewer.cam.distance = cam_pos[3]
-        self.viewer.cam.elevation = cam_pos[4]
-        self.viewer.cam.azimuth = cam_pos[5]
-        self.viewer.cam.trackbodyid = -1
-
-    def render(self, *args, **kwargs):
-        result = super(PusherEnv, self).render(*args, **kwargs)
-        self.viewer_setup()
-
-        return result
 
     @overrides
     def log_diagnostics(self, paths):
