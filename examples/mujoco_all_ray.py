@@ -15,6 +15,8 @@ from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from softlearning.algorithms import SAC
 from softlearning.environments import (
     GymEnv,
+    PusherEnv,
+    ImagePusherEnv,
     MultiDirectionSwimmerEnv,
     MultiDirectionAntEnv,
     MultiDirectionHumanoidEnv,
@@ -65,6 +67,10 @@ ENVIRONMENTS = {
     },
     'walker': {
         'default': lambda: GymEnv('Walker2d-v1')
+    },
+    'pusher': {
+        'default': PusherEnv,
+        'image': ImagePusherEnv
     },
 }
 
@@ -150,9 +156,8 @@ def run_experiment(variant, reporter):
 
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
-    pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
-
     sampler = SimpleSampler(**sampler_params)
+    pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
@@ -232,7 +237,8 @@ def run_experiment(variant, reporter):
         reparameterize=policy_params['reparameterize'],
         target_update_interval=algorithm_params['target_update_interval'],
         action_prior=policy_params['action_prior'],
-        save_full_state=False)
+        save_full_state=False,
+    )
 
     for epoch, mean_return in algorithm.train():
         reporter(timesteps_total=epoch, mean_accuracy=mean_return)
