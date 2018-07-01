@@ -16,6 +16,7 @@ from softlearning.algorithms import SAC
 from softlearning.environments import (
     GymEnv,
     PusherEnv,
+    ImagePusherEnv,
     MultiDirectionSwimmerEnv,
     MultiDirectionAntEnv,
     MultiDirectionHumanoidEnv,
@@ -70,7 +71,8 @@ ENVIRONMENTS = {
         'default': lambda: GymEnv('Walker2d-v1')
     },
     'pusher': {
-        'default': PusherEnv
+        'default': PusherEnv,
+        'image': ImagePusherEnv
     },
 }
 

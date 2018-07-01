@@ -289,8 +289,6 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(1e4 + 1),
         }
     },
-    'pusher': { # 17 DoF
-    },
 }
 
 REPLAY_POOL_PARAMS = {
@@ -391,6 +389,7 @@ TASKS = {
     ],
     'pusher': [
         'default',
+        'image'
     ],
 }
 
