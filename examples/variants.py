@@ -53,7 +53,11 @@ LSP_POLICY_PARAMS = {
     'humanoid-rllab': { # 21 DoF
         'preprocessing_layer_sizes': (M, M, 42),
         's_t_units': 21,
-    }
+    },
+    'pusher': { # 12 DoF
+        'preprocessing_layer_sizes': (M, M, 24),
+        's_t_units': 12,
+    },
 }
 
 GMM_POLICY_PARAMS_BASE = {
@@ -83,6 +87,8 @@ GMM_POLICY_PARAMS = {
     },
     'humanoid-rllab': { # 21 DoF
     },
+    'pusher': { # 17 DoF
+    },
 }
 
 GAUSSIAN_POLICY_PARAMS_BASE = {
@@ -110,6 +116,8 @@ GAUSSIAN_POLICY_PARAMS = {
     'humanoid-gym': { # 17 DoF
     },
     'humanoid-rllab': { # 21 DoF
+    },
+    'pusher': { # 17 DoF
     },
 }
 
@@ -151,6 +159,8 @@ ENV_DOMAIN_PARAMS = {
     'humanoid-gym': { # 17 DoF
     },
     'humanoid-rllab': { # 21 DoF
+    },
+    'pusher': { # 17 DoF
     },
 }
 
@@ -197,6 +207,8 @@ ENV_PARAMS = {
         }
     },
     'humanoid-rllab': { # 21 DOF
+    },
+    'pusher': { # 17 DoF
     },
 }
 
@@ -262,6 +274,11 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(1e4 + 1),
         }
     },
+    'pusher': { # 17 DoF
+        'base_kwargs': {
+            'n_epochs': int(1e4 + 1),
+        }
+    },
     'humanoid-rllab': { # 21 DoF
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
@@ -272,6 +289,8 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(1e4 + 1),
         }
     },
+    'pusher': { # 17 DoF
+    },
 }
 
 REPLAY_POOL_PARAMS = {
@@ -279,9 +298,6 @@ REPLAY_POOL_PARAMS = {
 }
 
 SAMPLER_PARAMS = {
-    'resize_kwargs': {
-        'output_shape': (16, 16, 3),
-    },
     'max_path_length': 1000,
     'min_pool_size': 1000,
     'batch_size': 256,
@@ -322,6 +338,9 @@ RUN_PARAMS = {
     'humanoid-rllab': { # 21 DoF
         'snapshot_gap': 2000
     },
+    'pusher': { # 17 DoF
+        'snapshot_gap': 1000
+    },
 }
 
 DOMAINS = [
@@ -334,6 +353,7 @@ DOMAINS = [
     'ant-rllab', # 8 DoF
     'humanoid-gym', # 17 DoF
     'humanoid-rllab', # 21 DoF
+    'pusher', # 17 DoF
 ]
 
 TASKS = {
@@ -368,6 +388,9 @@ TASKS = {
     'humanoid-rllab': [
         'default',
         'multi-direction'
+    ],
+    'pusher': [
+        'default',
     ],
 }
 

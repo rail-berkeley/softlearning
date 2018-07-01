@@ -1,5 +1,6 @@
 from .multigoal import MultiGoalEnv
 from .gym_env import GymEnv
+from .pusher import PusherEnv
 from .delayed_env import DelayedEnv
 from .multi_direction_env import (
     MultiDirectionSwimmerEnv,

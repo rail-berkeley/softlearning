@@ -15,6 +15,7 @@ from ray.tune.variant_generator import generate_variants
 from softlearning.algorithms import SAC
 from softlearning.environments import (
     GymEnv,
+    PusherEnv,
     MultiDirectionSwimmerEnv,
     MultiDirectionAntEnv,
     MultiDirectionHumanoidEnv,
@@ -67,6 +68,9 @@ ENVIRONMENTS = {
     },
     'walker': {
         'default': lambda: GymEnv('Walker2d-v1')
+    },
+    'pusher': {
+        'default': PusherEnv
     },
 }
 
