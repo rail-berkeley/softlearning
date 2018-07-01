@@ -118,7 +118,10 @@ def run_experiment(variant):
 
     if variant['store_images']:
         sampler = ImageSampler(**sampler_params)
-        pool = ImageReplayPool(env_spec=env.spec, **replay_pool_params)
+        pool = ImageReplayPool(
+            sampler_params['resize_kwargs']['output_shape'],
+            env_spec=env.spec,
+            **replay_pool_params)
     else:
         sampler = SimpleSampler(**sampler_params)
         pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)

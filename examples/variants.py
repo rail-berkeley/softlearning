@@ -279,6 +279,9 @@ REPLAY_POOL_PARAMS = {
 }
 
 SAMPLER_PARAMS = {
+    'resize_kwargs': {
+        'output_shape': (16, 16, 3),
+    },
     'max_path_length': 1000,
     'min_pool_size': 1000,
     'batch_size': 256,

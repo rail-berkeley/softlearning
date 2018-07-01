@@ -37,7 +37,7 @@ class ImageSampler(SimpleSampler):
             rewards=reward,
             terminals=terminal,
             next_observations=next_observation,
-            images=(image_id, image)
+            images=resized_image
         )
 
         if terminal or self._path_length >= self._max_path_length:
