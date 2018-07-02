@@ -122,15 +122,8 @@ def run_experiment(variant):
 
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
-    if variant['store_images']:
-        sampler = ImageSampler(**sampler_params)
-        pool = ImageReplayPool(
-            sampler_params['resize_kwargs']['output_shape'],
-            env_spec=env.spec,
-            **replay_pool_params)
-    else:
-        sampler = SimpleSampler(**sampler_params)
-        pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
+    sampler = SimpleSampler(**sampler_params)
+    pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
