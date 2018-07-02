@@ -87,7 +87,7 @@ GMM_POLICY_PARAMS = {
     },
     'humanoid-rllab': { # 21 DoF
     },
-    'pusher': { # 17 DoF
+    'pusher': { # 12 DoF
     },
 }
 
@@ -117,7 +117,7 @@ GAUSSIAN_POLICY_PARAMS = {
     },
     'humanoid-rllab': { # 21 DoF
     },
-    'pusher': { # 17 DoF
+    'pusher': { # 12 DoF
     },
 }
 
@@ -160,7 +160,7 @@ ENV_DOMAIN_PARAMS = {
     },
     'humanoid-rllab': { # 21 DoF
     },
-    'pusher': { # 17 DoF
+    'pusher': { # 12 DoF
     },
 }
 
@@ -208,7 +208,7 @@ ENV_PARAMS = {
     },
     'humanoid-rllab': { # 21 DOF
     },
-    'pusher': { # 17 DoF
+    'pusher': { # 12 DoF
     },
 }
 
@@ -274,9 +274,10 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(1e4 + 1),
         }
     },
-    'pusher': { # 17 DoF
+    'pusher': { # 12 DoF
         'base_kwargs': {
-            'n_epochs': int(1e4 + 1),
+            'n_epochs': int(2e3 + 1),
+            'n_initial_exploration_steps': int(1e4),
         }
     },
     'humanoid-rllab': { # 21 DoF
@@ -351,7 +352,7 @@ DOMAINS = [
     'ant-rllab', # 8 DoF
     'humanoid-gym', # 17 DoF
     'humanoid-rllab', # 21 DoF
-    'pusher', # 17 DoF
+    'pusher', # 12 DoF
 ]
 
 TASKS = {
