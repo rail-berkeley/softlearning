@@ -13,6 +13,11 @@ from .pusher import PusherEnv
 
 
 class ImagePusherEnv(PusherEnv):
+    def __init__(self, image_size, *args, **kwargs):
+        self.image_size = image_size
+        Serializable.quick_init(self, locals())
+        PusherEnv.__init__(self, *args, **kwargs)
+
     @overrides
     def get_current_obs(self):
         # image = self.render(mode='rgb_array',)
@@ -23,7 +28,7 @@ class ImagePusherEnv(PusherEnv):
         # resized_image = resize(image, size=(32, 32, 3))
         resized_image = resize(
             image,
-            output_shape=(32,32,3),
+            output_shape=self.image_size,
             preserve_range=True,
             anti_aliasing=True)
 

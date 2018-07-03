@@ -209,6 +209,9 @@ ENV_PARAMS = {
     'humanoid-rllab': { # 21 DOF
     },
     'pusher': { # 12 DoF
+        'image': {
+            'image_size': tune.grid_search([(32, 32, 3), (16, 16, 3)])
+        }
     },
 }
 
