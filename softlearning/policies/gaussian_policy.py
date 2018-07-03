@@ -68,12 +68,36 @@ class GaussianPolicy(NNPolicy, Serializable):
         # Figure out how to make the interface for `log_pis` cleaner
         if with_log_pis:
             # TODO.code_consolidation: should come from log_pis_for
-            log_pis = distribution.log_p_t
-            if self._squash:
-                log_pis -= self._squash_correction(raw_actions)
+            log_pis = self._log_pis_for_raw(observations, raw_actions,
+                            name, reuse=True, regularize=regularize)
             return actions, log_pis
 
         return actions
+
+    def _log_pis_for_raw(self, observations, actions, name=None, 
+                        reuse=tf.AUTO_REUSE, regularize=False):
+        name = name or self.name
+
+        with tf.variable_scope(name, reuse=reuse):
+            distribution = Normal(
+                hidden_layers_sizes=self._hidden_layers,
+                Dx=self._Da,
+                reparameterize=self._reparameterize,
+                cond_t_lst=(observations,),
+                reg=self._reg
+            )
+        log_pis = distribution.log_prob(actions) 
+        if self._squash:
+            log_pis -= self._squash_correction(actions)
+        return log_pis
+
+    def log_pis_for(self, observations, actions, name=None,
+                    reuse=tf.AUTO_REUSE, regularize=False):
+        if self._squash:
+            actions = tf.atanh(actions)
+        return self._log_pis_for_raw(observations, actions, name, 
+                                    reuse, regularize)
+        
 
     def build(self):
         self._observations_ph = tf.placeholder(
@@ -121,7 +145,9 @@ class GaussianPolicy(NNPolicy, Serializable):
 
     def _squash_correction(self, actions):
         if not self._squash: return 0
-        return tf.reduce_sum(tf.log(1 - tf.tanh(actions) ** 2 + EPS), axis=1)
+        # more stable squash correction
+        return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)))
+        # return tf.reduce_sum(tf.log(1 - tf.tanh(actions) ** 2 + EPS), axis=1)
 
     @contextmanager
     def deterministic(self, set_deterministic=True):

@@ -102,7 +102,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
         return actions
 
-    def log_pis_for(self, conditions, raw_actions, name=None,
+    def _log_pis_for_raw(self, conditions, raw_actions, name=None,
                     reuse=tf.AUTO_REUSE):
         name = name or self.name
 
@@ -114,6 +114,20 @@ class LatentSpacePolicy(NNPolicy, Serializable):
             log_pis -= self._squash_correction(raw_actions)
 
         return log_pis
+    
+    def log_pis_for(self, observations, raw_actions=None, actions=None, name=None, 
+            reuse=tf.AUTO_REUSE):
+            assert raw_actions or actions
+            conditions = (
+                self._observations_preprocessor.output_for(
+                    observations, reuse=reuse)
+                if self._observations_preprocessor is not None
+                else observations)
+            if raw_actions:
+                return self._log_pis_for_raw(onditions, raw_actions, name=name, reuse=reuse)
+            if self._squash:
+                actions = tf.atanh(actions) # store raw_actions
+
 
     def build(self):
         ds = tf.contrib.distributions
@@ -185,6 +199,8 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
     def _squash_correction(self, actions):
         if not self._squash: return 0
+        # more stable squash correction
+        return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)))
         return tf.reduce_sum(tf.log(1 - tf.tanh(actions) ** 2 + EPS), axis=1)
 
     @contextmanager
