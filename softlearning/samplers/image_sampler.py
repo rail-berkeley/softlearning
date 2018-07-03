@@ -1,9 +1,14 @@
 import numpy as np
+from skimage.transform import resize
 
 from .simple_sampler import SimpleSampler
 
 
 class ImageSampler(SimpleSampler):
+    def __init__(self, resize_kwargs, *args, **kwargs):
+        self.resize_kwargs = resize_kwargs
+        super(ImageSampler, self).__init__(*args, **kwargs)
+
     def sample(self):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
@@ -12,7 +17,8 @@ class ImageSampler(SimpleSampler):
         next_observation, reward, terminal, info = self.env.step(action)
 
         image_id = np.array([self._n_episodes, self._path_length])
-        image_np = self.env.render(mode='rgb_array',)
+        image = self.env.render(mode='rgb_array',)
+        resized_image = resize(image, **self.resize_kwargs)
 
         self._path_length += 1
         self._path_return += reward
@@ -24,7 +30,7 @@ class ImageSampler(SimpleSampler):
             rewards=reward,
             terminals=terminal,
             next_observations=next_observation,
-            images=(image_id, image_np)
+            images=(image_id, image)
         )
 
         if terminal or self._path_length >= self._max_path_length:

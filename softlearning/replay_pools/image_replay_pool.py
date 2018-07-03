@@ -10,17 +10,21 @@ from .simple_replay_pool import SimpleReplayPool
 
 
 class ImageReplayPool(SimpleReplayPool, Serializable):
-    def __init__(self, *args, **kwargs):
-        super(ImageReplayPool, self).__init__(*args, **kwargs)
+    def __init__(self,
+                 image_directory,
+                 *args,
+                 image_format='png',
+                 **kwargs):
         Serializable.quick_init(self, locals())
+        super(ImageReplayPool, self).__init__(*args, **kwargs)
 
-        self.image_directory = "/Users/kristian/code/softqlearning-private/test"
-        self.image_format = "jpg"
+        self.image_directory = image_directory
+        self.image_format = image_format
 
         fields = {
-            'image_ids': {
+            'images': {
                 'shape': [2], # (rollout_id, step_id)
-                'dtype': 'int32'
+                'dtype': 'uint64'
             },
         }
 
