@@ -1,3 +1,10 @@
+"""Sampler that saves images from env to ImagePool.
+
+TODO.hartikainen: This is still work-in-progress until I can figure out a
+reasonable apis between the sampler, pool, observations (images) preprocessor,
+and the policy.
+"""
+
 import numpy as np
 from skimage.transform import resize
 

@@ -26,8 +26,8 @@ from softlearning.policies import (
     LatentSpacePolicy,
     GMMPolicy,
     UniformPolicy)
-from softlearning.samplers import SimpleSampler, ImageSampler
-from softlearning.replay_pools import SimpleReplayPool, ImageReplayPool
+from softlearning.samplers import SimpleSampler
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variants
@@ -113,12 +113,8 @@ def run_experiment(variant):
 
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
-    if variant['store_images']:
-        sampler = ImageSampler(**sampler_params)
-        pool = ImageReplayPool(env_spec=env.spec, **replay_pool_params)
-    else:
-        sampler = SimpleSampler(**sampler_params)
-        pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
+    sampler = SimpleSampler(**sampler_params)
+    pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
