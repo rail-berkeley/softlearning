@@ -153,12 +153,9 @@ class GaussianPolicy(NNPolicy, Serializable):
         if not self._squash: return 0
         # more stable squash correction
         if stable:
-            return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions), axis=1))
+            return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)), axis=1)
         else:
             return tf.reduce_sum(tf.log(1 - tf.tanh(actions) ** 2 + EPS), axis=1)
-
-    def _squash_correction_eps(self, actions):
-        return tf.reduce_sum(tf.log(1 - tf.tanh(actions) ** 2 + EPS), axis=1)
 
     @contextmanager
     def deterministic(self, set_deterministic=True):
@@ -197,16 +194,16 @@ class GaussianPolicy(NNPolicy, Serializable):
                 self.distribution.log_sig_t,
                 # TODO: Move log_pi and correction under self.log_pi_for()
                 (self.distribution.log_p_t
-                 - self._squash_correction(self.distribution.x_t), stable=True),
+                 - self._squash_correction(self.distribution.x_t, stable=True)),
                 (self.distribution.log_p_t
-                 - self._squash_correction(self.distribution.x_t), stable=False),
+                 - self._squash_correction(self.distribution.x_t, stable=False)),
             ),
             feeds
         )
 
         # does the atanh
-        log_pis_for_eps_t = self.log_pis_for(self._observations_ph, self._action_ph, stable=False)
-        log_pis_for_stable_t = self.log_pis_for(self._observations_ph, self._action_ph, stable=True)
+        log_pis_for_eps_t = self.log_pis_for(self._observations_ph, self._actions_ph, stable=False)
+        log_pis_for_stable_t = self.log_pis_for(self._observations_ph, self._actions_ph, stable=True)
 
         feeds[self._actions_ph] = actions
         log_pis_for_eps, log_pis_for_stable = sess.run(
