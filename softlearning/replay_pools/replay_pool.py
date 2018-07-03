@@ -1,7 +1,7 @@
 import abc
 
 
-class ReplayBuffer(object):
+class ReplayPool(object):
     """
     A class used to save and replay data.
     """
@@ -17,7 +17,7 @@ class ReplayBuffer(object):
     @abc.abstractmethod
     def terminate_episode(self):
         """
-        Let the replay buffer know that the episode has terminated in case some
+        Let the replay pool know that the episode has terminated in case some
         special book-keeping has to happen.
         :return:
         """
@@ -33,7 +33,7 @@ class ReplayBuffer(object):
 
     def add_path(self, path):
         """
-        Add a path to the replay buffer.
+        Add a path to the replay pool.
 
         This default implementation naively goes through every step, but you
         may want to optimize this.

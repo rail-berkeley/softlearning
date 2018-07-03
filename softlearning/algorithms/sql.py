@@ -58,7 +58,7 @@ class SQL(RLAlgorithm):
             base_kwargs (dict): Dictionary of base arguments that are directly
                 passed to the base `RLAlgorithm` constructor.
             env (`rllab.Env`): rllab environment object.
-            pool (`PoolBase`): Replay buffer to add gathered samples to.
+            pool (`PoolBase`): Replay pool to add gathered samples to.
             qf (`NNQFunction`): Q-function approximator.
             policy: (`rllab.NNPolicy`): A policy function approximator.
             plotter (`QFPolicyPlotter`): Plotter instance to be used for
@@ -83,7 +83,7 @@ class SQL(RLAlgorithm):
             use_saved_policy ('boolean'): If true, use the initial parameters provided
                 in the policy instead of reinitializing.
             save_full_state ('boolean'): If true, saves the full algorithm
-                state, including the replay buffer.
+                state, including the replay pool.
         """
         super(SQL, self).__init__(**base_kwargs)
 
@@ -280,7 +280,9 @@ class SQL(RLAlgorithm):
 
     # TODO: do not pass, policy, and pool to `__init__` directly.
     def train(self):
-        self._train(self.env, self.policy, self.pool)
+        initial_exploration_policy = None
+        self._train(
+            self.env, self.policy, initial_exploration_policy, self.pool)
 
     @overrides
     def _init_training(self):
@@ -337,7 +339,7 @@ class SQL(RLAlgorithm):
         """Return loggable snapshot of the SQL algorithm.
 
         If `self._save_full_state == True`, returns snapshot including the
-        replay buffer. If `self._save_full_state == False`, returns snapshot
+        replay pool. If `self._save_full_state == False`, returns snapshot
         of policy, Q-function, and environment instances.
         """
 
@@ -349,6 +351,6 @@ class SQL(RLAlgorithm):
         }
 
         if self._save_full_state:
-            state.update({'replay_buffer': self.pool})
+            state.update({'replay_pool': self.pool})
 
         return state

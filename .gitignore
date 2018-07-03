@@ -114,3 +114,7 @@ rllab/config_personal.py
 rllab/ec2_info.py
 gym
 *.pkl
+
+
+.mujoco/
+.vscode/
