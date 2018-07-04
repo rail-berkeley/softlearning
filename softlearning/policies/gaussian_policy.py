@@ -242,7 +242,7 @@ class GaussianPolicy(NNPolicy, Serializable):
         logger.record_tabular('log-sigs-max', np.max(log_sig))
         logger.record_tabular('log-sigs-std', np.std(log_sig))
 
-        logger.record_tabular('-log-pi-mean', np.mean(-log_pi))
-        logger.record_tabular('-log-pi-max', np.max(-log_pi))
-        logger.record_tabular('-log-pi-min', np.min(-log_pi))
-        logger.record_tabular('-log-pi-std', np.std(-log_pi))
+        logger.record_tabular('-log-pi-mean', np.mean(-log_pi_eps))
+        logger.record_tabular('-log-pi-max', np.max(-log_pi_eps))
+        logger.record_tabular('-log-pi-min', np.min(-log_pi_eps))
+        logger.record_tabular('-log-pi-std', np.std(-log_pi_eps))

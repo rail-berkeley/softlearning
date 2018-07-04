@@ -281,6 +281,10 @@ class SAC(RLAlgorithm, Serializable):
 
         actions, log_pi = self._policy.actions_for(
             observations=self._observations_ph, with_log_pis=True)
+        log_pis_for = self._policy.log_pis_for(
+                observations=self._observations_ph, actions=actions)
+
+        self._log_pi_diff = log_pi - log_pis_for
 
         log_alpha = tf.get_variable(
             'log_alpha',
@@ -414,12 +418,13 @@ class SAC(RLAlgorithm, Serializable):
         """
 
         feed_dict = self._get_feed_dict(iteration, batch)
-        qf1, qf2, vf, td_loss1, td_loss2 = self._sess.run(
+        qf1, qf2, vf, td_loss1, td_loss2, log_pi_diff = self._sess.run(
             (self._qf1_t,
              self._qf2_t,
              self._vf_t,
              self._td_loss1_t,
-             self._td_loss2_t),
+             self._td_loss2_t,
+             self._log_pi_diff),
             feed_dict)
 
         logger.record_tabular('qf1-avg', np.mean(qf1))
@@ -427,6 +432,8 @@ class SAC(RLAlgorithm, Serializable):
         logger.record_tabular('qf2-avg', np.mean(qf1))
         logger.record_tabular('qf2-std', np.std(qf1))
         logger.record_tabular('mean-qf-diff', np.mean(np.abs(qf1-qf2)))
+        logger.record_tabular('log-pi-diff-avg', np.mean(np.absolute(log_pi_diff)))
+        logger.record_tabular('log-pi-diff-max', np.max(np.absolute(log_pi_diff)))
         logger.record_tabular('vf-avg', np.mean(vf))
         logger.record_tabular('vf-std', np.std(vf))
         logger.record_tabular('mean-sq-bellman-error1', td_loss1)
