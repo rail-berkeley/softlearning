@@ -48,9 +48,8 @@ class GaussianPolicy(NNPolicy, Serializable):
 
         super(NNPolicy, self).__init__(env_spec)
 
-    def actions_for(self, observations, latents=None,
-                    name=None, reuse=tf.AUTO_REUSE,
-                    with_log_pis=False, regularize=False):
+    def actions_for(self, observations, name=None, reuse=tf.AUTO_REUSE,
+                    with_log_pis=False, with_raw_actions=False):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
@@ -67,15 +66,18 @@ class GaussianPolicy(NNPolicy, Serializable):
         # TODO: should always return same shape out
         # Figure out how to make the interface for `log_pis` cleaner
         if with_log_pis:
-            # TODO.code_consolidation: should come from log_pis_for
             log_pis = self._log_pis_for_raw(observations, raw_actions,
-                            name, reuse=True, regularize=regularize)
+                                            name)
+
+            if with_raw_actions:
+                return actions, log_pis, raw_actions
+
             return actions, log_pis
 
         return actions
 
     def _log_pis_for_raw(self, observations, actions, name=None, 
-                        reuse=tf.AUTO_REUSE, regularize=False, stable=True):
+                        reuse=tf.AUTO_REUSE):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
@@ -88,15 +90,20 @@ class GaussianPolicy(NNPolicy, Serializable):
             )
         log_pis = distribution.log_prob(actions) 
         if self._squash:
-            log_pis -= self._squash_correction(actions, stable)
+            log_pis -= self._squash_correction(actions)
         return log_pis
 
-    def log_pis_for(self, observations, actions, name=None,
-                    reuse=tf.AUTO_REUSE, regularize=False, stable=True):
+    def log_pis_for(self, observations, raw_actions=None, actions=None, name=None,
+                    reuse=tf.AUTO_REUSE):
+        assert raw_actions is not None or actions is not None
+
+        # we prefer to use raw actions as to avoid instability with atanh
+        if raw_actions is not None:
+            return self._log_pis_for_raw(observations, raw_actions, name, reuse)
         if self._squash:
             actions = tf.atanh(actions)
-        return self._log_pis_for_raw(observations, actions, name, 
-                                    reuse, regularize, stable)
+        return self._log_pis_for_raw(observations, actions, name,
+                                     reuse)
         
 
     def build(self):
@@ -120,9 +127,8 @@ class GaussianPolicy(NNPolicy, Serializable):
                 reg=self._reg,
             )
 
-        raw_actions = self.distribution.x_t
-        self._actions = tf.tanh(raw_actions) if self._squash else raw_actions
-        self._raw_actions = raw_actions
+        self._actions, self._log_pis, self._raw_actions = self.actions_for(
+            self._observations_ph, with_log_pis=True, with_raw_actions=True)
 
     @overrides
     def get_actions(self, observations):
@@ -149,13 +155,10 @@ class GaussianPolicy(NNPolicy, Serializable):
 
         return super(GaussianPolicy, self).get_actions(observations)
 
-    def _squash_correction(self, actions, stable=True):
+    def _squash_correction(self, actions):
         if not self._squash: return 0
         # more stable squash correction
-        if stable:
-            return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)), axis=1)
-        else:
-            return tf.reduce_sum(tf.log(1 - tf.tanh(actions) ** 2 + EPS), axis=1)
+        return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)), axis=1)
 
     @contextmanager
     def deterministic(self, set_deterministic=True):
@@ -186,51 +189,16 @@ class GaussianPolicy(NNPolicy, Serializable):
 
         feeds = {self._observations_ph: batch['observations']}
         sess = tf_utils.get_default_session()
-        actions, raw_actions, mu, log_sig, log_pi_stable, log_pi_eps = sess.run(
+        actions, raw_actions, log_pi,  mu, log_sig, = sess.run(
             (
                 self._actions,
                 self._raw_actions,
+                self._log_pis,
                 self.distribution.mu_t,
                 self.distribution.log_sig_t,
-                # TODO: Move log_pi and correction under self.log_pi_for()
-                (self.distribution.log_p_t
-                 - self._squash_correction(self.distribution.x_t, stable=True)),
-                (self.distribution.log_p_t
-                 - self._squash_correction(self.distribution.x_t, stable=False)),
             ),
             feeds
         )
-
-        # does the atanh
-        log_pis_for_eps_t = self.log_pis_for(self._observations_ph, self._actions_ph, stable=False)
-        log_pis_for_stable_t = self.log_pis_for(self._observations_ph, self._actions_ph, stable=True)
-
-        feeds[self._actions_ph] = actions
-        log_pis_for_eps, log_pis_for_stable = sess.run(
-            (log_pis_for_eps_t, log_pis_for_stable_t), feeds
-        )
-        no_atanh_diff = np.absolute(log_pi_stable - log_pi_eps)
-        atanh_diff = np.absolute(log_pis_for_stable - log_pis_for_eps)
-
-        no_eps_diff = np.absolute(log_pi_stable - log_pis_for_stable)
-        with_eps_diff = np.absolute(log_pi_eps - log_pis_for_eps)
-
-
-        logger.record_tabular('no-atanh-diff-mean', np.mean(no_atanh_diff))
-        logger.record_tabular('no-atanh-diff-max', np.max(no_atanh_diff))
-        logger.record_tabular('no-atanh-diff-std', np.std(no_atanh_diff))
-
-        logger.record_tabular('atanh-diff-mean', np.mean(atanh_diff))
-        logger.record_tabular('atanh-diff-max', np.max(atanh_diff))
-        logger.record_tabular('atanh-diff-std', np.std(atanh_diff))
-
-        logger.record_tabular('no-eps-diff-mean', np.mean(no_eps_diff))
-        logger.record_tabular('no-eps-diff-max', np.max(no_eps_diff))
-        logger.record_tabular('no-eps-diff-std', np.std(no_eps_diff))
-
-        logger.record_tabular('with-eps-diff-mean', np.mean(with_eps_diff))
-        logger.record_tabular('with-eps-diff-max', np.max(with_eps_diff))
-        logger.record_tabular('with-eps-diff-std', np.std(with_eps_diff))
 
         logger.record_tabular('policy-mus-mean', np.mean(mu))
         logger.record_tabular('policy-mus-min', np.min(mu))
@@ -242,7 +210,7 @@ class GaussianPolicy(NNPolicy, Serializable):
         logger.record_tabular('log-sigs-max', np.max(log_sig))
         logger.record_tabular('log-sigs-std', np.std(log_sig))
 
-        logger.record_tabular('-log-pi-mean', np.mean(-log_pi_eps))
-        logger.record_tabular('-log-pi-max', np.max(-log_pi_eps))
-        logger.record_tabular('-log-pi-min', np.min(-log_pi_eps))
-        logger.record_tabular('-log-pi-std', np.std(-log_pi_eps))
+        logger.record_tabular('-log-pi-mean', np.mean(-log_pi))
+        logger.record_tabular('-log-pi-max', np.max(-log_pi))
+        logger.record_tabular('-log-pi-min', np.min(-log_pi))
+        logger.record_tabular('-log-pi-std', np.std(-log_pi))
