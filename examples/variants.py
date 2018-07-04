@@ -205,7 +205,7 @@ ALGORITHM_PARAMS_BASE = {
     'discount': 0.99,
     'target_update_interval': 1,
     'tau': 0.005,
-    'target_entropy': None,
+    'target_entropy': 'auto',
 
     'base_kwargs': {
         'epoch_length': 1000,
