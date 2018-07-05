@@ -152,7 +152,7 @@ class GaussianPolicy(NNPolicy, Serializable):
             # for case where `observations.shape[0] > 1`
             raw_mu = tf.get_default_session().run(
                 self.distribution.mu_t, feed_dict)  # 1 x Da
-            mu = tf.tanh(raw_mu) if self._squash else raw_mu
+            mu = np.tanh(raw_mu) if self._squash else raw_mu
 
             assert not with_log_pis, 'No log pi for deterministic action'
 

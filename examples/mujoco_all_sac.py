@@ -27,7 +27,9 @@ from softlearning.policies import (
     GMMPolicy,
     UniformPolicy)
 from softlearning.samplers import SimpleSampler
+from softlearning.samplers import ExtraPolicyInfoSampler
 from softlearning.replay_pools import SimpleReplayPool
+from softlearning.replay_pools import ExtraPolicyInfoReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variants
@@ -113,8 +115,12 @@ def run_experiment(variant):
 
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
-    sampler = SimpleSampler(**sampler_params)
-    pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
+    if replay_pool_params['store_extra_policy_info']:
+        sampler = ExtraPolicyInfoSampler(**sampler_params)
+        pool = ExtraPolicyInfoReplayPool(env_spec=env.spec, **replay_pool_params)
+    else:
+        sampler = SimpleSampler(**sampler_params)
+        pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 

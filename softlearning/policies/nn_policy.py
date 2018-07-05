@@ -24,7 +24,7 @@ class NNPolicy(Policy, Serializable):
         outputs = self.get_actions(observation[None], with_log_pis, with_raw_actions)
         if with_log_pis or with_raw_actions:
             outputs = [output[0] for output in outputs]
-            return *outputs, {}
+            return outputs + [{}]
 
         return outputs[0], {}
 
@@ -37,7 +37,8 @@ class NNPolicy(Policy, Serializable):
             ops.append(self._log_pis)
         if with_raw_actions:
             ops.append(self._raw_actions)
-        return tf.get_default_session().run(ops, feed_dict)
+        outputs =  tf.get_default_session().run(ops, feed_dict)
+        return outputs
 
     @overrides
     def log_diagnostics(self, paths):

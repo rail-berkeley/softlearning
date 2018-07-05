@@ -205,7 +205,7 @@ ALGORITHM_PARAMS_BASE = {
     'discount': 0.99,
     'target_update_interval': 1,
     'tau': 0.005,
-    'target_entropy': 'auto',
+    'target_entropy': None,
 
     'base_kwargs': {
         'epoch_length': 1000,
@@ -234,6 +234,7 @@ ALGORITHM_PARAMS = {
         }
     },
     'half-cheetah': { # 6 DoF
+        'reward_scale': 5,
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': int(1e4),
@@ -275,6 +276,7 @@ ALGORITHM_PARAMS = {
 
 REPLAY_POOL_PARAMS = {
     'max_size': 1e6,
+    'store_extra_policy_info': True,
 }
 
 SAMPLER_PARAMS = {

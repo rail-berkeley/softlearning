@@ -5,6 +5,7 @@ import numpy as np
 from .sampler import Sampler
 from .dummy_sampler import DummySampler
 from .simple_sampler import SimpleSampler
+from .extra_policy_info_sampler import ExtraPolicyInfoSampler
 
 
 def rollout(env, policy, path_length, render=False, speedup=10, callback=None,
@@ -21,13 +22,14 @@ def rollout(env, policy, path_length, render=False, speedup=10, callback=None,
     observations = np.zeros((path_length + 1, Do))
     actions = np.zeros((path_length, Da))
     terminals = np.zeros((path_length, ))
+    log_pis = np.zeros((path_length, ))
     rewards = np.zeros((path_length, ))
     agent_infos = []
     env_infos = []
 
     t = 0  # To make edge case path_length=0 work.
     for t in range(path_length):
-        action, agent_info = policy.get_action(observation)
+        action, log_pis, agent_info = policy.get_action(observation, with_log_pis=True)
 
         if callback is not None:
             callback(observation, action)
@@ -39,6 +41,7 @@ def rollout(env, policy, path_length, render=False, speedup=10, callback=None,
 
         actions[t] = action
         terminals[t] = terminal
+        log_pis[t] = reward
         rewards[t] = reward
         observations[t] = observation
 
@@ -63,6 +66,7 @@ def rollout(env, policy, path_length, render=False, speedup=10, callback=None,
         'observations': observations[:t + 1],
         'actions': actions[:t + 1],
         'rewards': rewards[:t + 1],
+        'log_pis': rewards[:t + 1],
         'terminals': terminals[:t + 1],
         'next_observations': observations[1:t + 2],
         'agent_infos': agent_infos,
