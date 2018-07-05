@@ -115,12 +115,14 @@ def run_experiment(variant):
 
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
+    """
     if replay_pool_params['store_extra_policy_info']:
         sampler = ExtraPolicyInfoSampler(**sampler_params)
         pool = ExtraPolicyInfoReplayPool(env_spec=env.spec, **replay_pool_params)
     else:
-        sampler = SimpleSampler(**sampler_params)
-        pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
+    """
+    sampler = SimpleSampler(**sampler_params)
+    pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 

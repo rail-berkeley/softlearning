@@ -276,7 +276,7 @@ ALGORITHM_PARAMS = {
 
 REPLAY_POOL_PARAMS = {
     'max_size': 1e6,
-    'store_extra_policy_info': True,
+    # 'store_extra_policy_info': False,
 }
 
 SAMPLER_PARAMS = {
@@ -286,7 +286,7 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS_BASE = {
-    'seed': [1,2,3,4,5],
+    'seed': 1,
     'snapshot_mode': 'gap',
     'snapshot_gap': 1000,
     'sync_pkl': True,
