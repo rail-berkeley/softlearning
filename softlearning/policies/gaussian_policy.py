@@ -62,17 +62,21 @@ class GaussianPolicy(NNPolicy, Serializable):
             )
         raw_actions = distribution.x_t
         actions = tf.tanh(raw_actions) if self._squash else raw_actions
+        return_list = [actions]
 
         # TODO: should always return same shape out
         # Figure out how to make the interface for `log_pis` cleaner
         if with_log_pis:
             log_pis = self._log_pis_for_raw(observations, raw_actions,
                                             name)
+            return_list.append(log_pis)
 
-            if with_raw_actions:
-                return actions, log_pis, raw_actions
+        if with_raw_actions:
+            return_list.append(raw_actions)
 
-            return actions, log_pis
+        # not sure the best way of returning variable outputs
+        if len(return_list) > 1:
+            return return_list
 
         return actions
 
@@ -95,7 +99,7 @@ class GaussianPolicy(NNPolicy, Serializable):
 
     def log_pis_for(self, observations, raw_actions=None, actions=None, name=None,
                     reuse=tf.AUTO_REUSE):
-        assert raw_actions is not None or actions is not None
+        assert raw_actions is not None or actions is not None, 'Must provide either actions or raw_actions'
 
         # we prefer to use raw actions as to avoid instability with atanh
         if raw_actions is not None:
@@ -131,7 +135,7 @@ class GaussianPolicy(NNPolicy, Serializable):
             self._observations_ph, with_log_pis=True, with_raw_actions=True)
 
     @overrides
-    def get_actions(self, observations):
+    def get_actions(self, observations, with_log_pis=False, with_raw_actions=False):
         """Sample actions based on the observations.
 
         If `self._is_deterministic` is True, returns the mean action for the
@@ -146,14 +150,18 @@ class GaussianPolicy(NNPolicy, Serializable):
 
             # TODO.code_consolidation: these shapes should be double checked
             # for case where `observations.shape[0] > 1`
-            mu = tf.get_default_session().run(
+            raw_mu = tf.get_default_session().run(
                 self.distribution.mu_t, feed_dict)  # 1 x Da
-            if self._squash:
-                mu = np.tanh(mu)
+            mu = tf.tanh(raw_mu) if self._squash else raw_mu
+
+            assert not with_log_pis, 'No log pi for deterministic action'
+
+            if with_raw_actions:
+                return mu, raw_mu
 
             return mu
 
-        return super(GaussianPolicy, self).get_actions(observations)
+        return super(GaussianPolicy, self).get_actions(observations, with_log_pis, with_raw_actions)
 
     def _squash_correction(self, actions):
         if not self._squash: return 0
