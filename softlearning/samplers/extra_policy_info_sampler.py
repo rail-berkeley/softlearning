@@ -6,13 +6,15 @@ from .simple_sampler import SimpleSampler
 
 class ExtraPolicyInfoSampler(SimpleSampler):
     def __init__(self, *args, **kwargs):
-        super(ExtraPolicyInfoSampler.self).__init__(*args, **kwargs)
+        super(ExtraPolicyInfoSampler, self).__init__(*args, **kwargs)
 
     def sample(self):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
 
-        action, log_pi, raw_action, _ = self.policy.get_action(self._current_observation)
+        action, log_pi, raw_action, _ = self.policy.get_action(self._current_observation,
+                                                               with_log_pis=True,
+                                                               with_raw_actions=True)
         next_observation, reward, terminal, info = self.env.step(action)
 
         self._path_length += 1

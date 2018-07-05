@@ -98,6 +98,12 @@ def parse_args():
         help=(
             "Store images from the rollouts. Images are currently always"
             " stored in the logging directory."))
+    parser.add_argument('--log_extra_policy_info', type=str2bool, nargs='?',
+                        const=True, default=False,
+                        help=(
+                            "Stores log pis and raw (unsquashed) actions in the"
+                            "replay pool."
+                        ))
     args = parser.parse_args()
 
     return args
@@ -115,14 +121,12 @@ def run_experiment(variant):
 
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
-    """
-    if replay_pool_params['store_extra_policy_info']:
+    if algorithm_params['store_extra_policy_info']:
         sampler = ExtraPolicyInfoSampler(**sampler_params)
         pool = ExtraPolicyInfoReplayPool(env_spec=env.spec, **replay_pool_params)
     else:
-    """
-    sampler = SimpleSampler(**sampler_params)
-    pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
+        sampler = SimpleSampler(**sampler_params)
+        pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
@@ -203,6 +207,7 @@ def run_experiment(variant):
         reparameterize=policy_params['reparameterize'],
         target_update_interval=algorithm_params['target_update_interval'],
         action_prior=policy_params['action_prior'],
+        store_extra_policy_info=True,
         save_full_state=False,
     )
 
@@ -220,7 +225,6 @@ def launch_experiments(variant_generator, args):
     for i, variant in enumerate(variants):
         print("Experiment: {}/{}".format(i, num_experiments))
         run_params = variant['run_params']
-        algo_params = variant['algorithm_params']
 
         experiment_prefix = variant['prefix'] + '/' + args.exp_name
         experiment_name = '{prefix}-{exp_name}-{i:02}'.format(

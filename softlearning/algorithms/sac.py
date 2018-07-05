@@ -91,6 +91,7 @@ class SAC(RLAlgorithm, Serializable):
             target_update_interval=1,
             action_prior='uniform',
             reparameterize=False,
+            store_extra_policy_info=False,
 
             save_full_state=False,
     ):
@@ -152,6 +153,7 @@ class SAC(RLAlgorithm, Serializable):
         # Reparameterize parameter must match between the algorithm and the
         # policy actions are sampled from.
         self._reparameterize = self._policy._reparameterize
+        self._store_extra_policy_info = store_extra_policy_info
 
         self._save_full_state = save_full_state
 
@@ -205,6 +207,7 @@ class SAC(RLAlgorithm, Serializable):
             shape=(None, self._Do),
             name='next_observation',
         )
+
         self._actions_ph = tf.placeholder(
             tf.float32,
             shape=(None, self._Da),
@@ -222,6 +225,18 @@ class SAC(RLAlgorithm, Serializable):
             shape=(None, ),
             name='terminals',
         )
+
+        if self._store_extra_policy_info:
+            self._log_pis_ph = tf.placeholder(
+                tf.float32,
+                shape=(None, ),
+                name='log_pis',
+            )
+            self._raw_actions_ph = tf.placeholder(
+                tf.float32,
+                shape=(None, self._Da),
+                name='raw_actions',
+            )
 
     def _init_critic_update(self):
         """Create minimization operation for critic Q-function.
@@ -281,10 +296,6 @@ class SAC(RLAlgorithm, Serializable):
 
         actions, log_pi, raw_actions = self._policy.actions_for(
             observations=self._observations_ph, with_log_pis=True, with_raw_actions=True)
-        log_pis_for = self._policy.log_pis_for(
-                observations=self._observations_ph, raw_actions=raw_actions)
-
-        self._log_pi_diff = log_pi - log_pis_for
 
         log_alpha = tf.get_variable(
             'log_alpha',
@@ -401,6 +412,10 @@ class SAC(RLAlgorithm, Serializable):
             self._terminals_ph: batch['terminals'],
         }
 
+        if self._store_extra_policy_info:
+            feed_dict[self._log_pis_ph] = batch['log_pis']
+            feed_dict[self._raw_actions_ph] = batch['raw_actions']
+
         if iteration is not None:
             feed_dict[self._iteration_ph] = iteration
 
@@ -418,13 +433,12 @@ class SAC(RLAlgorithm, Serializable):
         """
 
         feed_dict = self._get_feed_dict(iteration, batch)
-        qf1, qf2, vf, td_loss1, td_loss2, log_pi_diff = self._sess.run(
+        qf1, qf2, vf, td_loss1, td_loss2 = self._sess.run(
             (self._qf1_t,
              self._qf2_t,
              self._vf_t,
              self._td_loss1_t,
-             self._td_loss2_t,
-             self._log_pi_diff),
+             self._td_loss2_t),
             feed_dict)
 
         logger.record_tabular('qf1-avg', np.mean(qf1))
@@ -432,8 +446,6 @@ class SAC(RLAlgorithm, Serializable):
         logger.record_tabular('qf2-avg', np.mean(qf1))
         logger.record_tabular('qf2-std', np.std(qf1))
         logger.record_tabular('mean-qf-diff', np.mean(np.abs(qf1-qf2)))
-        logger.record_tabular('log-pi-diff-avg', np.mean(np.absolute(log_pi_diff)))
-        logger.record_tabular('log-pi-diff-max', np.max(np.absolute(log_pi_diff)))
         logger.record_tabular('vf-avg', np.mean(vf))
         logger.record_tabular('vf-std', np.std(vf))
         logger.record_tabular('mean-sq-bellman-error1', td_loss1)
