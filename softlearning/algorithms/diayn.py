@@ -6,7 +6,7 @@ from rllab.misc.overrides import overrides
 
 from softlearning.algorithms.sac import SAC
 from softlearning.misc import tf_utils, utils
-from softlearning.misc.sampler import rollouts
+from softlearning.samplers import rollouts
 from softlearning.policies.hierarchical_policy import FixedOptionPolicy
 
 from collections import deque
@@ -51,7 +51,7 @@ class DIAYN(SAC):
             discriminator: (`rllab.NNPolicy`): A discriminator for z.
             qf (`ValueFunction`): Q-function approximator.
             vf (`ValueFunction`): Soft value function approximator.
-            pool (`PoolBase`): Replay buffer to add gathered samples to.
+            pool (`PoolBase`): Replay pool to add gathered samples to.
             plotter (`QFPolicyPlotter`): Plotter instance to be used for
                 visualizing Q-function during training.
             lr (`float`): Learning rate used for the function approximators.

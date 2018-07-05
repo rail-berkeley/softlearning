@@ -26,11 +26,12 @@ from softlearning.policies import (
     LatentSpacePolicy,
     GMMPolicy,
     UniformPolicy)
-from softlearning.misc.sampler import SimpleSampler
-from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.samplers import SimpleSampler
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variants
+from .helpers import str2bool
 
 ENVIRONMENTS = {
     'swimmer-gym': {
@@ -89,6 +90,12 @@ def parse_args():
     parser.add_argument('--exp_name', type=str, default=timestamp())
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--log_dir', type=str, default=None)
+    parser.add_argument(
+        "--store-images", type=str2bool, nargs='?',
+        const=True, default=False,
+        help=(
+            "Store images from the rollouts. Images are currently always"
+            " stored in the logging directory."))
     args = parser.parse_args()
 
     return args
@@ -98,7 +105,7 @@ def run_experiment(variant):
     policy_params = variant['policy_params']
     value_fn_params = variant['value_fn_params']
     algorithm_params = variant['algorithm_params']
-    replay_buffer_params = variant['replay_buffer_params']
+    replay_pool_params = variant['replay_pool_params']
     sampler_params = variant['sampler_params']
 
     task = variant['task']
@@ -106,9 +113,8 @@ def run_experiment(variant):
 
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
-    pool = SimpleReplayBuffer(env_spec=env.spec, **replay_buffer_params)
-
     sampler = SimpleSampler(**sampler_params)
+    pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
@@ -236,6 +242,11 @@ def main():
 
     variant_generator = get_variants(
         domain=domain, task=task, policy=args.policy)
+
+    # TODO: move this somewhere else.
+    variant_generator.add('mode', [args.mode])
+    variant_generator.add('store_images', [args.store_images])
+
     launch_experiments(variant_generator, args)
 
 

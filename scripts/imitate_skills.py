@@ -1,5 +1,5 @@
 from softlearning.misc import utils
-from softlearning.misc.sampler import rollouts
+from softlearning.samplers import rollouts
 from softlearning.policies.hierarchical_policy import FixedOptionPolicy
 
 import argparse

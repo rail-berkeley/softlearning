@@ -5,7 +5,7 @@ import tensorflow as tf
 import os
 from softlearning.misc import utils
 from softlearning.policies.hierarchical_policy import FixedOptionPolicy
-from softlearning.misc.sampler import rollouts
+from softlearning.samplers import rollouts
 
 
 if __name__ == "__main__":

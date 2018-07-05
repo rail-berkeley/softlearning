@@ -10,11 +10,11 @@ from softlearning.misc.instrument import launch_experiment
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softlearning.misc.utils import timestamp
-from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction
 from softlearning.policies import StochasticNNPolicy
 from softlearning.environments import GymEnv
-from softlearning.misc.sampler import SimpleSampler
+from softlearning.samplers import SimpleSampler
 
 SHARED_PARAMS = {
     'seed': [1, 2, 3],
@@ -128,8 +128,8 @@ def run_experiment(variant):
     else:
         env = normalize(GymEnv(variant['env_name']))
 
-    pool = SimpleReplayBuffer(
-        env_spec=env.spec, max_replay_buffer_size=variant['max_pool_size'])
+    pool = SimpleReplayPool(
+        env_spec=env.spec, max_size=variant['max_pool_size'])
 
     sampler = SimpleSampler(
         max_path_length=variant['max_path_length'],

@@ -10,11 +10,11 @@ from softlearning.misc.instrument import launch_experiment
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softlearning.misc.utils import timestamp
-from softlearning.replay_buffers import UnionBuffer
+from softlearning.replay_pools import UnionPool
 from softlearning.value_functions import SumQFunction
 from softlearning.policies import StochasticNNPolicy
 from softlearning.environments.pusher import PusherEnv
-from softlearning.misc.sampler import DummySampler
+from softlearning.samplers import DummySampler
 from softlearning.misc.utils import PROJECT_PATH
 
 SHARED_PARAMS = {
@@ -74,23 +74,23 @@ def get_variants(args):
     return vg
 
 
-def load_buffer_and_qf(filename):
+def load_pool_and_qf(filename):
     with tf_utils.get_default_session().as_default():
         data = joblib.load(os.path.join(PROJECT_PATH, filename))
 
-    return data['replay_buffer'], data['qf']
+    return data['replay_pool'], data['qf']
 
 
 def run_experiment(variant):
     env = normalize(PusherEnv(goal=variant.get('goal')))
 
-    buffer1, qf1 = load_buffer_and_qf(variant['snapshot1'])
-    buffer2, qf2 = load_buffer_and_qf(variant['snapshot2'])
+    pool1, qf1 = load_pool_and_qf(variant['snapshot1'])
+    pool2, qf2 = load_pool_and_qf(variant['snapshot2'])
 
     sampler = DummySampler(
         batch_size=variant['batch_size'],
         max_path_length=variant['max_path_length'])
-    buffer = UnionBuffer(buffers=(buffer1, buffer2))
+    pool = UnionPool(pools=(pool1, pool2))
 
     qf = SumQFunction(env.spec, q_functions=(qf1, qf2))
 
@@ -111,7 +111,7 @@ def run_experiment(variant):
     algorithm = SQL(
         base_kwargs=base_kwargs,
         env=env,
-        pool=buffer,
+        pool=pool,
         qf=qf,
         policy=policy,
         kernel_fn=adaptive_isotropic_gaussian_kernel,
