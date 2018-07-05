@@ -33,6 +33,11 @@ class FlexibleReplayPool(ReplayPool, Serializable):
             field_shape = [self._max_size] + list(field_attrs['shape'])
             setattr(self, field_name, np.zeros(field_shape))
 
+    def _advance(self, count=1):
+        self._pointer = (self._pointer + count) % self._max_size
+        if self._size + count <= self._max_size:
+            self._size += count
+
     def add_sample(self, **kwargs):
         for field_name in self.field_names:
             getattr(self, field_name)[self._pointer] = kwargs.pop(field_name)
@@ -69,9 +74,8 @@ class FlexibleReplayPool(ReplayPool, Serializable):
         self._pointer = pool_state['_pointer']
         self._size = pool_state['_size']
 
-    @abstractmethod
-    def batch_indices(self, batch_size):
-        pass
+    def random_indices(self, batch_size):
+        return np.random.randint(0, self._size, batch_size)
 
     def random_batch(self, batch_size, field_name_filter=None):
         field_names = self.field_names
@@ -81,7 +85,7 @@ class FlexibleReplayPool(ReplayPool, Serializable):
                 if field_name_filter(field_name)
             ]
 
-        indices = self.batch_indices(batch_size)
+        indices = self.random_indices(batch_size)
 
         return {
             field_name: getattr(self, field_name)[indices]

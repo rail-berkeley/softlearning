@@ -45,11 +45,3 @@ class SimpleReplayPool(FlexibleReplayPool, Serializable):
 
     def terminate_episode(self):
         pass
-
-    def _advance(self):
-        self._pointer = (self._pointer + 1) % self._max_size
-        if self._size < self._max_size:
-            self._size += 1
-
-    def batch_indices(self, batch_size):
-        return np.random.randint(0, self._size, batch_size)

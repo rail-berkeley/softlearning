@@ -206,6 +206,7 @@ ALGORITHM_PARAMS_BASE = {
     'target_update_interval': 1,
     'tau': 0.005,
     'target_entropy': 'auto',
+    'reward_scale': 1.0,
 
     'base_kwargs': {
         'epoch_length': 1000,
