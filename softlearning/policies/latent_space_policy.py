@@ -75,6 +75,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
                     observations, reuse=reuse)
                 if self._observations_preprocessor is not None
                 else observations)
+            self._conditions_temp = conditions
 
             if latents is not None:
                 raw_actions = self.bijector.forward(
@@ -96,14 +97,14 @@ class LatentSpacePolicy(NNPolicy, Serializable):
                 conditions, raw_actions, name=name, reuse=reuse)
 
             if with_raw_actions:
-                return raw_actions, actions, log_pis
+                return actions, log_pis, raw_actions
 
             return actions, log_pis
 
         return actions
 
     def _log_pis_for_raw(self, conditions, raw_actions, name=None,
-                    reuse=tf.AUTO_REUSE):
+                         reuse=tf.AUTO_REUSE):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
@@ -115,22 +116,25 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
         return log_pis
     
-    def log_pis_for(self, observations, raw_actions=None, actions=None, name=None, 
-            reuse=tf.AUTO_REUSE):
-            assert raw_actions is not None or actions is not None
-            conditions = (
-                self._observations_preprocessor.output_for(
-                    observations, reuse=reuse)
-                if self._observations_preprocessor is not None
-                else observations)
-            """
-            if raw_actions:
-                return self._log_pis_for_raw(conditions, raw_actions, name=name, reuse=reuse)
-            """
-            if self._squash:
-                actions = tf.atanh(actions) # store raw_actions
-            return self._log_pis_for_raw(conditions, actions, name=name, reuse=reuse)
+    def log_pis_for(self, observations, raw_actions=None, actions=None, name=None,
+                    reuse=tf.AUTO_REUSE):
+            name = name or self.name
 
+            assert raw_actions is not None or actions is not None
+
+            with tf.variable_scope(name, reuse=reuse):
+                conditions = (
+                    self._observations_preprocessor.output_for(
+                        observations, reuse=reuse)
+                    if self._observations_preprocessor is not None
+                    else observations)
+            
+            if raw_actions is not None:
+                return self._log_pis_for_raw(conditions, raw_actions, name=name, reuse=reuse)
+            
+            if self._squash:
+                actions = tf.atanh(actions)
+            return self._log_pis_for_raw(conditions, actions, name=name, reuse=reuse)
 
     def build(self):
         ds = tf.contrib.distributions
@@ -163,7 +167,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
             name='latents',
         )
 
-        self._raw_actions, self._actions, self._log_pis = self.actions_for(
+        self._actions, self._log_pis, self._raw_actions = self.actions_for(
             self._observations_ph, with_log_pis=True, with_raw_actions=True)
         self._determistic_actions = self.actions_for(self._observations_ph,
                                                      self._latents_ph)
@@ -185,12 +189,12 @@ class LatentSpacePolicy(NNPolicy, Serializable):
     def get_actions(self, observations):
         """Sample batch of actions based on the observations"""
 
-        feed_dict = { self._observations_ph: observations }
+        feed_dict = {self._observations_ph: observations}
 
         if self._fixed_h is not None:
             latents = np.tile(self._fixed_h,
                               reps=(self._n_map_action_candidates, 1))
-            feed_dict.update({ self._latents_ph: latents })
+            feed_dict.update({self._latents_ph: latents})
             actions = tf.get_default_session().run(
                 self._determistic_actions,
                 feed_dict=feed_dict)
@@ -202,7 +206,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
     def _squash_correction(self, actions):
         if not self._squash: return 0
-        # more stable squash correction
+        # uses a more numerically stable squash correction
         return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)))
 
     @contextmanager

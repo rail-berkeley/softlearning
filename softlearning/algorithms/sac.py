@@ -282,7 +282,7 @@ class SAC(RLAlgorithm, Serializable):
         actions, log_pi, raw_actions = self._policy.actions_for(
             observations=self._observations_ph, with_log_pis=True, with_raw_actions=True)
         log_pis_for = self._policy.log_pis_for(
-                observations=self._observations_ph, raw_actions=raw_actions)
+                observations=self._observations_ph, actions=actions)
 
         self._log_pi_diff = log_pi - log_pis_for
 
