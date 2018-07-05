@@ -207,7 +207,7 @@ def run_experiment(variant):
         reparameterize=policy_params['reparameterize'],
         target_update_interval=algorithm_params['target_update_interval'],
         action_prior=policy_params['action_prior'],
-        store_extra_policy_info=True,
+        store_extra_policy_info=algorithm_params['store_extra_policy_info'],
         save_full_state=False,
     )
 
