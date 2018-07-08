@@ -17,10 +17,6 @@ __all__ = [
 tfb = tfp.bijectors
 
 
-tfd = tf.contrib.distributions
-tfb = tfd.bijectors
-
-
 class ConditionalRealNVPFlow(tfb.ConditionalBijector):
     """TODO"""
 
@@ -87,10 +83,13 @@ class ConditionalRealNVPFlow(tfb.ConditionalBijector):
                     hidden_layers=hidden_sizes,
                     # TODO: test tf.nn.relu
                     activation=tf.nn.tanh))
-            permute_bijector = tfb.Permute(
-                permutation=list(reversed(range(D))))
 
-            flow_parts += [real_nvp_bijector, permute_bijector]
+            flow_parts.append(real_nvp_bijector)
+
+            if i < num_coupling_layers - 1:
+                permute_bijector = tfb.Permute(
+                    permutation=list(reversed(range(D))))
+                flow_parts.append(permute_bijector)
 
         # Note: tfb.Chain applies the list of bijectors in the _reverse_ order
         # of what they are inputted.
