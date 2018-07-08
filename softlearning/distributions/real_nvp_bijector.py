@@ -1,4 +1,4 @@
-"""RealNVP bijector."""
+"""RealNVP bijector flow."""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -9,229 +9,36 @@ import tensorflow_probability as tfp
 
 import numpy as np
 
-from softlearning.misc.nn import feedforward_net_v2
-
 __all__ = [
-    "RealNVPBijector",
+    "ConditionalRealNVPFlow",
 ]
 
 
 tfb = tfp.bijectors
 
 
-def checkerboard(shape, parity='even', dtype=tf.bool):
-    """TODO: Implement for dimensions >1"""
-    if len(shape) > 1:
-        raise NotImplementedError(
-            "checkerboard not yet implemented for dimensions >1")
-
-    unit = (tf.constant((True, False))
-            if parity == 'even' else tf.constant((False, True)))
-
-    num_elements = np.prod(shape)
-    tiled = tf.tile(unit, ((num_elements // 2) + 1, ))[:num_elements]
-    return tf.cast(tf.reshape(tiled, shape), dtype)
+tfd = tf.contrib.distributions
+tfb = tfd.bijectors
 
 
-class CouplingBijector(tfb.ConditionalBijector):
-    """TODO"""
-
-    def __init__(self,
-                 parity,
-                 translation_fn,
-                 scale_fn,
-                 event_ndims=0,
-                 validate_args=False,
-                 name="coupling_bijector"):
-        """Instantiates the `CouplingBijector` bijector.
-
-        Args:
-            TODO
-            event_ndims: Python scalar indicating the number of dimensions
-            associated with a particular draw from the distribution.
-            validate_args: Python `bool` indicating whether arguments should be
-                checked for correctness.
-            name: Python `str` name given to ops managed by this object.
-
-        Raises:
-            ValueError: if TODO happens
-        """
-        self._graph_parents = []
-        self._name = name
-        self._validate_args = validate_args
-
-        self.parity = parity
-        self.translation_fn = translation_fn
-        self.scale_fn = scale_fn
-
-        super().__init__(
-            validate_args=validate_args,
-            forward_min_event_ndims=1,
-            inverse_min_event_ndims=1,
-            name=name)
-
-    def _forward(self, x, **condition_kwargs):
-        self._maybe_assert_valid_x(x)
-
-        D = x.shape[1]
-        if self.parity == 'even':
-            masked_x = x[:, :D//2]
-            non_masked_x = x[:, D//2:]
-        else:
-            non_masked_x = x[:, :D//2]
-            masked_x = x[:, D//2:]
-
-        with tf.variable_scope("{name}/scale".format(name=self.name),
-                               reuse=tf.AUTO_REUSE):
-            # s(x_{1:d}) in paper
-            scale = self.scale_fn(masked_x,
-                                  condition_kwargs['condition'],
-                                  non_masked_x.shape[-1])
-
-        with tf.variable_scope("{name}/translation".format(name=self.name),
-                               reuse=tf.AUTO_REUSE):
-            # t(x_{1:d}) in paper
-            translation = self.translation_fn(masked_x,
-                                              condition_kwargs['condition'],
-                                              non_masked_x.shape[-1])
-
-        # exp(s(b*x)) in paper
-        exp_scale = tf.check_numerics(
-            tf.exp(scale), "tf.exp(scale) contains NaNs or infs")
-
-        # y_{d+1:D} = x_{d+1:D} * exp(s(x_{1:d})) + t(x_{1:d})
-        part_1 = masked_x
-        part_2 = non_masked_x * exp_scale + translation
-
-        to_concat = (
-            (part_1, part_2)
-            if self.parity == 'even'
-            else (part_2, part_1)
-        )
-
-        outputs = tf.concat(to_concat, axis=1)
-
-        return outputs
-
-    def _forward_log_det_jacobian(self, x, **condition_kwargs):
-        self._maybe_assert_valid_x(x)
-
-        D = x.shape[1]
-        masked_slice = (
-            slice(None, D//2)
-            if self.parity == 'even'
-            else slice(D//2, None))
-        masked_x = x[:, masked_slice]
-        nonlinearity_output_size = D - masked_x.shape[1]
-
-        # TODO: scale and translation could be merged into a single network
-        with tf.variable_scope("{name}/scale".format(name=self.name),
-                               reuse=tf.AUTO_REUSE):
-            scale = self.scale_fn(
-                masked_x,
-                **condition_kwargs,
-                output_size=nonlinearity_output_size)
-
-        log_det_jacobian = tf.reduce_sum(
-            scale, axis=tuple(range(1, len(x.shape))))
-
-        return log_det_jacobian
-
-    def _inverse(self, y, **condition_kwargs):
-        self._maybe_assert_valid_y(y)
-
-        condition = condition_kwargs["condition"]
-
-        D = y.shape[1]
-        if self.parity == 'even':
-            masked_y = y[:, :D//2]
-            non_masked_y = y[:, D//2:]
-        else:
-            non_masked_y = y[:, :D//2]
-            masked_y = y[:, D//2:]
-
-        with tf.variable_scope("{name}/scale".format(name=self.name),
-                               reuse=tf.AUTO_REUSE):
-            # s(y_{1:d}) in paper
-            scale = self.scale_fn(masked_y,
-                                  condition,
-                                  non_masked_y.shape[-1])
-
-        with tf.variable_scope("{name}/translation".format(name=self.name),
-                               reuse=tf.AUTO_REUSE):
-            # t(y_{1:d}) in paper
-            translation = self.translation_fn(masked_y,
-                                              condition,
-                                              non_masked_y.shape[-1])
-
-        exp_scale = tf.exp(-scale)
-
-        # y_{d+1:D} = (y_{d+1:D} - t(y_{1:d})) * exp(-s(y_{1:d}))
-        part_1 = masked_y
-        part_2 = (non_masked_y - translation) * exp_scale
-
-        to_concat = (
-            (part_1, part_2)
-            if self.parity == 'even'
-            else (part_2, part_1)
-        )
-
-        outputs = tf.concat(to_concat, axis=1)
-
-        return outputs
-
-    def _inverse_log_det_jacobian(self, y, **condition_kwargs):
-        self._maybe_assert_valid_y(y)
-
-        condition = condition_kwargs["condition"]
-
-        D = y.shape[1]
-        masked_slice = (
-            slice(None, D//2)
-            if self.parity == 'even'
-            else slice(D//2, None))
-        masked_y = y[:, masked_slice]
-        nonlinearity_output_size = D - masked_y.shape[1]
-
-        # TODO: scale and translation could be merged into a single network
-        with tf.variable_scope("{name}/scale".format(name=self.name),
-                               reuse=tf.AUTO_REUSE):
-            scale = self.scale_fn(masked_y,
-                                  condition,
-                                  nonlinearity_output_size)
-
-        log_det_jacobian = -tf.reduce_sum(
-            scale, axis=tuple(range(1, len(y.shape))))
-
-        return log_det_jacobian
-
-    def _maybe_assert_valid_x(self, x):
-        """TODO"""
-        if not self.validate_args:
-            return x
-        raise NotImplementedError("_maybe_assert_valid_x")
-
-    def _maybe_assert_valid_y(self, y):
-        """TODO"""
-        if not self.validate_args:
-            return y
-        raise NotImplementedError("_maybe_assert_valid_y")
-
-
-class RealNVPBijector(tfb.ConditionalBijector):
+class ConditionalRealNVPFlow(tfb.ConditionalBijector):
     """TODO"""
 
     def __init__(self,
                  num_coupling_layers=2,
                  translation_hidden_sizes=(25,),
                  scale_hidden_sizes=(25,),
+                 event_ndims=1,
+                 event_dims=None,
                  validate_args=False,
-                 name="real_nvp"):
-        """Instantiates the `RealNVPBijector` bijector.
+                 name="conditional_real_nvp_flow"):
+        """Instantiates the `ConditionalRealNVPFlow` normalizing flow.
 
         Args:
             TODO
             event_ndims: Python scalar indicating the number of dimensions
+                associated with a particular draw from the distribution.
+            event_dims: Python list indicating the size of each dimension
                 associated with a particular draw from the distribution.
             validate_args: Python `bool` indicating whether arguments should be
                 checked for correctness.
@@ -240,6 +47,9 @@ class RealNVPBijector(tfb.ConditionalBijector):
         Raises:
             ValueError: if TODO happens
         """
+        assert event_ndims == 1, event_ndims
+        assert event_dims is not None and len(event_dims) == 1, event_dims
+
         self._graph_parents = []
         self._name = name
         self._validate_args = validate_args
@@ -247,6 +57,8 @@ class RealNVPBijector(tfb.ConditionalBijector):
         self._num_coupling_layers = num_coupling_layers
         self._translation_hidden_sizes = tuple(translation_hidden_sizes)
         self._scale_hidden_sizes = tuple(scale_hidden_sizes)
+
+        self._event_dims = event_dims
 
         self.build()
 
@@ -256,88 +68,73 @@ class RealNVPBijector(tfb.ConditionalBijector):
             inverse_min_event_ndims=1,
             name=name)
 
-    # TODO: Properties
-
     def build(self):
         num_coupling_layers = self._num_coupling_layers
         translation_hidden_sizes = self._translation_hidden_sizes
         scale_hidden_sizes = self._scale_hidden_sizes
-
-        def translation_wrapper(inputs, condition, output_size):
-            return feedforward_net_v2(
-                (inputs, condition),
-                hidden_layer_sizes=translation_hidden_sizes,
-                output_size=output_size)
-
-        def scale_wrapper(inputs, condition, output_size):
-            return feedforward_net_v2(
-                (inputs, condition),
-                hidden_layer_sizes=scale_hidden_sizes,
-                output_size=output_size
-            )
-
-        self.layers = [
-            CouplingBijector(
-                parity=('even', 'odd')[i % 2],
-                name="coupling_{i}".format(i=i),
-                translation_fn=translation_wrapper,
-                scale_fn=scale_wrapper)
-            for i in range(1, num_coupling_layers + 1)
+        hidden_sizes = [
+            x + y for x, y in
+            zip(translation_hidden_sizes, scale_hidden_sizes)
         ]
+
+        D = np.prod(self._event_dims)
+
+        flow_parts = []
+        for i in range(num_coupling_layers):
+            real_nvp_bijector = tfb.RealNVP(
+                num_masked=D//2,
+                shift_and_log_scale_fn=tfb.real_nvp_default_template(
+                    hidden_layers=hidden_sizes,
+                    # TODO: test tf.nn.relu
+                    activation=tf.nn.tanh))
+            permute_bijector = tfb.Permute(
+                permutation=list(reversed(range(D))))
+
+            flow_parts += [real_nvp_bijector, permute_bijector]
+
+        self.flow = tfb.Chain(flow_parts)
+
+    def _get_inputs(self, x, **condition_kwargs):
+        conditions = [
+            condition_kwargs[key]
+            for key in sorted(condition_kwargs.keys())
+        ]
+
+        input_ = tf.concat([x] + conditions, axis=1)
+
+        return input_
 
     def _forward(self, x, **condition_kwargs):
         self._maybe_assert_valid_x(x)
 
-        out = x
-        for layer in self.layers:
-            out = layer.forward(out, **condition_kwargs)
+        input_ = self._get_inputs(x, **condition_kwargs)
+        out = self.flow.forward(input_)
+
+        return out
+
+    def _inverse(self, y, **condition_kwargs):
+        self._maybe_assert_valid_y(y)
+
+        input_ = self._get_inputs(y, **condition_kwargs)
+        out = self.flow.inverse(input_)
 
         return out
 
     def _forward_log_det_jacobian(self, x, **condition_kwargs):
         self._maybe_assert_valid_x(x)
 
-        sum_log_det_jacobians = tf.reduce_sum(
-            tf.zeros_like(x), axis=tuple(range(1, len(x.shape))))
+        input_ = self._get_inputs(x, **condition_kwargs)
+        log_det_jacobian = self.flow.forward_log_det_jacobian(input_)
 
-        out = x
-        for layer in self.layers:
-            log_det_jacobian = layer.forward_log_det_jacobian(
-                out, event_ndims=1, **condition_kwargs)
-            out = layer.forward(out, **condition_kwargs)
-            assert (sum_log_det_jacobians.shape.as_list()
-                    == log_det_jacobian.shape.as_list())
-
-            sum_log_det_jacobians += log_det_jacobian
-
-        return sum_log_det_jacobians
-
-    def _inverse(self, y, **condition_kwargs):
-        self._maybe_assert_valid_y(y)
-
-        out = y
-        for layer in reversed(self.layers):
-            out = layer.inverse(out, **condition_kwargs)
-
-        return out
+        return log_det_jacobian
 
     def _inverse_log_det_jacobian(self, y, **condition_kwargs):
         self._maybe_assert_valid_y(y)
 
-        sum_log_det_jacobians = tf.reduce_sum(
-            tf.zeros_like(y), axis=tuple(range(1, len(y.shape))))
+        input_ = self._get_inputs(y, **condition_kwargs)
+        log_det_jacobian = self.flow.inverse_log_det_jacobian(input_)
 
-        out = y
-        for layer in reversed(self.layers):
-            log_det_jacobian = layer.inverse_log_det_jacobian(
-                out, event_ndims=1, **condition_kwargs)
-            out = layer.inverse(out, **condition_kwargs)
-            assert (sum_log_det_jacobians.shape.as_list()
-                    == log_det_jacobian.shape.as_list())
-
-            sum_log_det_jacobians += log_det_jacobian
-
-        return sum_log_det_jacobians
+        return log_det_jacobian
 
     def _maybe_assert_valid_x(self, x):
         """TODO"""

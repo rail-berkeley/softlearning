@@ -8,7 +8,7 @@ from tensorflow_probability import distributions as tfpd
 from serializable import Serializable
 from rllab.misc import logger
 
-from softlearning.distributions import RealNVPBijector
+from softlearning.distributions import ConditionalRealNVPFlow
 from softlearning.policies import NNPolicy
 
 EPS = 1e-6
@@ -136,10 +136,12 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
     def build(self):
         config = self._bijector_config
-        self.bijector = RealNVPBijector(
+        self.bijector = ConditionalRealNVPFlow(
             num_coupling_layers=config.get("num_coupling_layers"),
             translation_hidden_sizes=config.get("translation_hidden_sizes"),
-            scale_hidden_sizes=config.get("scale_hidden_sizes"))
+            scale_hidden_sizes=config.get("scale_hidden_sizes"),
+            event_ndims=1,
+            event_dims=(self._Da, ))
 
         self.base_distribution = tfpd.MultivariateNormalDiag(
             loc=tf.zeros(self._Da), scale_diag=tf.ones(self._Da))
