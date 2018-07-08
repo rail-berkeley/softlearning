@@ -92,7 +92,9 @@ class ConditionalRealNVPFlow(tfb.ConditionalBijector):
 
             flow_parts += [real_nvp_bijector, permute_bijector]
 
-        self.flow = tfb.Chain(flow_parts)
+        # Note: tfb.Chain applies the list of bijectors in the _reverse_ order
+        # of what they are inputted.
+        self.flow = tfb.Chain(list(reversed(flow_parts)))
 
     def _get_inputs(self, x, **condition_kwargs):
         conditions = [
