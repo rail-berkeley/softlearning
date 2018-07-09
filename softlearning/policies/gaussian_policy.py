@@ -165,7 +165,8 @@ class GaussianPolicy(NNPolicy, Serializable):
 
     def _squash_correction(self, actions):
         if not self._squash: return 0
-        return tf.reduce_sum(tf.log(1 - tf.tanh(actions) **2 + EPS), axis=1)
+        # return tf.reduce_sum(tf.log(1 - tf.tanh(actions) **2 + EPS), axis=1)
+
         # numerically stable squash correction without bias from EPS
         # return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)), axis=1)
 
