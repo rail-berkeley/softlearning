@@ -10,10 +10,10 @@ from ray.tune.variant_generator import generate_variants
 from softlearning.algorithms import SAC
 from softlearning.environments import FixedOptionEnv
 from softlearning.misc.instrument import run_sac_experiment
-from softlearning.misc.sampler import rollouts
+from softlearning.samplers import rollouts
 from softlearning.misc.utils import timestamp
 from softlearning.policies.hierarchical_policy import FixedOptionPolicy
-from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 
 import argparse
@@ -187,9 +187,9 @@ def run_experiment(variant):
 
         tf.logging.info('Finetuning best skill...')
 
-        pool = SimpleReplayBuffer(
+        pool = SimpleReplayPool(
             env_spec=fixed_z_env.spec,
-            max_replay_buffer_size=variant['max_pool_size'],
+            max_size=variant['max_pool_size'],
         )
 
         base_kwargs = dict(

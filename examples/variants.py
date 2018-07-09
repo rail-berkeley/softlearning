@@ -206,6 +206,7 @@ ALGORITHM_PARAMS_BASE = {
     'target_update_interval': 1,
     'tau': 0.005,
     'target_entropy': 'auto',
+    'reward_scale': 1.0,
 
     'base_kwargs': {
         'epoch_length': 1000,
@@ -273,8 +274,8 @@ ALGORITHM_PARAMS = {
     },
 }
 
-REPLAY_BUFFER_PARAMS = {
-    'max_replay_buffer_size': 1e6,
+REPLAY_POOL_PARAMS = {
+    'max_size': 1e6,
 }
 
 SAMPLER_PARAMS = {
@@ -387,7 +388,7 @@ def get_variant_spec(domain, task, policy):
             ALGORITHM_PARAMS_BASE,
             ALGORITHM_PARAMS[domain]
         ),
-        'replay_buffer_params': REPLAY_BUFFER_PARAMS,
+        'replay_pool_params': REPLAY_POOL_PARAMS,
         'sampler_params': SAMPLER_PARAMS,
         'run_params': deep_update(RUN_PARAMS_BASE, RUN_PARAMS[domain]),
     }

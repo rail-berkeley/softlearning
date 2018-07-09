@@ -19,7 +19,7 @@ from softlearning.environments import (
 from softlearning.misc.instrument import launch_experiment
 from softlearning.misc.utils import timestamp
 from softlearning.policies import LatentSpacePolicy
-from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
 from softlearning.misc import tf_utils
@@ -244,9 +244,9 @@ def run_experiment(variant):
     base_env = normalize(EnvClass(**env_args))
     env = HierarchyProxyEnv(wrapped_env=base_env,
                                 low_level_policy=low_level_policy)
-    pool = SimpleReplayBuffer(
+    pool = SimpleReplayPool(
         env_spec=env.spec,
-        max_replay_buffer_size=variant['max_pool_size'],
+        max_size=variant['max_pool_size'],
     )
 
     base_kwargs = dict(

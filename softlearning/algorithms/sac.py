@@ -18,7 +18,7 @@ class SAC(RLAlgorithm, Serializable):
 
     env = normalize(SwimmerEnv())
 
-    pool = SimpleReplayBuffer(env_spec=env.spec, max_pool_size=1E6)
+    pool = SimpleReplayPool(env_spec=env.spec, max_size=1E6)
 
     base_kwargs = dict(
         min_pool_size=1000,
@@ -109,7 +109,7 @@ class SAC(RLAlgorithm, Serializable):
                 Q-functions improves performance by reducing overestimation
                 bias.
             vf (`ValueFunction`): Soft value function approximator.
-            pool (`PoolBase`): Replay buffer to add gathered samples to.
+            pool (`PoolBase`): Replay pool to add gathered samples to.
             plotter (`QFPolicyPlotter`): Plotter instance to be used for
                 visualizing Q-function during training.
             lr (`float`): Learning rate used for the function approximators.

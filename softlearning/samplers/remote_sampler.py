@@ -6,8 +6,8 @@ import numpy as np
 from rllab.misc.overrides import overrides
 from rllab.misc import logger
 
-from . import tf_utils
-from .sampler import Sampler, rollout
+from softlearning.misc import tf_utils
+from . import Sampler, rollout
 
 
 class RemoteSampler(Sampler):

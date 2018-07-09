@@ -9,9 +9,9 @@ from softlearning.algorithms import SAC
 from softlearning.environments import GymEnv, DelayedEnv
 from softlearning.misc.instrument import launch_experiment
 from softlearning.misc.utils import timestamp
-from softlearning.misc.remote_sampler import RemoteSampler
+from softlearning.samplers import RemoteSampler
 from softlearning.policies.gmm import GMMPolicy
-from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 
 COMMON_PARAMS = {
@@ -104,9 +104,9 @@ def run_experiment(variant):
         env = normalize(GymEnv(variant['env_name']))
     env = DelayedEnv(env, delay=0.01)
 
-    pool = SimpleReplayBuffer(
+    pool = SimpleReplayPool(
         env_spec=env.spec,
-        max_replay_buffer_size=variant['max_pool_size'],
+        max_size=variant['max_pool_size'],
     )
 
     sampler = RemoteSampler(

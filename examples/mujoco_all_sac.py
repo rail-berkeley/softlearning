@@ -27,11 +27,12 @@ from softlearning.policies import (
     LatentSpacePolicy,
     GMMPolicy,
     UniformPolicy)
-from softlearning.misc.sampler import SimpleSampler
-from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.samplers import SimpleSampler
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variant_spec
+
 
 ENVIRONMENTS = {
     'swimmer-gym': {
@@ -91,6 +92,7 @@ def parse_args():
     parser.add_argument('--exp_name', type=str, default=timestamp())
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--log_dir', type=str, default=None)
+
     args = parser.parse_args()
 
     return args
@@ -100,7 +102,7 @@ def run_experiment(variant):
     policy_params = variant['policy_params']
     value_fn_params = variant['value_fn_params']
     algorithm_params = variant['algorithm_params']
-    replay_buffer_params = variant['replay_buffer_params']
+    replay_pool_params = variant['replay_pool_params']
     sampler_params = variant['sampler_params']
 
     task = variant['task']
@@ -108,9 +110,8 @@ def run_experiment(variant):
 
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
-    pool = SimpleReplayBuffer(env_spec=env.spec, **replay_buffer_params)
-
     sampler = SimpleSampler(**sampler_params)
+    pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
@@ -185,6 +186,7 @@ def run_experiment(variant):
         vf=vf,
         lr=algorithm_params['lr'],
         target_entropy=algorithm_params['target_entropy'],
+        reward_scale=algorithm_params['reward_scale'],
         discount=algorithm_params['discount'],
         tau=algorithm_params['tau'],
         reparameterize=policy_params['reparameterize'],
@@ -237,6 +239,7 @@ def main():
 
     variant_spec = get_variant_spec(
         domain=domain, task=task, policy=args.policy)
+    variant_spec['mode'] = args.mode
     variants = [x[1] for x in generate_variants(variant_spec)]
     launch_experiments(variants, args)
 

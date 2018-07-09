@@ -27,8 +27,8 @@ from softlearning.policies import (
     LatentSpacePolicy,
     GMMPolicy,
     UniformPolicy)
-from softlearning.misc.sampler import SimpleSampler
-from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.samplers import SimpleSampler
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variant_spec
@@ -142,7 +142,7 @@ def run_experiment(variant, reporter):
     policy_params = variant['policy_params']
     value_fn_params = variant['value_fn_params']
     algorithm_params = variant['algorithm_params']
-    replay_buffer_params = variant['replay_buffer_params']
+    replay_pool_params = variant['replay_pool_params']
     sampler_params = variant['sampler_params']
 
     task = variant['task']
@@ -150,7 +150,7 @@ def run_experiment(variant, reporter):
 
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
-    pool = SimpleReplayBuffer(env_spec=env.spec, **replay_buffer_params)
+    pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
 
     sampler = SimpleSampler(**sampler_params)
 
@@ -247,6 +247,7 @@ def main():
     variants = get_variant_spec(domain=domain, task=task, policy=args.policy)
 
     tune.register_trainable('mujoco-runner', run_experiment)
+
     if args.mode == 'local':
         ray.init()
         local_dir_base = './data/ray/results'

@@ -8,9 +8,9 @@ from softlearning.algorithms import SAC
 from softlearning.environments import MultiGoalEnv
 from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.misc.utils import timestamp
-from softlearning.misc.sampler import SimpleSampler
+from softlearning.samplers import SimpleSampler
 from softlearning.policies import GMMPolicy, LatentSpacePolicy
-from softlearning.replay_buffers import SimpleReplayBuffer
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 
 
@@ -22,7 +22,7 @@ def run(variant):
         init_sigma=0.1,
     ))
 
-    pool = SimpleReplayBuffer(max_replay_buffer_size=1e6, env_spec=env.spec)
+    pool = SimpleReplayPool(max_size=1e6, env_spec=env.spec)
 
     sampler = SimpleSampler(
         max_path_length=30, min_pool_size=100, batch_size=64)
