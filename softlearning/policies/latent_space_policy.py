@@ -172,6 +172,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         self._determistic_actions = self.actions_for(self._observations_ph,
                                                      self._latents_ph)
 
+
     def get_action(self, observation, with_log_pis=False, with_raw_actions=False):
         """Sample single action based on the observations.
         """

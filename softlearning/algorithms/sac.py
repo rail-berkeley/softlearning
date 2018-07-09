@@ -294,8 +294,11 @@ class SAC(RLAlgorithm, Serializable):
         of the value function and policy function update rules.
         """
 
-        actions, log_pi, raw_actions = self._policy.actions_for(
-            observations=self._observations_ph, with_log_pis=True, with_raw_actions=True)
+        actions, log_pi = self._policy.actions_for(
+            observations=self._observations_ph, with_log_pis=True)
+
+        for i in tf.global_variables():
+            print(i)
 
         log_alpha = tf.get_variable(
             'log_alpha',

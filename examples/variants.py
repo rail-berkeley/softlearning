@@ -205,8 +205,8 @@ ALGORITHM_PARAMS_BASE = {
     'discount': 0.99,
     'target_update_interval': 1,
     'tau': 0.005,
-    'target_entropy': 'auto',
-    'reward_scale': 1.0,
+    'target_entropy': None,
+    'reward_scale': 5.0,
     'store_extra_policy_info': False,
 
     'base_kwargs': {
