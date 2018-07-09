@@ -14,8 +14,8 @@ from .pusher import PusherEnv
 
 class ImagePusherEnv(PusherEnv):
     def __init__(self, image_size, *args, **kwargs):
-        self.image_size = image_size
         Serializable.quick_init(self, locals())
+        self.image_size = image_size
         PusherEnv.__init__(self, *args, **kwargs)
 
     @overrides

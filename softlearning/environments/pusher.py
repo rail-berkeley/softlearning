@@ -10,11 +10,17 @@ from rllab.misc.overrides import overrides
 from softlearning.misc.utils import PROJECT_PATH
 
 
-class PusherEnv(MujocoEnv, Serializable):
+class PusherEnv(Serializable, MujocoEnv):
     """Pusher environment
 
     Pusher is a two-dimensional 3-DoF manipulator. Task is to slide a cylinder-
     shaped object, or a 'puck', to a target coordinates.
+
+    Note: Serializable has to be the first super class for classes extending
+    MujocoEnv (or at least occur before MujocoEnv). Otherwise MujocoEnv calls
+    Serializable.__init__ (from MujocoEnv.__init__), and the Serializable
+    attributes (_Serializable__args and _Serializable__kwargs) will get
+    overwritten.
     """
     FILE_PATH = osp.abspath(osp.join(PROJECT_PATH, 'models', 'pusher.xml'))
 
@@ -34,8 +40,8 @@ class PusherEnv(MujocoEnv, Serializable):
         arm_distance_coeff ('float'): Coefficient for the arm-to-object distance
             cost.
         """
-        super(PusherEnv, self).__init__(file_path=self.FILE_PATH)
         Serializable.quick_init(self, locals())
+        MujocoEnv.__init__(self, file_path=self.FILE_PATH)
 
         self._goal_mask = [coordinate != 'any' for coordinate in goal]
         self._goal = np.array(goal)[self._goal_mask].astype(np.float32)
