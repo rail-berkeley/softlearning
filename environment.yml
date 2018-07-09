@@ -1,4 +1,4 @@
-name: sac-ray
+name: softlearning
 channels:
 - defaults
 - conda-forge
