@@ -75,7 +75,6 @@ class LatentSpacePolicy(NNPolicy, Serializable):
                     observations, reuse=reuse)
                 if self._observations_preprocessor is not None
                 else observations)
-            self._conditions_temp = conditions
 
             if latents is not None:
                 raw_actions = self.bijector.forward(
@@ -207,8 +206,9 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
     def _squash_correction(self, actions):
         if not self._squash: return 0
-        # uses a more numerically stable squash correction
-        return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)))
+        return tf.reduce_sum(tf.log(1 - tf.tanh(actions) **2 + EPS), axis=1)
+        # numerically stable squash correction without bias from EPS
+        # return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)))
 
     @contextmanager
     def deterministic(self, set_deterministic=True, h=None):
