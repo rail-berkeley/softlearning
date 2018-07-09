@@ -29,12 +29,11 @@ from softlearning.policies import (
     LatentSpacePolicy,
     GMMPolicy,
     UniformPolicy)
-from softlearning.samplers import SimpleSampler, ImageSampler
-from softlearning.replay_pools import SimpleReplayPool, ImageReplayPool
+from softlearning.samplers import SimpleSampler
+from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variant_spec
-from .helpers import str2bool
 
 
 ENVIRONMENTS = {
@@ -99,12 +98,6 @@ def parse_args():
     parser.add_argument('--exp_name', type=str, default=timestamp())
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--log_dir', type=str, default=None)
-    parser.add_argument(
-        "--store-images", type=str2bool, nargs='?',
-        const=True, default=False,
-        help=(
-            "Store images from the rollouts. Images are currently always"
-            " stored in the logging directory."))
     args = parser.parse_args()
 
     return args
