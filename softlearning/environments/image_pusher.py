@@ -23,21 +23,6 @@ class ImagePusherEnv(PusherEnv):
         self.viewer_setup()
         image = self.render(mode='rgb_array')
 
-        # image = resize(image, output_shape=(16,16,3), preserve_range=True)
-        # show_image = True
-        # if show_image:
-        #     from PIL import Image
-        #     Image.fromarray(image.astype('uint8')).show()
-        #     # .save(
-        #     #     '/Users/kristian/code/softqlearning-private/tmp/{}_real.png'.format(self.i)
-        #     # )
-        #     # Image.fromarray(resized_image.astype('uint8')).show()
-        #     # .save(
-        #     #     '/Users/kristian/code/softqlearning-private/tmp/{}_resized.png'.format(self.i)
-        #     # )
-        #     # setattr(self, 'i', getattr(self, 'i', 0) + 1)
-        #     from pdb import set_trace; from pprint import pprint; set_trace()
-
         return np.concatenate([
             image.reshape(-1),
             self.model.data.qpos.flat[self.JOINT_INDS],
