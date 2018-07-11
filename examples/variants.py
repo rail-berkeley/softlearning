@@ -210,7 +210,8 @@ ENV_PARAMS = {
     },
     'pusher': { # 12 DoF
         'image': {
-            'image_size': tune.grid_search([(32, 32, 3), (16, 16, 3)])
+            # Can't use tuples because they break ray.tune log_syncer
+            'image_size': tune.grid_search(['16x16x3', '32x32x3'])
         }
     },
 }

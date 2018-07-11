@@ -154,6 +154,9 @@ def run_experiment(variant, reporter):
     task = variant['task']
     domain = variant['domain']
 
+    if 'image_size' in env_params:
+        env_params['image_size'] = tuple(
+            int(dim) for dim in env_params['image_size'].split('x'))
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
     sampler = SimpleSampler(**sampler_params)
