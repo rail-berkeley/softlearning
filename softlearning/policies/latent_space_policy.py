@@ -10,7 +10,6 @@ from rllab.misc import logger
 from softlearning.distributions import RealNVPBijector
 from softlearning.policies import NNPolicy
 
-
 EPS = 1e-6
 
 
@@ -48,7 +47,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         self._reparameterize = reparameterize
         self._fix_h_on_reset = fix_h_on_reset
         self._q_function = q_function
-        self._n_map_action_candidates=n_map_action_candidates
+        self._n_map_action_candidates = n_map_action_candidates
 
         self._Da = env_spec.action_space.flat_dim
         self._Ds = env_spec.observation_space.flat_dim
@@ -60,7 +59,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         self.build()
 
         self._scope_name = (
-            tf.get_variable_scope().name + "/" + name
+                tf.get_variable_scope().name + "/" + name
         ).lstrip("/")
         super(NNPolicy, self).__init__(env_spec)
 
@@ -88,22 +87,23 @@ class LatentSpacePolicy(NNPolicy, Serializable):
                 raw_actions = tf.stop_gradient(raw_actions)
 
         actions = tf.tanh(raw_actions) if self._squash else raw_actions
-
-        # TODO: should always return same shape out
-        # Figure out how to make the interface for `log_pis` cleaner
+        return_list = [actions]
         if with_log_pis:
-            log_pis = self.log_pis_for(
-                conditions, raw_actions, name=name, reuse=reuse)
+            log_pis = self._log_pis_for_raw(conditions, raw_actions,
+                                            name)
+            return_list.append(log_pis)
 
-            if with_raw_actions:
-                return raw_actions, actions, log_pis
+        if with_raw_actions:
+            return_list.append(raw_actions)
 
-            return actions, log_pis
+        # not sure the best way of returning variable outputs
+        if len(return_list) > 1:
+            return return_list
 
         return actions
 
-    def log_pis_for(self, conditions, raw_actions, name=None,
-                    reuse=tf.AUTO_REUSE):
+    def _log_pis_for_raw(self, conditions, raw_actions, name=None,
+                         reuse=tf.AUTO_REUSE):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
@@ -114,6 +114,26 @@ class LatentSpacePolicy(NNPolicy, Serializable):
             log_pis -= self._squash_correction(raw_actions)
 
         return log_pis
+
+    def log_pis_for(self, observations, raw_actions=None, actions=None, name=None,
+                    reuse=tf.AUTO_REUSE):
+        name = name or self.name
+
+        assert raw_actions is not None or actions is not None
+
+        with tf.variable_scope(name, reuse=reuse):
+            conditions = (
+                self._observations_preprocessor.output_for(
+                    observations, reuse=reuse)
+                if self._observations_preprocessor is not None
+                else observations)
+
+        if raw_actions is not None:
+            return self._log_pis_for_raw(conditions, raw_actions, name=name, reuse=reuse)
+
+        if self._squash:
+            actions = tf.atanh(actions)
+        return self._log_pis_for_raw(conditions, actions, name=name, reuse=reuse)
 
     def build(self):
         ds = tf.contrib.distributions
@@ -146,46 +166,67 @@ class LatentSpacePolicy(NNPolicy, Serializable):
             name='latents',
         )
 
-        self._raw_actions, self._actions, self._log_pis = self.actions_for(
+        self._actions, self._log_pis, self._raw_actions = self.actions_for(
             self._observations_ph, with_log_pis=True, with_raw_actions=True)
-        self._determistic_actions = self.actions_for(self._observations_ph,
-                                                     self._latents_ph)
+        self._det_actions, self._det_actions_raw = self.actions_for(self._observations_ph,
+                                                                    self._latents_ph,
+                                                                    with_raw_actions=True)
 
-    def get_action(self, observation):
+    def get_action(self, observation, with_log_pis=False, with_raw_actions=False):
         """Sample single action based on the observations.
         """
 
         if self._is_deterministic and self._n_map_action_candidates > 1:
             observations = np.tile(
                 observation[None], reps=(self._n_map_action_candidates, 1))
-            action_candidates = self.get_actions(observations)
-            q_values = self._q_function.eval(observations, action_candidates)
-            best_action_index = np.argmax(q_values)
 
-            return action_candidates[best_action_index], {}
-        return self.get_actions(observation[None])[0], {}
+            assert not with_log_pis, 'No log pi for deterministic action'
+            if with_raw_actions:
+                action_candidates, raw_action_candidates = self.get_actions(
+                    observations, with_raw_actions=with_raw_actions)
 
-    def get_actions(self, observations):
+                q_values = self._q_function.eval(observations, action_candidates)
+                best_action_index = np.argmax(q_values)
+
+                return action_candidates[best_action_index], raw_action_candidates[best_action_index], {}
+            else:
+                action_candidates = self.get_actions(observations)
+                q_values = self._q_function.eval(observations, action_candidates)
+                best_action_index = np.argmax(q_values)
+
+                return action_candidates[best_action_index], {}
+        return super(LatentSpacePolicy, self).get_action(observation, with_log_pis, with_raw_actions)
+
+    def get_actions(self, observations, with_log_pis=False, with_raw_actions=False):
         """Sample batch of actions based on the observations"""
 
-        feed_dict = { self._observations_ph: observations }
-
         if self._fixed_h is not None:
+            feed_dict = {self._observations_ph: observations}
             latents = np.tile(self._fixed_h,
                               reps=(self._n_map_action_candidates, 1))
-            feed_dict.update({ self._latents_ph: latents })
-            actions = tf.get_default_session().run(
-                self._determistic_actions,
-                feed_dict=feed_dict)
-        else:
-            actions = tf.get_default_session().run(
-                self._actions, feed_dict=feed_dict)
+            feed_dict.update({self._latents_ph: latents})
 
-        return actions
+            assert not with_log_pis, 'No log pi for deterministic action'
+
+            if with_raw_actions:
+                return tf.get_default_session().run(
+                    [self._det_actions, self._det_actions_raw],
+                    feed_dict=feed_dict)
+            else:
+                return tf.get_default_session().run(
+                    self._det_actions,
+                    feed_dict=feed_dict)
+
+        else:
+            return super(LatentSpacePolicy, self).get_actions(observations, with_log_pis, with_raw_actions)
 
     def _squash_correction(self, actions):
-        if not self._squash: return 0
-        return tf.reduce_sum(tf.log(1 - tf.tanh(actions) ** 2 + EPS), axis=1)
+        if not self._squash:
+            return 0
+        # return tf.reduce_sum(tf.log(1 - tf.tanh(actions) **2 + EPS), axis=1)
+
+        # numerically stable squash correction without bias from EPS
+        return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)), axis=1)
 
     @contextmanager
     def deterministic(self, set_deterministic=True, h=None):
@@ -204,7 +245,8 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
         self._is_deterministic = set_deterministic
         if set_deterministic:
-            if h is None: h = self.sample_z.eval()
+            if h is None:
+                h = self.sample_z.eval()
             self._fixed_h = h
 
         yield
@@ -213,7 +255,8 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         self._fixed_h = old_fixed_h
 
     def get_params_internal(self, **tags):
-        if tags: raise NotImplementedError
+        if tags:
+            raise NotImplementedError
         return tf.trainable_variables(scope=self._scope_name)
 
     def reset(self, dones=None):
@@ -223,7 +266,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
     def log_diagnostics(self, iteration, batch):
         """Record diagnostic information to the logger."""
 
-        feeds = { self._observations_ph: batch['observations'] }
+        feeds = {self._observations_ph: batch['observations']}
         raw_actions, actions, log_pis = tf.get_default_session().run(
             (self._raw_actions, self._actions, self._log_pis), feeds)
 

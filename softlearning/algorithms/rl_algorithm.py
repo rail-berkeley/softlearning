@@ -103,8 +103,8 @@ class RLAlgorithm(Algorithm):
 
                 for t in range(self._epoch_length):
                     if (not initial_exploration_done
-                        and (self._epoch_length * epoch
-                             >= self._n_initial_exploration_steps)):
+                            and (self._epoch_length * epoch
+                                 >= self._n_initial_exploration_steps)):
                         self.sampler.set_policy(policy)
                         initial_exploration_done = True
                     self.sampler.sample()
@@ -159,7 +159,6 @@ class RLAlgorithm(Algorithm):
             paths = rollouts(evaluation_env, policy,
                              self.sampler._max_path_length,
                              self._eval_n_episodes)
-
 
         total_returns = [path['rewards'].sum() for path in paths]
         episode_lengths = [len(p['rewards']) for p in paths]

@@ -5,6 +5,7 @@ import numpy as np
 from .sampler import Sampler
 from .dummy_sampler import DummySampler
 from .simple_sampler import SimpleSampler
+from .extra_policy_info_sampler import ExtraPolicyInfoSampler
 
 
 def rollout(env, policy, path_length, render=False, speedup=10, callback=None,

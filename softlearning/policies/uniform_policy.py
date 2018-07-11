@@ -18,11 +18,19 @@ class UniformPolicy(Policy, Serializable):
         super(UniformPolicy, self).__init__(env_spec)
 
     @overrides
-    def get_action(self, observation):
+    def get_action(self, observation, with_log_pis=False, with_raw_actions=False):
         """Get single actions for the observation.
 
         Assumes action spaces are normalized to be the interval [-1, 1]."""
-        return np.random.uniform(-1., 1., self._Da), {}
+        action = np.random.uniform(-1., 1., self._Da)
+        return_list = [action]
+        if with_log_pis:
+            return_list.append(0.)
+        if with_raw_actions:
+            # atanh is unstable when actions are too close to +/- 1, but seems stable
+            # at least between -1 + 1e-10 and 1 - 1e-10, so we shouldn't need to worry.
+            return_list.append(np.arctanh(action))
+        return return_list + [{}]
 
     @overrides
     def get_actions(self, observations):
