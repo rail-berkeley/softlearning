@@ -297,7 +297,6 @@ class SAC(RLAlgorithm, Serializable):
         actions, log_pi = self._policy.actions_for(
             observations=self._observations_ph, with_log_pis=True)
 
-
         log_alpha = tf.get_variable(
             'log_alpha',
             dtype=tf.float32,
@@ -334,15 +333,11 @@ class SAC(RLAlgorithm, Serializable):
 
         if self._reparameterize:
             policy_kl_loss = tf.reduce_mean(
-                alpha * log_pi
-                - min_log_target
-                - policy_prior_log_probs)
+                alpha * log_pi - min_log_target - policy_prior_log_probs)
         else:
             policy_kl_loss = tf.reduce_mean(
                 log_pi * tf.stop_gradient(
-                    alpha * log_pi
-                    - min_log_target
-                    + self._vf_t
+                    alpha * log_pi - min_log_target + self._vf_t
                     - policy_prior_log_probs))
 
         policy_regularization_losses = tf.get_collection(

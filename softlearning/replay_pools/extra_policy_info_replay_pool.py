@@ -1,6 +1,7 @@
 from rllab.core.serializable import Serializable
 from .simple_replay_pool import SimpleReplayPool
 
+
 class ExtraPolicyInfoReplayPool(SimpleReplayPool, Serializable):
     def __init__(self, *args, **kwargs):
         Serializable.quick_init(self, locals())

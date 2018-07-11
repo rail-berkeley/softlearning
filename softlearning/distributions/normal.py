@@ -1,7 +1,6 @@
 """Multivariate normal distribution parameterized by a neural net."""
 
 import tensorflow as tf
-import numpy as np
 
 from softlearning.misc.nn import feedforward_net
 

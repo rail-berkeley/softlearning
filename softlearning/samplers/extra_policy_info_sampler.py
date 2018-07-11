@@ -1,6 +1,5 @@
 """Sampler that stores raw actions from policies"""
 
-import numpy as np
 from .simple_sampler import SimpleSampler
 
 

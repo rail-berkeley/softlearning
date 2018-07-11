@@ -37,7 +37,7 @@ class NNPolicy(Policy, Serializable):
             ops.append(self._log_pis)
         if with_raw_actions:
             ops.append(self._raw_actions)
-        outputs =  tf.get_default_session().run(ops, feed_dict)
+        outputs = tf.get_default_session().run(ops, feed_dict)
         return outputs
 
     @overrides

@@ -14,6 +14,7 @@ from softlearning.misc import tf_utils
 
 EPS = 1e-6
 
+
 class GaussianPolicy(NNPolicy, Serializable):
     def __init__(self, env_spec, hidden_layer_sizes=(100, 100), reg=1e-3,
                  squash=True, reparameterize=True, name='gaussian_policy'):
@@ -43,7 +44,7 @@ class GaussianPolicy(NNPolicy, Serializable):
         self.build()
 
         self._scope_name = (
-            tf.get_variable_scope().name + "/" + name
+                tf.get_variable_scope().name + "/" + name
         ).lstrip("/")
 
         super(NNPolicy, self).__init__(env_spec)
@@ -80,8 +81,8 @@ class GaussianPolicy(NNPolicy, Serializable):
 
         return actions
 
-    def _log_pis_for_raw(self, observations, actions, name=None, 
-                        reuse=tf.AUTO_REUSE):
+    def _log_pis_for_raw(self, observations, actions, name=None,
+                         reuse=tf.AUTO_REUSE):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
@@ -92,7 +93,7 @@ class GaussianPolicy(NNPolicy, Serializable):
                 cond_t_lst=(observations,),
                 reg=self._reg
             )
-        log_pis = distribution.log_prob(actions) 
+        log_pis = distribution.log_prob(actions)
         if self._squash:
             log_pis -= self._squash_correction(actions)
         return log_pis
@@ -108,7 +109,6 @@ class GaussianPolicy(NNPolicy, Serializable):
             actions = tf.atanh(actions)
         return self._log_pis_for_raw(observations, actions, name,
                                      reuse)
-        
 
     def build(self):
         self._observations_ph = tf.placeholder(
@@ -141,10 +141,8 @@ class GaussianPolicy(NNPolicy, Serializable):
         If `self._is_deterministic` is True, returns the mean action for the
         observations. If False, return stochastically sampled action.
 
-        TODO.code_consolidation: This should be somewhat similar with
-        `LatentSpacePolicy.get_actions`.
         """
-        if self._is_deterministic: # Handle the deterministic case separately.
+        if self._is_deterministic:  # Handle the deterministic case separately.
 
             feed_dict = {self._observations_ph: observations}
 
@@ -164,12 +162,12 @@ class GaussianPolicy(NNPolicy, Serializable):
         return super(GaussianPolicy, self).get_actions(observations, with_log_pis, with_raw_actions)
 
     def _squash_correction(self, actions):
-        if not self._squash: return 0
+        if not self._squash:
+            return 0
         # return tf.reduce_sum(tf.log(1 - tf.tanh(actions) **2 + EPS), axis=1)
 
         # numerically stable squash correction without bias from EPS
         return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)), axis=1)
-
 
     @contextmanager
     def deterministic(self, set_deterministic=True):
@@ -200,7 +198,7 @@ class GaussianPolicy(NNPolicy, Serializable):
 
         feeds = {self._observations_ph: batch['observations']}
         sess = tf_utils.get_default_session()
-        actions, raw_actions, log_pi,  mu, log_sig, = sess.run(
+        actions, raw_actions, log_pi, mu, log_sig, = sess.run(
             (
                 self._actions,
                 self._raw_actions,
