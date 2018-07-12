@@ -270,7 +270,7 @@ def main():
     tune.run_experiments({
         args.exp_name: {
             'run': 'mujoco-runner',
-            'trial_resources': {'cpu': 8},
+            'trial_resources': {'cpu': 16},
             'config': variants,
             'local_dir': local_dir,
             'upload_dir': 'gs://sac-ray-test/ray/results'
