@@ -29,6 +29,18 @@ class ImagePusherEnv(PusherEnv):
             self.model.data.qvel.flat[self.JOINT_INDS],
         ]).reshape(-1)
 
+    def step(self, action):
+        """Step, computing reward from 'true' observations and not images."""
+
+        reward_observations = super(ImagePusherEnv, self).get_current_obs()
+        reward, info = self.compute_reward(reward_observations, action)
+
+        self.forward_dynamics(action)
+        observation = self.get_current_obs()
+        done = False
+
+        return observation, reward, done, info
+
     def get_viewer(self):
         if self.viewer is None:
             width, height = self.image_size[:2]
