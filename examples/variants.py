@@ -280,7 +280,7 @@ ALGORITHM_PARAMS = {
     },
     'pusher': { # 12 DoF
         'base_kwargs': {
-            'n_epochs': int(2e3 + 1),
+            'n_epochs': int(4e3 + 1),
             'n_initial_exploration_steps': int(1e4),
         }
     },
@@ -342,7 +342,7 @@ RUN_PARAMS = {
         'snapshot_gap': 2000
     },
     'pusher': { # 17 DoF
-        'snapshot_gap': 1000
+        'snapshot_gap': 500
     },
 }
 
