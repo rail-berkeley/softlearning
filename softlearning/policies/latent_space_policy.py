@@ -58,9 +58,6 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         self.name = name
         self.build()
 
-        self._scope_name = (
-                tf.get_variable_scope().name + "/" + name
-        ).lstrip("/")
         super(NNPolicy, self).__init__(env_spec)
 
     def actions_for(self, observations, latents=None,
@@ -253,11 +250,6 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
         self._is_deterministic = was_deterministic
         self._fixed_h = old_fixed_h
-
-    def get_params_internal(self, **tags):
-        if tags:
-            raise NotImplementedError
-        return tf.trainable_variables(scope=self._scope_name)
 
     def reset(self, dones=None):
         if self._fix_h_on_reset:

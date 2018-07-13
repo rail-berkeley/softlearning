@@ -54,10 +54,6 @@ class GMMPolicy(NNPolicy, Serializable):
         self.name = name
         self.build()
 
-        self._scope_name = (
-            tf.get_variable_scope().name + "/" + name
-        ).lstrip("/")
-
         # TODO.code_consolidation: This should probably call
         # `super(GMMPolicy, self).__init__`
         super(NNPolicy, self).__init__(env_spec)

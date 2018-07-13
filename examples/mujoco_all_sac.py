@@ -213,6 +213,12 @@ def run_experiment(variant):
         save_full_state=False,
     )
 
+    from pprint import pprint
+    pprint(tf.trainable_variables())
+    print('target policy variables')
+    with tf.variable_scope('target'):
+        pprint(policy.get_params_internal())
+    import ipdb; ipdb.set_trace()
     algorithm.train()
 
 
