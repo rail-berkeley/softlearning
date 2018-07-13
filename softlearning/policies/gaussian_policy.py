@@ -43,10 +43,6 @@ class GaussianPolicy(NNPolicy, Serializable):
         self.name = name
         self.build()
 
-        self._scope_name = (
-                tf.get_variable_scope().name + "/" + name
-        ).lstrip("/")
-
         super(NNPolicy, self).__init__(env_spec)
 
     def actions_for(self, observations, name=None, reuse=tf.AUTO_REUSE,
