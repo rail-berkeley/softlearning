@@ -55,7 +55,9 @@ LSP_POLICY_PARAMS = {
         's_t_units': 21,
     },
     'pusher': { # 12 DoF
-        'preprocessing_layer_sizes': (M, M, 24),
+        'coupling_layers': 4,
+        'preprocessing_layer_sizes': (M*2, M, M//2, 24),
+        's_t_layers': 1,
         's_t_units': 12,
     },
 }
