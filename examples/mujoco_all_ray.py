@@ -91,6 +91,7 @@ def parse_args():
                         default='default')
     parser.add_argument('--policy',
                         type=str,
+                        nargs='+',
                         choices=('gaussian', 'gmm', 'lsp'),
                         default='gaussian')
     parser.add_argument('--env', type=str, default=DEFAULT_ENV)
@@ -253,8 +254,6 @@ def main():
     if (not domain) or (not task):
         domain, task = parse_domain_and_task(args.env)
 
-    variants = get_variant_spec(domain=domain, task=task, policy=args.policy)
-
     tune.register_trainable('mujoco-runner', run_experiment)
 
     if args.mode == 'local':
@@ -265,16 +264,23 @@ def main():
         local_dir_base = '~/ray_results'
 
     local_dir = '{}/{}/{}'.format(local_dir_base, domain, task)
-    variants['run_params']['local_dir'] = local_dir
+
+    variant_specs = []
+    for policy in args.policy:
+        variant_spec = get_variant_spec(
+            domain=domain, task=task, policy=policy)
+        variant_spec['run_params']['local_dir'] = local_dir
+        variant_specs.append(variant_spec)
 
     tune.run_experiments({
-        args.exp_name: {
+        "{}-{}".format(args.exp_name, policy): {
             'run': 'mujoco-runner',
             'trial_resources': {'cpu': 16},
-            'config': variants,
+            'config': variant_spec,
             'local_dir': local_dir,
             'upload_dir': 'gs://sac-ray-test/ray/results'
         }
+        for policy, variant_spec in zip(args.policy, variant_specs)
     })
 
 if __name__ == '__main__':
