@@ -20,7 +20,7 @@ from softlearning.misc.utils import timestamp
 from softlearning.policies import LatentSpacePolicy
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
-from softlearning.preprocessors import MLPPreprocessor
+from softlearning.preprocessors import FeedforwardNetPreprocessor
 from softlearning.misc import tf_utils
 
 try:
@@ -299,9 +299,10 @@ def run_experiment(variant):
 
     preprocessing_layer_sizes = variant.get('preprocessing_layer_sizes')
     observations_preprocessor = (
-        MLPPreprocessor(env_spec=env.spec,
-                        layer_sizes=preprocessing_layer_sizes,
-                        name='high_level_observations_preprocessor')
+        FeedforwardNetPreprocessor(
+            env_spec=env.spec,
+            layer_sizes=preprocessing_layer_sizes,
+            name='high_level_observations_preprocessor')
         if preprocessing_layer_sizes is not None
         else None
     )

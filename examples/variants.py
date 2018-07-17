@@ -11,8 +11,6 @@ LSP_POLICY_PARAMS_BASE = {
     'coupling_layers': 2,
     's_t_layers': 1,
     'action_prior': 'uniform',
-    # 'preprocessing_layer_sizes': None,
-    'preprocessing_output_nonlinearity': 'relu',
     'reparameterize': REPARAMETERIZE,
     'squash': True
 }
@@ -126,6 +124,82 @@ POLICY_PARAMS = {
         k: dict(GAUSSIAN_POLICY_PARAMS_BASE, **v)
         for k, v in GAUSSIAN_POLICY_PARAMS.items()
     },
+}
+
+PREPROCESSOR_PARAMS_BASE = {
+    'function_name': 'feedforward',
+    'kwargs': {
+        'hidden_layer_sizes': (M, M),
+        'output_size': 42,
+    },
+    # 'function_name': 'simple_convnet',
+    # 'kwargs': {
+    #     'image_shape': (16, 16, 32),
+    #     'output_size': 42,
+    # },
+}
+
+LSP_PREPROCESSOR_PARAMS = {
+    'swimmer-gym': {  # 2 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 4,  # 2*DoF
+        }
+    },
+    'swimmer-rllab': {  # 2 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 4,  # 2*DoF
+        }
+    },
+    'hopper': {  # 3 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 6,  # 2*DoF
+        }
+    },
+    'half-cheetah': {  # 6 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 12,  # 2*DoF
+        }
+    },
+    'walker': {  # 6 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 12,  # 2*DoF
+        }
+    },
+    'ant-gym': {  # 8 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 16,  # 2*DoF
+        }
+    },
+    'ant-rllab': {  # 8 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 16,  # 2*DoF
+        }
+    },
+    'humanoid-gym': {  # 17 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 34,  # 2*DoF
+        }
+    },
+    'humanoid-rllab': {  # 21 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 42,  # 2*DoF
+        }
+    }
+}
+
+PREPROCESSOR_PARAMS = {
+    'lsp': LSP_PREPROCESSOR_PARAMS,
+    'gmm': None,
+    'gaussian': None,
 }
 
 VALUE_FUNCTION_PARAMS = {
@@ -387,6 +461,10 @@ def get_variants(domain, task, policy):
         'env_params': ENV_PARAMS[domain].get(task, {}),
         'policy_params': POLICY_PARAMS[policy][domain],
         'value_fn_params': VALUE_FUNCTION_PARAMS,
+        'preprocessor_params': deep_update(
+            PREPROCESSOR_PARAMS_BASE,
+            PREPROCESSOR_PARAMS[policy][domain],
+        ),
         'algorithm_params': deep_update(
             ALGORITHM_PARAMS_BASE,
             ALGORITHM_PARAMS[domain]
