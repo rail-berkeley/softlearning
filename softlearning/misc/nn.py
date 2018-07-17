@@ -1,3 +1,5 @@
+from abc import ABCMeta, abstractmethod
+
 import tensorflow as tf
 
 from rllab.core.serializable import Serializable
@@ -7,12 +9,12 @@ from softlearning.misc import tf_utils
 
 
 def feedforward_net_v2(inputs,
-                    hidden_layer_sizes,
-                    output_size,
-                    activation=tf.nn.relu,
-                    output_activation=None,
-                    *args,
-                    **kwargs):
+                       hidden_layer_sizes,
+                       output_size,
+                       activation=tf.nn.relu,
+                       output_activation=None,
+                       *args,
+                       **kwargs):
     out = inputs
     for units in hidden_layer_sizes:
         out = tf.layers.dense(
@@ -37,7 +39,7 @@ def feedforward_net_template(
         output_size,
         activation=tf.nn.relu,
         output_activation=None,
-        template_name="feedforward_net_template",
+        name="feedforward_net_template",
         create_scope_now_=False,
         *args,
         **kwargs):
@@ -52,37 +54,39 @@ def feedforward_net_template(
             **kwargs)
 
     return tf.make_template(
-        template_name,
+        name,
         _fn,
         create_scope_now_=create_scope_now_)
 
 
-class FeedforwardFunction(Parameterized, Serializable):
-    def __init__(self,
-                 name,
-                 hidden_layer_sizes,
-                 output_size,
-                 activation=tf.nn.relu,
-                 output_activation=None,
-                 create_scope_now_=False):
+class TemplateFunction(Parameterized, Serializable, metaclass=ABCMeta):
+    def __init__(self, *args, **kwargs):
         Parameterized.__init__(self)
         Serializable.quick_init(self, locals())
 
-        self._name = name
+        self._function = self.template_function(*args, **kwargs)
 
-        self._function = feedforward_net_template(
-            hidden_layer_sizes,
-            output_size=output_size,
-            activation=activation,
-            output_activation=output_activation,
-            template_name=self._name,
-            create_scope_now_=create_scope_now_)
+    @property
+    @abstractmethod
+    def template_function(self):
+        pass
 
     def __call__(self, *inputs):
         return self._function(tf.concat(inputs, axis=-1))
 
     def get_params_internal(self):
         return self._function.trainable_variables
+
+
+class FeedforwardFunction(TemplateFunction):
+    def __init__(self, *args, name='feedforward_function', **kwargs):
+        Serializable.quick_init(self, locals())
+
+        super(FeedforwardNetFunction, self).__init__(*args, name=name, **kwargs)
+
+    @property
+    def template_function(self):
+        return feedforward_net_template
 
 
 def feedforward_net(inputs,
