@@ -45,7 +45,7 @@ class StochasticNNPolicy(NNPolicy, Serializable):
 
         latents = tf.random_normal(latent_shape)
 
-        with tf.variable_scope(self._name, reuse=reuse):
+        with tf.variable_scope(self.name, reuse=reuse):
             raw_actions = feedforward_net(
                 (observations, latents),
                 layer_sizes=self._layer_sizes,
