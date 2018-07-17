@@ -57,6 +57,34 @@ def feedforward_net_template(
         create_scope_now_=create_scope_now_)
 
 
+class FeedforwardFunction(Parameterized, Serializable):
+    def __init__(self,
+                 name,
+                 hidden_layer_sizes,
+                 output_size,
+                 activation=tf.nn.relu,
+                 output_activation=None,
+                 create_scope_now_=False):
+        Parameterized.__init__(self)
+        Serializable.quick_init(self, locals())
+
+        self._name = name
+
+        self._function = feedforward_net_template(
+            hidden_layer_sizes,
+            output_size=output_size,
+            activation=activation,
+            output_activation=output_activation,
+            template_name=self._name,
+            create_scope_now_=create_scope_now_)
+
+    def __call__(self, *inputs):
+        return self._function(tf.concat(inputs, axis=-1))
+
+    def get_params_internal(self):
+        return self._function.trainable_variables
+
+
 def feedforward_net(inputs,
                     layer_sizes,
                     activation_fn=tf.nn.relu,
