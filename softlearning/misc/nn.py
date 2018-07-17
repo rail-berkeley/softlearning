@@ -6,6 +6,57 @@ from sandbox.rocky.tf.core.parameterized import Parameterized
 from softlearning.misc import tf_utils
 
 
+def feedforward_net_v2(inputs,
+                    hidden_layer_sizes,
+                    output_size,
+                    activation=tf.nn.relu,
+                    output_activation=None,
+                    *args,
+                    **kwargs):
+    out = inputs
+    for units in hidden_layer_sizes:
+        out = tf.layers.dense(
+            inputs=out,
+            units=units,
+            activation=activation,
+            *args,
+            **kwargs)
+
+    out = tf.layers.dense(
+        inputs=out,
+        units=output_size,
+        activation=output_activation,
+        *args,
+        **kwargs)
+
+    return out
+
+
+def feedforward_net_template(
+        hidden_layer_sizes,
+        output_size,
+        activation=tf.nn.relu,
+        output_activation=None,
+        template_name="feedforward_net_template",
+        create_scope_now_=False,
+        *args,
+        **kwargs):
+    def _fn(inputs):
+        return feedforward_net_v2(
+            inputs,
+            hidden_layer_sizes,
+            output_size,
+            activation=tf.nn.relu,
+            output_activation=None,
+            *args,
+            **kwargs)
+
+    return tf.make_template(
+        template_name,
+        _fn,
+        create_scope_now_=create_scope_now_)
+
+
 def feedforward_net(inputs,
                     layer_sizes,
                     activation_fn=tf.nn.relu,
