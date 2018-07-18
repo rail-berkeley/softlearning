@@ -193,7 +193,7 @@ LSP_PREPROCESSOR_PARAMS = {
         'function_name': 'simple_convnet',
         'kwargs': {
             'image_size': lambda spec: (
-                spec['env_params']['image_size']),
+                spec['config']['env_params']['image_size']),
             'num_outputs': 12  # 6 for preprocessed images + 6 for raw joints
         }
     }
