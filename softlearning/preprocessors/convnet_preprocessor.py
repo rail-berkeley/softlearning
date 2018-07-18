@@ -10,13 +10,19 @@ import numpy as np
 
 
 def convnet_preprocessor_template(
+        image_size,
         num_outputs,
+        data_format='channels_last',
         name=None):
+    if data_format == 'channels_last':
+        H, W, C = image_size
+    elif data_format == 'channels_first':
+        C, H, W = image_size
 
     # TODO.hartikainen: should this be a variable_scope instead?
     with tf.name_scope(name, "convnet_preprocessor_template"):
         def _fn(x):
-            input_layer = x
+            input_layer = tf.reshape(x, (-1, W, H, C))
 
             conv1 = tf.layers.conv2d(
                 inputs=input_layer,
