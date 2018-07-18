@@ -150,7 +150,7 @@ def run_experiment(variant):
                 reg=1e-3,
         )
     elif policy_params['type'] == 'lsp':
-        if preprocessor_params is not None:
+        if preprocessor_params:
             preprocessor_fn = PREPROCESSOR_FUNCTIONS[
                 preprocessor_params.get('function_name')]
             preprocessor = preprocessor_fn(

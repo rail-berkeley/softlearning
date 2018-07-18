@@ -132,11 +132,6 @@ PREPROCESSOR_PARAMS_BASE = {
         'hidden_layer_sizes': (M, M),
         'output_size': 42,
     },
-    # 'function_name': 'simple_convnet',
-    # 'kwargs': {
-    #     'image_shape': (16, 16, 32),
-    #     'output_size': 42,
-    # },
 }
 
 LSP_PREPROCESSOR_PARAMS = {
@@ -198,8 +193,8 @@ LSP_PREPROCESSOR_PARAMS = {
 
 PREPROCESSOR_PARAMS = {
     'lsp': LSP_PREPROCESSOR_PARAMS,
-    'gmm': None,
-    'gaussian': None,
+    'gmm': {},
+    'gaussian': {},
 }
 
 VALUE_FUNCTION_PARAMS = {
@@ -463,7 +458,7 @@ def get_variants(domain, task, policy):
         'value_fn_params': VALUE_FUNCTION_PARAMS,
         'preprocessor_params': deep_update(
             PREPROCESSOR_PARAMS_BASE,
-            PREPROCESSOR_PARAMS[policy][domain],
+            PREPROCESSOR_PARAMS[policy].get(domain, {}),
         ),
         'algorithm_params': deep_update(
             ALGORITHM_PARAMS_BASE,
