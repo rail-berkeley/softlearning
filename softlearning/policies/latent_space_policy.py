@@ -67,8 +67,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
         with tf.variable_scope(name, reuse=reuse):
             conditions = (
-                self._observations_preprocessor.output_for(
-                    observations, reuse=reuse)
+                self._observations_preprocessor(observations)
                 if self._observations_preprocessor is not None
                 else observations)
 
@@ -120,8 +119,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
         with tf.variable_scope(name, reuse=reuse):
             conditions = (
-                self._observations_preprocessor.output_for(
-                    observations, reuse=reuse)
+                self._observations_preprocessor(observations)
                 if self._observations_preprocessor is not None
                 else observations)
 
