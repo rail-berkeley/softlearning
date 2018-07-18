@@ -17,6 +17,8 @@ class StochasticNNPolicy(NNPolicy, Serializable):
                  name='policy'):
         Serializable.quick_init(self, locals())
 
+        # name is set again in the superclass __init__ function, but actions_for needs name to be set
+        self.name = name
         self._action_dim = env_spec.action_space.flat_dim
         self._observation_dim = env_spec.observation_space.flat_dim
         self._layer_sizes = list(hidden_layer_sizes) + [self._action_dim]

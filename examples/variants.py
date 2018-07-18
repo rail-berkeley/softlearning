@@ -207,7 +207,7 @@ ALGORITHM_PARAMS_BASE = {
     'tau': 0.005,
     'target_entropy': 'auto',
     'reward_scale': 1.0,
-    'store_extra_policy_info': True,
+    'store_extra_policy_info': False,
 
     'base_kwargs': {
         'epoch_length': 1000,
