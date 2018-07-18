@@ -15,7 +15,11 @@ from softlearning.misc import tf_utils
 EPS = 1e-6
 
 class GMMPolicy(NNPolicy, Serializable):
-    """Gaussian Mixture Model policy"""
+    """
+    Gaussian Mixture Model policy
+
+    TODO: change interfaces to match other policies to support returning as log_pis for given actions.
+    """
     def __init__(self, env_spec, K=2, hidden_layer_sizes=(100, 100), reg=1e-3,
                  squash=True, reparameterize=False, qf=None, name='gmm_policy'):
         """
@@ -49,10 +53,6 @@ class GMMPolicy(NNPolicy, Serializable):
 
         self.name = name
         self.build()
-
-        self._scope_name = (
-            tf.get_variable_scope().name + "/" + name
-        ).lstrip("/")
 
         # TODO.code_consolidation: This should probably call
         # `super(GMMPolicy, self).__init__`

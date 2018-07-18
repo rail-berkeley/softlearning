@@ -21,7 +21,6 @@ class StochasticNNPolicy(NNPolicy, Serializable):
         self._observation_dim = env_spec.observation_space.flat_dim
         self._layer_sizes = list(hidden_layer_sizes) + [self._action_dim]
         self._squash = squash
-        self._name = name
 
         self._observation_ph = tf.placeholder(
             tf.float32,
@@ -31,7 +30,7 @@ class StochasticNNPolicy(NNPolicy, Serializable):
         self._actions = self.actions_for(self._observation_ph)
 
         super(StochasticNNPolicy, self).__init__(
-            env_spec, self._observation_ph, self._actions, self._name)
+            name, env_spec, self._observation_ph, self._actions)
 
     def actions_for(self, observations, n_action_samples=1, reuse=False):
 
@@ -46,7 +45,7 @@ class StochasticNNPolicy(NNPolicy, Serializable):
 
         latents = tf.random_normal(latent_shape)
 
-        with tf.variable_scope(self._name, reuse=reuse):
+        with tf.variable_scope(self.name, reuse=reuse):
             raw_actions = feedforward_net(
                 (observations, latents),
                 layer_sizes=self._layer_sizes,

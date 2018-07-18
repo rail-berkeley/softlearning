@@ -14,6 +14,7 @@ from softlearning.misc import tf_utils
 
 EPS = 1e-6
 
+
 class GaussianPolicy(NNPolicy, Serializable):
     def __init__(self, env_spec, hidden_layer_sizes=(100, 100), reg=1e-3,
                  squash=True, reparameterize=True, name='gaussian_policy'):
@@ -42,15 +43,10 @@ class GaussianPolicy(NNPolicy, Serializable):
         self.name = name
         self.build()
 
-        self._scope_name = (
-            tf.get_variable_scope().name + "/" + name
-        ).lstrip("/")
-
         super(NNPolicy, self).__init__(env_spec)
 
-    def actions_for(self, observations, latents=None,
-                    name=None, reuse=tf.AUTO_REUSE,
-                    with_log_pis=False, regularize=False):
+    def actions_for(self, observations, name=None, reuse=tf.AUTO_REUSE,
+                    with_log_pis=False, with_raw_actions=False):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
@@ -63,23 +59,63 @@ class GaussianPolicy(NNPolicy, Serializable):
             )
         raw_actions = distribution.x_t
         actions = tf.tanh(raw_actions) if self._squash else raw_actions
+        return_list = [actions]
 
         # TODO: should always return same shape out
         # Figure out how to make the interface for `log_pis` cleaner
         if with_log_pis:
-            # TODO.code_consolidation: should come from log_pis_for
-            log_pis = distribution.log_p_t
-            if self._squash:
-                log_pis -= self._squash_correction(raw_actions)
-            return actions, log_pis
+            log_pis = self._log_pis_for_raw(observations, raw_actions,
+                                            name)
+            return_list.append(log_pis)
+
+        if with_raw_actions:
+            return_list.append(raw_actions)
+
+        # not sure the best way of returning variable outputs
+        if len(return_list) > 1:
+            return return_list
 
         return actions
+
+    def _log_pis_for_raw(self, observations, actions, name=None,
+                         reuse=tf.AUTO_REUSE):
+        name = name or self.name
+
+        with tf.variable_scope(name, reuse=reuse):
+            distribution = Normal(
+                hidden_layers_sizes=self._hidden_layers,
+                Dx=self._Da,
+                reparameterize=self._reparameterize,
+                cond_t_lst=(observations,),
+                reg=self._reg
+            )
+        log_pis = distribution.log_prob(actions)
+        if self._squash:
+            log_pis -= self._squash_correction(actions)
+        return log_pis
+
+    def log_pis_for(self, observations, raw_actions=None, actions=None, name=None,
+                    reuse=tf.AUTO_REUSE):
+        assert raw_actions is not None or actions is not None, 'Must provide either actions or raw_actions'
+
+        # we prefer to use raw actions as to avoid instability with atanh
+        if raw_actions is not None:
+            return self._log_pis_for_raw(observations, raw_actions, name, reuse)
+        if self._squash:
+            actions = tf.atanh(actions)
+        return self._log_pis_for_raw(observations, actions, name,
+                                     reuse)
 
     def build(self):
         self._observations_ph = tf.placeholder(
             dtype=tf.float32,
             shape=(None, self._Ds),
             name='observations',
+        )
+        self._actions_ph = tf.placeholder(
+            dtype=tf.float32,
+            shape=(None, self._Da),
+            name='actions',
         )
 
         with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
@@ -91,37 +127,43 @@ class GaussianPolicy(NNPolicy, Serializable):
                 reg=self._reg,
             )
 
-        raw_actions = self.distribution.x_t
-        self._actions = tf.tanh(raw_actions) if self._squash else raw_actions
+        self._actions, self._log_pis, self._raw_actions = self.actions_for(
+            self._observations_ph, with_log_pis=True, with_raw_actions=True)
 
     @overrides
-    def get_actions(self, observations):
+    def get_actions(self, observations, with_log_pis=False, with_raw_actions=False):
         """Sample actions based on the observations.
 
         If `self._is_deterministic` is True, returns the mean action for the
         observations. If False, return stochastically sampled action.
 
-        TODO.code_consolidation: This should be somewhat similar with
-        `LatentSpacePolicy.get_actions`.
         """
-        if self._is_deterministic: # Handle the deterministic case separately.
+        if self._is_deterministic:  # Handle the deterministic case separately.
 
             feed_dict = {self._observations_ph: observations}
 
             # TODO.code_consolidation: these shapes should be double checked
             # for case where `observations.shape[0] > 1`
-            mu = tf.get_default_session().run(
+            raw_mu = tf.get_default_session().run(
                 self.distribution.mu_t, feed_dict)  # 1 x Da
-            if self._squash:
-                mu = np.tanh(mu)
+            mu = np.tanh(raw_mu) if self._squash else raw_mu
+
+            assert not with_log_pis, 'No log pi for deterministic action'
+
+            if with_raw_actions:
+                return mu, raw_mu
 
             return mu
 
-        return super(GaussianPolicy, self).get_actions(observations)
+        return super(GaussianPolicy, self).get_actions(observations, with_log_pis, with_raw_actions)
 
     def _squash_correction(self, actions):
-        if not self._squash: return 0
-        return tf.reduce_sum(tf.log(1 - tf.tanh(actions) ** 2 + EPS), axis=1)
+        if not self._squash:
+            return 0
+        # return tf.reduce_sum(tf.log(1 - tf.tanh(actions) **2 + EPS), axis=1)
+
+        # numerically stable squash correction without bias from EPS
+        return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)), axis=1)
 
     @contextmanager
     def deterministic(self, set_deterministic=True):
@@ -146,19 +188,19 @@ class GaussianPolicy(NNPolicy, Serializable):
     def log_diagnostics(self, iteration, batch):
         """Record diagnostic information to the logger.
 
-        Records the mean, min, max, and standard deviation of the GMM
-        means, component weights, and covariances.
+        Records the mean, min, max, and standard deviation of the 
+        means and covariances.
         """
 
         feeds = {self._observations_ph: batch['observations']}
         sess = tf_utils.get_default_session()
-        mu, log_sig, log_pi = sess.run(
+        actions, raw_actions, log_pi, mu, log_sig, = sess.run(
             (
+                self._actions,
+                self._raw_actions,
+                self._log_pis,
                 self.distribution.mu_t,
                 self.distribution.log_sig_t,
-                # TODO: Move log_pi and correction under self.log_pi_for()
-                (self.distribution.log_p_t
-                 - self._squash_correction(self.distribution.x_t)),
             ),
             feeds
         )

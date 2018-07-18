@@ -7,40 +7,48 @@ from sandbox.rocky.tf.policies.base import Policy
 
 
 class NNPolicy(Policy, Serializable):
-    def __init__(self, env_spec, observation_ph, actions,
-                 scope_name=None):
+    def __init__(self, name, env_spec, observation_ph, actions):
         Serializable.quick_init(self, locals())
 
+        self.name = name
         self._observations_ph = observation_ph
         self._actions = actions
-        self._scope_name = (
-            tf.get_variable_scope().name if not scope_name else scope_name
-        )
+
         super(NNPolicy, self).__init__(env_spec)
 
     @overrides
-    def get_action(self, observation):
+    def get_action(self, observation, with_log_pis=False, with_raw_actions=False):
         """Sample single action based on the observations."""
-        return self.get_actions(observation[None])[0], {}
+        outputs = self.get_actions(observation[None], with_log_pis, with_raw_actions)
+        if with_log_pis or with_raw_actions:
+            outputs = [output[0] for output in outputs]
+            return outputs + [{}]
+
+        return outputs[0], {}
 
     @overrides
-    def get_actions(self, observations):
+    def get_actions(self, observations, with_log_pis=False, with_raw_actions=False):
         """Sample actions based on the observations."""
         feed_dict = {self._observations_ph: observations}
-        actions = tf.get_default_session().run(self._actions, feed_dict)
-        return actions
+        ops = [self._actions]
+        if with_log_pis:
+            ops.append(self._log_pis)
+        if with_raw_actions:
+            ops.append(self._raw_actions)
+        outputs = tf.get_default_session().run(ops, feed_dict)
+        return outputs
 
     @overrides
     def log_diagnostics(self, paths):
         pass
 
     @overrides
-    def get_params_internal(self, **tags):
+    def get_params_internal(self, scope='', **tags):
         """TODO: rewrite this using tensorflow collections."""
         if tags:
             raise NotImplementedError
-        scope = self._scope_name
-        # Add "/" to 'scope' unless it's empty (otherwise get_collection will
-        # return all parameters that start with 'scope'.
-        scope = scope if scope == '' else scope + '/'
-        return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope)
+
+        scope = scope or tf.get_variable_scope().name
+        scope += '/' + self.name if len(scope) else self.name
+
+        return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
