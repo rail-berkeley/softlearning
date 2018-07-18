@@ -25,8 +25,8 @@ def convnet_preprocessor_template(
     # TODO.hartikainen: should this be a variable_scope instead?
     with tf.name_scope(name, "convnet_preprocessor_template"):
         def _fn(x):
-            # return tf.layers.dense(inputs=x, units=num_outputs)
-            input_layer = tf.reshape(x, (-1, H, W, C))
+            input_images, input_raw = x[..., :H*W*C], x[..., H*W*C:]
+            input_layer = tf.reshape(input_images, (-1, H, W, C))
 
             conv1 = tf.layers.conv2d(
                 inputs=input_layer,
@@ -51,9 +51,13 @@ def convnet_preprocessor_template(
                 pool2, [-1, np.prod(pool2.shape.as_list()[1:])])
             dense1 = tf.layers.dense(
                 inputs=pool2_flat, units=1024, activation=tf.nn.relu)
-            dense2 = tf.layers.dense(inputs=dense1, units=num_outputs)
+            dense2 = tf.layers.dense(
+                inputs=dense1,
+                units=num_outputs-input_raw.shape[-1])
 
-            return dense2
+            out = tf.concat([dense2, input_raw], axis=-1)
+
+            return out
 
         return tf.make_template(
             "convnet_preprocessor_template", _fn)
