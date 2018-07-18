@@ -16,7 +16,8 @@ class FeedforwardNetPreprocessorV2(TemplateFunction, Serializable):
     def __init__(self, *args, name='feedforward_net_preprocessor', **kwargs):
         Serializable.quick_init(self, locals())
 
-        super(FeedforwardNetPreprocessorV2, self).__init__(*args, name=name, **kwargs)
+        super(FeedforwardNetPreprocessorV2, self).__init__(
+            *args, name=name, **kwargs)
 
     @property
     def template_function(self):
