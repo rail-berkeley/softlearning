@@ -10,7 +10,7 @@ import numpy as np
 
 
 def convnet_preprocessor_template(
-        output_size,
+        num_outputs,
         name=None):
 
     # TODO.hartikainen: should this be a variable_scope instead?
@@ -41,7 +41,7 @@ def convnet_preprocessor_template(
                 pool2, [-1, np.prod(pool2.shape.as_list()[1:])])
             dense1 = tf.layers.dense(
                 inputs=pool2_flat, units=1024, activation=tf.nn.relu)
-            dense2 = tf.layers.dense(inputs=dense1, units=output_size)
+            dense2 = tf.layers.dense(inputs=dense1, units=num_outputs)
 
             return dense2
 
