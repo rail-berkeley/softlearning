@@ -163,9 +163,8 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
         self._actions, self._log_pis, self._raw_actions = self.actions_for(
             self._observations_ph, with_log_pis=True, with_raw_actions=True)
-        self._det_actions, self._det_actions_raw = self.actions_for(self._observations_ph,
-                                                                    self._latents_ph,
-                                                                    with_raw_actions=True)
+        self._det_actions, self._det_actions_raw = self.actions_for(
+            self._observations_ph, self._latents_ph, with_raw_actions=True)
 
     def get_action(self, observation, with_log_pis=False, with_raw_actions=False):
         """Sample single action based on the observations.
@@ -212,8 +211,8 @@ class LatentSpacePolicy(NNPolicy, Serializable):
                     self._det_actions,
                     feed_dict=feed_dict)
 
-        else:
-            return super(LatentSpacePolicy, self).get_actions(observations, with_log_pis, with_raw_actions)
+        return super(LatentSpacePolicy, self).get_actions(
+            observations, with_log_pis, with_raw_actions)
 
     def _squash_correction(self, actions):
         if not self._squash:
