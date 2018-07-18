@@ -198,6 +198,14 @@ LSP_PREPROCESSOR_PARAMS = {
             'hidden_layer_sizes': (M, M),
             'output_size': 42,  # 2*DoF
         }
+    },
+    'pusher': {
+        'function_name': 'simple_convnet',
+        'kwargs': {
+            'image_size': lambda spec: (
+                spec['config']['env_params']['image_size']),
+            'num_outputs': 6  # 2*DoF
+        }
     }
 }
 
