@@ -121,6 +121,19 @@ def run_experiment(variant):
     task = variant['task']
     domain = variant['domain']
 
+
+    # Unfortunately we have to do hack like this because ray logger fails
+    # if our variant has parentheses.
+    if 'image_size' in env_params:
+        env_params['image_size'] = tuple(
+            int(dim) for dim in env_params['image_size'].split('x'))
+
+    preprocessor_kwargs = preprocessor_params.get('kwargs', {})
+    if 'image_size' in preprocessor_kwargs:
+        preprocessor_kwargs['image_size'] = tuple(
+            int(dim) for dim in preprocessor_kwargs['image_size'].split('x'))
+
+
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
     if algorithm_params['store_extra_policy_info']:

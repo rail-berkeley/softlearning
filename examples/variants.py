@@ -137,11 +137,11 @@ POLICY_PARAMS = {
 }
 
 PREPROCESSOR_PARAMS_BASE = {
-    'function_name': 'feedforward',
-    'kwargs': {
-        'hidden_layer_sizes': (M, M),
-        'output_size': 42,
-    },
+    # 'function_name': 'feedforward',
+    # 'kwargs': {
+    #     'hidden_layer_sizes': (M, M),
+    #     'output_size': 42,
+    # },
 }
 
 LSP_PREPROCESSOR_PARAMS = {
@@ -203,7 +203,7 @@ LSP_PREPROCESSOR_PARAMS = {
         'function_name': 'simple_convnet',
         'kwargs': {
             'image_size': lambda spec: (
-                spec['config']['env_params']['image_size']),
+                spec['env_params']['image_size']),
             'num_outputs': 6  # 2*DoF
         }
     }
