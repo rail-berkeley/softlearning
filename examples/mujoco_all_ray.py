@@ -32,7 +32,10 @@ from softlearning.policies import (
 from softlearning.samplers import SimpleSampler
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
-from softlearning.preprocessors import MLPPreprocessor
+from softlearning.preprocessors import (
+    FeedforwardNetPreprocessor,
+    PREPROCESSOR_FUNCTIONS,
+)
 from examples.variants import parse_domain_and_task, get_variant_spec
 
 ENVIRONMENTS = {
@@ -147,6 +150,7 @@ def run_experiment(variant, reporter):
 
     env_params = variant['env_params']
     policy_params = variant['policy_params']
+    preprocessor_params = variant['preprocessor_params']
     value_fn_params = variant['value_fn_params']
     algorithm_params = variant['algorithm_params']
     replay_pool_params = variant['replay_pool_params']
@@ -179,21 +183,14 @@ def run_experiment(variant, reporter):
                 reg=1e-3,
         )
     elif policy_params['type'] == 'lsp':
-        preprocessing_layer_sizes = policy_params.get(
-            'preprocessing_layer_sizes')
-        if preprocessing_layer_sizes is not None:
-            nonlinearity = {
-                None: None,
-                'relu': tf.nn.relu,
-                'tanh': tf.nn.tanh
-            }[policy_params['preprocessing_output_nonlinearity']]
-
-            observations_preprocessor = MLPPreprocessor(
-                env_spec=env.spec,
-                layer_sizes=preprocessing_layer_sizes,
-                output_nonlinearity=nonlinearity)
+        if preprocessor_params:
+            preprocessor_fn = PREPROCESSOR_FUNCTIONS[
+                preprocessor_params.get('function_name')]
+            preprocessor = preprocessor_fn(
+                *preprocessor_params.get('args', []),
+                **preprocessor_params.get('kwargs', {}))
         else:
-            observations_preprocessor = None
+            preprocessor = None
 
         policy_s_t_layers = policy_params['s_t_layers']
         policy_s_t_units = policy_params['s_t_units']
@@ -211,7 +208,7 @@ def run_experiment(variant, reporter):
             bijector_config=bijector_config,
             reparameterize=policy_params['reparameterize'],
             q_function=qf1,
-            observations_preprocessor=observations_preprocessor)
+            observations_preprocessor=preprocessor)
     elif policy_params['type'] == 'gmm':
         # reparameterize should always be False if using a GMMPolicy
         policy = GMMPolicy(
