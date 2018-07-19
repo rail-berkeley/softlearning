@@ -8,8 +8,40 @@ from softlearning.misc.nn import (
     MLPFunction,
     TemplateFunction,
     feedforward_net_template,
+    feedforward_net_v2,
 )
 from softlearning.misc import tf_utils
+
+def feedforward_net_preprocessor_template(
+        hidden_layer_sizes,
+        output_size,
+        ignore_input=0,
+        activation=tf.nn.relu,
+        output_activation=None,
+        name="feedforward_net_preprocessor_template",
+        create_scope_now_=False,
+        *args,
+        **kwargs):
+    def _fn(inputs):
+        if ignore_input > 0:
+            inputs_to_preprocess = inputs[..., :-ignore_input]
+            passthrough = inputs[..., -ignore_input:]
+        else:
+            inputs_to_preprocess = inputs
+            passthrough = []
+
+        preprocessed = feedforward_net_v2(
+            inputs_to_preprocess,
+            hidden_layer_sizes,
+            output_size-ignore_input,
+            activation=tf.nn.relu,
+            output_activation=None,
+            *args,
+            **kwargs)
+
+        return tf.concat([preprocessed, passthrough], axis=-1)
+
+    return tf.make_template(name, _fn, create_scope_now_=create_scope_now_)
 
 
 class FeedforwardNetPreprocessorV2(TemplateFunction, Serializable):
@@ -21,7 +53,7 @@ class FeedforwardNetPreprocessorV2(TemplateFunction, Serializable):
 
     @property
     def template_function(self):
-        return feedforward_net_template
+        return feedforward_net_preprocessor_template
 
 
 class FeedforwardNetPreprocessor(Parameterized, Serializable):

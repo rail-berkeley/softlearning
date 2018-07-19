@@ -189,10 +189,10 @@ LSP_PREPROCESSOR_PARAMS = {
         }
     },
     'pusher': {
-        'function_name': 'simple_convnet',
+        'function_name': 'feedforward',
         'kwargs': {
-            'image_size': lambda spec: (
-                spec['config']['env_params']['image_size']),
+            'hidden_layer_sizes': (M, M),
+            'ignore_input': 6,  # Don't preprocess the raw joints
             'output_size': 12  # 6 for preprocessed images + 6 for raw joints
         }
     }
