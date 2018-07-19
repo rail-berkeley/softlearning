@@ -17,7 +17,9 @@ def convnet_preprocessor_template(
         output_size,
         data_format='channels_last',
         name="convnet_preprocessor_template",
-        create_scope_now_=False):
+        create_scope_now_=False,
+        *args,
+        **kwargs):
     if data_format == 'channels_last':
         H, W, C = image_size
     elif data_format == 'channels_first':
@@ -32,7 +34,10 @@ def convnet_preprocessor_template(
             filters=32,
             kernel_size=[5, 5],
             padding="same",
-            activation=tf.nn.relu)
+            activation=tf.nn.relu,
+            *args,
+            **kwargs
+        )
         pool1 = tf.layers.max_pooling2d(
             inputs=conv1, pool_size=[2, 2], strides=2)
 
@@ -41,17 +46,25 @@ def convnet_preprocessor_template(
             filters=64,
             kernel_size=[5, 5],
             padding="same",
-            activation=tf.nn.relu)
+            activation=tf.nn.relu,
+            *args,
+            **kwargs)
         pool2 = tf.layers.max_pooling2d(
             inputs=conv2, pool_size=[2, 2], strides=2)
 
         # Dense Layer
         pool2_flat = tf.layers.flatten(pool2)
         dense1 = tf.layers.dense(
-            inputs=pool2_flat, units=1024, activation=tf.nn.relu)
+            inputs=pool2_flat,
+            units=1024,
+            activation=tf.nn.relu,
+            *args,
+            **kwargs)
         dense2 = tf.layers.dense(
             inputs=dense1,
-            units=output_size-input_raw.shape[-1])
+            units=output_size-input_raw.shape[-1],
+            *args,
+            **kwargs)
 
         out = tf.concat([dense2, input_raw], axis=-1)
 
