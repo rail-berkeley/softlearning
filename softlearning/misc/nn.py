@@ -53,10 +53,7 @@ def feedforward_net_template(
             *args,
             **kwargs)
 
-    return tf.make_template(
-        name,
-        _fn,
-        create_scope_now_=create_scope_now_)
+    return tf.make_template(name, _fn, create_scope_now_=create_scope_now_)
 
 
 class TemplateFunction(Parameterized, Serializable, metaclass=ABCMeta):

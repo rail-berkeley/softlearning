@@ -16,51 +16,49 @@ def convnet_preprocessor_template(
         image_size,
         num_outputs,
         data_format='channels_last',
-        name=None):
+        name="convnet_preprocessor_template",
+        create_scope_now_=False):
     if data_format == 'channels_last':
         H, W, C = image_size
     elif data_format == 'channels_first':
         C, H, W = image_size
 
-    # TODO.hartikainen: should this be a variable_scope instead?
-    with tf.name_scope(name, "convnet_preprocessor_template"):
-        def _fn(x):
-            input_images, input_raw = x[..., :H*W*C], x[..., H*W*C:]
-            input_layer = tf.reshape(input_images, (-1, H, W, C))
+    def _fn(x):
+        input_images, input_raw = x[..., :H*W*C], x[..., H*W*C:]
+        input_layer = tf.reshape(input_images, (-1, H, W, C))
 
-            conv1 = tf.layers.conv2d(
-                inputs=input_layer,
-                filters=32,
-                kernel_size=[5, 5],
-                padding="same",
-                activation=tf.nn.relu)
-            pool1 = tf.layers.max_pooling2d(
-                inputs=conv1, pool_size=[2, 2], strides=2)
+        conv1 = tf.layers.conv2d(
+            inputs=input_layer,
+            filters=32,
+            kernel_size=[5, 5],
+            padding="same",
+            activation=tf.nn.relu)
+        pool1 = tf.layers.max_pooling2d(
+            inputs=conv1, pool_size=[2, 2], strides=2)
 
-            conv2 = tf.layers.conv2d(
-                inputs=pool1,
-                filters=64,
-                kernel_size=[5, 5],
-                padding="same",
-                activation=tf.nn.relu)
-            pool2 = tf.layers.max_pooling2d(
-                inputs=conv2, pool_size=[2, 2], strides=2)
+        conv2 = tf.layers.conv2d(
+            inputs=pool1,
+            filters=64,
+            kernel_size=[5, 5],
+            padding="same",
+            activation=tf.nn.relu)
+        pool2 = tf.layers.max_pooling2d(
+            inputs=conv2, pool_size=[2, 2], strides=2)
 
-            # Dense Layer
-            pool2_flat = tf.reshape(
-                pool2, [-1, np.prod(pool2.shape.as_list()[1:])])
-            dense1 = tf.layers.dense(
-                inputs=pool2_flat, units=1024, activation=tf.nn.relu)
-            dense2 = tf.layers.dense(
-                inputs=dense1,
-                units=num_outputs-input_raw.shape[-1])
+        # Dense Layer
+        pool2_flat = tf.reshape(
+            pool2, [-1, np.prod(pool2.shape.as_list()[1:])])
+        dense1 = tf.layers.dense(
+            inputs=pool2_flat, units=1024, activation=tf.nn.relu)
+        dense2 = tf.layers.dense(
+            inputs=dense1,
+            units=num_outputs-input_raw.shape[-1])
 
-            out = tf.concat([dense2, input_raw], axis=-1)
+        out = tf.concat([dense2, input_raw], axis=-1)
 
-            return out
+        return out
 
-        return tf.make_template(
-            "convnet_preprocessor_template", _fn)
+    return tf.make_template(name, _fn, create_scope_now_=create_scope_now_)
 
 
 class ConvnetPreprocessor(TemplateFunction):
