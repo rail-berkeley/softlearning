@@ -1,7 +1,6 @@
 import os.path as osp
 
 import numpy as np
-from skimage.transform import resize
 
 from rllab.core.serializable import Serializable
 from rllab.misc import logger
