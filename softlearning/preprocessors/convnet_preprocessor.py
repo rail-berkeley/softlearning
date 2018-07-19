@@ -46,8 +46,7 @@ def convnet_preprocessor_template(
             inputs=conv2, pool_size=[2, 2], strides=2)
 
         # Dense Layer
-        pool2_flat = tf.reshape(
-            pool2, [-1, np.prod(pool2.shape.as_list()[1:])])
+        pool2_flat = tf.layers.flatten(pool2)
         dense1 = tf.layers.dense(
             inputs=pool2_flat, units=1024, activation=tf.nn.relu)
         dense2 = tf.layers.dense(
