@@ -193,7 +193,7 @@ LSP_PREPROCESSOR_PARAMS = {
         'kwargs': {
             'image_size': lambda spec: (
                 spec['config']['env_params']['image_size']),
-            'num_outputs': 12  # 6 for preprocessed images + 6 for raw joints
+            'output_size': 12  # 6 for preprocessed images + 6 for raw joints
         }
     }
 }

@@ -14,7 +14,7 @@ from rllab.core.serializable import Serializable
 
 def convnet_preprocessor_template(
         image_size,
-        num_outputs,
+        output_size,
         data_format='channels_last',
         name="convnet_preprocessor_template",
         create_scope_now_=False):
@@ -51,7 +51,7 @@ def convnet_preprocessor_template(
             inputs=pool2_flat, units=1024, activation=tf.nn.relu)
         dense2 = tf.layers.dense(
             inputs=dense1,
-            units=num_outputs-input_raw.shape[-1])
+            units=output_size-input_raw.shape[-1])
 
         out = tf.concat([dense2, input_raw], axis=-1)
 
