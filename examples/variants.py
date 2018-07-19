@@ -127,11 +127,10 @@ POLICY_PARAMS = {
 }
 
 PREPROCESSOR_PARAMS_BASE = {
-    # 'function_name': 'feedforward',
-    # 'kwargs': {
-    #     'hidden_layer_sizes': (M, M),
-    #     'output_size': 42,
-    # },
+    'function_name': 'feedforward',
+    'kwargs': {
+        'trainable': tune.grid_search([True, False]),
+    }
 }
 
 LSP_PREPROCESSOR_PARAMS = {
