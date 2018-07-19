@@ -25,6 +25,10 @@ def convnet_preprocessor_template(
     elif data_format == 'channels_first':
         C, H, W = image_size
 
+    # TODO.hartikainen: remove this
+    kwargs.pop('ignore_input', None)
+    kwargs.pop('hidden_layer_sizes', None)
+
     def _fn(x):
         input_images, input_raw = x[..., :H*W*C], x[..., H*W*C:]
         input_layer = tf.reshape(input_images, (-1, H, W, C))

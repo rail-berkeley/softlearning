@@ -127,10 +127,7 @@ POLICY_PARAMS = {
 }
 
 PREPROCESSOR_PARAMS_BASE = {
-    'function_name': 'feedforward',
-    'kwargs': {
-        'trainable': tune.grid_search([True, False]),
-    }
+    'function_name': tune.grid_search(['simple_convnet', 'feedforward']),
 }
 
 LSP_PREPROCESSOR_PARAMS = {
@@ -189,14 +186,16 @@ LSP_PREPROCESSOR_PARAMS = {
         }
     },
     'pusher': {
-        'function_name': 'feedforward',
         'kwargs': {
             'hidden_layer_sizes': (M, M),
+            'output_size': 12,  # 6 for preprocessed images + 6 for raw joints
             'ignore_input': 6,  # Don't preprocess the raw joints
-            'output_size': 12  # 6 for preprocessed images + 6 for raw joints
-        }
+            'trainable': tune.grid_search([True, False]),
+            'image_size': lambda spec: spec['config']['env_params']['image_size'],
+        },
     }
 }
+
 
 PREPROCESSOR_PARAMS = {
     'lsp': LSP_PREPROCESSOR_PARAMS,
@@ -279,7 +278,7 @@ ENV_PARAMS = {
     'pusher': { # 12 DoF
         'image': {
             # Can't use tuples because they break ray.tune log_syncer
-            'image_size': tune.grid_search(['16x16x3', '32x32x3'])
+            'image_size': tune.grid_search(['16x16x3'])
         }
     },
 }

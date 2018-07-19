@@ -22,6 +22,8 @@ def feedforward_net_preprocessor_template(
         create_scope_now_=False,
         *args,
         **kwargs):
+    # TODO.hartikainen: Remove this
+    kwargs.pop('image_size', None)
     def _fn(inputs):
         if ignore_input > 0:
             inputs_to_preprocess = inputs[..., :-ignore_input]
