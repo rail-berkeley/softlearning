@@ -133,7 +133,6 @@ def run_experiment(variant):
         preprocessor_kwargs['image_size'] = tuple(
             int(dim) for dim in preprocessor_kwargs['image_size'].split('x'))
 
-
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
     if algorithm_params['store_extra_policy_info']:
@@ -153,10 +152,10 @@ def run_experiment(variant):
 
     if policy_params['type'] == 'gaussian':
         policy = GaussianPolicy(
-                env_spec=env.spec,
-                hidden_layer_sizes=(M,M),
-                reparameterize=policy_params['reparameterize'],
-                reg=1e-3,
+            env_spec=env.spec,
+            hidden_layer_sizes=[policy_params['hidden_layer_width']]*2,
+            reparameterize=policy_params['reparameterize'],
+            reg=1e-3,
         )
     elif policy_params['type'] == 'lsp':
         if preprocessor_params:

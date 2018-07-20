@@ -43,7 +43,7 @@ LSP_POLICY_PARAMS = {
     'humanoid-rllab': {  # 21 DoF
         's_t_units': 21,
     },
-    'pusher': { # 12 DoF
+    'pusher': {  # 12 DoF
         'coupling_layers': 4,
         's_t_layers': 1,
         's_t_units': 12,
@@ -85,7 +85,8 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
     'type': 'gaussian',
     'reg': 1e-3,
     'action_prior': 'uniform',
-    'reparameterize': REPARAMETERIZE
+    'reparameterize': REPARAMETERIZE,
+    'hidden_layer_width': tune.grid_search([M, M//4])
 }
 
 GAUSSIAN_POLICY_PARAMS = {
@@ -127,7 +128,7 @@ POLICY_PARAMS = {
 }
 
 PREPROCESSOR_PARAMS_BASE = {
-    'function_name': tune.grid_search(['simple_convnet', 'feedforward']),
+    'function_name': None
 }
 
 LSP_PREPROCESSOR_PARAMS = {
@@ -187,11 +188,11 @@ LSP_PREPROCESSOR_PARAMS = {
     },
     'pusher': {
         'kwargs': {
-            'hidden_layer_sizes': (M, M),
-            'output_size': 12,  # 6 for preprocessed images + 6 for raw joints
-            'ignore_input': 6,  # Don't preprocess the raw joints
-            'trainable': tune.grid_search([True, False]),
-            'image_size': lambda spec: spec['config']['env_params']['image_size'],
+            # 'hidden_layer_sizes': (M, M),
+            # 'output_size': 12,  # 6 for preprocessed images + 6 for raw joints
+            # 'ignore_input': 6,  # Don't preprocess the raw joints
+            # 'trainable': tune.grid_search([True, False]),
+            # 'image_size': lambda spec: spec['config']['env_params']['image_size'],
         },
     }
 }
@@ -275,10 +276,10 @@ ENV_PARAMS = {
     },
     'humanoid-rllab': {  # 21 DOF
     },
-    'pusher': { # 12 DoF
+    'pusher': {  # 12 DoF
         'image': {
             # Can't use tuples because they break ray.tune log_syncer
-            'image_size': tune.grid_search(['16x16x3'])
+            'image_size': tune.grid_search(['16x16x3', '32x32x3'])
         }
     },
 }
@@ -346,7 +347,7 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(1e4 + 1),
         }
     },
-    'pusher': { # 12 DoF
+    'pusher': {  # 12 DoF
         'base_kwargs': {
             'n_epochs': int(4e3 + 1),
             'n_initial_exploration_steps': int(1e4),
@@ -362,6 +363,11 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(1e4 + 1),
         }
     },
+    'pusher': {
+        'base_kwargs': {
+            'n_initial_exploration_steps': int(1e4),
+        }
+    }
 }
 
 REPLAY_POOL_PARAMS = {
@@ -409,7 +415,7 @@ RUN_PARAMS = {
     'humanoid-rllab': {  # 21 DoF
         'snapshot_gap': 2000
     },
-    'pusher': { # 17 DoF
+    'pusher': {  # 17 DoF
         'snapshot_gap': 500
     },
 }
@@ -472,6 +478,7 @@ def parse_domain_and_task(env_name):
     domain_tasks = TASKS[domain]
     task = next((task for task in domain_tasks if task in env_name), 'default')
     return domain, task
+
 
 def get_variant_spec(domain, task, policy):
     variant_spec = {
