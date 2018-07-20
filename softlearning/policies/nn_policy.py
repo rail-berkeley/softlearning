@@ -24,7 +24,7 @@ class NNPolicy(Policy, Serializable):
             outputs = [output[0] for output in outputs]
             return outputs + [{}]
 
-        return outputs[0][0], {}
+        return outputs[0], {}
 
     @overrides
     def get_actions(self, observations, with_log_pis=False, with_raw_actions=False):
