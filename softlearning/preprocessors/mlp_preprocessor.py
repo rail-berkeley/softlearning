@@ -12,6 +12,7 @@ from softlearning.misc.nn import (
 )
 from softlearning.misc import tf_utils
 
+
 def feedforward_net_preprocessor_template(
         hidden_layer_sizes,
         output_size,
@@ -24,6 +25,7 @@ def feedforward_net_preprocessor_template(
         **kwargs):
     # TODO.hartikainen: Remove this
     kwargs.pop('image_size', None)
+
     def _fn(inputs):
         if ignore_input > 0:
             inputs_to_preprocess = inputs[..., :-ignore_input]

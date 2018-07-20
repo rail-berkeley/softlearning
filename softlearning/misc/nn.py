@@ -79,7 +79,7 @@ class FeedforwardFunction(TemplateFunction):
     def __init__(self, *args, name='feedforward_function', **kwargs):
         Serializable.quick_init(self, locals())
 
-        super(FeedforwardNetFunction, self).__init__(*args, name=name, **kwargs)
+        super(FeedforwardFunction, self).__init__(*args, name=name, **kwargs)
 
     @property
     def template_function(self):
