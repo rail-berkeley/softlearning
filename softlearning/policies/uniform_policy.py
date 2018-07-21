@@ -33,7 +33,7 @@ class UniformPolicy(Policy, Serializable):
         return return_list + [{}]
 
     @overrides
-    def get_actions(self, observations):
+    def get_actions(self, observations, *args, **kwargs):
         pass
 
     @overrides

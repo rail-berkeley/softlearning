@@ -57,12 +57,12 @@ class SimpleReplayPool(FlexibleReplayPool, Serializable):
     def __getstate__(self):
         pool_state = super(SimpleReplayPool, self).__getstate__()
         pool_state.update({
-            'observations': self._observations.tobytes(),
-            'actions': self._actions.tobytes(),
-            'rewards': self._rewards.tobytes(),
-            'terminals': self._terminals.tobytes(),
-            'next_observations': self._next_obs.tobytes(),
-            'top': self._top,
+            'observations': self.observations.tobytes(),
+            'actions': self.actions.tobytes(),
+            'rewards': self.rewards.tobytes(),
+            'terminals': self.terminals.tobytes(),
+            'next_observations': self.next_observations.tobytes(),
+            'pointer': self._pointer,
             'size': self._size,
         })
         return pool_state
@@ -77,10 +77,10 @@ class SimpleReplayPool(FlexibleReplayPool, Serializable):
         flat_terminals = np.fromstring(
             pool_state['terminals'], dtype=np.uint8)
 
-        self._observations = flat_obs.reshape(self._max_size, -1)
-        self._next_obs = flat_next_obs.reshape(self._max_size, -1)
-        self._actions = flat_actions.reshape(self._max_size, -1)
-        self._rewards = flat_reward.reshape(self._max_size)
-        self._terminals = flat_terminals.reshape(self._max_size)
-        self._top = pool_state['top']
+        self.observations = flat_obs.reshape(self._max_size, -1)
+        self.next_observations = flat_next_obs.reshape(self._max_size, -1)
+        self.actions = flat_actions.reshape(self._max_size, -1)
+        self.rewards = flat_reward.reshape(self._max_size)
+        self.terminals = flat_terminals.reshape(self._max_size)
+        self._pointer = pool_state['pointer']
         self._size = pool_state['size']
