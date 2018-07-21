@@ -40,6 +40,8 @@ class GaussianPolicy(NNPolicy, Serializable):
         self._reparameterize = reparameterize
         self._reg = reg
 
+        self.no_op = tf.no_op()
+
         self.name = name
         self.build()
 
