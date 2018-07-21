@@ -12,13 +12,16 @@ from softlearning.distributions import GMM
 from softlearning.policies import NNPolicy
 from softlearning.misc import tf_utils
 
+
 EPS = 1e-6
+
 
 class GMMPolicy(NNPolicy, Serializable):
     """
     Gaussian Mixture Model policy
 
-    TODO: change interfaces to match other policies to support returning as log_pis for given actions.
+    TODO: change interfaces to match other policies to support returning as
+    log_pis for given actions.
     """
     def __init__(self, env_spec, K=2, hidden_layer_sizes=(100, 100), reg=1e-3,
                  squash=True, reparameterize=False, qf=None, name='gmm_policy'):
@@ -152,7 +155,7 @@ class GMMPolicy(NNPolicy, Serializable):
             qs = self._qf.eval(observations, squashed_mus)
 
             if self._fixed_h is not None:
-                h = self._fixed_h  # TODO.code_consolidation: this needs to be tiled
+                h = self._fixed_h  # TODO.code_consolidation: needs to be tiled
             else:
                 h = np.argmax(qs)  # TODO.code_consolidation: check the axis
 
@@ -164,15 +167,8 @@ class GMMPolicy(NNPolicy, Serializable):
 
             return actions
 
-        return super(GMMPolicy, self).get_actions(observations, with_log_pis, with_raw_actions)
-
-    def _squash_correction(self, actions):
-        if not self._squash:
-            return 0
-        # return tf.reduce_sum(tf.log(1 - tf.tanh(actions) **2 + EPS), axis=1)
-
-        # numerically stable squash correction without bias from EPS
-        return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)), axis=1)
+        return super(GMMPolicy, self).get_actions(
+            observations, with_log_pis, with_raw_actions)
 
     @contextmanager
     def deterministic(self, set_deterministic=True, latent=None):

@@ -22,7 +22,7 @@ class MetaEnv(Serializable):
         total_reward = 0
         for _ in range(self._steps_per_option):
             aug_obs = concat_obs_z(self._obs, meta_action, self._num_skills)
-            (action, _) = self._base_policy.get_action(aug_obs)
+            (action, _, _), _ = self._base_policy.get_action(aug_obs)
             (self._obs, r, done, _) = self._env.step(action)
             total_reward += r
             if done: break
