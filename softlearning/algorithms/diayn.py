@@ -397,7 +397,7 @@ class DIAYN(SAC):
                 for t in range(self._epoch_length):
                     iteration = t + epoch * self._epoch_length
 
-                    action, _ = policy.get_action(aug_obs)
+                    (action, _, _), _ = policy.get_action(aug_obs)
 
                     if self._learn_p_z:
                         (obs, _) = utils.split_aug_obs(aug_obs, self._num_skills)

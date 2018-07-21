@@ -148,22 +148,15 @@ class GaussianPolicy(NNPolicy, Serializable):
                 self.distribution.mu_t, feed_dict)  # 1 x Da
             mu = np.tanh(raw_mu) if self._squash else raw_mu
 
-            assert not with_log_pis, 'No log pi for deterministic action'
+            assert not with_log_pis, "No log_pis for deterministic action"
 
             if with_raw_actions:
-                return mu, raw_mu
+                return mu, None, raw_mu
 
-            return mu
+            return mu, None, None
 
-        return super(GaussianPolicy, self).get_actions(observations, with_log_pis, with_raw_actions)
-
-    def _squash_correction(self, actions):
-        if not self._squash:
-            return 0
-        # return tf.reduce_sum(tf.log(1 - tf.tanh(actions) **2 + EPS), axis=1)
-
-        # numerically stable squash correction without bias from EPS
-        return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)), axis=1)
+        return super(GaussianPolicy, self).get_actions(
+            observations, with_log_pis, with_raw_actions)
 
     @contextmanager
     def deterministic(self, set_deterministic=True):
@@ -188,8 +181,8 @@ class GaussianPolicy(NNPolicy, Serializable):
     def log_diagnostics(self, iteration, batch):
         """Record diagnostic information to the logger.
 
-        Records the mean, min, max, and standard deviation of the 
-        means and covariances.
+        Records the mean, min, max, and standard deviation of means and
+        covariances.
         """
 
         feeds = {self._observations_ph: batch['observations']}

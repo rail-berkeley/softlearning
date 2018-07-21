@@ -23,18 +23,21 @@ class UniformPolicy(Policy, Serializable):
 
         Assumes action spaces are normalized to be the interval [-1, 1]."""
         action = np.random.uniform(-1., 1., self._Da)
-        return_list = [action]
-        if with_log_pis:
-            return_list.append(0.)
-        if with_raw_actions:
-            # atanh is unstable when actions are too close to +/- 1, but seems stable
-            # at least between -1 + 1e-10 and 1 - 1e-10, so we shouldn't need to worry.
-            return_list.append(np.arctanh(action))
-        return return_list + [{}]
+        outputs = (
+            action,
+            0.0 if with_log_pis else None,
+            # atanh is unstable when actions are too close to +/- 1, but seems
+            # stable at least between -1 + 1e-10 and 1 - 1e-10, so we shouldn't
+            # need to worry.
+            np.arctanh(action) if with_raw_actions else None)
+
+        return outputs, {}
 
     @overrides
     def get_actions(self, observations, *args, **kwargs):
-        pass
+        actions, log_pis, raw_actions = None, None, None
+        agent_info = {}
+        return (actions, log_pis, raw_actions), agent_info
 
     @overrides
     def log_diagnostics(self, paths):
