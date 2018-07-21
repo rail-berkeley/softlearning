@@ -1,13 +1,10 @@
 import argparse
 import os
 
-import tensorflow as tf
-import numpy as np
 import ray
 from ray import tune
 
 from rllab.envs.normalized_env import normalize
-from rllab.envs.mujoco.gather.ant_gather_env import AntGatherEnv
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
@@ -22,15 +19,16 @@ from softlearning.environments import (
     MultiDirectionHumanoidEnv,
     CrossMazeAntEnv)
 
-from softlearning.misc.instrument import launch_experiment
 from softlearning.misc.utils import timestamp
 from softlearning.policies import (
     GaussianPolicy,
     LatentSpacePolicy,
     GMMPolicy,
     UniformPolicy)
-from softlearning.samplers import SimpleSampler
-from softlearning.replay_pools import SimpleReplayPool
+from softlearning.samplers import SimpleSampler, ExtraPolicyInfoSampler
+from softlearning.replay_pools import (
+    SimpleReplayPool,
+    ExtraPolicyInfoReplayPool)
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import (
     FeedforwardNetPreprocessor,
@@ -105,9 +103,11 @@ def parse_args():
 
     return args
 
+
 DEFAULT_SNAPSHOT_DIR = '~/ray/results'
 DEFAULT_SNAPSHOT_MODE = 'none'
 DEFAULT_SNAPSHOT_GAP = 1000
+
 
 def setup_rllab_logger(variant):
     """Temporary setup for rllab logger previously handled by run_experiment.
@@ -124,7 +124,6 @@ def setup_rllab_logger(variant):
 
     tabular_log_file = os.path.join(log_dir, 'progress.csv')
     text_log_file = os.path.join(log_dir, 'debug.log')
-    params_log_file = os.path.join(log_dir, 'params.json')
     variant_log_file = os.path.join(log_dir, 'variant.json')
 
     logger.log_variant(variant_log_file, variant)
@@ -150,15 +149,14 @@ def run_experiment(variant, reporter):
 
     env_params = variant['env_params']
     policy_params = variant['policy_params']
-    preprocessor_params = variant['preprocessor_params']
     value_fn_params = variant['value_fn_params']
+    preprocessor_params = variant['preprocessor_params']
     algorithm_params = variant['algorithm_params']
     replay_pool_params = variant['replay_pool_params']
     sampler_params = variant['sampler_params']
 
     task = variant['task']
     domain = variant['domain']
-
 
     # Unfortunately we have to do hack like this because ray logger fails
     # if our variant has parentheses.
@@ -171,11 +169,14 @@ def run_experiment(variant, reporter):
         preprocessor_kwargs['image_size'] = tuple(
             int(dim) for dim in preprocessor_kwargs['image_size'].split('x'))
 
-
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
-    sampler = SimpleSampler(**sampler_params)
-    pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
+    if algorithm_params['store_extra_policy_info']:
+        sampler = ExtraPolicyInfoSampler(**sampler_params)
+        pool = ExtraPolicyInfoReplayPool(env_spec=env.spec, **replay_pool_params)
+    else:
+        sampler = SimpleSampler(**sampler_params)
+        pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
@@ -187,10 +188,10 @@ def run_experiment(variant, reporter):
 
     if policy_params['type'] == 'gaussian':
         policy = GaussianPolicy(
-                env_spec=env.spec,
-                hidden_layer_sizes=(M,M),
-                reparameterize=policy_params['reparameterize'],
-                reg=1e-3,
+            env_spec=env.spec,
+            hidden_layer_sizes=(M, M),
+            reparameterize=policy_params['reparameterize'],
+            reg=1e-3,
         )
     elif policy_params['type'] == 'lsp':
         if preprocessor_params:
@@ -220,7 +221,8 @@ def run_experiment(variant, reporter):
             q_function=qf1,
             observations_preprocessor=preprocessor)
     elif policy_params['type'] == 'gmm':
-        # reparameterize should always be False if using a GMMPolicy
+        assert not policy_params['reparameterize'], (
+            "reparameterize should be False when using a GMMPolicy")
         policy = GMMPolicy(
             env_spec=env.spec,
             K=policy_params['K'],
@@ -243,16 +245,19 @@ def run_experiment(variant, reporter):
         vf=vf,
         lr=algorithm_params['lr'],
         target_entropy=algorithm_params['target_entropy'],
+        reward_scale=algorithm_params['reward_scale'],
         discount=algorithm_params['discount'],
         tau=algorithm_params['tau'],
         reparameterize=policy_params['reparameterize'],
         target_update_interval=algorithm_params['target_update_interval'],
         action_prior=policy_params['action_prior'],
+        store_extra_policy_info=algorithm_params['store_extra_policy_info'],
         save_full_state=False,
     )
 
     for epoch, mean_return in algorithm.train():
         reporter(timesteps_total=epoch, mean_accuracy=mean_return)
+
 
 def main():
     args = parse_args()

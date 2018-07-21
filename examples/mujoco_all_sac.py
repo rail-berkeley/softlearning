@@ -1,11 +1,6 @@
 import argparse
-import os
-
-import tensorflow as tf
-import numpy as np
 
 from rllab.envs.normalized_env import normalize
-from rllab.envs.mujoco.gather.ant_gather_env import AntGatherEnv
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
@@ -120,7 +115,6 @@ def run_experiment(variant):
 
     task = variant['task']
     domain = variant['domain']
-
 
     # Unfortunately we have to do hack like this because ray logger fails
     # if our variant has parentheses.
