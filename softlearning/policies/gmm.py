@@ -117,14 +117,17 @@ class GMMPolicy(NNPolicy, Serializable):
             )
 
         raw_actions = tf.stop_gradient(self.distribution.x_t)
+
         self._actions = tf.tanh(raw_actions) if self._squash else raw_actions
+        self._log_pis = self.distribution.log_p_t
+        self._raw_actions = raw_actions
         # TODO.code_consolidation:
         # This should be standardized with LatentSpacePolicy/NNPolicy
         # self._determistic_actions = self.actions_for(self._observations_ph,
         #                                              self._latents_ph)
 
     @overrides
-    def get_actions(self, observations):
+    def get_actions(self, observations, with_log_pis=False, with_raw_actions=False):
         """Sample actions based on the observations.
 
         If `self._is_deterministic` is True, returns a greedily sampled action
@@ -135,6 +138,8 @@ class GMMPolicy(NNPolicy, Serializable):
         """
         if self._is_deterministic: # Handle the deterministic case separately.
             if self._qf is None: raise AttributeError
+
+            assert not with_log_pis, 'No log pi for deterministic action'
 
             feed_dict = {self._observations_ph: observations}
 
@@ -147,18 +152,27 @@ class GMMPolicy(NNPolicy, Serializable):
             qs = self._qf.eval(observations, squashed_mus)
 
             if self._fixed_h is not None:
-                h = self._fixed_h # TODO.code_consolidation: this needs to be tiled
+                h = self._fixed_h  # TODO.code_consolidation: this needs to be tiled
             else:
-                h = np.argmax(qs) # TODO.code_consolidation: check the axis
+                h = np.argmax(qs)  # TODO.code_consolidation: check the axis
 
             actions = squashed_mus[h, :][None]
+            raw_actions = mus[h, :][None]
+
+            if with_raw_actions:
+                return actions, raw_actions
+
             return actions
 
-        return super(GMMPolicy, self).get_actions(observations)
+        return super(GMMPolicy, self).get_actions(observations, with_log_pis, with_raw_actions)
 
     def _squash_correction(self, actions):
-        if not self._squash: return 0
-        return tf.reduce_sum(tf.log(1 - tf.tanh(actions) ** 2 + EPS), axis=1)
+        if not self._squash:
+            return 0
+        # return tf.reduce_sum(tf.log(1 - tf.tanh(actions) **2 + EPS), axis=1)
+
+        # numerically stable squash correction without bias from EPS
+        return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)), axis=1)
 
     @contextmanager
     def deterministic(self, set_deterministic=True, latent=None):
