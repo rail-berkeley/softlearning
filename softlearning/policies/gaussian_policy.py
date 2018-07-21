@@ -148,14 +148,15 @@ class GaussianPolicy(NNPolicy, Serializable):
                 self.distribution.mu_t, feed_dict)  # 1 x Da
             mu = np.tanh(raw_mu) if self._squash else raw_mu
 
-            assert not with_log_pis, 'No log pi for deterministic action'
+            assert not with_log_pis, "No log_pis for deterministic action"
 
             if with_raw_actions:
-                return mu, raw_mu
+                return mu, None, raw_mu
 
-            return mu
+            return mu, None, None
 
-        return super(GaussianPolicy, self).get_actions(observations, with_log_pis, with_raw_actions)
+        return super(GaussianPolicy, self).get_actions(
+            observations, with_log_pis, with_raw_actions)
 
     def _squash_correction(self, actions):
         if not self._squash:

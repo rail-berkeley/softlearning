@@ -51,7 +51,7 @@ if __name__ == "__main__":
                     else:
                         obs_vec = [obs]
                     for t in range(args.max_path_length):
-                        action, _ = fixed_z_policy.get_action(obs)
+                        (action, _, _), _ = fixed_z_policy.get_action(obs)
                         (obs, _, _, _) = env.step(action)
                         if args.use_qpos:
                             qpos = env.wrapped_env.env.model.data.qpos[:, 0]
