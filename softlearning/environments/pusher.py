@@ -62,11 +62,11 @@ class PusherEnv(Serializable, MujocoEnv):
         return observation, reward, done, info
 
     def compute_reward(self, observations, actions):
-        is_batch = False
+        is_batch = True
         if observations.ndim == 1:
             observations = observations[None]
             actions = actions[None]
-            is_batch = True
+            is_batch = False
 
         arm_pos = observations[:, -6:-3]
         obj_pos = observations[:, -3:]

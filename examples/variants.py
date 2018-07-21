@@ -363,11 +363,6 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(1e4 + 1),
         }
     },
-    'pusher': {
-        'base_kwargs': {
-            'n_initial_exploration_steps': int(1e4),
-        }
-    }
 }
 
 REPLAY_POOL_PARAMS = {
