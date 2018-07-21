@@ -166,13 +166,14 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
         self._actions, self._log_pis, self._raw_actions = self.actions_for(
             self._observations_ph, with_log_pis=True, with_raw_actions=True)
-        self._det_actions, self._det_actions_raw = self.actions_for(self._observations_ph,
-                                                                    self._latents_ph,
-                                                                    with_raw_actions=True)
+        self._det_actions, self._det_actions_raw = self.actions_for(
+            self._observations_ph, self._latents_ph, with_raw_actions=True)
 
-    def get_action(self, observation, with_log_pis=False, with_raw_actions=False):
-        """Sample single action based on the observations.
-        """
+    def get_action(self,
+                   observation,
+                   with_log_pis=False,
+                   with_raw_actions=False):
+        """Sample single action based on the observations."""
 
         if self._is_deterministic and self._n_map_action_candidates > 1:
             observations = np.tile(
@@ -230,7 +231,12 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         # return tf.reduce_sum(tf.log(1 - tf.tanh(actions) **2 + EPS), axis=1)
 
         # numerically stable squash correction without bias from EPS
-        return tf.reduce_sum(2. * (tf.log(2.) - actions - tf.nn.softplus(-2. * actions)), axis=1)
+        return tf.reduce_sum(
+            2.0 * (
+                tf.log(2.)
+                - actions
+                - tf.nn.softplus(-2.0 * actions)
+            ), axis=1)
 
     @contextmanager
     def deterministic(self, set_deterministic=True, h=None):
