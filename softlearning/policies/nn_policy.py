@@ -19,6 +19,19 @@ class NNPolicy(Policy, Serializable):
 
         super(NNPolicy, self).__init__(env_spec)
 
+    def _squash_correction(self, actions):
+        if not self._squash:
+            return 0
+
+        # Numerically stable squash correction without bias from EPS,
+        # return tf.reduce_sum(tf.log(1 - tf.tanh(actions) **2 + EPS), axis=1)
+        return tf.reduce_sum(
+            2.0 * (
+                tf.log(2.0)
+                - actions
+                - tf.nn.softplus(-2. * actions)
+            ), axis=1)
+
     @overrides
     def get_action(self,
                    observation,

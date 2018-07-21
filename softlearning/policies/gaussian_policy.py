@@ -158,19 +158,6 @@ class GaussianPolicy(NNPolicy, Serializable):
         return super(GaussianPolicy, self).get_actions(
             observations, with_log_pis, with_raw_actions)
 
-    def _squash_correction(self, actions):
-        if not self._squash:
-            return 0
-
-        # Numerically stable squash correction without bias from EPS,
-        # return tf.reduce_sum(tf.log(1 - tf.tanh(actions) **2 + EPS), axis=1)
-        return tf.reduce_sum(
-            2.0 * (
-                tf.log(2.0)
-                - actions
-                - tf.nn.softplus(-2. * actions)
-            ), axis=1)
-
     @contextmanager
     def deterministic(self, set_deterministic=True):
         """Context manager for changing the determinism of the policy.
