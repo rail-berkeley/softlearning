@@ -3,7 +3,8 @@ import argparse
 import joblib
 import tensorflow as tf
 
-from rllab.sampler.utils import rollout
+from softlearning.samplers import rollout
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -21,6 +22,7 @@ def parse_args():
 
     return args
 
+
 def simulate_policy(args):
     with tf.Session() as sess:
         data = joblib.load(args.file)
@@ -34,8 +36,9 @@ def simulate_policy(args):
         with policy.deterministic(args.deterministic):
             while True:
                 path = rollout(env, policy,
-                               max_path_length=args.max_path_length,
-                               animated=True, speedup=args.speedup)
+                               path_length=args.max_path_length,
+                               render=True,
+                               speedup=args.speedup)
 if __name__ == "__main__":
     args = parse_args()
     simulate_policy(args)

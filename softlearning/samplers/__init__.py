@@ -51,7 +51,7 @@ def rollout(env, policy, path_length, render=False, speedup=10, callback=None,
                     mode=render_mode,
                 ))
             else:
-                env.render(render_mode)
+                env.render()
                 time_step = 0.05
                 time.sleep(time_step / speedup)
 
