@@ -31,7 +31,11 @@ class PusherEnv(Serializable, MujocoEnv):
     # TODO.before_release Fix target visualization (right now the target is
     # always drawn in (-1, 0), regardless of the actual goal.
 
-    def __init__(self, goal=(0, -1), arm_distance_coeff=0):
+    def __init__(self,
+                 goal=(0, -1),
+                 arm_distance_cost_coeff=0,
+                 goal_distance_cost_coeff=1.0,
+                 action_cost_coeff=0.1):
         """
         goal (`list`): List of two elements denoting the x and y coordinates of
             the goal location. Either of the coordinate can also be a string
@@ -39,6 +43,8 @@ class PusherEnv(Serializable, MujocoEnv):
             coordinate.
         arm_distance_coeff ('float'): Coefficient for the arm-to-object distance
             cost.
+        goal_distance_coeff ('float'): Coefficient for the object-to-goal
+            distance cost.
         """
         Serializable.quick_init(self, locals())
         MujocoEnv.__init__(self, file_path=self.FILE_PATH)
@@ -46,8 +52,9 @@ class PusherEnv(Serializable, MujocoEnv):
         self._goal_mask = [coordinate != 'any' for coordinate in goal]
         self._goal = np.array(goal)[self._goal_mask].astype(np.float32)
 
-        self._arm_distance_coeff = arm_distance_coeff
-        self._action_cost_coeff = 0.1
+        self._arm_distance_cost_coeff = arm_distance_cost_coeff
+        self._goal_distance_cost_coeff = goal_distance_cost_coeff
+        self._action_cost_coeff = action_cost_coeff
 
         # Make the the complete robot visible when visualizing.
         self.model.stat.extent = 10
@@ -76,8 +83,12 @@ class PusherEnv(Serializable, MujocoEnv):
         arm_dists = np.linalg.norm(arm_pos - obj_pos, axis=1)
         ctrl_costs = np.sum(actions**2, axis=1)
 
-        rewards = -self._action_cost_coeff * ctrl_costs - goal_dists
-        rewards -= self._arm_distance_coeff * arm_dists
+        costs = (
+            + self._arm_distance_cost_coeff * arm_dists
+            + self._goal_distance_cost_coeff * goal_dists
+            + self._action_cost_coeff * ctrl_costs)
+
+        rewards = -costs
 
         if not is_batch:
             rewards = rewards.squeeze()
