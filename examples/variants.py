@@ -376,7 +376,7 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS_BASE = {
-    'seed': tune.grid_search([1,2,3,4,5]),
+    'seed': tune.grid_search([1,2,3]),
     'snapshot_mode': 'gap',
     'snapshot_gap': 1000,
     'sync_pkl': True,
