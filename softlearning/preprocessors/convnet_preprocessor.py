@@ -56,7 +56,7 @@ def convnet_preprocessor_template(
         pool2_flat = tf.layers.flatten(pool2)
         dense1 = tf.layers.dense(
             inputs=pool2_flat,
-            units=1024,
+            units=512,
             activation=tf.nn.relu,
             *args,
             **kwargs)
