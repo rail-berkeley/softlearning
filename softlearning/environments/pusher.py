@@ -117,8 +117,7 @@ class PusherEnv(Serializable, MujocoEnv):
 
     def reset(self, init_state=None):
         if init_state:
-            super(PusherEnv, self).reset(init_state)
-            return
+            return super(PusherEnv, self).reset(init_state)
 
         qpos = np.random.uniform(
             low=-0.1, high=0.1, size=self.model.nq) + self.init_qpos.squeeze()
