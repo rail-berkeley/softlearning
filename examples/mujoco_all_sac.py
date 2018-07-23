@@ -16,6 +16,7 @@ from softlearning.environments import (
     MultiDirectionAntEnv,
     MultiDirectionHumanoidEnv,
     CrossMazeAntEnv)
+from softlearning.environments.image_pusher import ImageForkReacherEnv
 
 from softlearning.misc.instrument import launch_experiment
 from softlearning.misc.utils import timestamp
@@ -71,7 +72,8 @@ ENVIRONMENTS = {
     },
     'pusher': {
         'default': PusherEnv,
-        'image': ImagePusherEnv
+        'image': ImagePusherEnv,
+        'reach': ImageForkReacherEnv,
     },
 }
 

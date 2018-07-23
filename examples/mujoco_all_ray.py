@@ -18,6 +18,7 @@ from softlearning.environments import (
     MultiDirectionAntEnv,
     MultiDirectionHumanoidEnv,
     CrossMazeAntEnv)
+from softlearning.environments.image_pusher import ImageForkReacherEnv
 
 from softlearning.misc.utils import timestamp
 from softlearning.policies import (
@@ -71,8 +72,9 @@ ENVIRONMENTS = {
     },
     'pusher': {
         'default': PusherEnv,
-        'image': ImagePusherEnv
-    },
+        'image': ImagePusherEnv,
+        'reach': ImageForkReacherEnv,
+     },
 }
 
 DEFAULT_DOMAIN = DEFAULT_ENV = 'swimmer-rllab'
