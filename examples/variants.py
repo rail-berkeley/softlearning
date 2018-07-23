@@ -278,7 +278,7 @@ ENV_PARAMS = {
         'image': {
             # Can't use tuples because they break ray.tune log_syncer
             'image_size': tune.grid_search(['16x16x3', '32x32x3']),
-            'arm_distance_cost_coeff': [0.3, 1.0, 3.0],
+            'arm_distance_cost_coeff': tune.grid_search([0.3, 1.0, 3.0]),
             'goal_distance_cost_coeff': 0.0,
         }
     },
