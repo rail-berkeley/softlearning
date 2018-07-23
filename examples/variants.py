@@ -187,16 +187,14 @@ LSP_PREPROCESSOR_PARAMS = {
         }
     },
     'pusher': {
+        'function_name': 'feedforward',
         'kwargs': {
-            # 'hidden_layer_sizes': (M, M),
-            # 'output_size': 12,  # 6 for preprocessed images + 6 for raw joints
-            # 'ignore_input': 6,  # Don't preprocess the raw joints
-            # 'trainable': tune.grid_search([True, False]),
-            # 'image_size': lambda spec: spec['config']['env_params']['image_size'],
-        },
+            'hidden_layer_sizes': (M, M),
+            'ignore_input': 6,  # Don't preprocess the raw joints
+            'output_size': 12  # 6 for preprocessed images + 6 for raw joints
+        }
     }
 }
-
 
 PREPROCESSOR_PARAMS = {
     'lsp': LSP_PREPROCESSOR_PARAMS,
