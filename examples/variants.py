@@ -43,10 +43,8 @@ LSP_POLICY_PARAMS = {
     'humanoid-rllab': {  # 21 DoF
         's_t_units': 21,
     },
-    'pusher': {  # 12 DoF
-        'coupling_layers': 4,
-        's_t_layers': 1,
-        's_t_units': 12,
+    'pusher': {  # 3 DoF
+        's_t_units': 3,
     },
 }
 
@@ -77,7 +75,7 @@ GMM_POLICY_PARAMS = {
     },
     'humanoid-rllab': {  # 21 DoF
     },
-    'pusher': { # 12 DoF
+    'pusher': { # 3 DoF
     },
 }
 
@@ -108,7 +106,7 @@ GAUSSIAN_POLICY_PARAMS = {
     },
     'humanoid-rllab': {  # 21 DoF
     },
-    'pusher': { # 12 DoF
+    'pusher': { # 3 DoF
     },
 }
 
@@ -226,7 +224,7 @@ ENV_DOMAIN_PARAMS = {
     },
     'humanoid-rllab': {  # 21 DoF
     },
-    'pusher': { # 12 DoF
+    'pusher': { # 3 DoF
     },
 }
 
@@ -274,7 +272,7 @@ ENV_PARAMS = {
     },
     'humanoid-rllab': {  # 21 DOF
     },
-    'pusher': {  # 12 DoF
+    'pusher': {  # 3 DoF
         'image': {
             # Can't use tuples because they break ray.tune log_syncer
             'image_size': tune.grid_search(['32x32x3']),
@@ -353,7 +351,7 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(1e4 + 1),
         }
     },
-    'pusher': {  # 12 DoF
+    'pusher': {  # 3 DoF
         'base_kwargs': {
             'n_epochs': int(4e3 + 1),
             'n_initial_exploration_steps': int(1e4),
@@ -416,7 +414,7 @@ RUN_PARAMS = {
     'humanoid-rllab': {  # 21 DoF
         'snapshot_gap': 2000
     },
-    'pusher': {  # 17 DoF
+    'pusher': {  # 3 DoF
         'snapshot_gap': 500
     },
 }
@@ -431,7 +429,7 @@ DOMAINS = [
     'ant-rllab',  # 8 DoF
     'humanoid-gym',  # 17 DoF
     'humanoid-rllab',  # 21 DoF
-    'pusher',  # 12 DoF
+    'pusher',  # 3 DoF
 ]
 
 TASKS = {
