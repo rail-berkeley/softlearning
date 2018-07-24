@@ -150,12 +150,20 @@ class ImageForkReacherEnv(ImagePusherEnv):
             p['env_infos'][-1]['arm_object_distance']
             for p in paths]
 
-        logger.record_tabular('FinalArmDistanceAvg', np.mean(arm_goal_dists))
-        logger.record_tabular('FinalArmDistanceMax', np.max(arm_goal_dists))
-        logger.record_tabular('FinalArmDistanceMin', np.min(arm_goal_dists))
-        logger.record_tabular('FinalArmDistanceStd', np.std(arm_goal_dists))
+        logger.record_tabular(
+            'FinalArmGoalDistanceAvg', np.mean(arm_goal_dists))
+        logger.record_tabular(
+            'FinalArmGoalDistanceMax', np.max(arm_goal_dists))
+        logger.record_tabular(
+            'FinalArmGoalDistanceMin', np.min(arm_goal_dists))
+        logger.record_tabular(
+            'FinalArmGoalDistanceStd', np.std(arm_goal_dists))
 
-        logger.record_tabular('FinalGoalDistanceAvg', np.mean(arm_object_dists))
-        logger.record_tabular('FinalGoalDistanceMax', np.max(arm_object_dists))
-        logger.record_tabular('FinalGoalDistanceMin', np.min(arm_object_dists))
-        logger.record_tabular('FinalGoalDistanceStd', np.std(arm_object_dists))
+        logger.record_tabular(
+            'FinalArmObjectDistanceAvg', np.mean(arm_object_dists))
+        logger.record_tabular(
+            'FinalArmObjectDistanceMax', np.max(arm_object_dists))
+        logger.record_tabular(
+            'FinalArmObjectDistanceMin', np.min(arm_object_dists))
+        logger.record_tabular(
+            'FinalArmObjectDistanceStd', np.std(arm_object_dists))
