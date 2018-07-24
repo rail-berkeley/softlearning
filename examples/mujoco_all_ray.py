@@ -5,6 +5,7 @@ from ray import tune
 from softlearning.environments.utils import get_environment
 from softlearning.algorithms import SAC
 
+from softlearning.misc.utils import timestamp, set_seed
 from softlearning.policies import (
     GaussianPolicy,
     LatentSpacePolicy,
@@ -25,6 +26,7 @@ def run_experiment(variant, reporter):
     # Setup the rllab logger manually
     # TODO.hartikainen: We should change the logger to use some standard logger
     setup_rllab_logger(variant)
+    set_seed(variant['run_params']['seed'])
 
     env_params = variant['env_params']
     policy_params = variant['policy_params']
