@@ -415,7 +415,7 @@ RUN_PARAMS = {
         'snapshot_gap': 2000
     },
     'pusher': {  # 3 DoF
-        'snapshot_gap': 500
+        'snapshot_gap': 200
     },
 }
 
