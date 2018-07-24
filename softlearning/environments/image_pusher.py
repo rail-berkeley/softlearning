@@ -79,15 +79,16 @@ class ImageForkReacherEnv(ImagePusherEnv):
             observations = observations[None]
             actions = actions[None]
             is_batch = False
+        else:
+            raise NotImplementedError('Might be broken.')
 
-        arm_pos = observations[:, -6:-3]
+        arm_pos = observations[:, -6:-4]
+        goal_pos = self.get_body_com('goal')[:2][None]
         object_pos = observations[:, -3:]
         object_pos_masked = object_pos[:, :2][:, self._goal_mask]
 
-        arm_goal_dists = np.linalg.norm(
-            arm_pos[:, :2] - self._goal[None], axis=1)
-        arm_object_dists = np.linalg.norm(
-            arm_pos[:, :2] - object_pos_masked, axis=1)
+        arm_goal_dists = np.linalg.norm(arm_pos - goal_pos, axis=1)
+        arm_object_dists = np.linalg.norm(arm_pos - object_pos_masked, axis=1)
         ctrl_costs = np.sum(actions**2, axis=1)
 
         costs = (
@@ -114,10 +115,11 @@ class ImageForkReacherEnv(ImagePusherEnv):
         qpos = np.random.uniform(
             low=-0.1, high=0.1, size=self.model.nq) + self.init_qpos.squeeze()
 
-        target_pos = np.random.uniform([-1.0], [1.0], size=[2])
-        target_pos = np.sign(target_pos) * np.maximum(np.abs(target_pos), 1/3)
-        target_pos[np.where(target_pos == 0)] = 1.0
-        target_pos[1] += 1.0
+        target_pos = np.array([np.random.choice([-0.5, 0.5]), 0.0])
+        # target_pos = np.random.uniform([-1.0], [1.0], size=[2])
+        # target_pos = np.sign(target_pos) * np.maximum(np.abs(target_pos), 1/3)
+        # target_pos[np.where(target_pos == 0)] = 1.0
+        # target_pos[1] += 1.0
 
         qpos[self.TARGET_INDS] = target_pos
         # qpos[self.TARGET_INDS] = [1.0, 2.0]
