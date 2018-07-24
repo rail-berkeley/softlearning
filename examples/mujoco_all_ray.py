@@ -20,7 +20,7 @@ from softlearning.environments import (
     CrossMazeAntEnv)
 from softlearning.environments.image_pusher import ImageForkReacherEnv
 
-from softlearning.misc.utils import timestamp
+from softlearning.misc.utils import timestamp, set_seed
 from softlearning.policies import (
     GaussianPolicy,
     LatentSpacePolicy,
@@ -148,6 +148,7 @@ def run_experiment(variant, reporter):
     # TODO.hartikainen: We should change the logger to use some standard logger
 
     setup_rllab_logger(variant)
+    set_seed(variant['run_params']['seed'])
 
     env_params = variant['env_params']
     policy_params = variant['policy_params']
