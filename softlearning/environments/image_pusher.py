@@ -85,11 +85,10 @@ class ImageForkReacherEnv(ImagePusherEnv):
 
         arm_pos = observations[:, -6:-4]
         goal_pos = self.get_body_com('goal')[:2][None]
-        object_pos = observations[:, -3:]
-        object_pos_masked = object_pos[:, :2][:, self._goal_mask]
+        object_pos = observations[:, -3:-1]
 
         arm_goal_dists = np.linalg.norm(arm_pos - goal_pos, axis=1)
-        arm_object_dists = np.linalg.norm(arm_pos - object_pos_masked, axis=1)
+        arm_object_dists = np.linalg.norm(arm_pos - object_pos, axis=1)
         ctrl_costs = np.sum(actions**2, axis=1)
 
         costs = (
@@ -126,10 +125,14 @@ class ImageForkReacherEnv(ImagePusherEnv):
         # qpos[self.TARGET_INDS] = [1.0, 2.0]
         # qpos[self.TARGET_INDS] = self.init_qpos.squeeze()[self.TARGET_INDS]
 
-        # TODO.before_release: Hack for reproducing the exact results we have in
-        # paper, remove before release.
-        puck_position = np.random.uniform(
-            low=[0.3, -1.0], high=[1.0, -0.4]),
+        puck_position = np.random.uniform([-1.0], [1.0], size=[2])
+        puck_position = (
+            np.sign(puck_position)
+            * np.maximum(np.abs(puck_position), 1/2))
+        puck_position[np.where(puck_position == 0)] = 1.0
+        # puck_position[1] += 1.0
+        # puck_position = np.random.uniform(
+        #     low=[0.3, -1.0], high=[1.0, -0.4]),
 
         qpos[self.PUCK_INDS] = puck_position
 
