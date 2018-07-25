@@ -187,7 +187,7 @@ LSP_PREPROCESSOR_PARAMS = {
     'pusher': {
         'function_name': 'feedforward',
         'kwargs': {
-            'hidden_layer_sizes': (M//4, M//4),
+            'hidden_layer_sizes': tune.grid_search(['64x64', '128x128']),
             'output_size': 12,  # 6 for preprocessed images + 6 for raw joints
             'ignore_input': 6,
         }

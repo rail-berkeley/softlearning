@@ -128,6 +128,9 @@ def run_experiment(variant):
     if 'image_size' in preprocessor_kwargs:
         preprocessor_kwargs['image_size'] = tuple(
             int(dim) for dim in preprocessor_kwargs['image_size'].split('x'))
+    if 'hidden_layer_sizes' in preprocessor_kwargs:
+        preprocessor_kwargs['hidden_layer_sizes'] = tuple(
+            int(dim) for dim in preprocessor_kwargs['hidden_layer_sizes'].split('x'))
 
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
