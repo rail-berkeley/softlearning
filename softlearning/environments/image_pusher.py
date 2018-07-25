@@ -115,6 +115,12 @@ class ImageForkReacherEnv(ImagePusherEnv):
         qpos = np.random.uniform(
             low=-0.1, high=0.1, size=self.model.nq) + self.init_qpos.squeeze()
 
+        qpos[self.JOINT_INDS[0]] = np.random.uniform(-np.pi, np.pi)
+        qpos[self.JOINT_INDS[1]] = np.random.uniform(
+            -np.pi/2, np.pi/2) + np.pi/4
+        qpos[self.JOINT_INDS[2]] = np.random.uniform(
+            -np.pi/2, np.pi/2) + np.pi/2
+
         target_pos = np.random.uniform([-1.0], [1.0], size=[2])
         target_pos = np.sign(target_pos) * np.maximum(np.abs(target_pos), 1/2)
         target_pos[np.where(target_pos == 0)] = 1.0
