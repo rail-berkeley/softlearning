@@ -29,7 +29,7 @@ def feedforward_net_preprocessor_template(
             passthrough = inputs[..., -ignore_input:]
         else:
             inputs_to_preprocess = inputs
-            passthrough = []
+            passthrough = inputs[..., 0:0]
 
         preprocessed = feedforward_net_v2(
             inputs_to_preprocess,
