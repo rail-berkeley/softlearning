@@ -9,23 +9,23 @@ from . import rllab as custom_rllab_envs
 
 GYM_ENVIRONMENTS = {
     'swimmer': {
-        'default': lambda: GymEnv('Swimmer-v1')
+        'default': lambda: GymEnv('Swimmer-v2')
     },
     'ant': {
-        'default': lambda: GymEnv('Ant-v1')
+        'default': lambda: GymEnv('Ant-v2')
     },
     'humanoid': {
-        'default': lambda: GymEnv('Humanoid-v1'),
-        'standup': lambda: GymEnv('HumanoidStandup-v1')
+        'default': lambda: GymEnv('Humanoid-v2'),
+        'standup': lambda: GymEnv('HumanoidStandup-v2')
     },
     'hopper': {
-        'default': lambda: GymEnv('Hopper-v1')
+        'default': lambda: GymEnv('Hopper-v2')
     },
     'half-cheetah': {
-        'default': lambda: GymEnv('HalfCheetah-v1')
+        'default': lambda: GymEnv('HalfCheetah-v2')
     },
     'walker': {
-        'default': lambda: GymEnv('Walker2d-v1')
+        'default': lambda: GymEnv('Walker2d-v2')
     },
 }
 
