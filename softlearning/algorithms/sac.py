@@ -93,6 +93,7 @@ class SAC(RLAlgorithm, Serializable):
             target_update_interval=1,
             action_prior='uniform',
             reparameterize=False,
+            store_extra_policy_info=False,
 
             save_full_state=False,
     ):
@@ -154,6 +155,7 @@ class SAC(RLAlgorithm, Serializable):
         # Reparameterize parameter must match between the algorithm and the
         # policy actions are sampled from.
         self._reparameterize = self._policy._reparameterize
+        self._store_extra_policy_info = store_extra_policy_info
 
         self._save_full_state = save_full_state
 
@@ -213,6 +215,7 @@ class SAC(RLAlgorithm, Serializable):
             shape=(None, self._Do),
             name='next_observation',
         )
+
         self._actions_ph = tf.placeholder(
             tf.float32,
             shape=(None, self._Da),
@@ -230,6 +233,18 @@ class SAC(RLAlgorithm, Serializable):
             shape=(None, ),
             name='terminals',
         )
+
+        if self._store_extra_policy_info:
+            self._log_pis_ph = tf.placeholder(
+                tf.float32,
+                shape=(None, ),
+                name='log_pis',
+            )
+            self._raw_actions_ph = tf.placeholder(
+                tf.float32,
+                shape=(None, self._Da),
+                name='raw_actions',
+            )
 
     def _init_critic_update(self):
         """Create minimization operation for critic Q-function.
@@ -326,15 +341,11 @@ class SAC(RLAlgorithm, Serializable):
 
         if self._reparameterize:
             policy_kl_loss = tf.reduce_mean(
-                alpha * log_pi
-                - min_log_target
-                - policy_prior_log_probs)
+                alpha * log_pi - min_log_target - policy_prior_log_probs)
         else:
             policy_kl_loss = tf.reduce_mean(
                 log_pi * tf.stop_gradient(
-                    alpha * log_pi
-                    - min_log_target
-                    + self._vf_t
+                    alpha * log_pi - min_log_target + self._vf_t
                     - policy_prior_log_probs))
 
         policy_regularization_losses = tf.get_collection(
@@ -404,6 +415,10 @@ class SAC(RLAlgorithm, Serializable):
             self._rewards_ph: batch['rewards'],
             self._terminals_ph: batch['terminals'],
         }
+
+        if self._store_extra_policy_info:
+            feed_dict[self._log_pis_ph] = batch['log_pis']
+            feed_dict[self._raw_actions_ph] = batch['raw_actions']
 
         if iteration is not None:
             feed_dict[self._iteration_ph] = iteration

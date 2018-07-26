@@ -5,6 +5,7 @@ import numpy as np
 from .sampler import Sampler
 from .dummy_sampler import DummySampler
 from .simple_sampler import SimpleSampler
+from .extra_policy_info_sampler import ExtraPolicyInfoSampler
 
 
 def rollout(env, policy, path_length, render=False, speedup=10, callback=None,
@@ -27,7 +28,7 @@ def rollout(env, policy, path_length, render=False, speedup=10, callback=None,
 
     t = 0  # To make edge case path_length=0 work.
     for t in range(path_length):
-        action, agent_info = policy.get_action(observation)
+        (action, _, _), agent_info = policy.get_action(observation)
 
         if callback is not None:
             callback(observation, action)

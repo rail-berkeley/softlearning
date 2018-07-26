@@ -1,5 +1,6 @@
 import argparse
 import os
+from distutils.util import strtobool
 
 import tensorflow as tf
 import numpy as np
@@ -28,7 +29,9 @@ from softlearning.policies import (
     GMMPolicy,
     UniformPolicy)
 from softlearning.samplers import SimpleSampler
+from softlearning.samplers import ExtraPolicyInfoSampler
 from softlearning.replay_pools import SimpleReplayPool
+from softlearning.replay_pools import ExtraPolicyInfoReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variant_spec
@@ -92,10 +95,16 @@ def parse_args():
     parser.add_argument('--exp_name', type=str, default=timestamp())
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--log_dir', type=str, default=None)
-
+    parser.add_argument('--log_extra_policy_info', type=strtobool, nargs='?',
+                        const=True, default=False,
+                        help=(
+                            "Stores log pis and raw (unsquashed) actions in the"
+                            "replay pool."
+                        ))
     args = parser.parse_args()
 
     return args
+
 
 def run_experiment(variant):
     env_params = variant['env_params']
@@ -110,8 +119,12 @@ def run_experiment(variant):
 
     env = normalize(ENVIRONMENTS[domain][task](**env_params))
 
-    sampler = SimpleSampler(**sampler_params)
-    pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
+    if algorithm_params['store_extra_policy_info']:
+        sampler = ExtraPolicyInfoSampler(**sampler_params)
+        pool = ExtraPolicyInfoReplayPool(env_spec=env.spec, **replay_pool_params)
+    else:
+        sampler = SimpleSampler(**sampler_params)
+        pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
@@ -192,6 +205,7 @@ def run_experiment(variant):
         reparameterize=policy_params['reparameterize'],
         target_update_interval=algorithm_params['target_update_interval'],
         action_prior=policy_params['action_prior'],
+        store_extra_policy_info=algorithm_params['store_extra_policy_info'],
         save_full_state=False,
     )
 
@@ -208,7 +222,6 @@ def launch_experiments(variants, args):
     for i, variant in enumerate(variants):
         print("Experiment: {}/{}".format(i, num_experiments))
         run_params = variant['run_params']
-        algo_params = variant['algorithm_params']
 
         experiment_prefix = variant['prefix'] + '/' + args.exp_name
         experiment_name = '{prefix}-{exp_name}-{i:02}'.format(

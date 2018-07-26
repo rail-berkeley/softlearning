@@ -1,27 +1,22 @@
-import numpy as np
+"""Sampler that stores raw actions from policies"""
 
-from rllab.misc import logger
-from .sampler import Sampler
+from .simple_sampler import SimpleSampler
 
 
-class SimpleSampler(Sampler):
-    def __init__(self, **kwargs):
-        super(SimpleSampler, self).__init__(**kwargs)
-
-        self._path_length = 0
-        self._path_return = 0
-        self._last_path_return = 0
-        self._max_path_return = -np.inf
-        self._n_episodes = 0
-        self._current_observation = None
-        self._total_samples = 0
+class ExtraPolicyInfoSampler(SimpleSampler):
+    def __init__(self, *args, **kwargs):
+        super(ExtraPolicyInfoSampler, self).__init__(*args, **kwargs)
 
     def sample(self):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
 
-        (action, _, _), _ = self.policy.get_action(self._current_observation)
+        (action, log_pi, raw_action), _ = self.policy.get_action(
+            self._current_observation,
+            with_log_pis=True,
+            with_raw_actions=True)
         next_observation, reward, terminal, info = self.env.step(action)
+
         self._path_length += 1
         self._path_return += reward
         self._total_samples += 1
@@ -29,9 +24,12 @@ class SimpleSampler(Sampler):
         self.pool.add_sample(
             observations=self._current_observation,
             actions=action,
+            raw_actions=raw_action,
+            log_pis=log_pi,
             rewards=reward,
             terminals=terminal,
-            next_observations=next_observation)
+            next_observations=next_observation,
+        )
 
         if terminal or self._path_length >= self._max_path_length:
             self.policy.reset()
@@ -46,10 +44,3 @@ class SimpleSampler(Sampler):
 
         else:
             self._current_observation = next_observation
-
-    def log_diagnostics(self):
-        super(SimpleSampler, self).log_diagnostics()
-        logger.record_tabular('max-path-return', self._max_path_return)
-        logger.record_tabular('last-path-return', self._last_path_return)
-        logger.record_tabular('episodes', self._n_episodes)
-        logger.record_tabular('total-samples', self._total_samples)
