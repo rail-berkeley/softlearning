@@ -21,7 +21,9 @@ gast==0.2.0
 google-api-python-client==1.6.7
 grpcio==1.12.1
 gtimer==1.0.0b5
-gym[all]==0.10.5
+# Newer gym version which adds some improvements for the rendering.
+# Will hopefully help us with the images.
+git+https://github.com/openai/gym.git@5c116fb3c91e872505300031d2bd60672b3a6e03#[all]
 html5lib==0.9999999
 idna==2.6
 jmespath==0.9.3
