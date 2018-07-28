@@ -90,6 +90,12 @@ def get_parser():
     parser.add_argument('--exp_name', type=str, default=timestamp())
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--log_dir', type=str, default=None)
+    parser.add_argument("--confirm_remote",
+                        type=strtobool,
+                        nargs='?',
+                        const=True,
+                        default=True,
+                        help="Whether or not to query yes/no on remote run.")
     parser.add_argument('--log_extra_policy_info', type=strtobool, nargs='?',
                         const=True, default=False,
                         help=(
@@ -168,4 +174,5 @@ def launch_experiments_rllab(variants, args, run_fn):
             log_dir=args.log_dir,
             snapshot_mode=snapshot_mode,
             snapshot_gap=snapshot_gap,
+            confirm_remote=args.confirm_remote,
             sync_s3_pkl=sync_pkl)
