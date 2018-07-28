@@ -1,4 +1,5 @@
 import os
+import math
 import argparse
 from distutils.util import strtobool
 
@@ -159,8 +160,11 @@ def launch_experiments_rllab(variants, args, run_fn):
         seed = run_params.get('seed', variant.get('seed'))
 
         experiment_prefix = variant['prefix'] + '/' + args.exp_name
-        experiment_name = '{prefix}-{exp_name}-{i:02}'.format(
-            prefix=variant['prefix'], exp_name=args.exp_name, i=i)
+        experiment_name = '{prefix}-{exp_name}-{i:0{max_i_len}}'.format(
+            prefix=variant['prefix'],
+            exp_name=args.exp_name,
+            i=i,
+            max_i_len=int(math.ceil(math.log10(num_experiments))))
 
         launch_experiment(
             run_fn,

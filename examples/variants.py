@@ -178,7 +178,7 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS_BASE = {
-    'seed': tune.grid_search([1]),
+    'seed': tune.grid_search([1, 2, 3]),
     'snapshot_mode': 'gap',
     'snapshot_gap': 1000,
     'sync_pkl': True,
@@ -224,7 +224,7 @@ ENV_PARAMS = {
 
 def get_variant_spec(universe, domain, task, policy):
     variant_spec = {
-        'prefix': '{}/{}'.format(domain, task),
+        'prefix': '{}/{}/{}'.format(universe, domain, task),
         'domain': domain,
         'task': task,
         'universe': universe,
