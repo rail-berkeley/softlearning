@@ -6,26 +6,25 @@ important when working with physical hardware and data collection becomes a
 bottleneck. In that case, it is desirable to allocate all available compute to
 optimizers rather then waiting for new sample to arrive.
 """
-import argparse
-
-from rllab.envs.normalized_env import normalize
-from rllab.envs.mujoco.swimmer_env import SwimmerEnv
-from rllab.envs.mujoco.humanoid_env import HumanoidEnv
-
+from ray import tune
 from ray.tune.variant_generator import generate_variants
 
-from softlearning.misc.instrument import launch_experiment
+from softlearning.environments.utils import get_environment
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softlearning.misc.utils import timestamp
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction
 from softlearning.policies import StochasticNNPolicy
-from softlearning.environments import GymEnv, DelayedEnv
+from softlearning.environments.rllab import DelayedEnv
 from softlearning.samplers import RemoteSampler
+from examples.utils import (
+    parse_universe_domain_task,
+    get_parser,
+    launch_experiments_rllab)
 
-SHARED_PARAMS = {
-    'seed': 1,
+
+COMMON_PARAMS = {
+    'seed': tune.grid_search([1]),
     'policy_lr': 3E-4,
     'qf_lr': 3E-4,
     'discount': 0.99,
@@ -84,34 +83,23 @@ ENV_PARAMS = {
         'reward_scale': 3,
     }
 }
-DEFAULT_ENV = 'swimmer'
-AVAILABLE_ENVS = list(ENV_PARAMS.keys())
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--env', type=str, choices=AVAILABLE_ENVS, default=DEFAULT_ENV)
-    parser.add_argument('--exp_name', type=str, default=timestamp())
-    parser.add_argument('--mode', type=str, default='local')
-    parser.add_argument('--log_dir', type=str, default=None)
-    args = parser.parse_args()
-
-    return args
 
 
 def run_experiment(variant):
-    if variant['env_name'] == 'humanoid-rllab':
-        env = normalize(HumanoidEnv())
-    elif variant['env_name'] == 'swimmer-rllab':
-        env = normalize(SwimmerEnv())
-    else:
-        env = normalize(GymEnv(variant['env_name']))
+    universe = variant['universe']
 
+    assert universe in ['rllab', 'gym'], universe
+
+    task = variant['task']
+    domain = variant['domain']
+
+    env = get_environment(universe, domain, task, env_params={})
     env = DelayedEnv(env, delay=0.01)
 
     pool = SimpleReplayPool(
-        env_spec=env.spec, max_size=variant['max_pool_size'])
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        max_size=variant['max_pool_size'])
 
     sampler = RemoteSampler(
         max_path_length=variant['max_path_length'],
@@ -127,9 +115,15 @@ def run_experiment(variant):
         sampler=sampler)
 
     M = variant['layer_size']
-    qf = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
+    qf = NNQFunction(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        hidden_layer_sizes=(M, M))
 
-    policy = StochasticNNPolicy(env_spec=env.spec, hidden_layer_sizes=(M, M))
+    policy = StochasticNNPolicy(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        hidden_layer_sizes=(M, M))
 
     algorithm = SQL(
         base_kwargs=base_kwargs,
@@ -153,38 +147,22 @@ def run_experiment(variant):
         pass
 
 
-def launch_experiments(variants, args):
-    num_experiments = len(variants)
-
-    print('Launching {} experiments.'.format(num_experiments))
-
-    for i, variant in enumerate(variants):
-        full_experiment_name = variant['prefix']
-        full_experiment_name += '-' + args.exp_name + '-' + str(i).zfill(2)
-
-        launch_experiment(
-            run_experiment,
-            mode=args.mode,
-            variant=variant,
-            exp_prefix=variant['prefix'] + '/' + args.exp_name,
-            exp_name=full_experiment_name,
-            n_parallel=1,
-            seed=variant['seed'],
-            terminate_machine=True,
-            log_dir=args.log_dir,
-            snapshot_mode=variant['snapshot_mode'],
-            snapshot_gap=variant['snapshot_gap'],
-            sync_s3_pkl=True)
-
-
 def main():
-    args = parse_args()
+    args = get_parser().parse_args()
+
+    universe, domain, task = parse_universe_domain_task(args)
 
     variant_spec = dict(
-        SHARED_PARAMS,
-        **ENV_PARAMS[args.env])
+        COMMON_PARAMS,
+        **ENV_PARAMS[args.env],
+        **{
+            'universe': universe,
+            'task': task,
+            'domain': domain,
+        })
+
     variants = [x[1] for x in generate_variants(variant_spec)]
-    launch_experiments(variants, args)
+    launch_experiments_rllab(variants, args, run_experiment)
 
 
 if __name__ == '__main__':

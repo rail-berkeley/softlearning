@@ -5,7 +5,6 @@ from ray.tune.variant_generator import generate_variants
 from softlearning.environments.utils import get_environment
 from softlearning.algorithms import SAC
 
-from softlearning.misc.instrument import launch_experiment
 from softlearning.policies import (
     GaussianPolicy,
     LatentSpacePolicy,
@@ -20,7 +19,8 @@ from softlearning.preprocessors import MLPPreprocessor
 from examples.variants import get_variant_spec
 from examples.utils import (
     parse_universe_domain_task,
-    get_parser)
+    get_parser,
+    launch_experiments_rllab)
 
 
 def run_experiment(variant):
@@ -39,23 +39,41 @@ def run_experiment(variant):
 
     if algorithm_params['store_extra_policy_info']:
         sampler = ExtraPolicyInfoSampler(**sampler_params)
-        pool = ExtraPolicyInfoReplayPool(env_spec=env.spec,
-                                         **replay_pool_params)
+        pool = ExtraPolicyInfoReplayPool(
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
+            **replay_pool_params)
     else:
         sampler = SimpleSampler(**sampler_params)
-        pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
+        pool = SimpleReplayPool(
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
+            **replay_pool_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
     M = value_fn_params['layer_size']
-    qf1 = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M), name='qf1')
-    qf2 = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M), name='qf2')
-    vf = NNVFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
-    initial_exploration_policy = UniformPolicy(env_spec=env.spec)
+    qf1 = NNQFunction(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        hidden_layer_sizes=(M, M),
+        name='qf1')
+    qf2 = NNQFunction(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        hidden_layer_sizes=(M, M),
+        name='qf2')
+    vf = NNVFunction(
+        observation_shape=env.observation_space.shape,
+        hidden_layer_sizes=(M, M))
+    initial_exploration_policy = UniformPolicy(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape)
 
     if policy_params['type'] == 'gaussian':
         policy = GaussianPolicy(
-            env_spec=env.spec,
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
             hidden_layer_sizes=(M, M),
             reparameterize=policy_params['reparameterize'],
             reg=1e-3,
@@ -71,7 +89,7 @@ def run_experiment(variant):
             }[policy_params['preprocessing_output_nonlinearity']]
 
             observations_preprocessor = MLPPreprocessor(
-                env_spec=env.spec,
+                observation_shape=env.observation_space.shape,
                 layer_sizes=preprocessing_layer_sizes,
                 output_nonlinearity=nonlinearity)
         else:
@@ -88,7 +106,8 @@ def run_experiment(variant):
         }
 
         policy = LatentSpacePolicy(
-            env_spec=env.spec,
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
             squash=policy_params['squash'],
             bijector_config=bijector_config,
             reparameterize=policy_params['reparameterize'],
@@ -97,7 +116,8 @@ def run_experiment(variant):
     elif policy_params['type'] == 'gmm':
         # reparameterize should always be False if using a GMMPolicy
         policy = GMMPolicy(
-            env_spec=env.spec,
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
             K=policy_params['K'],
             hidden_layer_sizes=(M, M),
             reparameterize=policy_params['reparameterize'],
@@ -133,34 +153,6 @@ def run_experiment(variant):
         pass
 
 
-def launch_experiments(variants, args):
-    num_experiments = len(variants)
-
-    print('Launching {} experiments.'.format(num_experiments))
-
-    for i, variant in enumerate(variants):
-        print("Experiment: {}/{}".format(i, num_experiments))
-        run_params = variant['run_params']
-
-        experiment_prefix = variant['prefix'] + '/' + args.exp_name
-        experiment_name = '{prefix}-{exp_name}-{i:02}'.format(
-            prefix=variant['prefix'], exp_name=args.exp_name, i=i)
-
-        launch_experiment(
-            run_experiment,
-            mode=args.mode,
-            variant=variant,
-            exp_prefix=experiment_prefix,
-            exp_name=experiment_name,
-            n_parallel=1,
-            seed=run_params['seed'],
-            terminate_machine=True,
-            log_dir=args.log_dir,
-            snapshot_mode=run_params['snapshot_mode'],
-            snapshot_gap=run_params['snapshot_gap'],
-            sync_s3_pkl=run_params['sync_pkl'])
-
-
 def main():
     args = get_parser().parse_args()
 
@@ -170,8 +162,9 @@ def main():
 
     variant_spec['mode'] = args.mode
     variants = [x[1] for x in generate_variants(variant_spec)]
-    launch_experiments(variants, args)
+    launch_experiments_rllab(variants, args, run_experiment)
 
 
 if __name__ == '__main__':
+
     main()

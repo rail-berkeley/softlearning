@@ -65,11 +65,23 @@ class RllabAdapter(SoftlearningEnv):
 
     @property
     def observation_space(self):
-        return convert_rllab_space_to_gym_space(self._env.observation_space)
+        observation_space = convert_rllab_space_to_gym_space(
+            self._env.observation_space)
+        if len(observation_space.shape) > 1:
+            raise NotImplementedError(
+                "Observation space ({}) is not flat, make sure to check the"
+                " implemenation. ".format(observation_space))
+        return observation_space
 
     @property
-    def action_space(self, *args, **kwargs):
-        return convert_rllab_space_to_gym_space(self._env.action_space)
+    def action_space(self):
+        action_space = convert_rllab_space_to_gym_space(
+            self._env.action_space)
+        if len(action_space.shape) > 1:
+            raise NotImplementedError(
+                "Action space ({}) is not flat, make sure to check the"
+                " implemenation. ".format(action_space))
+        return action_space
 
     def step(self, action, *args, **kwargs):
         # TODO(hartikainen): refactor this to always return OrderedDict,

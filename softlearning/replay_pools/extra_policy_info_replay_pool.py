@@ -9,7 +9,7 @@ class ExtraPolicyInfoReplayPool(SimpleReplayPool, Serializable):
 
         fields = {
             'raw_actions': {
-                'shape': [self._action_dim],
+                'shape': self._action_shape,
                 'dtype': 'float32'
             },
             'log_pis': {

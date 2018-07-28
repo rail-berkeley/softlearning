@@ -18,7 +18,8 @@ class LatentSpacePolicy(NNPolicy, Serializable):
     """Latent Space Policy."""
 
     def __init__(self,
-                 env_spec,
+                 observation_shape,
+                 action_shape,
                  mode="train",
                  squash=True,
                  bijector_config=None,
@@ -31,8 +32,8 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         """Initialize LatentSpacePolicy.
 
         Args:
-            env_spec (`rllab.EnvSpec`): Specification of the environment
-                to create the policy for.
+            observation_shape (`list`, `tuple`): Dimension of the observations.
+            action_shape (`list`, `tuple`): Dimension of the actions.
             bijector_config (`dict`): Parameter configuration for bijector.
             squash (`bool`): If True, squash the action samples between
                 -1 and 1 with tanh.
@@ -41,7 +42,10 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         """
         Serializable.quick_init(self, locals())
 
-        self._env_spec = env_spec
+        assert len(observation_shape) == 1, observation_shape
+        self._Ds = observation_shape[0]
+        assert len(action_shape) == 1, action_shape
+        self._Da = action_shape[0]
         self._bijector_config = bijector_config
         self._mode = mode
         self._squash = squash
@@ -50,8 +54,6 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         self._q_function = q_function
         self._n_map_action_candidates = n_map_action_candidates
 
-        self._Da = env_spec.action_space.flat_dim
-        self._Ds = env_spec.observation_space.flat_dim
         self._fixed_h = None
         self._is_deterministic = False
         self._observations_preprocessor = observations_preprocessor
@@ -59,7 +61,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         self.name = name
         self.build()
 
-        super(NNPolicy, self).__init__(env_spec)
+        super(NNPolicy, self).__init__(env_spec=None)
 
     def actions_for(self, observations, latents=None,
                     name=None, reuse=tf.AUTO_REUSE, with_log_pis=False,

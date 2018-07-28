@@ -189,3 +189,6 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
     @abstractmethod
     def set_param_values(self, params):
         raise NotImplementedError
+
+    def log_diagnostics(self, *args, **kwargs):
+        pass

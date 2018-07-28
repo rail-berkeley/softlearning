@@ -39,21 +39,37 @@ def run_experiment(variant, reporter):
 
     env = get_environment(universe, domain, task, env_params)
 
-    pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
+    pool = SimpleReplayPool(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        **replay_pool_params)
 
     sampler = SimpleSampler(**sampler_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
     M = value_fn_params['layer_size']
-    qf1 = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M), name='qf1')
-    qf2 = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M), name='qf2')
-    vf = NNVFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
-    initial_exploration_policy = UniformPolicy(env_spec=env.spec)
+    qf1 = NNQFunction(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        hidden_layer_sizes=(M, M),
+        name='qf1')
+    qf2 = NNQFunction(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        hidden_layer_sizes=(M, M),
+        name='qf2')
+    vf = NNVFunction(
+        observation_shape=env.observation_space.shape,
+        hidden_layer_sizes=(M, M))
+    initial_exploration_policy = UniformPolicy(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape)
 
     if policy_params['type'] == 'gaussian':
         policy = GaussianPolicy(
-            env_spec=env.spec,
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
             hidden_layer_sizes=(M, M),
             reparameterize=policy_params['reparameterize'],
             reg=1e-3,
@@ -69,7 +85,7 @@ def run_experiment(variant, reporter):
             }[policy_params['preprocessing_output_nonlinearity']]
 
             observations_preprocessor = MLPPreprocessor(
-                env_spec=env.spec,
+                observation_shape=env.observation_space.shape,
                 layer_sizes=preprocessing_layer_sizes,
                 output_nonlinearity=nonlinearity)
         else:
@@ -86,7 +102,8 @@ def run_experiment(variant, reporter):
         }
 
         policy = LatentSpacePolicy(
-            env_spec=env.spec,
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
             squash=policy_params['squash'],
             bijector_config=bijector_config,
             reparameterize=policy_params['reparameterize'],
@@ -95,7 +112,8 @@ def run_experiment(variant, reporter):
     elif policy_params['type'] == 'gmm':
         # reparameterize should always be False if using a GMMPolicy
         policy = GMMPolicy(
-            env_spec=env.spec,
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
             K=policy_params['K'],
             hidden_layer_sizes=(M, M),
             reparameterize=policy_params['reparameterize'],
@@ -121,7 +139,8 @@ def run_experiment(variant, reporter):
         reparameterize=policy_params['reparameterize'],
         target_update_interval=algorithm_params['target_update_interval'],
         action_prior=policy_params['action_prior'],
-        save_full_state=False)
+        save_full_state=False,
+        store_extra_policy_info=algorithm_params['store_extra_policy_info'])
 
     for epoch, mean_return in algorithm.train():
         reporter(timesteps_total=epoch, mean_accuracy=mean_return)

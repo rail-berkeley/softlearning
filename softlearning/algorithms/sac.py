@@ -13,58 +13,6 @@ from .rl_algorithm import RLAlgorithm
 class SAC(RLAlgorithm, Serializable):
     """Soft Actor-Critic (SAC)
 
-    Example:
-    ```python
-
-    env = normalize(SwimmerEnv())
-
-    pool = SimpleReplayPool(env_spec=env.spec, max_size=1E6)
-
-    base_kwargs = dict(
-        min_pool_size=1000,
-        epoch_length=1000,
-        n_epochs=1000,
-        batch_size=64,
-        target_entropy=-1.0,
-        n_train_repeat=1,
-        eval_render=False,
-        eval_n_episodes=1,
-        eval_deterministic=True,
-    )
-
-    M = 100
-    qf = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
-
-    vf = NNVFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
-
-    policy = GMMPolicy(
-        env_spec=env.spec,
-        K=2,
-        hidden_layers=(M, M),
-        qf=qf,
-        reg=0.001
-    )
-
-    algorithm = SAC(
-        base_kwargs=base_kwargs,
-        env=env,
-        policy=policy,
-        pool=pool,
-        qf=qf,
-        vf=vf,
-
-        lr=3E-4,
-        discount=0.99,
-        tau=0.01,
-
-        save_full_state=False
-    )
-
-    # Do the training
-    for epoch, mean_return in algorithm.train():
-        pass
-    ```
-
     References
     ----------
     [1] Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, and Sergey Levine, "Soft
@@ -143,7 +91,7 @@ class SAC(RLAlgorithm, Serializable):
 
         self._reward_scale = reward_scale
         self._target_entropy = (
-            -self._env.action_space.flat_dim
+            -np.prod(self._env.action_space.shape)
             if target_entropy == 'auto'
             else target_entropy)
 
@@ -159,8 +107,13 @@ class SAC(RLAlgorithm, Serializable):
 
         self._save_full_state = save_full_state
 
-        self._Da = self._env.action_space.flat_dim
-        self._Do = self._env.observation_space.flat_dim
+        observation_shape = self._env.observation_space.shape
+        action_shape = self._env.action_space.shape
+
+        assert len(observation_shape) == 1, observation_shape
+        self._Do = observation_shape[0]
+        assert len(action_shape) == 1, action_shape
+        self._Da = action_shape[0]
 
         self._training_ops = list()
 

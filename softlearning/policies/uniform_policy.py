@@ -11,14 +11,21 @@ class UniformPolicy(Policy, Serializable):
 
     Used for an initial exploration period instead of an undertrained policy.
     """
-    def __init__(self, env_spec):
+    def __init__(self, observation_shape, action_shape):
         Serializable.quick_init(self, locals())
-        self._Da = env_spec.action_space.flat_dim
 
-        super(UniformPolicy, self).__init__(env_spec)
+        assert len(observation_shape) == 1, observation_shape
+        self._Ds = observation_shape[0]
+        assert len(action_shape) == 1, action_shape
+        self._Da = action_shape[0]
+
+        super(UniformPolicy, self).__init__(env_spec=None)
 
     @overrides
-    def get_action(self, observation, with_log_pis=False, with_raw_actions=False):
+    def get_action(self,
+                   observation,
+                   with_log_pis=False,
+                   with_raw_actions=False):
         """Get single actions for the observation.
 
         Assumes action spaces are normalized to be the interval [-1, 1]."""

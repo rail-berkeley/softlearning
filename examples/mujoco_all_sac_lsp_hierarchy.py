@@ -1,37 +1,32 @@
-import argparse
-import joblib
 import os
+import joblib
 
 import tensorflow as tf
 import numpy as np
+from ray import tune
 
 from rllab.envs.normalized_env import normalize
-from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 
 from ray.tune.variant_generator import generate_variants
 
 from softlearning.algorithms import SAC
-from softlearning.environments import (
-    RandomGoalSwimmerEnv, RandomGoalAntEnv, RandomGoalHumanoidEnv,
-    HierarchyProxyEnv)
-from softlearning.misc.instrument import launch_experiment
-from softlearning.misc.utils import timestamp
+from softlearning.environments.rllab import HierarchyProxyEnv
 from softlearning.policies import LatentSpacePolicy
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
 from softlearning.misc import tf_utils
 from softlearning.misc.utils import get_git_rev
+from examples.utils import (
+    parse_universe_domain_task,
+    get_parser,
+    launch_experiments_rllab)
 
-
-LOCAL_POLICIES_PATH = os.path.join(
-    os.getcwd(), 'softlearning/trained_policies')
-RLLAB_MOUNT_POLICIES_PATH = '/root/code/rllab/trained_policies'
 
 COMMON_PARAMS = {
-    'seed': 'random',
+    'seed': lambda spec: np.random.randint(1, 100),
     'lr': 3e-4,
     'discount': 0.99,
     'target_update_interval': 1,
@@ -77,13 +72,13 @@ ENV_PARAMS = {
         'env_goal_distance': 5,
         'env_goal_angle_range': (-0.25*np.pi, 0.25*np.pi),
 
-        'low_level_policy_path': [
+        'low_level_policy_path': tune.grid_search([
             'multi-direction-swimmer-low-level-policy-3-00/itr_100.pkl',
             'multi-direction-swimmer-low-level-policy-3-01/itr_100.pkl',
             'multi-direction-swimmer-low-level-policy-3-02/itr_100.pkl',
             'multi-direction-swimmer-low-level-policy-3-03/itr_100.pkl',
             'multi-direction-swimmer-low-level-policy-3-04/itr_100.pkl',
-        ]
+        ])
     },
     'random-goal-ant': {  # 8 DoF
         'prefix': 'random-goal-ant',
@@ -105,13 +100,13 @@ ENV_PARAMS = {
         'env_goal_distance': 25,
         'env_goal_angle_range': (0, 2*np.pi),
 
-        'low_level_policy_path': [
+        'low_level_policy_path': tune.grid_search([
             'multi-direction-ant-low-level-policy-1-00/itr_10000.pkl',
             'multi-direction-ant-low-level-policy-1-01/itr_10000.pkl',
             'multi-direction-ant-low-level-policy-1-02/itr_10000.pkl',
             'multi-direction-ant-low-level-policy-1-03/itr_10000.pkl',
             'multi-direction-ant-low-level-policy-1-04/itr_10000.pkl',
-        ]
+        ])
     },
     'random-goal-humanoid': {  # 21 DoF
         'prefix': 'random-goal-humanoid',
@@ -133,13 +128,13 @@ ENV_PARAMS = {
         'env_goal_distance': 5,
         'env_goal_angle_range': (0, 2*np.pi),
 
-        'low_level_policy_path': [
+        'low_level_policy_path': tune.grid_search([
             'multi-direction-humanoid-low-level-policy-2-00/itr_20000.pkl',
             'multi-direction-humanoid-low-level-policy-2-01/itr_20000.pkl',
             'multi-direction-humanoid-low-level-policy-2-02/itr_20000.pkl',
             'multi-direction-humanoid-low-level-policy-2-03/itr_20000.pkl',
             'multi-direction-humanoid-low-level-policy-2-04/itr_20000.pkl',
-        ]
+        ])
     },
     'ant-resume-training': {  # 8 DoF
         'prefix': 'ant-resume-training',
@@ -153,13 +148,13 @@ ENV_PARAMS = {
 
         'snapshot_gap': 1000,
 
-        'low_level_policy_path': [
+        'low_level_policy_path': tune.grid_search([
             'ant-rllab-real-nvp-final-00-00/itr_6000.pkl',
             'ant-rllab-real-nvp-final-00-01/itr_6000.pkl',
             'ant-rllab-real-nvp-final-00-02/itr_6000.pkl',
             'ant-rllab-real-nvp-final-00-03/itr_6000.pkl',
             'ant-rllab-real-nvp-final-00-04/itr_6000.pkl',
-        ]
+        ])
     },
     'humanoid-resume-training': {  # 21 DoF
         'prefix': 'humanoid-resume-training',
@@ -173,33 +168,15 @@ ENV_PARAMS = {
 
         'snapshot_gap': 2000,
 
-        'low_level_policy_path': [
+        'low_level_policy_path': tune.grid_search([
             'humanoid-real-nvp-final-01b-00/itr_10000.pkl',
             'humanoid-real-nvp-final-01b-01/itr_10000.pkl',
             'humanoid-real-nvp-final-01b-02/itr_10000.pkl',
             'humanoid-real-nvp-final-01b-03/itr_10000.pkl',
             'humanoid-real-nvp-final-01b-04/itr_10000.pkl',
-        ]
+        ])
     },
 }
-
-DEFAULT_ENV = 'random-goal-swimmer'
-AVAILABLE_ENVS = list(ENV_PARAMS.keys())
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--env',
-                        type=str,
-                        choices=AVAILABLE_ENVS,
-                        default=DEFAULT_ENV)
-    parser.add_argument('--exp_name',type=str, default=timestamp())
-    parser.add_argument('--mode', type=str, default='local')
-    parser.add_argument('--log_dir', type=str, default=None)
-    parser.add_argument('--low_level_policy_path', '-p',
-                        type=str, default=None)
-    args = parser.parse_args()
-
-    return args
 
 
 def load_low_level_policy(policy_path):
@@ -211,23 +188,18 @@ def load_low_level_policy(policy_path):
 
     return policy
 
-RANDOM_GOAL_ENVS = {
-    'swimmer': RandomGoalSwimmerEnv,
-    'ant': RandomGoalAntEnv,
-    'humanoid': RandomGoalHumanoidEnv,
-}
 
 RLLAB_ENVS = {
     'ant-rllab': AntEnv,
     'humanoid-rllab': HumanoidEnv
 }
 
+
 def run_experiment(variant):
     low_level_policy = load_low_level_policy(
-        policy_path=variant['low_level_policy_path'])
+        policy_path=variant['low_level_policy_path_full'])
 
     env_name = variant['env_name']
-    env_type = env_name.split('-')[-1]
 
     env_args = {
         name.replace('env_', '', 1): value
@@ -235,7 +207,7 @@ def run_experiment(variant):
         if name.startswith('env_') and name != 'env_name'
     }
     if 'random-goal' in env_name:
-        EnvClass = RANDOM_GOAL_ENVS[env_type]
+        raise NotImplementedError
     elif 'rllab' in variant['env_name']:
         EnvClass = RLLAB_ENVS[variant['env_name']]
     else:
@@ -243,9 +215,10 @@ def run_experiment(variant):
 
     base_env = normalize(EnvClass(**env_args))
     env = HierarchyProxyEnv(wrapped_env=base_env,
-                                low_level_policy=low_level_policy)
+                            low_level_policy=low_level_policy)
     pool = SimpleReplayPool(
-        env_spec=env.spec,
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
         max_size=variant['max_pool_size'],
     )
 
@@ -263,20 +236,22 @@ def run_experiment(variant):
 
     M = variant['layer_size']
     qf = NNQFunction(
-        env_spec=env.spec,
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
         hidden_layer_sizes=[M, M],
     )
 
     vf = NNVFunction(
-        env_spec=env.spec,
+        observation_shape=env.observation_space.shape,
         hidden_layer_sizes=[M, M],
     )
 
     preprocessing_layer_sizes = variant.get('preprocessing_layer_sizes')
     observations_preprocessor = (
-        MLPPreprocessor(env_spec=env.spec,
-                        layer_sizes=preprocessing_layer_sizes,
-                        name='high_level_observations_preprocessor')
+        MLPPreprocessor(
+            observation_shape=env.observation_space.shape,
+            layer_sizes=preprocessing_layer_sizes,
+            name='high_level_observations_preprocessor')
         if preprocessing_layer_sizes is not None
         else None
     )
@@ -293,7 +268,8 @@ def run_experiment(variant):
     }
 
     policy = LatentSpacePolicy(
-        env_spec=env.spec,
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
         mode="train",
         squash=False,
         bijector_config=bijector_config,
@@ -325,56 +301,43 @@ def run_experiment(variant):
         pass
 
 
-def launch_experiments(variants, args):
-    num_experiments = len(variants)
+LOCAL_POLICIES_PATH = os.path.join(
+    os.getcwd(), 'softlearning/trained_policies')
+RLLAB_MOUNT_POLICIES_PATH = '/root/code/rllab/trained_policies'
 
-    print('Launching {} experiments.'.format(num_experiments))
 
-    for i, variant in enumerate(variants):
-        if variant['seed'] == 'random':
-            variant['seed'] = np.random.randint(1, 100)
-        print("Experiment: {}/{}".format(i, num_experiments))
-        experiment_prefix = variant['prefix'] + '/' + args.exp_name
-        experiment_name = (variant['prefix']
-                           + '-' + args.exp_name
-                           + '-' + str(i).zfill(2))
+def build_low_level_policy_path(spec):
+    trained_policies_path = (
+        LOCAL_POLICIES_PATH
+        if spec['mode'] == 'local'
+        else RLLAB_MOUNT_POLICIES_PATH)
 
-        launch_experiment(
-            run_experiment,
-            mode=args.mode,
-            variant=variant,
-            exp_prefix=experiment_prefix,
-            exp_name=experiment_name,
-            n_parallel=1,
-            seed=variant['seed'],
-            terminate_machine=True,
-            log_dir=args.log_dir,
-            snapshot_mode=variant['snapshot_mode'],
-            snapshot_gap=variant['snapshot_gap'],
-            sync_s3_pkl=variant['sync_pkl'],
-        )
+    return os.path.join(trained_policies_path, spec['low_level_policy_path'])
+
 
 def main():
-    args = parse_args()
+    parser = get_parser()
+    parser.add_argument(
+        '--low_level_policy_path', '-p', type=str, default=None)
+    args = parser.parse_args()
+
+    universe, domain, task = parse_universe_domain_task(args)
 
     variant_spec = dict(
         COMMON_PARAMS,
         **ENV_PARAMS[args.env],
-    )
-
-    trained_policies_path = (
-        LOCAL_POLICIES_PATH
-        if args.mode == 'local'
-        else RLLAB_MOUNT_POLICIES_PATH
-    )
-
-    variant_spec['low_level_policy_path'] = tune.grid_search([
-        os.path.join(trained_policies_path, p)
-        for p in variant_spec['low_level_policy_path']
-    ])
+        **{
+            'mode': args.mode,
+            'low_level_policy_path_full': build_low_level_policy_path
+        },
+        **{
+            'universe': universe,
+            'task': task,
+            'domain': domain,
+        })
 
     variants = [x[1] for x in generate_variants(variant_spec)]
-    launch_experiments(variants, args)
+    launch_experiments_rllab(variants, args, run_experiment)
 
 
 if __name__ == '__main__':

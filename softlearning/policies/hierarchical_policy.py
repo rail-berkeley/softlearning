@@ -2,6 +2,7 @@ from softlearning.misc.utils import concat_obs_z
 import numpy as np
 import tensorflow as tf
 
+
 class FixedOptionPolicy(object):
     def __init__(self, base_policy, num_skills, z):
         self._z = z

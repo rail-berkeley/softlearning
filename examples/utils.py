@@ -4,6 +4,7 @@ from distutils.util import strtobool
 
 import softlearning.environments.utils as env_utils
 from softlearning.misc.utils import timestamp
+from softlearning.misc.instrument import launch_experiment
 
 
 DEFAULT_UNIVERSE = 'gym'
@@ -133,3 +134,38 @@ def setup_rllab_logger(variant):
 
     # TODO.hartikainen: need to remove something, or push_prefix, pop_prefix?
     # logger.push_prefix("[%s] " % args.exp_name)
+
+
+def launch_experiments_rllab(variants, args, run_fn):
+    num_experiments = len(variants)
+
+    print('Launching {} experiments.'.format(num_experiments))
+
+    for i, variant in enumerate(variants):
+        print("Experiment: {}/{}".format(i, num_experiments))
+
+        run_params = variant.get('run_params', {})
+        snapshot_mode = run_params.get(
+            'snapshot_mode', variant.get('snapshot_mode'))
+        snapshot_gap = run_params.get(
+            'snapshot_gap', variant.get('snapshot_gap'))
+        sync_pkl = run_params.get('sync_pkl', variant.get('sync_pkl'))
+        seed = run_params.get('seed', variant.get('seed'))
+
+        experiment_prefix = variant['prefix'] + '/' + args.exp_name
+        experiment_name = '{prefix}-{exp_name}-{i:02}'.format(
+            prefix=variant['prefix'], exp_name=args.exp_name, i=i)
+
+        launch_experiment(
+            run_fn,
+            mode=args.mode,
+            variant=variant,
+            exp_prefix=experiment_prefix,
+            exp_name=experiment_name,
+            n_parallel=1,
+            seed=seed,
+            terminate_machine=True,
+            log_dir=args.log_dir,
+            snapshot_mode=snapshot_mode,
+            snapshot_gap=snapshot_gap,
+            sync_s3_pkl=sync_pkl)
