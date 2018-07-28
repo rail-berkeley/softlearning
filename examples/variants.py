@@ -1,4 +1,3 @@
-import numpy as np
 from ray import tune
 
 from softlearning.misc.utils import get_git_rev, deep_update
@@ -109,62 +108,6 @@ VALUE_FUNCTION_PARAMS = {
 
 }
 
-ENV_DOMAIN_PARAMS = {
-    'swimmer': {  # 2 DoF
-    },
-    'hopper': {  # 3 DoF
-    },
-    'half-cheetah': {  # 6 DoF
-    },
-    'walker': {  # 6 DoF
-    },
-    'ant': {  # 8 DoF
-    },
-    'humanoid': {  # 17/21 DoF (gym/rllab)
-    },
-}
-
-ENV_PARAMS = {
-    'swimmer': {  # 2 DoF
-    },
-    'hopper': {  # 3 DoF
-    },
-    'half-cheetah': {  # 6 DoF
-    },
-    'walker': {  # 6 DoF
-    },
-    'ant': {  # 8 DoF
-        'resume-training': {
-            'low_level_policy_path': [
-                # 'ant-low-level-policy-00-00/itr_4000.pkl',
-            ]
-        },
-        'cross-maze': {
-            'terminate_at_goal': True,
-            'goal_reward_weight': 1000,
-            'goal_radius': 2,
-            'velocity_reward_weight': 0,
-            'ctrl_cost_coeff': 0,  # 1e-2,
-            'contact_cost_coeff': 0,  # 1e-3,
-            'survive_reward': 0,  # 5e-2,
-            'goal_distance': 12,
-            'goal_angle_range': (0, 2 * np.pi),
-
-            'env_fixed_goal_position': tune.grid_search(
-                [[6, -6], [6, 6], [12, 0]]),
-
-            'pre_trained_policy_path': []
-        },
-    },
-    'humanoid': {  # 17/21 DoF (gym/rllab)
-        'resume-training': {
-            'low_level_policy_path': [
-                # 'humanoid-low-level-policy-00-00/itr_4000.pkl',
-            ]
-        }
-    },
-}
-
 ALGORITHM_PARAMS_BASE = {
     'lr': 3e-4,
     'discount': 0.99,
@@ -235,7 +178,7 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS_BASE = {
-    'seed': tune.grid_search([1,2,3,4,5]),
+    'seed': tune.grid_search([1]),
     'snapshot_mode': 'gap',
     'snapshot_gap': 1000,
     'sync_pkl': True,
@@ -259,6 +202,22 @@ RUN_PARAMS = {
     },
     'humanoid': {  # 17/21 DoF (gym/rllab)
         'snapshot_gap': 2000
+    },
+}
+
+
+ENV_PARAMS = {
+    'swimmer': {  # 2 DoF
+    },
+    'hopper': {  # 3 DoF
+    },
+    'half-cheetah': {  # 6 DoF
+    },
+    'walker': {  # 6 DoF
+    },
+    'ant': {  # 8 DoF
+    },
+    'humanoid': {  # 17/21 DoF (gym/rllab)
     },
 }
 

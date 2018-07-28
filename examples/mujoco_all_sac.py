@@ -158,8 +158,7 @@ def launch_experiments(variants, args):
             log_dir=args.log_dir,
             snapshot_mode=run_params['snapshot_mode'],
             snapshot_gap=run_params['snapshot_gap'],
-            sync_s3_pkl=run_params['sync_pkl'],
-        )
+            sync_s3_pkl=run_params['sync_pkl'])
 
 
 def main():
