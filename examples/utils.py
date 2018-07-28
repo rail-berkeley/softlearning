@@ -72,7 +72,7 @@ def get_parser():
     parser.add_argument('--universe',
                         type=str,
                         choices=UNIVERSES,
-                        default=DEFAULT_UNIVERSE)
+                        default=None)
     parser.add_argument('--domain',
                         type=str,
                         choices=AVAILABLE_DOMAINS,
