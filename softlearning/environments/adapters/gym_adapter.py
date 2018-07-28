@@ -5,6 +5,7 @@ import gym
 from rllab.core.serializable import Serializable
 
 from .softlearning_env import SoftlearningEnv
+from softlearning.environments.gym.wrappers import NormalizeActionWrapper
 
 
 GYM_ENVIRONMENTS = {
@@ -43,6 +44,9 @@ class GymAdapter(SoftlearningEnv):
         # the time limit specified for each environment has been passed and
         # therefore the environment is not Markovian (terminal condition
         # depends on time rather than state).
+        if normalize:
+            env = NormalizeActionWrapper(env)
+
         self._env = env.env
 
     @property

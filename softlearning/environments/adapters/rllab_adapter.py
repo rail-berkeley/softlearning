@@ -7,6 +7,7 @@ from rllab.core.serializable import Serializable
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
+from rllab.envs.normalized_env import NormalizedEnv
 
 from softlearning.environments.rllab import (
     MultiDirectionSwimmerEnv,
@@ -56,6 +57,9 @@ class RllabAdapter(SoftlearningEnv):
         super(RllabAdapter, self).__init__(domain, task, *args, **kwargs)
 
         env = RLLAB_ENVIRONMENTS[domain][task](*args, **kwargs)
+
+        if normalize:
+            env = NormalizedEnv(env)
 
         self._env = env
 
