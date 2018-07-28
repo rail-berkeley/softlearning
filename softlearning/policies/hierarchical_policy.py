@@ -2,6 +2,7 @@ from softlearning.misc.utils import concat_obs_z
 import numpy as np
 import tensorflow as tf
 
+
 class FixedOptionPolicy(object):
     def __init__(self, base_policy, num_skills, z):
         self._z = z
@@ -72,7 +73,7 @@ class HierarchicalPolicy(object):
     def get_action(self, obs):
         # Choose a skill if necessary
         if self._t % self._steps_per_option == 0:
-            (self._z, _) = self._meta_policy.get_action(obs)
+            (self._z, _, _), _ = self._meta_policy.get_action(obs)
         self._t += 1
         aug_obs = concat_obs_z(obs, self._z, self._num_skills)
         return self._base_policy.get_action(aug_obs)

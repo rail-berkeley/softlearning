@@ -9,12 +9,13 @@ from softlearning.misc import tf_utils
 
 class NNVFunction(MLPFunction):
     def __init__(self,
-                 env_spec,
+                 observation_shape,
                  hidden_layer_sizes=(128, 128),
                  name='vf'):
         Serializable.quick_init(self, locals())
 
-        self._Do = env_spec.observation_space.flat_dim
+        assert len(observation_shape) == 1, observation_shape
+        self._Do = observation_shape[0]
         self._observations_ph = tf.placeholder(
             tf.float32, shape=(None, self._Do), name='observations')
 
@@ -31,13 +32,16 @@ class NNVFunction(MLPFunction):
 
 class NNQFunction(MLPFunction):
     def __init__(self,
-                 env_spec,
+                 observation_shape,
+                 action_shape,
                  hidden_layer_sizes=(128, 128),
                  name='qf'):
         Serializable.quick_init(self, locals())
 
-        self._Da = env_spec.action_space.flat_dim
-        self._Do = env_spec.observation_space.flat_dim
+        assert len(observation_shape) == 1, observation_shape
+        self._Do = observation_shape[0]
+        assert len(action_shape) == 1, action_shape
+        self._Da = action_shape[0]
 
         self._observations_ph = tf.placeholder(
             tf.float32, shape=(None, self._Do), name='observations')
@@ -57,15 +61,18 @@ class NNQFunction(MLPFunction):
 
 class NNDiscriminatorFunction(MLPFunction):
     def __init__(self,
-                 env_spec,
+                 observation_shape,
+                 action_shape,
                  hidden_layer_sizes=(128, 128),
                  num_skills=None,
                  name='discriminator_function'):
         assert num_skills is not None
         Serializable.quick_init(self, locals())
 
-        self._Da = env_spec.action_space.flat_dim
-        self._Do = env_spec.observation_space.flat_dim
+        assert len(observation_shape) == 1, observation_shape
+        self._Do = observation_shape[0]
+        assert len(action_shape) == 1, action_shape
+        self._Da = action_shape[0]
 
         self._observations_ph = tf.placeholder(
             tf.float32, shape=(None, self._Do), name='observations')
@@ -82,13 +89,18 @@ class NNDiscriminatorFunction(MLPFunction):
 
 
 class SumQFunction(Serializable):
-    def __init__(self, env_spec, q_functions):
+    def __init__(self,
+                 observation_shape,
+                 action_shape,
+                 q_functions):
         Serializable.quick_init(self, locals())
 
         self.q_functions = q_functions
 
-        self._Da = env_spec.action_space.flat_dim
-        self._Do = env_spec.observation_space.flat_dim
+        assert len(observation_shape) == 1, observation_shape
+        self._Do = observation_shape[0]
+        assert len(action_shape) == 1, action_shape
+        self._Da = action_shape[0]
 
         self._observations_ph = tf.placeholder(
             tf.float32, shape=(None, self._Do), name='observations')

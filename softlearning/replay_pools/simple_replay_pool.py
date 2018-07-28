@@ -7,27 +7,26 @@ from .flexible_replay_pool import FlexibleReplayPool
 
 
 class SimpleReplayPool(FlexibleReplayPool, Serializable):
-    def __init__(self, env_spec, *args, **kwargs):
+    def __init__(self, observation_shape, action_shape, *args, **kwargs):
         Serializable.quick_init(self, locals())
 
-        self._env_spec = env_spec
-        self._observation_dim = env_spec.observation_space.flat_dim
-        self._action_dim = env_spec.action_space.flat_dim
+        self._observation_shape = observation_shape
+        self._action_shape = action_shape
 
         fields = {
             'observations': {
-                'shape': [self._observation_dim],
+                'shape': self._observation_shape,
                 'dtype': 'float32'
             },
             # It's a bit memory inefficient to save the observations twice,
             # but it makes the code *much* easier since you no longer have
             # toworry about termination conditions.
             'next_observations': {
-                'shape': [self._observation_dim],
+                'shape': self._observation_shape,
                 'dtype': 'float32'
             },
             'actions': {
-                'shape': [self._action_dim],
+                'shape': self._action_shape,
                 'dtype': 'float32'
             },
             'rewards': {

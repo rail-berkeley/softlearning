@@ -21,7 +21,9 @@ gast==0.2.0
 google-api-python-client==1.6.7
 grpcio==1.12.1
 gtimer==1.0.0b5
-gym[all]==0.9.2
+# Newer gym version which adds some improvements for the rendering.
+# Will hopefully help us with the images.
+git+https://github.com/openai/gym.git@5c116fb3c91e872505300031d2bd60672b3a6e03#[all]
 html5lib==0.9999999
 idna==2.6
 jmespath==0.9.3
@@ -34,6 +36,7 @@ markdown==2.6.11
 markupsafe==1.0
 matplotlib==2.2.2
 more-itertools==4.1.0
+mujoco-py==1.50.1.56
 numpy==1.14.5
 path.py==11.0.1
 pluggy==0.6.0
@@ -57,8 +60,9 @@ s3transfer==0.1.12
 scipy==1.0.1
 scikit-image==0.14.0
 six==1.11.0
-tensorboard==1.8.0
-tensorflow==1.8.0
+tensorboard==1.9.0
+tensorflow==1.9.0
+tensorflow-probability==0.2.0
 termcolor==1.1.0
 theano==1.0.1
 urllib3==1.22

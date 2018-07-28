@@ -1,4 +1,3 @@
-import numpy as np
 from ray import tune
 
 from softlearning.misc.utils import get_git_rev, deep_update
@@ -18,39 +17,27 @@ LSP_POLICY_PARAMS_BASE = {
 }
 
 LSP_POLICY_PARAMS = {
-    'swimmer-gym': { # 2 DoF
+    'swimmer': {  # 2 DoF
         'preprocessing_layer_sizes': (M, M, 4),
         's_t_units': 2,
     },
-    'swimmer-rllab': { # 2 DoF
-        'preprocessing_layer_sizes': (M, M, 4),
-        's_t_units': 2,
-    },
-    'hopper': { # 3 DoF
+    'hopper': {  # 3 DoF
         'preprocessing_layer_sizes': (M, M, 6),
         's_t_units': 3,
     },
-    'half-cheetah': { # 6 DoF
+    'half-cheetah': {  # 6 DoF
         'preprocessing_layer_sizes': (M, M, 12),
         's_t_units': 6,
     },
-    'walker': { # 6 DoF
+    'walker': {  # 6 DoF
         'preprocessing_layer_sizes': (M, M, 12),
         's_t_units': 6,
-   },
-    'ant-gym': { # 8 DoF
+    },
+    'ant': {  # 8 DoF
         'preprocessing_layer_sizes': (M, M, 16),
         's_t_units': 8,
     },
-    'ant-rllab': { # 8 DoF
-        'preprocessing_layer_sizes': (M, M, 16),
-        's_t_units': 8,
-    },
-    'humanoid-gym': { # 17 DoF
-        'preprocessing_layer_sizes': (M, M, 34),
-        's_t_units': 17,
-    },
-    'humanoid-rllab': { # 21 DoF
+    'humanoid': {
         'preprocessing_layer_sizes': (M, M, 42),
         's_t_units': 21,
     }
@@ -61,27 +48,21 @@ GMM_POLICY_PARAMS_BASE = {
     'K': 1,
     'reg': 1e-3,
     'action_prior': 'uniform',
-    'reparameterize': False # GMM can't be parameterized
+    'reparameterize': False  # GMM can't be parameterized
 }
 
 GMM_POLICY_PARAMS = {
-    'swimmer-gym': { # 2 DoF
+    'swimmer': {  # 2 DoF
     },
-    'swimmer-rllab': { # 2 DoF
+    'hopper': {  # 3 DoF
     },
-    'hopper': { # 3 DoF
+    'half-cheetah': {  # 6 DoF
     },
-    'half-cheetah': { # 6 DoF
+    'walker': {  # 6 DoF
     },
-    'walker': { # 6 DoF
+    'ant': {  # 8 DoF
     },
-    'ant-gym': { # 8 DoF
-    },
-    'ant-rllab': { # 8 DoF
-    },
-    'humanoid-gym': { # 17 DoF
-    },
-    'humanoid-rllab': { # 21 DoF
+    'humanoid': {  # 17/21 DoF (gym/rllab)
     },
 }
 
@@ -93,23 +74,17 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
 }
 
 GAUSSIAN_POLICY_PARAMS = {
-    'swimmer-gym': { # 2 DoF
+    'swimmer': {  # 2 DoF
     },
-    'swimmer-rllab': { # 2 DoF
+    'hopper': {  # 3 DoF
     },
-    'hopper': { # 3 DoF
+    'half-cheetah': {  # 6 DoF
     },
-    'half-cheetah': { # 6 DoF
+    'walker': {  # 6 DoF
     },
-    'walker': { # 6 DoF
+    'ant': {  # 8 DoF
     },
-    'ant-gym': { # 8 DoF
-    },
-    'ant-rllab': { # 8 DoF
-    },
-    'humanoid-gym': { # 17 DoF
-    },
-    'humanoid-rllab': { # 21 DoF
+    'humanoid': {  # 17/21 DoF (gym/rllab)
     },
 }
 
@@ -133,73 +108,6 @@ VALUE_FUNCTION_PARAMS = {
 
 }
 
-ENV_DOMAIN_PARAMS = {
-    'swimmer-gym': { # 2 DoF
-    },
-    'swimmer-rllab': { # 2 DoF
-    },
-    'hopper': { # 3 DoF
-    },
-    'half-cheetah': { # 6 DoF
-    },
-    'walker': { # 6 DoF
-    },
-    'ant-gym': { # 8 DoF
-    },
-    'ant-rllab': { # 8 DoF
-    },
-    'humanoid-gym': { # 17 DoF
-    },
-    'humanoid-rllab': { # 21 DoF
-    },
-}
-
-ENV_PARAMS = {
-    'swimmer-gym': { # 2 DoF
-    },
-    'swimmer-rllab': { # 2 DoF
-    },
-    'hopper': { # 3 DoF
-    },
-    'half-cheetah': { # 6 DoF
-    },
-    'walker': { # 6 DoF
-    },
-    'ant-gym': { # 8 DoF
-    },
-    'ant-rllab': { # 8 DoF
-        'resume-training': {
-            'low_level_policy_path': [
-                # 'ant-low-level-policy-00-00/itr_4000.pkl',
-            ]
-        },
-        'cross-maze': {
-            'terminate_at_goal': True,
-            'goal_reward_weight': 1000,
-            'goal_radius': 2,
-            'velocity_reward_weight': 0,
-            'ctrl_cost_coeff': 0, # 1e-2,
-            'contact_cost_coeff': 0, # 1e-3,
-            'survive_reward': 0, # 5e-2,
-            'goal_distance': 12,
-            'goal_angle_range': (0, 2*np.pi),
-
-            'env_fixed_goal_position': tune.grid_search([[6, -6], [6, 6], [12, 0]]),
-
-            'pre_trained_policy_path': []
-        },
-    },
-    'humanoid-gym': { # 17 DoF
-        'resume-training': {
-            'low_level_policy_path': [
-                # 'humanoid-low-level-policy-00-00/itr_4000.pkl',
-            ]
-        }
-    },
-    'humanoid-rllab': { # 21 DOF
-    },
-}
-
 ALGORITHM_PARAMS_BASE = {
     'lr': 3e-4,
     'discount': 0.99,
@@ -207,6 +115,7 @@ ALGORITHM_PARAMS_BASE = {
     'tau': 0.005,
     'target_entropy': 'auto',
     'reward_scale': 1.0,
+    'store_extra_policy_info': False,
 
     'base_kwargs': {
         'epoch_length': 1000,
@@ -219,55 +128,39 @@ ALGORITHM_PARAMS_BASE = {
 }
 
 ALGORITHM_PARAMS = {
-    'swimmer-gym': { # 2 DoF
+    'swimmer': {  # 2 DoF
         'base_kwargs': {
             'n_epochs': int(5e2 + 1),
         }
     },
-    'swimmer-rllab': { # 2 DoF
-        'base_kwargs': {
-            'n_epochs': int(5e2 + 1),
-        }
-    },
-    'hopper': { # 3 DoF
+    'hopper': {  # 3 DoF
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
         }
     },
-    'half-cheetah': { # 6 DoF
+    'half-cheetah': {  # 6 DoF
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': int(1e4),
         }
     },
-    'walker': { # 6 DoF
+    'walker': {  # 6 DoF
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
         }
     },
-    'ant-gym': { # 8 DoF
-        'base_kwargs': {
-            'n_epochs': int(3e3 + 1),
-            'n_initial_exploration_steps': int(1e4),
-        }
-    },
-    'ant-rllab': { # 8 DoF
+    'ant': {  # 8 DoF
         'base_kwargs': {
             'n_epochs': int(3e3 + 1),
             'n_initial_exploration_steps': int(1e4),
         }
     },
-    'humanoid-gym': { # 17 DoF
+    'humanoid': {  # 17/21 DoF (gym/rllab)
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
     },
-    'humanoid-rllab': { # 21 DoF
-        'base_kwargs': {
-            'n_epochs': int(1e4 + 1),
-        }
-    },
-    'humanoid-standup-gym': { # 17 DoF
+    'humanoid-standup': {  # 17 DoF
         'base_kwargs': {
             'n_epochs': int(1e4 + 1),
         }
@@ -285,100 +178,56 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS_BASE = {
-    'seed': tune.grid_search([1,2,3,4,5]),
+    'seed': tune.grid_search([1, 2, 3]),
     'snapshot_mode': 'gap',
     'snapshot_gap': 1000,
     'sync_pkl': True,
 }
 
 RUN_PARAMS = {
-    'swimmer-gym': { # 2 DoF
+    'swimmer': {  # 2 DoF
         'snapshot_gap': 200
     },
-    'swimmer-rllab': { # 2 DoF
-        'snapshot_gap': 200
-    },
-    'hopper': { # 3 DoF
+    'hopper': {  # 3 DoF
         'snapshot_gap': 600
     },
-    'half-cheetah': { # 6 DoF
+    'half-cheetah': {  # 6 DoF
         'snapshot_gap': 2000
     },
-    'walker': { # 6 DoF
+    'walker': {  # 6 DoF
         'snapshot_gap': 1000
     },
-    'ant-gym': { # 8 DoF
+    'ant': {  # 8 DoF
         'snapshot_gap': 2000
     },
-    'ant-rllab': { # 8 DoF
-        'snapshot_gap': 2000
-    },
-    'humanoid-gym': { # 21 DoF
-        'snapshot_gap': 2000
-    },
-    'humanoid-rllab': { # 21 DoF
+    'humanoid': {  # 17/21 DoF (gym/rllab)
         'snapshot_gap': 2000
     },
 }
 
-DOMAINS = [
-    'swimmer-gym', # 2 DoF
-    'swimmer-rllab', # 2 DoF
-    'hopper', # 3 DoF
-    'half-cheetah', # 6 DoF
-    'walker', # 6 DoF
-    'ant-gym', # 8 DoF
-    'ant-rllab', # 8 DoF
-    'humanoid-gym', # 17 DoF
-    'humanoid-rllab', # 21 DoF
-]
 
-TASKS = {
-    'swimmer-gym': [
-        'default',
-    ],
-    'swimmer-rllab': [
-        'default',
-        'multi-direction',
-    ],
-    'hopper': [
-        'default',
-    ],
-    'half-cheetah': [
-        'default',
-    ],
-    'walker': [
-        'default',
-    ],
-    'ant-gym': [
-        'default',
-    ],
-    'ant-rllab': [
-        'default',
-        'multi-direction',
-        'cross-maze'
-    ],
-    'humanoid-gym': [
-        'default',
-        'standup'
-    ],
-    'humanoid-rllab': [
-        'default',
-        'multi-direction'
-    ],
+ENV_PARAMS = {
+    'swimmer': {  # 2 DoF
+    },
+    'hopper': {  # 3 DoF
+    },
+    'half-cheetah': {  # 6 DoF
+    },
+    'walker': {  # 6 DoF
+    },
+    'ant': {  # 8 DoF
+    },
+    'humanoid': {  # 17/21 DoF (gym/rllab)
+    },
 }
 
-def parse_domain_and_task(env_name):
-    domain = next(domain for domain in DOMAINS if domain in env_name)
-    domain_tasks = TASKS[domain]
-    task = next((task for task in domain_tasks if task in env_name), 'default')
-    return domain, task
 
-def get_variant_spec(domain, task, policy):
+def get_variant_spec(universe, domain, task, policy):
     variant_spec = {
-        'prefix': '{}/{}'.format(domain, task),
+        'prefix': '{}/{}/{}'.format(universe, domain, task),
         'domain': domain,
         'task': task,
+        'universe': universe,
         'git_sha': get_git_rev(),
 
         'env_params': ENV_PARAMS[domain].get(task, {}),

@@ -1,7 +1,6 @@
 """Multivariate normal distribution parameterized by a neural net."""
 
 import tensorflow as tf
-import numpy as np
 
 from softlearning.misc.nn import feedforward_net
 
@@ -73,6 +72,9 @@ class Normal(object):
         reg_loss_t = self._reg * 0.5 * tf.reduce_mean(self._log_sig_t ** 2)
         reg_loss_t += self._reg * 0.5 * tf.reduce_mean(self._mu_t ** 2)
         self._reg_loss_t = reg_loss_t
+
+    def log_prob(self, actions):
+        return self._dist.log_prob(actions)
 
     @property
     def log_p_t(self):

@@ -36,7 +36,9 @@ if __name__ == "__main__":
         data = joblib.load(args.file)
         policy = data['policy']
         env = data['env']
-        num_skills = data['policy'].observation_space.flat_dim - data['env'].spec.observation_space.flat_dim
+        num_skills = (
+            np.prod(data['policy']._observation_shape)
+            - np.prod(data['env'].observation_space.shape))
 
         plt.figure(figsize=(6, 6))
         palette = sns.color_palette('hls', num_skills)
@@ -51,7 +53,7 @@ if __name__ == "__main__":
                     else:
                         obs_vec = [obs]
                     for t in range(args.max_path_length):
-                        action, _ = fixed_z_policy.get_action(obs)
+                        (action, _, _), _ = fixed_z_policy.get_action(obs)
                         (obs, _, _, _) = env.step(action)
                         if args.use_qpos:
                             qpos = env.wrapped_env.env.model.data.qpos[:, 0]
