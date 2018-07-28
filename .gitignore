@@ -109,10 +109,8 @@ venv.bak/
 *.mp4
 data
 vendor/*
-rllab
 rllab/config_personal.py
 rllab/ec2_info.py
-gym
 *.pkl
 
 
