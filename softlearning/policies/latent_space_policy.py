@@ -141,8 +141,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         self.bijector = RealNVPBijector(
             num_coupling_layers=config.get("num_coupling_layers"),
             translation_hidden_sizes=config.get("translation_hidden_sizes"),
-            scale_hidden_sizes=config.get("scale_hidden_sizes"),
-            event_ndims=self._Da)
+            scale_hidden_sizes=config.get("scale_hidden_sizes"))
 
         self.base_distribution = ds.MultivariateNormalDiag(
             loc=tf.zeros(self._Da), scale_diag=tf.ones(self._Da))
