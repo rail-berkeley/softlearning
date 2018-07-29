@@ -1,6 +1,6 @@
 """Implements an RllabAdapter that converts rllab envs in a SoftlearningEnv."""
 
-import gym
+import gym.spaces
 
 import rllab.spaces
 from rllab.core.serializable import Serializable
@@ -36,10 +36,11 @@ RLLAB_ENVIRONMENTS = {
 
 
 def convert_rllab_space_to_gym_space(space):
+    dtype = space.sample().dtype
     if isinstance(space, rllab.spaces.Box):
-        return gym.spaces.Box(low=space.low, high=space.high)
+        return gym.spaces.Box(low=space.low, high=space.high, dtype=dtype)
     elif isinstance(space, rllab.spaces.Discrete):
-        return gym.spaces.Discrete(n=space.n)
+        return gym.spaces.Discrete(n=space.n, dtype=dtype)
     elif isinstance(space, rllab.spaces.Product):
         return gym.spaces.Tuple([
             convert_rllab_space_to_gym_space(x)
