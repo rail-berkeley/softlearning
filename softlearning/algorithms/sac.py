@@ -227,14 +227,18 @@ class SAC(RLAlgorithm, Serializable):
         self._td_loss1_t = 0.5 * tf.reduce_mean((ys - self._qf1_t)**2)
         self._td_loss2_t = 0.5 * tf.reduce_mean((ys - self._qf2_t)**2)
 
-        qf1_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
+        qf1_train_op = tf.train.AdamOptimizer(
+            self._qf_lr,
+            name='td_loss_1_optimizer',
+        ).minimize(
             loss=self._td_loss1_t,
-            var_list=self._qf1.get_params_internal()
-        )
-        qf2_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
+            var_list=self._qf1.get_params_internal())
+        qf2_train_op = tf.train.AdamOptimizer(
+            self._qf_lr,
+            name='td_loss_2_optimizer',
+        ).minimize(
             loss=self._td_loss2_t,
-            var_list=self._qf2.get_params_internal()
-        )
+            var_list=self._qf2.get_params_internal())
 
         self._training_ops.append(qf1_train_op)
         self._training_ops.append(qf2_train_op)
@@ -256,7 +260,7 @@ class SAC(RLAlgorithm, Serializable):
         """
 
         actions, log_pi = self._policy.actions_for(
-            observations=self._observations_ph, with_log_pis=True)
+            observations=self._observations_ph, with_log_pis=True, reuse=True)
 
         log_alpha = tf.get_variable(
             'log_alpha',
@@ -268,7 +272,8 @@ class SAC(RLAlgorithm, Serializable):
             alpha_loss = -tf.reduce_mean(
                 log_alpha * tf.stop_gradient(log_pi + self._target_entropy))
 
-            self._alpha_optimizer = tf.train.AdamOptimizer(self._policy_lr)
+            self._alpha_optimizer = tf.train.AdamOptimizer(
+                self._policy_lr, name='alpha_optimizer')
             self._alpha_train_op = self._alpha_optimizer.minimize(
                 loss=alpha_loss, var_list=[log_alpha])
             self._training_ops.append(self._alpha_train_op)
@@ -312,19 +317,24 @@ class SAC(RLAlgorithm, Serializable):
         # We update the vf towards the min of two Q-functions in order to
         # reduce overestimation bias from function approximation error.
         self._vf_loss_t = 0.5 * tf.reduce_mean((
-          self._vf_t
-          - tf.stop_gradient(
-              min_log_target
-              - alpha * log_pi
-              + policy_prior_log_probs)
+            self._vf_t
+            - tf.stop_gradient(
+                min_log_target
+                - alpha * log_pi
+                + policy_prior_log_probs)
         )**2)
 
-        policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
+        policy_train_op = tf.train.AdamOptimizer(
+            self._policy_lr,
+            name='policy_loss_optimizer',
+        ).minimize(
             loss=policy_loss,
-            var_list=self._policy.get_params_internal()
-        )
+            var_list=self._policy.get_params_internal())
 
-        vf_train_op = tf.train.AdamOptimizer(self._vf_lr).minimize(
+        vf_train_op = tf.train.AdamOptimizer(
+            self._vf_lr,
+            name='vf_loss_optimizer',
+        ).minimize(
             loss=self._vf_loss_t,
             var_list=self._vf_params
         )
