@@ -50,6 +50,8 @@ class GaussianPolicy(NNPolicy, Serializable):
         self._reg = reg
 
         self.name = name
+        self.NO_OP = tf.no_op()
+
         self.build()
 
         super(NNPolicy, self).__init__(env_spec=None)
