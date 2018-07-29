@@ -3,6 +3,7 @@
 from contextlib import contextmanager
 import numpy as np
 import tensorflow as tf
+from tensorflow_probability import distributions as tfpd
 
 from rllab.core.serializable import Serializable
 from rllab.misc import logger
@@ -75,13 +76,12 @@ class LatentSpacePolicy(NNPolicy, Serializable):
                 if self._observations_preprocessor is not None
                 else observations)
 
-            if latents is not None:
-                raw_actions = self.bijector.forward(
-                    latents, condition=conditions)
-            else:
-                N = tf.shape(conditions)[0]
-                raw_actions = self.distribution.sample(
-                    N, bijector_kwargs={"condition": conditions})
+            if latents is None:
+                shape = tf.shape(conditions)[0]
+                latents = self.base_distribution.sample(shape)
+
+            raw_actions = self.bijector.forward(
+                latents, condition=conditions)
 
             if not self._reparameterize:
                 raw_actions = tf.stop_gradient(raw_actions)
@@ -90,7 +90,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         return_list = [actions]
         if with_log_pis:
             log_pis = self._log_pis_for_raw(conditions, raw_actions,
-                                            name)
+                                            name, reuse=reuse)
             return_list.append(log_pis)
 
         if with_raw_actions:
@@ -136,22 +136,30 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         return self._log_pis_for_raw(conditions, actions, name=name, reuse=reuse)
 
     def build(self):
-        ds = tf.contrib.distributions
         config = self._bijector_config
         self.bijector = RealNVPBijector(
             num_coupling_layers=config.get("num_coupling_layers"),
             translation_hidden_sizes=config.get("translation_hidden_sizes"),
             scale_hidden_sizes=config.get("scale_hidden_sizes"))
 
-        self.base_distribution = ds.MultivariateNormalDiag(
+        self.base_distribution = tfpd.MultivariateNormalDiag(
             loc=tf.zeros(self._Da), scale_diag=tf.ones(self._Da))
+        # TODO(hartikainen): Without setting _is_constant_jacobian, the
+        # tfpd.MultivariateNormalDiag.sample(N) caches the samples based on
+        # `event_dims` and not `N`. Because we call sample with
+        # N = tf.shape(observation)[0], things break if we use two different
+        # observations, e.g. one in SAC and one in LatentSpacePolicy.
+        # TODO(hartikainen): Probably should file an issue to TensorFlow
+        # probability about this.
+        self.base_distribution.bijector._is_constant_jacobian = False
 
         self.sample_z = self.base_distribution.sample(1)
 
-        self.distribution = ds.ConditionalTransformedDistribution(
-            distribution=self.base_distribution,
-            bijector=self.bijector,
-            name="lsp_distribution")
+        self.distribution = (
+            tfpd.ConditionalTransformedDistribution(
+                distribution=self.base_distribution,
+                bijector=self.bijector,
+                name="lsp_distribution"))
 
         self._observations_ph = tf.placeholder(
             dtype=tf.float32,
