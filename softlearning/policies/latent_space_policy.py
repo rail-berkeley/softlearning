@@ -12,7 +12,6 @@ from softlearning.distributions import RealNVPBijector
 from softlearning.policies import NNPolicy
 
 EPS = 1e-6
-NO_OP = tf.no_op()
 
 
 class LatentSpacePolicy(NNPolicy, Serializable):
@@ -58,6 +57,8 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         self._fixed_h = None
         self._is_deterministic = False
         self._observations_preprocessor = observations_preprocessor
+
+        self.NO_OP = tf.no_op()
 
         self.name = name
         self.build()
@@ -226,8 +227,8 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
             fetches = (
                 self._det_actions,
-                NO_OP,
-                self._det_actions_raw if with_raw_actions else NO_OP)
+                self.NO_OP,
+                self._det_actions_raw if with_raw_actions else self.NO_OP)
 
             return tf.get_default_session().run(fetches, feed_dict=feed_dict)
 
