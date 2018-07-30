@@ -1,6 +1,5 @@
 import abc
 from collections import OrderedDict
-import numpy as np
 
 
 class MultitaskEnv(metaclass=abc.ABCMeta):

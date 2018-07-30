@@ -1,15 +1,24 @@
+import os
 from collections import OrderedDict
+
 import numpy as np
-from multiworld.envs.mujoco.mujoco_env import MujocoEnv
+from .custom_mujoco_env import CustomMujocoEnv
 from gym.spaces import Box, Dict
-from multiworld.core.serializable import Serializable
-from multiworld.core.multitask_env import MultitaskEnv
-from multiworld.envs.env_util import get_stat_in_paths, \
-    create_stats_ordered_dict, get_asset_full_path
+
+from rllab.core.serializable import Serializable
+
+from softlearning.misc.utils import PROJECT_PATH
+from .multitask_env import MultitaskEnv
+from .multiworld_utils import (
+    get_stat_in_paths,
+    create_stats_ordered_dict)
 
 
-class SawyerReachTorqueEnv(MujocoEnv, Serializable, MultitaskEnv):
+class SawyerReachTorqueEnv(Serializable, CustomMujocoEnv, MultitaskEnv):
     """Implements a torque-controlled Sawyer environment"""
+
+    MODEL_PATH = os.path.join(
+        PROJECT_PATH, 'models/gym/mujoco/sawyer/sawyer_reach_torque.xml')
 
     def __init__(self,
                  frame_skip=30,
@@ -21,38 +30,50 @@ class SawyerReachTorqueEnv(MujocoEnv, Serializable, MultitaskEnv):
                  reward_type='hand_distance',
                  indicator_threshold=.05,
                  goal_low=None,
-                 goal_high=None,
-                 ):
+                 goal_high=None):
+
         self.quick_init(locals())
-        MultitaskEnv.__init__(self)
+
         self.action_scale = action_scale
-        MujocoEnv.__init__(self, self.model_name, frame_skip=frame_skip)
+        self.fix_goal = fix_goal
+        self.fixed_goal = np.array(fixed_goal)
+        self.use_safety_box = use_safety_box
+        self.prev_qpos = self.init_angles.copy()
+        self.reward_type = reward_type
+        self.indicator_threshold = indicator_threshold
+        self.keep_vel_in_obs = keep_vel_in_obs
+
+        MultitaskEnv.__init__(self)
+        CustomMujocoEnv.__init__(
+            self, self.model_name, frame_skip=frame_skip)
+
         bounds = self.model.actuator_ctrlrange.copy()
         low = bounds[:, 0]
         high = bounds[:, 1]
         self.action_space = Box(low=low, high=high)
+
         if goal_low is None:
             goal_low = np.array([-0.1, 0.5, 0.02])
         else:
             goal_low = np.array(goal_low)
+
         if goal_high is None:
             goal_high = np.array([0.1, 0.7, 0.2])
         else:
             goal_high = np.array(goal_low)
-        self.safety_box = Box(
-            goal_low,
-            goal_high
-        )
-        self.keep_vel_in_obs = keep_vel_in_obs
+
+        self.safety_box = Box(goal_low, goal_high)
         self.goal_space = Box(goal_low, goal_high)
+
         obs_size = self._get_env_obs().shape[0]
         high = np.inf * np.ones(obs_size)
         low = -high
+
         self.obs_space = Box(low, high)
         self.achieved_goal_space = Box(
             -np.inf * np.ones(3),
-            np.inf * np.ones(3)
-        )
+            np.inf * np.ones(3))
+
         self.observation_space = Dict([
             ('observation', self.obs_space),
             ('desired_goal', self.goal_space),
@@ -61,19 +82,15 @@ class SawyerReachTorqueEnv(MujocoEnv, Serializable, MultitaskEnv):
             ('state_desired_goal', self.goal_space),
             ('state_achieved_goal', self.achieved_goal_space),
         ])
-        self.fix_goal = fix_goal
-        self.fixed_goal = np.array(fixed_goal)
-        self.use_safety_box=use_safety_box
-        self.prev_qpos = self.init_angles.copy()
-        self.reward_type = reward_type
-        self.indicator_threshold = indicator_threshold
+
         goal = self.sample_goal()
         self._state_goal = goal['state_desired_goal']
+
         self.reset()
 
     @property
     def model_name(self):
-       return get_asset_full_path('sawyer_xyz/sawyer_reach_torque.xml')
+        return self.MODEL_PATH
 
     def reset_to_prev_qpos(self):
         angles = self.data.qpos.copy()
@@ -211,12 +228,12 @@ class SawyerReachTorqueEnv(MujocoEnv, Serializable, MultitaskEnv):
                 '%s%s' % (prefix, stat_name),
                 stat,
                 always_show_all_stats=True,
-                ))
+            ))
             statistics.update(create_stats_ordered_dict(
                 'Final %s%s' % (prefix, stat_name),
                 [s[-1] for s in stat],
                 always_show_all_stats=True,
-                ))
+            ))
         return statistics
 
     """
@@ -277,6 +294,7 @@ class SawyerReachTorqueEnv(MujocoEnv, Serializable, MultitaskEnv):
         self.sim.set_state(state)
         self.sim.forward()
         self._state_goal = goal
+
 
 if __name__ == "__main__":
     # import pygame
