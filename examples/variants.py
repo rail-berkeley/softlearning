@@ -86,6 +86,10 @@ GAUSSIAN_POLICY_PARAMS = {
     },
     'humanoid': {  # 17/21 DoF (gym/rllab)
     },
+    'pusher': {  # 3 DoF
+    },
+    'sawyer-torque': {
+    },
 }
 
 POLICY_PARAMS = {
@@ -165,6 +169,16 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(1e4 + 1),
         }
     },
+    'pusher': {  # 3 DoF
+        'base_kwargs': {
+            'n_epochs': int(1e3 + 1),
+        }
+    },
+    'sawyer-torque': {
+        'base_kwargs': {
+            'n_epochs': int(1e3 + 1),
+        }
+    },
 }
 
 REPLAY_POOL_PARAMS = {
@@ -203,6 +217,12 @@ RUN_PARAMS = {
     'humanoid': {  # 17/21 DoF (gym/rllab)
         'snapshot_gap': 2000
     },
+    'pusher': {  # 21 DoF
+        'snapshot_gap': 500
+    },
+    'sawyer-torque': {
+        'snapshot_gap': 1000
+    }
 }
 
 
@@ -219,6 +239,15 @@ ENV_PARAMS = {
     },
     'humanoid': {  # 17/21 DoF (gym/rllab)
     },
+    'pusher': {  # 3 DoF
+        'default': {
+            'arm_distance_coeff': 0.0,
+            'goal': tune.grid_search([(0, -1)]),
+        }
+    },
+    'sawyer-torque': {
+
+    }
 }
 
 
