@@ -4,7 +4,7 @@ from ray import tune
 from softlearning.environments.utils import get_environment
 from softlearning.algorithms import SAC
 
-from softlearning.misc.utils import set_seed
+from softlearning.misc.utils import timestamp, set_seed
 from softlearning.policies import (
     GaussianPolicy,
     LatentSpacePolicy,
