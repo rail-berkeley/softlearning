@@ -59,11 +59,12 @@ class SawyerPickAndPlaceEnv(MultitaskEnv, SawyerXYZEnv):
         self.action_space = Box(
             np.array([-1, -1, -1, -1]),
             np.array([1, 1, 1, 1]),
-        )
+            dtype=np.float32)
         self.hand_and_obj_space = Box(
             np.hstack((self.hand_low, obj_low)),
             np.hstack((self.hand_high, obj_high)),
-        )
+            dtype=np.float32)
+
         self.observation_space = Dict([
             ('observation', self.hand_and_obj_space),
             ('desired_goal', self.hand_and_obj_space),
