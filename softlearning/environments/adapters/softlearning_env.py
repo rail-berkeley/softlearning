@@ -162,10 +162,9 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
         return
 
     @abstractmethod
-    def copy(self, seed=None):
+    def copy(self):
         """Create a deep copy the environment."""
-        logger.warn("Could not seed environment %s", self)
-        return
+        raise NotImplementedError
 
     @property
     @abstractmethod
