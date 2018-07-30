@@ -1,45 +1,61 @@
 """Implements a GymAdapter that converts Gym envs in a SoftlearningEnv."""
 
 import gym
+from gym.wrappers.dict import FlattenDictWrapper
 
 from rllab.core.serializable import Serializable
 
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym.wrappers import NormalizeActionWrapper
+from softlearning.environments.gym.mujoco.sawyer import SawyerReachTorqueEnv
 
 
 GYM_ENVIRONMENTS = {
     'swimmer': {
-        'default': 'Swimmer-v2'
+        'default': lambda: gym.envs.make('Swimmer-v2')
     },
     'ant': {
-        'default': 'Ant-v2'
+        'default': lambda: gym.envs.make('Ant-v2')
     },
     'humanoid': {
-        'default': 'Humanoid-v2',
-        'standup': 'HumanoidStandup-v2'
+        'default': lambda: gym.envs.make('Humanoid-v2'),
+        'standup': lambda: gym.envs.make('HumanoidStandup-v2')
     },
     'hopper': {
-        'default': 'Hopper-v2'
+        'default': lambda: gym.envs.make('Hopper-v2')
     },
     'half-cheetah': {
-        'default': 'HalfCheetah-v2'
+        'default': lambda: gym.envs.make('HalfCheetah-v2')
     },
     'walker': {
-        'default': 'Walker2d-v2'
+        'default': lambda: gym.envs.make('Walker2d-v2')
     },
+    'sawyer-torque': {
+        'default': SawyerReachTorqueEnv,
+        'reach': SawyerReachTorqueEnv,
+    }
 }
 
 
 class GymAdapter(SoftlearningEnv):
     """Adapter to convert Gym environment into standard."""
 
-    def __init__(self, domain, task, *args, normalize=True, **kwargs):
+    def __init__(self,
+                 domain,
+                 task,
+                 *args,
+                 normalize=True,
+                 observation_keys=None,
+                 **kwargs):
         Serializable.quick_init(self, locals())
+        self.observation_keys = observation_keys
         super(GymAdapter, self).__init__(domain, task, *args, **kwargs)
 
-        env_name = GYM_ENVIRONMENTS[domain][task]
-        env = gym.envs.make(env_name)
+        env = GYM_ENVIRONMENTS[domain][task](*args, **kwargs)
+        if isinstance(env.observation_space, gym.spaces.Dict):
+            keys = (
+                observation_keys or list(env.observation_space.spaces.keys()))
+            env = FlattenDictWrapper(env, keys)
         # Remove the TimeLimit wrapper that sets 'done = True' when
         # the time limit specified for each environment has been passed and
         # therefore the environment is not Markovian (terminal condition
@@ -52,10 +68,12 @@ class GymAdapter(SoftlearningEnv):
     @property
     def observation_space(self):
         observation_space = self._env.observation_space
+
         if len(observation_space.shape) > 1:
             raise NotImplementedError(
                 "Observation space ({}) is not flat, make sure to check the"
                 " implemenation. ".format(observation_space))
+
         return observation_space
 
     @property
