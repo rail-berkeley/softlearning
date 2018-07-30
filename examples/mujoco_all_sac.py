@@ -14,7 +14,7 @@ from softlearning.replay_pools import SimpleReplayPool
 from softlearning.replay_pools import ExtraPolicyInfoReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import PREPROCESSOR_FUNCTIONS
-from examples.variants import get_variant_spec
+from examples.variants import get_variant_spec, get_variant_spec_image
 from examples.utils import (
     parse_universe_domain_task,
     get_parser,
@@ -165,7 +165,11 @@ def main():
 
     universe, domain, task = parse_universe_domain_task(args)
 
-    variant_spec = get_variant_spec(universe, domain, task, args.policy)
+    if 'image' in task:
+        variant_spec = get_variant_spec_image(
+            universe, domain, task, args.policy)
+    else:
+        variant_spec = get_variant_spec(universe, domain, task, args.policy)
 
     variant_spec['mode'] = args.mode
     variants = [x[1] for x in generate_variants(variant_spec)]

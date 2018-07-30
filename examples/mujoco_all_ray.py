@@ -16,7 +16,7 @@ from softlearning.replay_pools import (
     ExtraPolicyInfoReplayPool)
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import PREPROCESSOR_FUNCTIONS
-from examples.variants import get_variant_spec
+from examples.variants import get_variant_spec_image
 from examples.utils import (
     parse_universe_domain_task,
     get_parser,
@@ -166,7 +166,9 @@ def run_experiment(variant, reporter):
 
 
 def main():
-    args = get_parser().parse_args()
+    parser = get_parser()
+    parser.add_argument('--gpus', type=int, default=0)
+    args = parser.parse_args()
 
     universe, domain, task = parse_universe_domain_task(args)
 
@@ -174,16 +176,26 @@ def main():
 
     if args.mode == 'local':
         ray.init()
+        trial_resources = {'cpu': 8}
         local_dir_base = './data/ray/results'
     else:
+        trial_resources = {'cpu': 16}
         ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
         local_dir_base = '~/ray_results'
+
+    if args.gpus > 0:
+        trial_resources['gpu'] = args.gpus
 
     local_dir = '{}/{}/{}'.format(local_dir_base, domain, task)
 
     variant_specs = []
     for policy in args.policy:
-        variant_spec = get_variant_spec(universe, domain, task, args.policy)
+        if 'image' in task:
+            variant_spec = get_variant_spec_image(
+                universe, domain, task, args.policy)
+        else:
+            raise ValueError(
+                "Should not be here, this was meant to be temporary.")
 
         variant_spec['run_params']['local_dir'] = local_dir
         variant_specs.append(variant_spec)
@@ -191,7 +203,7 @@ def main():
     tune.run_experiments({
         "{}-{}".format(args.exp_name, policy): {
             'run': 'mujoco-runner',
-            'trial_resources': {'cpu': 16},
+            'trial_resources': trial_resources,
             'config': variant_spec,
             'local_dir': local_dir,
             'upload_dir': 'gs://sac-ray-test/ray/results'
