@@ -3,11 +3,12 @@ import datetime
 import dateutil.tz
 import os
 
+import numpy as np
+
 from rllab.core.serializable import Serializable
 
 PROJECT_PATH = os.path.dirname(
     os.path.realpath(os.path.join(__file__, '..', '..')))
-import numpy as np
 
 
 def timestamp():
