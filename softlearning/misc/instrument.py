@@ -40,7 +40,7 @@ def launch_experiment(main,
         include_folders = []
 
     if mode == 'ec2':
-        include_folders += ['softlearning', 'models', 'trained_policies']
+        include_folders += ['softlearning', 'models', 'snapshots']
         all_symlinks = []
 
         for folder in include_folders:

@@ -3,7 +3,7 @@ import argparse
 import joblib
 import tensorflow as tf
 
-from softlearning.samplers import rollout
+from softlearning.samplers.utils import rollout
 
 
 def parse_args():
@@ -35,10 +35,13 @@ def simulate_policy(args):
 
         with policy.deterministic(args.deterministic):
             while True:
-                path = rollout(env, policy,
-                               path_length=args.max_path_length,
-                               render=True,
-                               speedup=args.speedup)
+                path = rollout(
+                    env,
+                    policy,
+                    path_length=args.max_path_length,
+                    render=True, speedup=args.speedup)
+
+
 if __name__ == "__main__":
     args = parse_args()
     simulate_policy(args)
