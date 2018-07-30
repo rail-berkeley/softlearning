@@ -22,7 +22,7 @@ class PusherEnv(Serializable, MujocoEnv):
     attributes (_Serializable__args and _Serializable__kwargs) will get
     overwritten.
     """
-    FILE_PATH = osp.abspath(osp.join(PROJECT_PATH, 'models', 'pusher.xml'))
+    FILE_PATH = osp.abspath(osp.join(PROJECT_PATH, 'models', 'pusher_2d.xml'))
 
     JOINT_INDS = list(range(0, 3))
     PUCK_INDS = list(range(3, 5))
