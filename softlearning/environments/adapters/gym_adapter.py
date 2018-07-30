@@ -31,7 +31,8 @@ GYM_ENVIRONMENTS = {
         'default': lambda: gym.envs.make('Walker2d-v2')
     },
     'sawyer-torque': {
-        'reach': SawyerReachTorqueEnv
+        'default': SawyerReachTorqueEnv,
+        'reach': SawyerReachTorqueEnv,
     }
 }
 
