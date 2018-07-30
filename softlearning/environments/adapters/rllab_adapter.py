@@ -1,4 +1,4 @@
-"""Implements an RllabAdapter that converts rllab envs in a SoftlearningEnv."""
+"""Implements an RllabAdapter that converts Rllab envs into SoftlearningEnv."""
 
 import gym.spaces
 
@@ -60,7 +60,7 @@ def convert_rllab_space_to_gym_space(space):
 
 
 class RllabAdapter(SoftlearningEnv):
-    """Adapter to convert Rllab environment into standard."""
+    """Adapter that implements the SoftlearningEnv for Rllab envs."""
 
     def __init__(self, domain, task, *args, normalize=True, **kwargs):
         Serializable.quick_init(self, locals())
@@ -96,7 +96,8 @@ class RllabAdapter(SoftlearningEnv):
     def step(self, action, *args, **kwargs):
         # TODO(hartikainen): refactor this to always return OrderedDict,
         # such that the observation for all the envs is consistent. Right now
-        # Some of the rllab envs return np.array whereas other return dict.
+        # all the rllab envs return np.array whereas some Gym envs return
+        # gym.spaces.Dict type.
         #
         # Something like:
         # observation = OrderedDict()
