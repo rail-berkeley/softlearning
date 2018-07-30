@@ -10,7 +10,7 @@ from rllab.misc.overrides import overrides
 from softlearning.misc.utils import PROJECT_PATH
 
 
-class PusherEnv(Serializable, MujocoEnv):
+class Pusher2dEnv(Serializable, MujocoEnv):
     """Pusher environment
 
     Pusher is a two-dimensional 3-DoF manipulator. Task is to slide a cylinder-
@@ -117,7 +117,7 @@ class PusherEnv(Serializable, MujocoEnv):
 
     def reset(self, init_state=None):
         if init_state:
-            return super(PusherEnv, self).reset(init_state)
+            return super(Pusher2dEnv, self).reset(init_state)
 
         qpos = np.random.uniform(
             low=-0.1, high=0.1, size=self.model.nq) + self.init_qpos.squeeze()
@@ -143,7 +143,7 @@ class PusherEnv(Serializable, MujocoEnv):
         ctrl = np.zeros(self.model.data.ctrl.shape[0])
 
         full_state = np.concatenate((qpos, qvel, qacc, ctrl))
-        super(PusherEnv, self).reset(full_state)
+        super(Pusher2dEnv, self).reset(full_state)
 
         return self.get_current_obs()
 

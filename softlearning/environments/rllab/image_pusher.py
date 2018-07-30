@@ -4,14 +4,14 @@ from rllab.core.serializable import Serializable
 from rllab.mujoco_py import MjViewer
 from rllab.misc import logger
 
-from .pusher import PusherEnv
+from .pusher_2d_env import Pusher2dEnv
 
 
-class ImagePusherEnv(PusherEnv):
+class ImagePusherEnv(Pusher2dEnv):
     def __init__(self, image_size, *args, **kwargs):
         Serializable.quick_init(self, locals())
         self.image_size = image_size
-        PusherEnv.__init__(self, *args, **kwargs)
+        Pusher2dEnv.__init__(self, *args, **kwargs)
         self.viewer_setup()
 
     def get_current_obs(self):
@@ -110,7 +110,7 @@ class ImageForkReacherEnv(ImagePusherEnv):
 
     def reset(self, init_state=None):
         if init_state:
-            return super(PusherEnv, self).reset(init_state)
+            return super(Pusher2dEnv, self).reset(init_state)
 
         qpos = np.random.uniform(
             low=-0.1, high=0.1, size=self.model.nq) + self.init_qpos.squeeze()
@@ -149,7 +149,7 @@ class ImageForkReacherEnv(ImagePusherEnv):
         ctrl = np.zeros(self.model.data.ctrl.shape[0])
 
         full_state = np.concatenate((qpos, qvel, qacc, ctrl))
-        super(PusherEnv, self).reset(full_state)
+        super(Pusher2dEnv, self).reset(full_state)
 
         return self.get_current_obs()
 

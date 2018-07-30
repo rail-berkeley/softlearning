@@ -14,6 +14,7 @@ from softlearning.environments.rllab import (
     MultiDirectionAntEnv,
     MultiDirectionHumanoidEnv,
     CrossMazeAntEnv)
+from softlearning.environments.rllab.pusher_2d_env import Pusher2dEnv
 from softlearning.environments.rllab.image_pusher import (
     ImageForkReacherEnv,
     ImagePusherEnv)
@@ -36,6 +37,7 @@ RLLAB_ENVIRONMENTS = {
         'multi-direction': MultiDirectionHumanoidEnv,
     },
     'pusher': {
+        'default': Pusher2dEnv,
         '2d-image-reach': ImageForkReacherEnv,
         '2d-image-default': ImagePusherEnv,
     }
