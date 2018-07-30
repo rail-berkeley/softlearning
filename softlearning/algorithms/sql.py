@@ -109,8 +109,8 @@ class SQL(RLAlgorithm):
         self._train_qf = train_qf
         self._train_policy = train_policy
 
-        self._observation_dim = self.env.observation_space.flat_dim
-        self._action_dim = self.env.action_space.flat_dim
+        self._observation_shape = list(self.env.observation_space.shape)
+        self._action_shape = list(self.env.action_space.shape)
 
         self._create_placeholders()
 
@@ -138,19 +138,19 @@ class SQL(RLAlgorithm):
 
         self._observations_ph = tf.placeholder(
             tf.float32,
-            shape=[None, self._observation_dim],
+            shape=[None] + self._observation_shape,
             name='observations')
 
         self._next_observations_ph = tf.placeholder(
             tf.float32,
-            shape=[None, self._observation_dim],
+            shape=[None] + self._observation_shape,
             name='next_observations')
 
         self._actions_pl = tf.placeholder(
-            tf.float32, shape=[None, self._action_dim], name='actions')
+            tf.float32, shape=[None] + self._action_shape, name='actions')
 
         self._next_actions_ph = tf.placeholder(
-            tf.float32, shape=[None, self._action_dim], name='next_actions')
+            tf.float32, shape=[None] + self._action_shape, name='next_actions')
 
         self._rewards_pl = tf.placeholder(
             tf.float32, shape=[None], name='rewards')
@@ -164,7 +164,7 @@ class SQL(RLAlgorithm):
         with tf.variable_scope('target'):
             # The value of the next state is approximated with uniform samples.
             target_actions = tf.random_uniform(
-                (1, self._value_n_particles, self._action_dim), -1, 1)
+                [1, self._value_n_particles] + self._action_shape, -1, 1)
             q_value_targets = self.qf.output_for(
                 self._next_observations_ph[:, None, :], target_actions)
             assert_shape(q_value_targets, [None, self._value_n_particles])
@@ -179,7 +179,7 @@ class SQL(RLAlgorithm):
 
         # Importance weights add just a constant to the value.
         next_value -= tf.log(tf.cast(self._value_n_particles, tf.float32))
-        next_value += self._action_dim * np.log(2)
+        next_value += np.prod(self._action_shape) * np.log(2)
 
         # \hat Q in Equation 11:
         ys = tf.stop_gradient(self._reward_scale * self._rewards_pl + (
@@ -204,7 +204,7 @@ class SQL(RLAlgorithm):
             n_action_samples=self._kernel_n_particles,
             reuse=True)
         assert_shape(actions,
-                     [None, self._kernel_n_particles, self._action_dim])
+                     [None, self._kernel_n_particles] + self._action_shape)
 
         # SVGD requires computing two empirical expectations over actions
         # (see Appendix C1.1.). To that end, we first sample a single set of
@@ -218,9 +218,10 @@ class SQL(RLAlgorithm):
         fixed_actions, updated_actions = tf.split(
             actions, [n_fixed_actions, n_updated_actions], axis=1)
         fixed_actions = tf.stop_gradient(fixed_actions)
-        assert_shape(fixed_actions, [None, n_fixed_actions, self._action_dim])
+        assert_shape(fixed_actions,
+                     [None, n_fixed_actions] + self._action_shape)
         assert_shape(updated_actions,
-                     [None, n_updated_actions, self._action_dim])
+                     [None, n_updated_actions] + self._action_shape)
 
         svgd_target_values = self.qf.output_for(
             self._observations_ph[:, None, :], fixed_actions, reuse=True)
@@ -233,7 +234,8 @@ class SQL(RLAlgorithm):
         grad_log_p = tf.gradients(log_p, fixed_actions)[0]
         grad_log_p = tf.expand_dims(grad_log_p, axis=2)
         grad_log_p = tf.stop_gradient(grad_log_p)
-        assert_shape(grad_log_p, [None, n_fixed_actions, 1, self._action_dim])
+        assert_shape(grad_log_p,
+                     [None, n_fixed_actions, 1] + self._action_shape)
 
         kernel_dict = self._kernel_fn(xs=fixed_actions, ys=updated_actions)
 
@@ -245,7 +247,7 @@ class SQL(RLAlgorithm):
         action_gradients = tf.reduce_mean(
             kappa * grad_log_p + kernel_dict["gradient"], reduction_indices=1)
         assert_shape(action_gradients,
-                     [None, n_updated_actions, self._action_dim])
+                     [None, n_updated_actions] + self._action_shape)
 
         # Propagate the gradient through the policy network (Equation 14).
         gradients = tf.gradients(
@@ -282,7 +284,10 @@ class SQL(RLAlgorithm):
     def train(self):
         initial_exploration_policy = None
         return self._train(
-            self.env, self.policy, initial_exploration_policy, self.pool)
+            self.env,
+            self.policy,
+            self.pool,
+            initial_exploration_policy=initial_exploration_policy)
 
     @overrides
     def _init_training(self):

@@ -1,25 +1,25 @@
-import argparse
 import joblib
 import os
 
-from rllab.envs.normalized_env import normalize
-
+from ray import tune
 from ray.tune.variant_generator import generate_variants
 
+from rllab.envs.normalized_env import normalize
+
 from softlearning.misc import tf_utils
-from softlearning.misc.instrument import launch_experiment
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softlearning.misc.utils import timestamp
 from softlearning.replay_pools import UnionPool
 from softlearning.value_functions import SumQFunction
 from softlearning.policies import StochasticNNPolicy
-from softlearning.environments.pusher import PusherEnv
+from softlearning.environments.rllab.pusher import PusherEnv
 from softlearning.samplers import DummySampler
 from softlearning.misc.utils import PROJECT_PATH
+from examples.utils import get_parser, launch_experiments_rllab
 
-SHARED_PARAMS = {
-    'seed': 0,
+
+COMMON_PARAMS = {
+    'seed': tune.grid_search([1]),
     'policy_lr': 3E-4,
     'layer_size': 128,
     'batch_size': 128,
@@ -39,22 +39,6 @@ ENV_PARAMS = {
         'goal': (-1, -1),
     }
 }
-DEFAULT_ENV = 'pusher'
-AVAILABLE_ENVS = list(ENV_PARAMS.keys())
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--env', type=str, choices=AVAILABLE_ENVS, default=DEFAULT_ENV)
-    parser.add_argument('--exp_name', type=str, default=timestamp())
-    parser.add_argument('--mode', type=str, default='local')
-    parser.add_argument('--log_dir', type=str, default=None)
-    parser.add_argument('--snapshot1', type=str, default='')
-    parser.add_argument('--snapshot2', type=str, default='')
-    args = parser.parse_args()
-
-    return args
 
 
 def load_pool_and_qf(filename):
@@ -75,11 +59,15 @@ def run_experiment(variant):
         max_path_length=variant['max_path_length'])
     pool = UnionPool(pools=(pool1, pool2))
 
-    qf = SumQFunction(env.spec, q_functions=(qf1, qf2))
+    qf = SumQFunction(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        q_functions=(qf1, qf2))
 
     M = variant['layer_size']
     policy = StochasticNNPolicy(
-        env_spec=env.spec,
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
         hidden_layer_sizes=(M, M),
         name='policy{i}'.format(i=0))
 
@@ -111,39 +99,29 @@ def run_experiment(variant):
         pass
 
 
-def launch_experiments(variants, args):
-    print('Launching {} experiments.'.format(len(variants)))
-
-    for i, variant in enumerate(variants):
-        print("Experiment: {}/{}".format(i, num_experiments))
-        full_experiment_name = variant['prefix']
-        full_experiment_name += '-' + args.exp_name + '-' + str(i).zfill(2)
-
-        launch_experiment(
-            run_experiment,
-            mode=args.mode,
-            variant=variant,
-            exp_prefix=variant['prefix'] + '/' + args.exp_name,
-            exp_name=full_experiment_name,
-            n_parallel=1,
-            seed=variant['seed'],
-            terminate_machine=True,
-            log_dir=args.log_dir,
-            snapshot_mode=variant['snapshot_mode'],
-            snapshot_gap=variant['snapshot_gap'],
-            sync_s3_pkl=True)
-
-
 def main():
-    args = parse_args()
+    parser = get_parser()
+    parser.add_argument('--snapshot1', type=str, default='')
+    parser.add_argument('--snapshot2', type=str, default='')
+    args = parser.parse_args()
+
+    universe, domain, task = 'rllab', 'pusher', 'default'
 
     variant_spec = dict(
-        SHARED_PARAMS,
-        **ENV_PARAMS[args.env],
-        **{'snapshot1', args.snapshot1, 'snapshot_2', args.snapshot2})
-    from pdb import set_trace; from pprint import pprint; set_trace()
+        COMMON_PARAMS,
+        **ENV_PARAMS[domain],
+        **{
+            'snapshot1': args.snapshot1,
+            'snapshot2': args.snapshot2
+        },
+        **{
+            'universe': universe,
+            'task': task,
+            'domain': domain,
+        })
+
     variants = [x[1] for x in generate_variants(variant_spec)]
-    launch_experiments(variants, args)
+    launch_experiments_rllab(variants, args, run_experiment)
 
 
 if __name__ == '__main__':

@@ -13,15 +13,14 @@ from collections import deque
 import gtimer as gt
 import json
 import numpy as np
-import os
 import scipy.stats
 import tensorflow as tf
 
 
 EPS = 1E-6
 
-class DIAYN(SAC):
 
+class DIAYN(SAC):
     def __init__(self,
                  base_kwargs,
                  env,
@@ -97,8 +96,13 @@ class DIAYN(SAC):
         self._include_actions = include_actions
         self._add_p_z = add_p_z
 
-        self._Da = self._env.action_space.flat_dim
-        self._Do = self._env.observation_space.flat_dim
+        observation_shape = self._env.observation_space.shape
+        action_shape = self._env.action_space.shape
+
+        assert len(observation_shape) == 1, observation_shape
+        self._Do = observation_shape[0]
+        assert len(action_shape) == 1, action_shape
+        self._Da = action_shape[0]
 
         self._training_ops = list()
 
@@ -107,7 +111,6 @@ class DIAYN(SAC):
         self._init_critic_update()
         self._init_discriminator_update()
         self._init_target_ops()
-
 
         self._sess.run(tf.global_variables_initializer())
 

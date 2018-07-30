@@ -13,58 +13,6 @@ from .rl_algorithm import RLAlgorithm
 class SAC(RLAlgorithm, Serializable):
     """Soft Actor-Critic (SAC)
 
-    Example:
-    ```python
-
-    env = normalize(SwimmerEnv())
-
-    pool = SimpleReplayPool(env_spec=env.spec, max_size=1E6)
-
-    base_kwargs = dict(
-        min_pool_size=1000,
-        epoch_length=1000,
-        n_epochs=1000,
-        batch_size=64,
-        target_entropy=-1.0,
-        n_train_repeat=1,
-        eval_render=False,
-        eval_n_episodes=1,
-        eval_deterministic=True,
-    )
-
-    M = 100
-    qf = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
-
-    vf = NNVFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
-
-    policy = GMMPolicy(
-        env_spec=env.spec,
-        K=2,
-        hidden_layers=(M, M),
-        qf=qf,
-        reg=0.001
-    )
-
-    algorithm = SAC(
-        base_kwargs=base_kwargs,
-        env=env,
-        policy=policy,
-        pool=pool,
-        qf=qf,
-        vf=vf,
-
-        lr=3E-4,
-        discount=0.99,
-        tau=0.01,
-
-        save_full_state=False
-    )
-
-    # Do the training
-    for epoch, mean_return in algorithm.train():
-        pass
-    ```
-
     References
     ----------
     [1] Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, and Sergey Levine, "Soft
@@ -143,7 +91,7 @@ class SAC(RLAlgorithm, Serializable):
 
         self._reward_scale = reward_scale
         self._target_entropy = (
-            -self._env.action_space.flat_dim
+            -np.prod(self._env.action_space.shape)
             if target_entropy == 'auto'
             else target_entropy)
 
@@ -159,8 +107,13 @@ class SAC(RLAlgorithm, Serializable):
 
         self._save_full_state = save_full_state
 
-        self._Da = self._env.action_space.flat_dim
-        self._Do = self._env.observation_space.flat_dim
+        observation_shape = self._env.observation_space.shape
+        action_shape = self._env.action_space.shape
+
+        assert len(observation_shape) == 1, observation_shape
+        self._Do = observation_shape[0]
+        assert len(action_shape) == 1, action_shape
+        self._Da = action_shape[0]
 
         self._training_ops = list()
 
@@ -274,14 +227,18 @@ class SAC(RLAlgorithm, Serializable):
         self._td_loss1_t = 0.5 * tf.reduce_mean((ys - self._qf1_t)**2)
         self._td_loss2_t = 0.5 * tf.reduce_mean((ys - self._qf2_t)**2)
 
-        qf1_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
+        qf1_train_op = tf.train.AdamOptimizer(
+            self._qf_lr,
+            name='td_loss_1_optimizer',
+        ).minimize(
             loss=self._td_loss1_t,
-            var_list=self._qf1.get_params_internal()
-        )
-        qf2_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
+            var_list=self._qf1.get_params_internal())
+        qf2_train_op = tf.train.AdamOptimizer(
+            self._qf_lr,
+            name='td_loss_2_optimizer',
+        ).minimize(
             loss=self._td_loss2_t,
-            var_list=self._qf2.get_params_internal()
-        )
+            var_list=self._qf2.get_params_internal())
 
         self._training_ops.append(qf1_train_op)
         self._training_ops.append(qf2_train_op)
@@ -303,7 +260,7 @@ class SAC(RLAlgorithm, Serializable):
         """
 
         actions, log_pi = self._policy.actions_for(
-            observations=self._observations_ph, with_log_pis=True)
+            observations=self._observations_ph, with_log_pis=True, reuse=True)
 
         log_alpha = tf.get_variable(
             'log_alpha',
@@ -315,7 +272,8 @@ class SAC(RLAlgorithm, Serializable):
             alpha_loss = -tf.reduce_mean(
                 log_alpha * tf.stop_gradient(log_pi + self._target_entropy))
 
-            self._alpha_optimizer = tf.train.AdamOptimizer(self._policy_lr)
+            self._alpha_optimizer = tf.train.AdamOptimizer(
+                self._policy_lr, name='alpha_optimizer')
             self._alpha_train_op = self._alpha_optimizer.minimize(
                 loss=alpha_loss, var_list=[log_alpha])
             self._training_ops.append(self._alpha_train_op)
@@ -359,19 +317,24 @@ class SAC(RLAlgorithm, Serializable):
         # We update the vf towards the min of two Q-functions in order to
         # reduce overestimation bias from function approximation error.
         self._vf_loss_t = 0.5 * tf.reduce_mean((
-          self._vf_t
-          - tf.stop_gradient(
-              min_log_target
-              - alpha * log_pi
-              + policy_prior_log_probs)
+            self._vf_t
+            - tf.stop_gradient(
+                min_log_target
+                - alpha * log_pi
+                + policy_prior_log_probs)
         )**2)
 
-        policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
+        policy_train_op = tf.train.AdamOptimizer(
+            self._policy_lr,
+            name='policy_loss_optimizer',
+        ).minimize(
             loss=policy_loss,
-            var_list=self._policy.get_params_internal()
-        )
+            var_list=self._policy.get_params_internal())
 
-        vf_train_op = tf.train.AdamOptimizer(self._vf_lr).minimize(
+        vf_train_op = tf.train.AdamOptimizer(
+            self._vf_lr,
+            name='vf_loss_optimizer',
+        ).minimize(
             loss=self._vf_loss_t,
             var_list=self._vf_params
         )

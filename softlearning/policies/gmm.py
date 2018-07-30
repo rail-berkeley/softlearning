@@ -17,18 +17,25 @@ EPS = 1e-6
 
 
 class GMMPolicy(NNPolicy, Serializable):
-    """
-    Gaussian Mixture Model policy
+    """Gaussian Mixture Model policy.
 
     TODO: change interfaces to match other policies to support returning as
     log_pis for given actions.
     """
-    def __init__(self, env_spec, K=2, hidden_layer_sizes=(100, 100), reg=1e-3,
-                 squash=True, reparameterize=False, qf=None, name='gmm_policy'):
+    def __init__(self,
+                 observation_shape,
+                 action_shape,
+                 K=2,
+                 hidden_layer_sizes=(100, 100),
+                 reg=1e-3,
+                 squash=True,
+                 reparameterize=False,
+                 qf=None,
+                 name='gmm_policy'):
         """
         Args:
-            env_spec (`rllab.EnvSpec`): Specification of the environment
-                to create the policy for.
+            observation_shape (`list`, `tuple`): Dimension of the observations.
+            action_shape (`list`, `tuple`): Dimension of the actions.
             K (`int`): Number of mixture components.
             hidden_layer_sizes (`list` of `int`): Sizes for the Multilayer
                 perceptron hidden layers.
@@ -40,8 +47,10 @@ class GMMPolicy(NNPolicy, Serializable):
         Serializable.quick_init(self, locals())
 
         self._hidden_layers = hidden_layer_sizes
-        self._Da = env_spec.action_space.flat_dim
-        self._Ds = env_spec.observation_space.flat_dim
+        assert len(observation_shape) == 1, observation_shape
+        self._Ds = observation_shape[0]
+        assert len(action_shape) == 1, action_shape
+        self._Da = action_shape[0]
         self._K = K
         self._is_deterministic = False
         self._fixed_h = None
@@ -59,7 +68,7 @@ class GMMPolicy(NNPolicy, Serializable):
 
         # TODO.code_consolidation: This should probably call
         # `super(GMMPolicy, self).__init__`
-        super(NNPolicy, self).__init__(env_spec)
+        super(NNPolicy, self).__init__(env_spec=None)
 
     def actions_for(self, observations, latents=None,
                     name=None, reuse=tf.AUTO_REUSE,

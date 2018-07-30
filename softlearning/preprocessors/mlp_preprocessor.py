@@ -67,7 +67,8 @@ class FeedforwardNetPreprocessor(Parameterized, Serializable):
         Parameterized.__init__(self)
         Serializable.quick_init(self, locals())
 
-        self._Do = input_shape
+        assert len(input_shape) == 1, input_shape
+        self._Do = input_shape[0]
         self._observations_ph = tf.placeholder(
             tf.float32, shape=(None, self._Do), name='observations')
 

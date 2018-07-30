@@ -1,30 +1,33 @@
 """Script for launching DIAYN experiments.
 
 Usage:
-    python mujoco_all_diayn.py --env=point --snapshot_dir=<snapshot_dir> --log_dir=/dev/null
+    python mujoco_all_diayn.py \
+        --env=point \
+        --snapshot_dir=<snapshot_dir> \
+        --log_dir=/dev/null
 """
+import os
+import joblib
 
-
+import numpy as np
+import tensorflow as tf
+from ray import tune
 from ray.tune.variant_generator import generate_variants
 
 from softlearning.algorithms import SAC
-from softlearning.environments import FixedOptionEnv
-from softlearning.misc.instrument import run_sac_experiment
+from softlearning.environments.rllab import FixedOptionEnv
 from softlearning.samplers import rollouts
-from softlearning.misc.utils import timestamp
 from softlearning.policies.hierarchical_policy import FixedOptionPolicy
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
-
-import argparse
-import joblib
-import numpy as np
-import os
-import tensorflow as tf
+from examples.utils import (
+    parse_universe_domain_task,
+    get_parser,
+    launch_experiments_rllab)
 
 
-SHARED_PARAMS = {
-    'seed': 1,
+COMMON_PARAMS = {
+    'seed': tune.grid_search([1]),
     'lr': 3E-4,
     'discount': 0.99,
     'tau': 0.01,
@@ -42,21 +45,21 @@ SHARED_PARAMS = {
 TAG_KEYS = ['lr', 'use_pretrained_values']
 
 ENV_PARAMS = {
-    'swimmer': { # 2 DoF
+    'swimmer': {  # 2 DoF
         'prefix': 'swimmer',
         'env_name': 'Swimmer-v1',
         'max_path_length': 1000,
         'n_epochs': 2000,
         'target_entropy': -2,
     },
-    'hopper': { # 3 DoF
+    'hopper': {  # 3 DoF
         'prefix': 'hopper',
         'env_name': 'Hopper-v1',
         'max_path_length': 1000,
         'n_epochs': 3000,
         'target_entropy': -3,
     },
-    'half-cheetah': { # 6 DoF
+    'half-cheetah': {  # 6 DoF
         'prefix': 'half-cheetah',
         'env_name': 'HalfCheetah-v1',
         'max_path_length': 1000,
@@ -64,21 +67,21 @@ ENV_PARAMS = {
         'target_entropy': -6,
         'max_size': 1E7,
     },
-    'walker': { # 6 DoF
+    'walker': {  # 6 DoF
         'prefix': 'walker',
         'env_name': 'Walker2d-v1',
         'max_path_length': 1000,
         'n_epochs': 5000,
         'target_entropy': -6,
     },
-    'ant': { # 8 DoF
+    'ant': {  # 8 DoF
         'prefix': 'ant',
         'env_name': 'Ant-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
         'target_entropy': -8,
     },
-    'humanoid': { # 21 DoF
+    'humanoid': {  # 21 DoF
         'prefix': 'humanoid',
         'env_name': 'Humanoid-v1',
         'max_path_length': 1000,
@@ -137,22 +140,6 @@ ENV_PARAMS = {
         'target_entropy': -4,
     },
 }
-DEFAULT_ENV = 'swimmer'
-AVAILABLE_ENVS = list(ENV_PARAMS.keys())
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--env',
-                        type=str,
-                        choices=AVAILABLE_ENVS,
-                        default='swimmer')
-    parser.add_argument('--exp_name', type=str, default=timestamp())
-    parser.add_argument('--mode', type=str, default='local')
-    parser.add_argument('--log_dir', type=str, default=None)
-    parser.add_argument('--snapshot', type=str, default=None)
-    args = parser.parse_args()
-
-    return args
 
 
 def get_best_skill(policy, env, num_skills, max_path_length):
@@ -163,7 +150,8 @@ def get_best_skill(policy, env, num_skills, max_path_length):
             fixed_z_policy = FixedOptionPolicy(policy, num_skills, z)
             new_paths = rollouts(env, fixed_z_policy,
                                  max_path_length, n_paths=2)
-            total_returns = np.mean([path['rewards'].sum() for path in new_paths])
+            total_returns = np.mean([
+                path['rewards'].sum() for path in new_paths])
             tf.logging.info('Reward for skill %d = %.3f', z, total_returns)
             reward_list.append(total_returns)
 
@@ -173,22 +161,24 @@ def get_best_skill(policy, env, num_skills, max_path_length):
     return best_z
 
 
-
 def run_experiment(variant):
     tf.logging.set_verbosity(tf.logging.INFO)
-    with tf.Session() as sess:
+    with tf.Session():
         data = joblib.load(variant['snapshot_filename'])
         policy = data['policy']
         env = data['env']
 
-        num_skills = data['policy'].observation_space.flat_dim - data['env'].spec.observation_space.flat_dim
+        num_skills = (
+            np.prod(data['policy']._observation_shape)
+            - np.prod(data['env'].observation_space.shape))
         best_z = get_best_skill(policy, env, num_skills, variant['max_path_length'])
         fixed_z_env = FixedOptionEnv(env, num_skills, best_z)
 
         tf.logging.info('Finetuning best skill...')
 
         pool = SimpleReplayPool(
-            env_spec=fixed_z_env.spec,
+            observation_shape=fixed_z_env.spec.observation_space.shape,
+            action_shape=fixed_z_env.spec.action_space.shape,
             max_size=variant['max_size'],
         )
 
@@ -233,7 +223,7 @@ def run_experiment(variant):
             qf=qf,
             vf=vf,
             lr=variant['lr'],
-            target_entropy=algorithm_params['target_entropy'],
+            target_entropy=variant['target_entropy'],
             discount=variant['discount'],
             tau=variant['tau'],
             save_full_state=False,
@@ -244,38 +234,45 @@ def run_experiment(variant):
             pass
 
 
-def launch_experiments(variants, args):
-    for i, variant in enumerate(variants):
-        tag = 'finetune__'
-        print(variant['snapshot_filename'])
-        tag += variant['snapshot_filename'].split('/')[-2]
-        tag += '____'
-        tag += '__'.join(['%s_%s' % (key, variant[key]) for key in TAG_KEYS])
-        log_dir = os.path.join(args.log_dir, tag)
-        variant['video_dir'] = os.path.join(log_dir, 'videos')
-        print('Launching {} experiments.'.format(len(variants)))
-        run_sac_experiment(
-            run_experiment,
-            mode=args.mode,
-            variant=variant,
-            exp_prefix=variant['prefix'] + '/' + args.exp_name,
-            exp_name=variant['prefix'] + '-' + args.exp_name + '-' + str(i).zfill(2),
-            n_parallel=1,  # Increasing this barely effects performance,
-                           # but breaks learning of hierarchical policy.
-            seed=variant['seed'],
-            terminate_machine=True,
-            log_dir=log_dir,
-            snapshot_mode=variant['snapshot_mode'],
-            snapshot_gap=variant['snapshot_gap'],
-            sync_s3_pkl=variant['sync_pkl'],
-        )
+def build_tagged_log_dir(spec):
+    tag = 'finetune__{}____{}'.format(
+        spec['snapshot_filename'].split('/')[-2],
+        '__'.join(['%s_%s' % (key, spec[key]) for key in TAG_KEYS]))
+    log_dir = os.path.join(spec['log_dir_base'], tag)
+    return log_dir
+
+
+def build_video_dir(spec):
+    log_dir = os.path.join(spec['log_dir'])
+    video_dir = os.path.join(log_dir, 'videos')
+    return video_dir
+
 
 def main():
-    args = parse_args()
+    parser = get_parser()
+    parser.add_argument('--snapshot', type=str, default=None)
+    args = parser.parse_args()
+
+    universe, domain, task = parse_universe_domain_task(args)
 
     variant_spec = dict(
         COMMON_PARAMS,
-        **ENV_PARAMS[args.env],
-        **{'snapshot_filename': args.snapshot})
+        **ENV_PARAMS[domain],
+        **{
+            'log_dir_base': args.log_dir,
+            'snapshot_filename': args.snapshot,
+            'log_dir': build_tagged_log_dir,
+            'video_dir': build_video_dir
+        },
+        **{
+            'universe': universe,
+            'task': task,
+            'domain': domain,
+        })
+
     variants = [x[1] for x in generate_variants(variant_spec)]
-    launch_experiments(variants, args)
+    launch_experiments_rllab(variants, args)
+
+
+if __name__ == '__main__':
+    main()

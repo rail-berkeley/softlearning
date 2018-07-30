@@ -7,16 +7,27 @@ from sandbox.rocky.tf.policies.base import Policy
 
 
 class NNPolicy(Policy, Serializable):
-    def __init__(self, name, env_spec, observation_ph, actions):
+    def __init__(self,
+                 name,
+                 observation_shape,
+                 action_shape,
+                 observation_ph,
+                 actions):
         Serializable.quick_init(self, locals())
+
+        self._observation_shape = observation_shape
+        self._action_shape = action_shape
 
         self.name = name
         self._observations_ph = observation_ph
         self._actions = actions
 
-        self.no_op = tf.no_op()
+        self.NO_OP = tf.no_op()
 
-        super(NNPolicy, self).__init__(env_spec)
+        # Temporarily set env_spec to None. All our algorithms use
+        # observation_shape and action_shape directly. Get rid of this once we
+        # further deprecate rllab
+        super(NNPolicy, self).__init__(env_spec=None)
 
     def _squash_correction(self, actions):
         if not self._squash:
@@ -54,8 +65,8 @@ class NNPolicy(Policy, Serializable):
         """Sample actions based on the observations."""
         feed_dict = {self._observations_ph: observations}
         fetches = (self._actions,
-                   self._log_pis if with_log_pis else self.no_op,
-                   self._raw_actions if with_raw_actions else self.no_op)
+                   self._log_pis if with_log_pis else self.NO_OP,
+                   self._raw_actions if with_raw_actions else self.NO_OP)
         outputs = tf.get_default_session().run(fetches, feed_dict)
         return outputs
 

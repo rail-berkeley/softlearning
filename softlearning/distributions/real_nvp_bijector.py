@@ -5,12 +5,15 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+import tensorflow_probability as tfp
+
 import numpy as np
-ConditionalBijector = tf.contrib.distributions.bijectors.ConditionalBijector
 
 __all__ = [
     "RealNVPBijector",
 ]
+
+tfb = tfp.bijectors
 
 
 def checkerboard(shape, parity='even', dtype=tf.bool):
@@ -60,7 +63,8 @@ def feedforward_net(inputs,
 
     return out
 
-class CouplingBijector(ConditionalBijector):
+
+class CouplingBijector(tfb.ConditionalBijector):
     """TODO"""
 
     def __init__(self,
@@ -91,11 +95,11 @@ class CouplingBijector(ConditionalBijector):
         self.translation_fn = translation_fn
         self.scale_fn = scale_fn
 
-        super().__init__(event_ndims=event_ndims,
-                         validate_args=validate_args,
-                         name=name)
-
-    # TODO: Properties
+        super().__init__(
+            validate_args=validate_args,
+            forward_min_event_ndims=1,
+            inverse_min_event_ndims=1,
+            name=name)
 
     def _forward(self, x, **condition_kwargs):
         self._maybe_assert_valid_x(x)
@@ -121,7 +125,6 @@ class CouplingBijector(ConditionalBijector):
             translation = self.translation_fn(masked_x,
                                               condition_kwargs['condition'],
                                               non_masked_x.shape[-1])
-
 
         # exp(s(b*x)) in paper
         exp_scale = tf.check_numerics(
@@ -177,7 +180,6 @@ class CouplingBijector(ConditionalBijector):
         else:
             non_masked_y = y[:, :D//2]
             masked_y = y[:, D//2:]
-
 
         with tf.variable_scope("{name}/scale".format(name=self.name),
                                reuse=tf.AUTO_REUSE):
@@ -246,14 +248,14 @@ class CouplingBijector(ConditionalBijector):
             return y
         raise NotImplementedError("_maybe_assert_valid_y")
 
-class RealNVPBijector(ConditionalBijector):
+
+class RealNVPBijector(tfb.ConditionalBijector):
     """TODO"""
 
     def __init__(self,
                  num_coupling_layers=2,
                  translation_hidden_sizes=(25,),
                  scale_hidden_sizes=(25,),
-                 event_ndims=0,
                  validate_args=False,
                  name="real_nvp"):
         """Instantiates the `RealNVPBijector` bijector.
@@ -279,9 +281,11 @@ class RealNVPBijector(ConditionalBijector):
 
         self.build()
 
-        super().__init__(event_ndims=event_ndims,
-                         validate_args=validate_args,
-                         name=name)
+        super().__init__(
+            validate_args=validate_args,
+            forward_min_event_ndims=1,
+            inverse_min_event_ndims=1,
+            name=name)
 
     # TODO: Properties
 
@@ -329,7 +333,7 @@ class RealNVPBijector(ConditionalBijector):
         out = x
         for layer in self.layers:
             log_det_jacobian = layer.forward_log_det_jacobian(
-                out, **condition_kwargs)
+                out, event_ndims=1, **condition_kwargs)
             out = layer.forward(out, **condition_kwargs)
             assert (sum_log_det_jacobians.shape.as_list()
                     == log_det_jacobian.shape.as_list())
@@ -356,7 +360,7 @@ class RealNVPBijector(ConditionalBijector):
         out = y
         for layer in reversed(self.layers):
             log_det_jacobian = layer.inverse_log_det_jacobian(
-                out, **condition_kwargs)
+                out, event_ndims=1, **condition_kwargs)
             out = layer.inverse(out, **condition_kwargs)
             assert (sum_log_det_jacobians.shape.as_list()
                     == log_det_jacobian.shape.as_list())

@@ -16,25 +16,34 @@ EPS = 1e-6
 
 
 class GaussianPolicy(NNPolicy, Serializable):
-    def __init__(self, env_spec, hidden_layer_sizes=(100, 100), reg=1e-3,
-                 squash=True, reparameterize=True, name='gaussian_policy'):
+    def __init__(self,
+                 observation_shape,
+                 action_shape,
+                 hidden_layer_sizes=(100, 100),
+                 reg=1e-3,
+                 squash=True,
+                 reparameterize=True,
+                 name='gaussian_policy'):
         """
         Args:
-            env_spec (`rllab.EnvSpec`): Specification of the environment
-                to create the policy for.
+            observation_shape (`list`, `tuple`): Dimension of the observations.
+            action_shape (`list`, `tuple`): Dimension of the actions.
             hidden_layer_sizes (`list` of `int`): Sizes for the Multilayer
                 perceptron hidden layers.
-            reg (`float`): Regularization coeffiecient for the Gaussian parameters.
+            reg (`float`): Regularization coeffiecient for the Gaussian
+                parameters.
             squash (`bool`): If True, squash the Gaussian the gmm action samples
-               between -1 and 1 with tanh.
-            reparameterize ('bool'): If True, gradients will flow directly through
-                the action samples.
+                between -1 and 1 with tanh.
+            reparameterize ('bool'): If True, gradients will flow directly
+                through the action samples.
         """
         Serializable.quick_init(self, locals())
 
         self._hidden_layers = hidden_layer_sizes
-        self._Da = env_spec.action_space.flat_dim
-        self._Ds = env_spec.observation_space.flat_dim
+        assert len(observation_shape) == 1, observation_shape
+        self._Ds = observation_shape[0]
+        assert len(action_shape) == 1, action_shape
+        self._Da = action_shape[0]
         self._is_deterministic = False
         self._squash = squash
         self._reparameterize = reparameterize
@@ -43,9 +52,11 @@ class GaussianPolicy(NNPolicy, Serializable):
         self.no_op = tf.no_op()
 
         self.name = name
+        self.NO_OP = tf.no_op()
+
         self.build()
 
-        super(NNPolicy, self).__init__(env_spec)
+        super(NNPolicy, self).__init__(env_spec=None)
 
     def actions_for(self, observations, name=None, reuse=tf.AUTO_REUSE,
                     with_log_pis=False, with_raw_actions=False):
