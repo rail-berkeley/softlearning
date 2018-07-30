@@ -2,6 +2,8 @@
 
 from abc import ABCMeta, abstractmethod
 
+import numpy as np
+
 from rllab.core.serializable import Serializable
 
 
@@ -190,5 +192,26 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
     def set_param_values(self, params):
         raise NotImplementedError
 
-    def log_diagnostics(self, *args, **kwargs):
-        pass
+    def get_path_infos(self, paths, *args, **kwargs):
+        if len(paths) > 1:
+            raise NotImplementedError(
+                "This implementation expects only one path at a time.")
+
+        keys = list(paths[0]['env_infos'][0].keys())
+        path_results = {
+            k: [
+                env_info[k]
+                for path in paths
+                for env_info in path['env_infos']
+            ] for k in keys
+        }
+
+        results = {}
+        for info_key, info_values in path_results.items():
+            # Only log mean for now. We rarely have more than one path in the
+            # paths so max, min, std are kinda useless.
+            results[info_key + '-first'] = info_values[0]
+            results[info_key + '-last'] = info_values[-1]
+            results[info_key + '-range'] = np.ptp(info_values)
+
+        return results
