@@ -1,4 +1,4 @@
-"""Implements a GymAdapter that converts Gym envs in a SoftlearningEnv."""
+"""Implements a GymAdapter that converts Gym envs into SoftlearningEnv."""
 
 import gym
 from gym.wrappers.dict import FlattenDictWrapper
@@ -38,7 +38,7 @@ GYM_ENVIRONMENTS = {
 
 
 class GymAdapter(SoftlearningEnv):
-    """Adapter to convert Gym environment into standard."""
+    """Adapter that implements the SoftlearningEnv for Gym envs."""
 
     def __init__(self,
                  domain,
@@ -46,24 +46,29 @@ class GymAdapter(SoftlearningEnv):
                  *args,
                  normalize=True,
                  observation_keys=None,
+                 unwrap_time_limit=True,
                  **kwargs):
         Serializable.quick_init(self, locals())
         self.observation_keys = observation_keys
         super(GymAdapter, self).__init__(domain, task, *args, **kwargs)
 
         env = GYM_ENVIRONMENTS[domain][task](*args, **kwargs)
+
+        if isinstance(env, gym.wrappers.TimeLimit) and unwrap_time_limit:
+            # Remove the TimeLimit wrapper that sets 'done = True' when
+            # the time limit specified for each environment has been passed and
+            # therefore the environment is not Markovian (terminal condition
+            # depends on time rather than state).
+            env = env.env
+
         if isinstance(env.observation_space, gym.spaces.Dict):
-            keys = (
+            observation_keys = (
                 observation_keys or list(env.observation_space.spaces.keys()))
-            env = FlattenDictWrapper(env, keys)
-        # Remove the TimeLimit wrapper that sets 'done = True' when
-        # the time limit specified for each environment has been passed and
-        # therefore the environment is not Markovian (terminal condition
-        # depends on time rather than state).
+            env = FlattenDictWrapper(env, observation_keys)
         if normalize:
             env = NormalizeActionWrapper(env)
 
-        self._env = env.env
+        self._env = env
 
     @property
     def observation_space(self):
@@ -86,9 +91,9 @@ class GymAdapter(SoftlearningEnv):
         return action_space
 
     def step(self, action, *args, **kwargs):
-        # TODO(hartikainen): refactor this to always return OrderedDict,
-        # such that the observation for all the envs is consistent. Right now
-        # Some of the gym envs return np.array whereas other return dict.
+        # TODO(hartikainen): refactor this to always return an OrderedDict,
+        # such that the observations for all the envs is consistent. Right now
+        # some of the gym envs return np.array whereas others return dict.
         #
         # Something like:
         # observation = OrderedDict()
