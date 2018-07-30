@@ -18,6 +18,7 @@ flatbuffers==2015.12.22.1
 funcsigs==1.0.2
 future==0.16.0
 gast==0.2.0
+gitpython==2.1.11
 google-api-python-client==1.6.7
 grpcio==1.12.1
 gtimer==1.0.0b5
