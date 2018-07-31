@@ -17,7 +17,10 @@ from softlearning.replay_pools import SimpleReplayPool
 def run_experiment(variant):
     env = normalize(SwimmerEnv())
 
-    pool = SimpleReplayPool(env_spec=env.spec, max_size=1e6)
+    pool = SimpleReplayPool(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        max_size=1e6)
 
     sampler = SimpleSampler(
         max_path_length=1000,
@@ -60,7 +63,9 @@ def run_experiment(variant):
             use_saved_policy=True,
             save_full_state=False)
 
-        algorithm.train()
+        # Do the training
+        for epoch, mean_return in algorithm.train():
+            pass
 
 
 def parse_args():
@@ -88,6 +93,7 @@ def main():
         snapshot_mode='gap',
         snapshot_gap=100,
         sync_s3_pkl=True)
+
     return
 
 

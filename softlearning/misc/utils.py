@@ -2,12 +2,23 @@ import collections
 import datetime
 import dateutil.tz
 import os
+import random
+
+import tensorflow as tf
+import numpy as np
 
 from rllab.core.serializable import Serializable
 
 PROJECT_PATH = os.path.dirname(
     os.path.realpath(os.path.join(__file__, '..', '..')))
-import numpy as np
+
+
+def set_seed(seed):
+    seed %= 4294967294
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.set_random_seed(seed)
+    print("Using seed {}".format(seed))
 
 
 def timestamp():

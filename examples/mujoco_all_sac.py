@@ -1,26 +1,10 @@
-import argparse
-import os
-
 import tensorflow as tf
-import numpy as np
 
-from rllab.envs.normalized_env import normalize
-from rllab.envs.mujoco.gather.ant_gather_env import AntGatherEnv
-from rllab.envs.mujoco.swimmer_env import SwimmerEnv
-from rllab.envs.mujoco.ant_env import AntEnv
-from rllab.envs.mujoco.humanoid_env import HumanoidEnv
-from rllab.misc.instrument import VariantGenerator
+from ray.tune.variant_generator import generate_variants
 
+from softlearning.environments.utils import get_environment
 from softlearning.algorithms import SAC
-from softlearning.environments import (
-    GymEnv,
-    MultiDirectionSwimmerEnv,
-    MultiDirectionAntEnv,
-    MultiDirectionHumanoidEnv,
-    CrossMazeAntEnv)
 
-from softlearning.misc.instrument import launch_experiment
-from softlearning.misc.utils import timestamp, unflatten
 from softlearning.policies import (
     GaussianPolicy,
     LatentSpacePolicy,
@@ -32,82 +16,11 @@ from softlearning.replay_pools import SimpleReplayPool
 from softlearning.replay_pools import ExtraPolicyInfoReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import MLPPreprocessor
-from examples.variants import parse_domain_and_task, get_variants
-from .helpers import str2bool
-
-ENVIRONMENTS = {
-    'swimmer-gym': {
-        'default': lambda: GymEnv('Swimmer-v1'),
-    },
-    'swimmer-rllab': {
-        'default': SwimmerEnv,
-        'multi-direction': MultiDirectionSwimmerEnv,
-    },
-    'ant-gym': {
-        'default': lambda: GymEnv('Ant-v1'),
-    },
-    'ant-rllab': {
-        'default': AntEnv,
-        'multi-direction': MultiDirectionAntEnv,
-        'cross-maze': CrossMazeAntEnv
-    },
-    'humanoid-gym': {
-        'default': lambda: GymEnv('Humanoid-v1'),
-        'standup': lambda: GymEnv('HumanoidStandup-v1')
-    },
-    'humanoid-rllab': {
-        'default': HumanoidEnv,
-        'multi-direction': MultiDirectionHumanoidEnv,
-    },
-    'hopper': {
-        'default': lambda: GymEnv('Hopper-v1')
-    },
-    'half-cheetah': {
-        'default': lambda: GymEnv('HalfCheetah-v1')
-    },
-    'walker': {
-        'default': lambda: GymEnv('Walker2d-v1')
-    },
-}
-
-DEFAULT_DOMAIN = DEFAULT_ENV = 'swimmer-rllab'
-AVAILABLE_DOMAINS = set(ENVIRONMENTS.keys())
-AVAILABLE_TASKS = set(y for x in ENVIRONMENTS.values() for y in x.keys())
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--domain',
-                        type=str,
-                        choices=AVAILABLE_DOMAINS,
-                        default=None)
-    parser.add_argument('--task',
-                        type=str,
-                        choices=AVAILABLE_TASKS,
-                        default='default')
-    parser.add_argument('--policy',
-                        type=str,
-                        choices=('gaussian', 'gmm', 'lsp'),
-                        default='gaussian')
-    parser.add_argument('--env', type=str, default=DEFAULT_ENV)
-    parser.add_argument('--exp_name', type=str, default=timestamp())
-    parser.add_argument('--mode', type=str, default='local')
-    parser.add_argument('--log_dir', type=str, default=None)
-    parser.add_argument(
-        "--store-images", type=str2bool, nargs='?',
-        const=True, default=False,
-        help=(
-            "Store images from the rollouts. Images are currently always"
-            " stored in the logging directory."))
-    parser.add_argument('--log_extra_policy_info', type=str2bool, nargs='?',
-                        const=True, default=False,
-                        help=(
-                            "Stores log pis and raw (unsquashed) actions in the"
-                            "replay pool."
-                        ))
-    args = parser.parse_args()
-
-    return args
+from examples.variants import get_variant_spec
+from examples.utils import (
+    parse_universe_domain_task,
+    get_parser,
+    launch_experiments_rllab)
 
 
 def run_experiment(variant):
@@ -118,32 +31,52 @@ def run_experiment(variant):
     replay_pool_params = variant['replay_pool_params']
     sampler_params = variant['sampler_params']
 
+    universe = variant['universe']
     task = variant['task']
     domain = variant['domain']
 
-    env = normalize(ENVIRONMENTS[domain][task](**env_params))
+    env = get_environment(universe, domain, task, env_params)
 
     if algorithm_params['store_extra_policy_info']:
         sampler = ExtraPolicyInfoSampler(**sampler_params)
-        pool = ExtraPolicyInfoReplayPool(env_spec=env.spec, **replay_pool_params)
+        pool = ExtraPolicyInfoReplayPool(
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
+            **replay_pool_params)
     else:
         sampler = SimpleSampler(**sampler_params)
-        pool = SimpleReplayPool(env_spec=env.spec, **replay_pool_params)
+        pool = SimpleReplayPool(
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
+            **replay_pool_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
     M = value_fn_params['layer_size']
-    qf1 = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M), name='qf1')
-    qf2 = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M), name='qf2')
-    vf = NNVFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
-    initial_exploration_policy = UniformPolicy(env_spec=env.spec)
+    qf1 = NNQFunction(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        hidden_layer_sizes=(M, M),
+        name='qf1')
+    qf2 = NNQFunction(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        hidden_layer_sizes=(M, M),
+        name='qf2')
+    vf = NNVFunction(
+        observation_shape=env.observation_space.shape,
+        hidden_layer_sizes=(M, M))
+    initial_exploration_policy = UniformPolicy(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape)
 
     if policy_params['type'] == 'gaussian':
         policy = GaussianPolicy(
-                env_spec=env.spec,
-                hidden_layer_sizes=(M,M),
-                reparameterize=policy_params['reparameterize'],
-                reg=1e-3,
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
+            hidden_layer_sizes=(M, M),
+            reparameterize=policy_params['reparameterize'],
+            reg=1e-3,
         )
     elif policy_params['type'] == 'lsp':
         preprocessing_layer_sizes = policy_params.get(
@@ -156,7 +89,7 @@ def run_experiment(variant):
             }[policy_params['preprocessing_output_nonlinearity']]
 
             observations_preprocessor = MLPPreprocessor(
-                env_spec=env.spec,
+                observation_shape=env.observation_space.shape,
                 layer_sizes=preprocessing_layer_sizes,
                 output_nonlinearity=nonlinearity)
         else:
@@ -173,7 +106,8 @@ def run_experiment(variant):
         }
 
         policy = LatentSpacePolicy(
-            env_spec=env.spec,
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
             squash=policy_params['squash'],
             bijector_config=bijector_config,
             reparameterize=policy_params['reparameterize'],
@@ -182,7 +116,8 @@ def run_experiment(variant):
     elif policy_params['type'] == 'gmm':
         # reparameterize should always be False if using a GMMPolicy
         policy = GMMPolicy(
-            env_spec=env.spec,
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
             K=policy_params['K'],
             hidden_layer_sizes=(M, M),
             reparameterize=policy_params['reparameterize'],
@@ -213,57 +148,23 @@ def run_experiment(variant):
         save_full_state=False,
     )
 
-    algorithm.train()
-
-
-def launch_experiments(variant_generator, args):
-    variants = variant_generator.variants()
-    # TODO: Remove unflatten. Variant generator should support nested params
-    variants = [unflatten(variant, separator='.') for variant in variants]
-
-    num_experiments = len(variants)
-    print('Launching {} experiments.'.format(num_experiments))
-
-    for i, variant in enumerate(variants):
-        print("Experiment: {}/{}".format(i, num_experiments))
-        run_params = variant['run_params']
-
-        experiment_prefix = variant['prefix'] + '/' + args.exp_name
-        experiment_name = '{prefix}-{exp_name}-{i:02}'.format(
-            prefix=variant['prefix'], exp_name=args.exp_name, i=i)
-
-        launch_experiment(
-            run_experiment,
-            mode=args.mode,
-            variant=variant,
-            exp_prefix=experiment_prefix,
-            exp_name=experiment_name,
-            n_parallel=1,
-            seed=run_params['seed'],
-            terminate_machine=True,
-            log_dir=args.log_dir,
-            snapshot_mode=run_params['snapshot_mode'],
-            snapshot_gap=run_params['snapshot_gap'],
-            sync_s3_pkl=run_params['sync_pkl'],
-        )
+    # Do the training
+    for epoch, mean_return in algorithm.train():
+        pass
 
 
 def main():
-    args = parse_args()
+    args = get_parser().parse_args()
 
-    domain, task = args.domain, args.task
-    if (not domain) or (not task):
-        domain, task = parse_domain_and_task(args.env)
+    universe, domain, task = parse_universe_domain_task(args)
 
-    variant_generator = get_variants(
-        domain=domain, task=task, policy=args.policy)
+    variant_spec = get_variant_spec(universe, domain, task, args.policy)
 
-    # TODO: move this somewhere else.
-    variant_generator.add('mode', [args.mode])
-    variant_generator.add('store_images', [args.store_images])
-
-    launch_experiments(variant_generator, args)
+    variant_spec['mode'] = args.mode
+    variants = [x[1] for x in generate_variants(variant_spec)]
+    launch_experiments_rllab(variants, args, run_experiment)
 
 
 if __name__ == '__main__':
+
     main()

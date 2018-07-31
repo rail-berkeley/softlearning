@@ -1,23 +1,8 @@
-name: sql
+name: softlearning
+channels:
+- defaults
+- conda-forge
 dependencies:
-    - cached-property
-    - cloudpickle
-    - flask
-    - joblib
-    - lasagne
-    - matplotlib
-    - mako
-    - numpy==1.13.1
-    - path.py
-    - plotly
-    - PyOpenGL
-    - python==3.5.2
-    - six
-    - theano==0.8.2
-    - pip:
-        - gtimer
-        - gym==0.8
-        - mujoco_py==0.5.7
-        - pyprind
-        - ray
-        - tensorflow
+- python=3.6.5
+- pip:
+    - -r ./requirements.txt

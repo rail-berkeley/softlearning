@@ -3,26 +3,33 @@
 Usage:
     python mujoco_all_diayn.py --env=point --log_dir=/dev/null
 """
+import os
+
+import numpy as np
+
+from ray import tune
+from ray.tune.variant_generator import generate_variants
+
 from rllab.envs.env_spec import EnvSpec
-from rllab.misc.instrument import VariantGenerator
-from rllab.envs.normalized_env import normalize
 from rllab import spaces
 
 from softlearning.algorithms import DIAYN
-from softlearning.environments import GymEnv
-from softlearning.misc.instrument import run_sac_experiment
-from softlearning.misc.utils import timestamp
+from softlearning.environments.utils import get_environment
 from softlearning.policies.gmm import GMMPolicy
 from softlearning.replay_pools import SimpleReplayPool
-from softlearning.value_functions import NNQFunction, NNVFunction, NNDiscriminatorFunction
+from softlearning.value_functions import (
+    NNQFunction,
+    NNVFunction,
+    NNDiscriminatorFunction)
 
-import argparse
-import numpy as np
-import os
+from examples.utils import (
+    parse_universe_domain_task,
+    get_parser,
+    launch_experiments_rllab)
 
 
-SHARED_PARAMS = {
-    'seed': [1],
+COMMON_PARAMS = {
+    'seed': tune.grid_search([1]),
     'lr': 3E-4,
     'discount': 0.99,
     'tau': 0.01,
@@ -45,38 +52,38 @@ SHARED_PARAMS = {
 TAG_KEYS = ['seed']
 
 ENV_PARAMS = {
-    'swimmer': { # 2 DoF
+    'swimmer': {  # 2 DoF
         'prefix': 'swimmer',
         'env_name': 'Swimmer-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
     },
-    'hopper': { # 3 DoF
+    'hopper': {  # 3 DoF
         'prefix': 'hopper',
         'env_name': 'Hopper-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
     },
-    'half-cheetah': { # 6 DoF
+    'half-cheetah': {  # 6 DoF
         'prefix': 'half-cheetah',
         'env_name': 'HalfCheetah-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
         'max_pool_size': 1E7,
     },
-    'walker': { # 6 DoF
+    'walker': {  # 6 DoF
         'prefix': 'walker',
         'env_name': 'Walker2d-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
     },
-    'ant': { # 8 DoF
+    'ant': {  # 8 DoF
         'prefix': 'ant',
         'env_name': 'Ant-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
     },
-    'humanoid': { # 21 DoF
+    'humanoid': {  # 21 DoF
         'prefix': 'humanoid',
         'env_name': 'Humanoid-v1',
         'max_path_length': 1000,
@@ -131,47 +138,14 @@ ENV_PARAMS = {
         'scale_entropy': 0.1,
     },
 }
-DEFAULT_ENV = 'swimmer'
-AVAILABLE_ENVS = list(ENV_PARAMS.keys())
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--env',
-                        type=str,
-                        choices=AVAILABLE_ENVS,
-                        default='swimmer')
-    parser.add_argument('--exp_name', type=str, default=timestamp())
-    parser.add_argument('--mode', type=str, default='local')
-    parser.add_argument('--log_dir', type=str, default=None)
-    args = parser.parse_args()
-
-    return args
-
-
-def get_variants(args):
-    env_params = ENV_PARAMS[args.env]
-    params = SHARED_PARAMS
-    params.update(env_params)
-
-    vg = VariantGenerator()
-    for key, val in params.items():
-        if isinstance(val, list):
-            vg.add(key, val)
-        else:
-            vg.add(key, [val])
-
-    return vg
 
 
 def run_experiment(variant):
-    if variant['env_name'] == 'humanoid-rllab':
-        from rllab.envs.mujoco.humanoid_env import HumanoidEnv
-        env = normalize(HumanoidEnv())
-    elif variant['env_name'] == 'swimmer-rllab':
-        from rllab.envs.mujoco.swimmer_env import SwimmerEnv
-        env = normalize(SwimmerEnv())
-    else:
-        env = normalize(GymEnv(variant['env_name']))
+    universe = variant['universe']
+    task = variant['task']
+    domain = variant['domain']
+
+    env = get_environment(universe, domain, task, env_params={})
 
     obs_space = env.spec.observation_space
     assert isinstance(obs_space, spaces.Box)
@@ -180,7 +154,8 @@ def run_experiment(variant):
     aug_obs_space = spaces.Box(low=low, high=high)
     aug_env_spec = EnvSpec(aug_obs_space, env.spec.action_space)
     pool = SimpleReplayPool(
-        env_spec=aug_env_spec,
+        observation_shape=aug_env_spec.observation_space.shape,
+        action_shape=aug_env_spec.action_space.shape,
         max_size=variant['max_pool_size'],
     )
 
@@ -198,17 +173,19 @@ def run_experiment(variant):
 
     M = variant['layer_size']
     qf = NNQFunction(
-        env_spec=aug_env_spec,
+        observation_shape=aug_env_spec.observation_space.shape,
+        action_shape=aug_env_spec.action_space.shape,
         hidden_layer_sizes=[M, M],
     )
 
     vf = NNVFunction(
-        env_spec=aug_env_spec,
+        observation_shape=aug_env_spec.observation_space.shape,
         hidden_layer_sizes=[M, M],
     )
 
     policy = GMMPolicy(
-        env_spec=aug_env_spec,
+        observation_shape=aug_env_spec.observation_space.shape,
+        action_shape=aug_env_spec.action_space.shape,
         K=variant['K'],
         hidden_layer_sizes=[M, M],
         qf=qf,
@@ -216,7 +193,8 @@ def run_experiment(variant):
     )
 
     discriminator = NNDiscriminatorFunction(
-        env_spec=env.spec,
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
         hidden_layer_sizes=[M, M],
         num_skills=variant['num_skills'],
     )
@@ -241,33 +219,38 @@ def run_experiment(variant):
         add_p_z=variant['add_p_z'],
     )
 
-    algorithm.train()
+    # Do the training
+    for epoch, mean_return in algorithm.train():
+        pass
 
 
-def launch_experiments(variant_generator):
-    variants = variant_generator.variants()
+def build_tagged_log_dir(spec):
+    tag = '__'.join(['%s_%s' % (key, spec[key]) for key in TAG_KEYS])
+    log_dir = os.path.join(spec['log_dir_base'], tag)
+    return log_dir
 
-    for i, variant in enumerate(variants):
-        tag = '__'.join(['%s_%s' % (key, variant[key]) for key in TAG_KEYS])
-        log_dir = os.path.join(args.log_dir, tag)
-        print('Launching {} experiments.'.format(len(variants)))
-        run_sac_experiment(
-            run_experiment,
-            mode=args.mode,
-            variant=variant,
-            exp_prefix=variant['prefix'] + '/' + args.exp_name,
-            exp_name=variant['prefix'] + '-' + args.exp_name + '-' + str(i).zfill(2),
-            n_parallel=1,  # Increasing this barely effects performance,
-                           # but breaks learning of hierarchical policy.
-            seed=variant['seed'],
-            terminate_machine=True,
-            log_dir=log_dir,
-            snapshot_mode=variant['snapshot_mode'],
-            snapshot_gap=variant['snapshot_gap'],
-            sync_s3_pkl=variant['sync_pkl'],
-        )
+
+def main():
+    args = get_parser().parse_args()
+
+    universe, domain, task = parse_universe_domain_task(args)
+
+    variant_spec = dict(
+        COMMON_PARAMS,
+        **ENV_PARAMS[args.env],
+        **{
+            'log_dir_base': args.log_dir,
+            'log_dir': build_tagged_log_dir
+        },
+        **{
+            'universe': universe,
+            'task': task,
+            'domain': domain,
+        })
+
+    variants = [x[1] for x in generate_variants(variant_spec)]
+    launch_experiments_rllab(variants, args, run_experiment)
+
 
 if __name__ == '__main__':
-    args = parse_args()
-    variant_generator = get_variants(args)
-    launch_experiments(variant_generator)
+    main()

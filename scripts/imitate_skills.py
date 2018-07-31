@@ -10,13 +10,16 @@ import os
 import re
 import tensorflow as tf
 
+
 def collect_expert_trajectories(expert_snapshot, max_path_length):
     tf.logging.info('Collecting expert trajectories')
     with tf.Session() as sess:
         data = joblib.load(expert_snapshot)
         policy = data['policy']
         env = data['env']
-        num_skills = data['policy'].observation_space.flat_dim - data['env'].spec.observation_space.flat_dim
+        num_skills = (
+            np.prod(data['policy']._observation_shape)
+            - np.prod(data['env'].observation_space.shape))
         traj_vec = []
         with policy.deterministic(True):
             for z in range(num_skills):
@@ -27,7 +30,6 @@ def collect_expert_trajectories(expert_snapshot, max_path_length):
                 traj_vec.append(path)
     tf.reset_default_graph()
     return traj_vec
-
 
 
 if __name__ == "__main__":
@@ -68,7 +70,9 @@ if __name__ == "__main__":
         data = joblib.load(args.student_snapshot)
         policy = data['policy']
         env = data['env']
-        num_skills_student = data['policy'].observation_space.flat_dim - data['env'].spec.observation_space.flat_dim
+        num_skills_student = (
+            np.prod(data['policy']._observation_shape)
+            - np.prod(data['env'].observation_space.shape))
 
         M = np.zeros((num_skills_expert, num_skills_student))
         L = []

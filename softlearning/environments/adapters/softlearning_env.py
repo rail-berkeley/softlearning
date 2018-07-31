@@ -1,0 +1,216 @@
+"""Implements the SoftlearningEnv that is usable in softlearning algorithms."""
+
+from abc import ABCMeta, abstractmethod
+
+import numpy as np
+
+from rllab.core.serializable import Serializable
+
+
+class SoftlearningEnv(Serializable, metaclass=ABCMeta):
+    """The abstract Softlearning environment class.
+
+    It's an abstract class defining the interface an adapter needs to implement
+    in order to function with softlearning algorithms. It closely follows the
+    gym.Env, yet that may not be the case in the future.
+
+    The main API methods that users of this class need to know are:
+
+        step
+        reset
+        render
+        close
+        seed
+
+    And set the following attributes:
+
+        action_space: The Space object corresponding to valid actions
+        observation_space: The Space object corresponding to valid observations
+        reward_range: A tuple corresponding to the min and max possible rewards
+
+    The methods are accessed publicly as "step", "reset", etc.. The
+    non-underscored versions are wrapper methods to which we may add
+    functionality over time.
+    """
+
+    # Set this in SOME subclasses
+    metadata = {'render.modes': []}
+    reward_range = (-float('inf'), float('inf'))
+    spec = None
+
+    # Set these in ALL subclasses
+    action_space = None
+    observation_space = None
+
+    def __init__(self, domain, task, *args, **kwargs):
+        """Initialize an environment based on domain and task.
+        Keyword Arguments:
+        domain   --
+        task     --
+        *args    --
+        **kwargs --
+        """
+        Serializable.quick_init(self, locals())
+        self._domain = domain
+        self._task = task
+
+    @property
+    @abstractmethod
+    def observation_space(self):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def action_space(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def step(self, action):
+        """Run one timestep of the environment's dynamics. When end of
+        episode is reached, you are responsible for calling `reset()`
+        to reset this environment's state.
+
+        Accepts an action and returns a tuple (observation, reward, done, info).
+
+        Args:
+            action (object): an action provided by the environment
+
+        Returns:
+            observation (object): agent's observation of the current environment
+            reward (float) : amount of reward returned after previous action
+            done (boolean): whether the episode has ended, in which case further step() calls will return undefined results
+            info (dict): contains auxiliary diagnostic information (helpful for debugging, and sometimes learning)
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def reset(self):
+        """Resets the state of the environment and returns an initial observation.
+
+        Returns: observation (object): the initial observation of the
+            space.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def render(self, mode='human'):
+        """Renders the environment.
+
+        The set of supported modes varies per environment. (And some
+        environments do not support rendering at all.) By convention,
+        if mode is:
+
+        - human: render to the current display or terminal and
+          return nothing. Usually for human consumption.
+        - rgb_array: Return an numpy.ndarray with shape (x, y, 3),
+          representing RGB values for an x-by-y pixel image, suitable
+          for turning into a video.
+        - ansi: Return a string (str) or StringIO.StringIO containing a
+          terminal-style text representation. The text can include newlines
+          and ANSI escape sequences (e.g. for colors).
+
+        Note:
+            Make sure that your class's metadata 'render.modes' key includes
+              the list of supported modes. It's recommended to call super()
+              in implementations to use the functionality of this method.
+
+        Args:
+            mode (str): the mode to render with
+            close (bool): close all open renderings
+
+        Example:
+
+        class MyEnv(Env):
+            metadata = {'render.modes': ['human', 'rgb_array']}
+
+            def render(self, mode='human'):
+                if mode == 'rgb_array':
+                    return np.array(...) # return RGB frame suitable for video
+                elif mode is 'human':
+                    ... # pop up a window and render
+                else:
+                    super(MyEnv, self).render(mode=mode) # just raise an exception
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def close(self):
+        """Override _close in your subclass to perform any necessary cleanup.
+
+        Environments will automatically close() themselves when
+        garbage collected or when the program exits.
+        """
+        return
+
+    @abstractmethod
+    def seed(self, seed=None):
+        """Sets the seed for this env's random number generator(s).
+
+        Note:
+            Some environments use multiple pseudorandom number generators.
+            We want to capture all such seeds used in order to ensure that
+            there aren't accidental correlations between multiple generators.
+
+        Returns:
+            list<bigint>: Returns the list of seeds used in this env's random
+              number generators. The first value in the list should be the
+              "main" seed, or the value which a reproducer should pass to
+              'seed'. Often, the main seed equals the provided 'seed', but
+              this won't be true if seed=None, for example.
+        """
+        logger.warn("Could not seed environment %s", self)
+        return
+
+    @abstractmethod
+    def copy(self):
+        """Create a deep copy the environment."""
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def unwrapped(self):
+        """Completely unwrap this env.
+
+        Returns:
+            gym.Env: The base non-wrapped gym.Env instance
+        """
+        return self
+
+    def __str__(self):
+        return '<{type_name}(domain={domain}, task={task}) <{env}>>'.format(
+            type_name=type(self).__name__,
+            domain=self._domain,
+            task=self._task,
+            env=self._env)
+
+    @abstractmethod
+    def get_param_values(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_param_values(self, params):
+        raise NotImplementedError
+
+    def get_path_infos(self, paths, *args, **kwargs):
+        if len(paths) > 1:
+            raise NotImplementedError(
+                "This implementation expects only one path at a time.")
+
+        keys = list(paths[0]['env_infos'][0].keys())
+        path_results = {
+            k: [
+                env_info[k]
+                for path in paths
+                for env_info in path['env_infos']
+            ] for k in keys
+        }
+
+        results = {}
+        for info_key, info_values in path_results.items():
+            # Only log mean for now. We rarely have more than one path in the
+            # paths so max, min, std are kinda useless.
+            results[info_key + '-first'] = info_values[0]
+            results[info_key + '-last'] = info_values[-1]
+            results[info_key + '-range'] = np.ptp(info_values)
+
+        return results

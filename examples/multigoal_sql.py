@@ -5,7 +5,7 @@ from rllab.envs.normalized_env import normalize
 
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softlearning.environments import MultiGoalEnv
+from softlearning.environments.rllab import MultiGoalEnv
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction
 from softlearning.misc.plotter import QFPolicyPlotter
@@ -21,7 +21,10 @@ def test():
         init_sigma=0.1,
     ))
 
-    pool = SimpleReplayPool(max_size=1e6, env_spec=env.spec)
+    pool = SimpleReplayPool(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        max_size=1e6)
 
     sampler = SimpleSampler(
         max_path_length=30, min_pool_size=100, batch_size=64)
@@ -37,9 +40,15 @@ def test():
 
     M = 128
     policy = StochasticNNPolicy(
-        env.spec, hidden_layer_sizes=(M, M), squash=True)
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        hidden_layer_sizes=(M, M),
+        squash=True)
 
-    qf = NNQFunction(env_spec=env.spec, hidden_layer_sizes=[M, M])
+    qf = NNQFunction(
+        observation_shape=env.observation_space.shape,
+        action_shape=env.action_space.shape,
+        hidden_layer_sizes=[M, M])
 
     plotter = QFPolicyPlotter(
         qf=qf,
@@ -66,7 +75,9 @@ def test():
         reward_scale=0.1,
         save_full_state=False)
 
-    algorithm.train()
+    # Do the training
+    for epoch, mean_return in algorithm.train():
+        pass
 
 
 if __name__ == "__main__":

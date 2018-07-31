@@ -31,14 +31,16 @@ def launch_experiment(main,
         exp_name = timestamp()
 
     if log_dir is None:
-        log_dir = os.path.join(DEFAULT_LOG_DIR, "local",
-                               exp_prefix.replace("_", "-"), exp_name)
+        log_dir = os.path.join(
+            DEFAULT_LOG_DIR,
+            "local",
+            exp_prefix.replace("_", "-"), exp_name)
 
     if include_folders is None:
         include_folders = []
 
     if mode == 'ec2':
-        include_folders += ['softlearning', 'models']
+        include_folders += ['softlearning', 'models', 'snapshots']
         all_symlinks = []
 
         for folder in include_folders:

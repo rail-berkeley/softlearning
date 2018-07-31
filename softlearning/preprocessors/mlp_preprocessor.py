@@ -5,11 +5,11 @@ from rllab.core.serializable import Serializable
 from sandbox.rocky.tf.core.parameterized import Parameterized
 
 from softlearning.misc.nn import MLPFunction
-from softlearning.misc import tf_utils
+
 
 class MLPPreprocessor(MLPFunction):
     def __init__(self,
-                 env_spec,
+                 observation_shape,
                  layer_sizes,
                  output_nonlinearity=None,
                  name='observations_preprocessor'):
@@ -17,7 +17,8 @@ class MLPPreprocessor(MLPFunction):
         Parameterized.__init__(self)
         Serializable.quick_init(self, locals())
 
-        self._Do = env_spec.observation_space.flat_dim
+        assert len(observation_shape) == 1, observation_shape
+        self._Do = observation_shape[0]
         self._observations_ph = tf.placeholder(
             tf.float32, shape=(None, self._Do), name='observations')
 

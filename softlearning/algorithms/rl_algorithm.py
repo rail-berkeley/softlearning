@@ -70,8 +70,8 @@ class RLAlgorithm(Algorithm):
         self._policy = None
         self._pool = None
 
-    def _train(self, env, policy, initial_exploration_policy, pool):
-        """Perform RL training.
+    def _train(self, env, policy, pool, initial_exploration_policy=None):
+        """Return a generator that performs RL training.
 
         Args:
             env (`rllab.Env`): Environment used for training
@@ -118,7 +118,7 @@ class RLAlgorithm(Algorithm):
                             batch=self.sampler.random_batch())
                     gt.stamp('train')
 
-                self._evaluate(policy, evaluation_env, epoch)
+                mean_returns = self._evaluate(policy, evaluation_env, epoch)
                 gt.stamp('eval')
 
                 params = self.get_snapshot(epoch)
@@ -140,6 +140,8 @@ class RLAlgorithm(Algorithm):
 
                 logger.dump_tabular(with_prefix=False)
                 logger.pop_prefix()
+
+                yield epoch, mean_returns
 
             self.sampler.terminate()
 
@@ -172,13 +174,18 @@ class RLAlgorithm(Algorithm):
         logger.record_tabular('episode-length-max', np.max(episode_lengths))
         logger.record_tabular('episode-length-std', np.std(episode_lengths))
 
-        evaluation_env.log_diagnostics(paths)
+        env_infos = evaluation_env.get_path_infos(paths)
+        for key, value in env_infos.items():
+            logger.record_tabular(key, value)
+
         if self._eval_render:
             evaluation_env.render(paths)
 
         iteration = epoch * self._epoch_length
         batch = self.sampler.random_batch()
         self.log_diagnostics(iteration, batch)
+
+        return np.mean(total_returns)
 
     @abc.abstractmethod
     def log_diagnostics(self, iteration, batch):
