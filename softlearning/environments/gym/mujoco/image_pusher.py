@@ -130,8 +130,8 @@ class ImageForkReacherEnv(ImagePusherEnv):
         # ctrl = np.zeros(self.sim.data.ctrl.shape[0])
         # full_state = np.concatenate((qpos, qvel, qacc, ctrl))
 
-        self.set_state(qpos, qvel)
-
         # super(Pusher2dEnv, self).reset(full_state)
+
+        self.set_state(qpos, qvel)
 
         return self._get_obs()

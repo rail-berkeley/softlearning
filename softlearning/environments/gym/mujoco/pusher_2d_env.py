@@ -54,7 +54,6 @@ class Pusher2dEnv(Serializable, MujocoEnv):
         self._goal_distance_cost_coeff = goal_distance_cost_coeff
         self._action_cost_coeff = action_cost_coeff
 
-        # Make the the complete robot visible when visualizing.
         MujocoEnv.__init__(self, model_path=self.MODEL_PATH, frame_skip=5)
 
         self.model.stat.extent = 10
@@ -115,15 +114,8 @@ class Pusher2dEnv(Serializable, MujocoEnv):
             low=-0.1, high=0.1, size=self.model.nq) + self.init_qpos.squeeze()
         qpos[self.TARGET_INDS] = self.init_qpos.squeeze()[self.TARGET_INDS]
 
-        # TODO.before_release: Hack for reproducing the exact results we have in
-        # paper, remove before release.
-        while True:
-            puck_position = np.random.uniform(
-                low=[0.3, -1.0], high=[1.0, -0.4]),
-
-            bottom_right_corner = np.array([1, -1])
-            if np.linalg.norm(puck_position - bottom_right_corner) > 0.45:
-                break
+        puck_position = np.random.uniform(
+            low=[0.3, -1.0], high=[1.0, -0.4]),
 
         qpos[self.PUCK_INDS] = puck_position
 
