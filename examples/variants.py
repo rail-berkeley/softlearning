@@ -39,7 +39,7 @@ LSP_POLICY_PARAMS = {
         'preprocessing_layer_sizes': (M, M, 42),
         's_t_units': 21,
     },
-    'pusher': {  # 3 DoF
+    'pusher-2d': {  # 3 DoF
         's_t_units': 3,
     },
 }
@@ -65,7 +65,7 @@ GMM_POLICY_PARAMS = {
     },
     'humanoid': {  # 17/21 DoF (gym/rllab)
     },
-    'pusher': { # 3 DoF
+    'pusher-2d': { # 3 DoF
     },
 }
 
@@ -90,7 +90,7 @@ GAUSSIAN_POLICY_PARAMS = {
     },
     'humanoid': {  # 17/21 DoF (gym/rllab)
     },
-    'pusher': {  # 3 DoF
+    'pusher-2d': {  # 3 DoF
     },
     'sawyer-torque': {
     },
@@ -170,7 +170,7 @@ LSP_PREPROCESSOR_PARAMS = {
             'output_size': 42,  # 2*DoF
         }
     },
-    'pusher': {
+    'pusher-2d': {
         'function_name': 'feedforward',
         'kwargs': {
             'hidden_layer_sizes': tune.grid_search(['64x64', '256x256']),
@@ -243,15 +243,10 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(1e4 + 1),
         }
     },
-    'pusher': {  # 3 DoF
+    'pusher-2d': {  # 3 DoF
         'base_kwargs': {
             'n_epochs': int(4e3 + 1),
             'n_initial_exploration_steps': int(1e4),
-        }
-    },
-    'pusher': {  # 3 DoF
-        'base_kwargs': {
-            'n_epochs': int(1e3 + 1),
         }
     },
     'sawyer-torque': {
@@ -297,7 +292,7 @@ RUN_PARAMS = {
     'humanoid': {  # 17/21 DoF (gym/rllab)
         'snapshot_gap': 2000
     },
-    'pusher': {  # 21 DoF
+    'pusher-2d': {  # 21 DoF
         'snapshot_gap': 500
     },
     'sawyer-torque': {
@@ -319,7 +314,7 @@ ENV_PARAMS = {
     },
     'humanoid': {  # 17/21 DoF (gym/rllab)
     },
-    'pusher': {  # 3 DoF
+    'pusher-2d': {  # 3 DoF
         'default': {
             'arm_distance_cost_coeff': 0.0,
             'goal': tune.grid_search([(0, -1)]),
@@ -362,14 +357,14 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
     variant_spec = get_variant_spec(
         universe, domain, task, policy, *args, **kwargs)
 
-    if task == '2d-image-default':
+    if task == 'image-default':
         variant_spec['env_params'].update({
             # Can't use tuples because they break ray.tune log_syncer
             'image_size': tune.grid_search(['32x32x3']),
             'arm_distance_cost_coeff': tune.grid_search([3.0, 1.0]),
             'goal_distance_cost_coeff': 0.0,
         })
-    elif task == '2d-image-reach':
+    elif task == 'image-reach':
         variant_spec['env_params'].update({
             # Can't use tuples because they break ray.tune log_syncer
             'image_size': tune.grid_search(['32x32x3']),
