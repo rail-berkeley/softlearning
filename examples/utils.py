@@ -51,7 +51,19 @@ def parse_domain_task(env_name, universe):
 
     env_name = env_name.replace(domain, '').strip('-')
     tasks = TASKS_BY_DOMAIN_BY_UNIVERSE[universe][domain]
-    task = next((task for task in tasks if task in env_name), DEFAULT_TASK)
+    task = next((task for task in tasks if task == env_name), None)
+
+    if task is None:
+        matching_tasks = [task for task in tasks if task in env_name]
+        if len(matching_tasks) > 1:
+            raise ValueError(
+                "Task name cannot be unmbiguously determined: {}."
+                " Following task names match: {}"
+                "".format(env_name, matching_tasks))
+        elif len(matching_tasks) == 1:
+            task = matching_tasks[-1]
+        else:
+            task = DEFAULT_TASK
 
     return domain, task
 
