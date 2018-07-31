@@ -37,19 +37,22 @@ class SawyerDoorEnv(MultitaskEnv, MujocoEnv, Serializable, metaclass=abc.ABCMeta
 
         self.fix_goal = fix_goal
         self.fixed_goal = np.array([fixed_goal])
-        self.goal_space = Box(np.array([goal_low]), np.array([goal_high]))
+        self.goal_space = Box(
+            np.array([goal_low]), np.array([goal_high]), dtype=np.float32)
         self._state_goal = None
 
-        self.action_space = Box(np.array([-1, -1, -1, -1]), np.array([1, 1, 1, 1]))
+        self.action_space = Box(
+            np.array([-1, -1, -1, -1]),
+            np.array([1, 1, 1, 1]),
+            dtype=np.float32)
         max_angle = 1.5708
         self.state_space = Box(
             np.array([-1, -1, -1, -max_angle]),
             np.array([1, 1, 1, max_angle]),
-        )
+            dtype=np.float32)
         self.angle_space = Box(
-            np.array([-max_angle]),
-            np.array([max_angle])
-        )
+            np.array([-max_angle]), np.array([max_angle]), dtype=np.float32)
+
         self.observation_space = Dict([
             ('observation', self.state_space),
             ('desired_goal', self.goal_space),
@@ -363,15 +366,20 @@ class SawyerDoorPushOpenAndReachEnv(SawyerDoorPushOpenEnv):
         self.goal_space = Box(
             np.array(goal_low),
             np.array(goal_high),
+            dtype=np.float32
         )
         self._state_goal = None
 
-        self.action_space = Box(np.array([-1, -1, -1, -1]), np.array([1, 1, 1, 1]))
+        self.action_space = Box(
+            np.array([-1, -1, -1, -1]),
+            np.array([1, 1, 1, 1]),
+            dtype=np.float32)
         max_angle = 1.5708
         self.state_space = Box(
             np.array([-1, -1, -1, -max_angle]),
             np.array([1, 1, 1, max_angle]),
-        )
+            dtype=np.float32)
+
         self.observation_space = Dict([
             ('observation', self.state_space),
             ('desired_goal', self.state_space),
@@ -388,7 +396,7 @@ class SawyerDoorPushOpenAndReachEnv(SawyerDoorPushOpenEnv):
         self.max_x_pos = max_x_pos
         self.max_y_pos = max_y_pos
         self.min_y_pos = .5
-        
+
         self.reset()
         self.reset_mocap_welds()
 
@@ -433,7 +441,7 @@ class SawyerDoorPushOpenAndReachEnv(SawyerDoorPushOpenEnv):
         else:
             raise NotImplementedError("Invalid/no reward type.")
         return r
-        
+
     ''' Multitask Functions '''
 
     @property

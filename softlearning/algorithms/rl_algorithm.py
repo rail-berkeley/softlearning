@@ -174,7 +174,10 @@ class RLAlgorithm(Algorithm):
         logger.record_tabular('episode-length-max', np.max(episode_lengths))
         logger.record_tabular('episode-length-std', np.std(episode_lengths))
 
-        evaluation_env.log_diagnostics(paths)
+        env_infos = evaluation_env.get_path_infos(paths)
+        for key, value in env_infos.items():
+            logger.record_tabular(key, value)
+
         if self._eval_render:
             evaluation_env.render(paths)
 

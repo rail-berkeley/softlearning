@@ -59,12 +59,16 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 
         self.hide_goal_markers = hide_goal_markers
 
-        self.action_space = Box(np.array([-1, -1, -1]), np.array([1, 1, 1]))
+        self.action_space = Box(
+            np.array([-1, -1, -1]),
+            np.array([1, 1, 1]),
+            dtype=np.float32)
         self.hand_and_puck_space = Box(
             np.hstack((self.hand_low, puck_low)),
             np.hstack((self.hand_high, puck_high)),
-        )
-        self.hand_space = Box(self.hand_low, self.hand_high)
+            dtype=np.float32)
+        self.hand_space = Box(self.hand_low, self.hand_high, dtype=np.float32)
+
         self.observation_space = Dict([
             ('observation', self.hand_and_puck_space),
             ('desired_goal', self.hand_and_puck_space),
@@ -308,13 +312,15 @@ class SawyerPushAndReachXYEnv(SawyerPushAndReachXYZEnv):
         self.quick_init(locals())
         SawyerPushAndReachXYZEnv.__init__(self, *args, **kwargs)
         self.hand_z_position = hand_z_position
-        self.action_space = Box(np.array([-1, -1]), np.array([1, 1]))
+        self.action_space = Box(
+            np.array([-1, -1]), np.array([1, 1]), dtype=np.float32)
         self.fixed_goal[2] = hand_z_position
         hand_and_puck_low = self.hand_and_puck_space.low.copy()
         hand_and_puck_low[2] = hand_z_position
         hand_and_puck_high = self.hand_and_puck_space.high.copy()
         hand_and_puck_high[2] = hand_z_position
-        self.hand_and_puck_space = Box(hand_and_puck_low, hand_and_puck_high)
+        self.hand_and_puck_space = Box(
+            hand_and_puck_low, hand_and_puck_high, dtype=np.float32)
         self.observation_space = Dict([
             ('observation', self.hand_and_puck_space),
             ('desired_goal', self.hand_and_puck_space),
