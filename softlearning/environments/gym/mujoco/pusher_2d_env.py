@@ -4,7 +4,6 @@ import numpy as np
 from gym.envs.mujoco.mujoco_env import MujocoEnv
 
 from rllab.core.serializable import Serializable
-from rllab.misc import logger
 
 from softlearning.misc.utils import PROJECT_PATH
 
@@ -153,17 +152,3 @@ class Pusher2dEnv(Serializable, MujocoEnv):
             self.get_body_com("distal_4"),
             self.get_body_com("object"),
         ]).reshape(-1)
-
-    def log_diagnostics(self, paths):
-        arm_dists = [p['env_infos'][-1]['arm_distance'] for p in paths]
-        goal_dists = [p['env_infos'][-1]['goal_distance'] for p in paths]
-
-        logger.record_tabular('FinalArmDistanceAvg', np.mean(arm_dists))
-        logger.record_tabular('FinalArmDistanceMax', np.max(arm_dists))
-        logger.record_tabular('FinalArmDistanceMin', np.min(arm_dists))
-        logger.record_tabular('FinalArmDistanceStd', np.std(arm_dists))
-
-        logger.record_tabular('FinalGoalDistanceAvg', np.mean(goal_dists))
-        logger.record_tabular('FinalGoalDistanceMax', np.max(goal_dists))
-        logger.record_tabular('FinalGoalDistanceMin', np.min(goal_dists))
-        logger.record_tabular('FinalGoalDistanceStd', np.std(goal_dists))
