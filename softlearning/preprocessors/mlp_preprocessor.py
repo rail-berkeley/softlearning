@@ -10,7 +10,6 @@ from softlearning.misc.nn import (
     feedforward_net_template,
     feedforward_net_v2,
 )
-from softlearning.misc import tf_utils
 
 
 def feedforward_net_preprocessor_template(
