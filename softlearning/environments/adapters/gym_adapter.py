@@ -9,7 +9,9 @@ from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym.wrappers import NormalizeActionWrapper
 from softlearning.environments.gym.mujoco.sawyer import SawyerReachTorqueEnv
 from softlearning.environments.gym.mujoco.pusher_2d_env import Pusher2dEnv
-
+from softlearning.environments.gym.mujoco.image_pusher import (
+    ImagePusherEnv,
+    ImageForkReacherEnv)
 
 GYM_ENVIRONMENTS = {
     'swimmer': {
@@ -31,8 +33,10 @@ GYM_ENVIRONMENTS = {
     'walker': {
         'default': lambda: gym.envs.make('Walker2d-v2')
     },
-    'pusher': {
-        'default': Pusher2dEnv
+    'pusher-2d': {
+        'default': Pusher2dEnv,
+        'image-default': ImagePusherEnv,
+        'image-reach': ImageForkReacherEnv,
     },
     'sawyer-torque': {
         'default': SawyerReachTorqueEnv,
