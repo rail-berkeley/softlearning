@@ -321,7 +321,7 @@ ENV_PARAMS = {
     },
     'pusher': {  # 3 DoF
         'default': {
-            'arm_distance_coeff': 0.0,
+            'arm_distance_cost_coeff': 0.0,
             'goal': tune.grid_search([(0, -1)]),
         }
     },
