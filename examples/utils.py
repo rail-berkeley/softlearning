@@ -80,7 +80,7 @@ def parse_universe_domain_task(args):
     return universe, domain, task
 
 
-def get_parser():
+def get_parser(allow_policy_list=False):
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--universe',
@@ -95,10 +95,17 @@ def get_parser():
                         type=str,
                         choices=AVAILABLE_TASKS,
                         default=DEFAULT_TASK)
-    parser.add_argument('--policy',
-                        type=str,
-                        choices=('gaussian', 'gmm', 'lsp'),
-                        default='gaussian')
+    if allow_policy_list:
+        parser.add_argument('--policy',
+                            type=str,
+                            nargs='+',
+                            choices=('gaussian', 'gmm', 'lsp'),
+                            default='gaussian')
+    else:
+        parser.add_argument('--policy',
+                            type=str,
+                            choices=('gaussian', 'gmm', 'lsp'),
+                            default='gaussian')
     parser.add_argument('--env', type=str, default='gym-swimmer-default')
     parser.add_argument('--exp_name', type=str, default=timestamp())
     parser.add_argument('--mode', type=str, default='local')

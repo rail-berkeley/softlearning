@@ -166,7 +166,7 @@ def run_experiment(variant, reporter):
 
 
 def main():
-    parser = get_parser()
+    parser = get_parser(allow_policy_list=True)
     parser.add_argument('--gpus', type=int, default=0)
     args = parser.parse_args()
 
@@ -192,7 +192,7 @@ def main():
     for policy in args.policy:
         if 'image' in task:
             variant_spec = get_variant_spec_image(
-                universe, domain, task, args.policy)
+                universe, domain, task, policy)
         else:
             raise ValueError(
                 "Should not be here, this was meant to be temporary.")
