@@ -91,10 +91,7 @@ class ImageForkReacherEnv(ImagePusherEnv):
             'arm_object_distance': arm_object_dists,
         }
 
-    def reset(self, init_state=None):
-        if init_state:
-            return super(Pusher2dEnv, self).reset(init_state)
-
+    def reset_model(self):
         qpos = np.random.uniform(
             low=-0.1, high=0.1, size=self.model.nq) + self.init_qpos.squeeze()
 
@@ -128,10 +125,13 @@ class ImageForkReacherEnv(ImagePusherEnv):
         qvel[self.PUCK_INDS] = 0
         qvel[self.TARGET_INDS] = 0
 
-        qacc = np.zeros(self.sim.data.qacc.shape[0])
-        ctrl = np.zeros(self.sim.data.ctrl.shape[0])
+        # TODO: remnants from rllab -> gym conversion
+        # qacc = np.zeros(self.sim.data.qacc.shape[0])
+        # ctrl = np.zeros(self.sim.data.ctrl.shape[0])
+        # full_state = np.concatenate((qpos, qvel, qacc, ctrl))
 
-        full_state = np.concatenate((qpos, qvel, qacc, ctrl))
-        super(Pusher2dEnv, self).reset(full_state)
+        self.set_state(qpos, qvel)
+
+        # super(Pusher2dEnv, self).reset(full_state)
 
         return self._get_obs()
