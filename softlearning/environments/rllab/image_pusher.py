@@ -32,6 +32,7 @@ class ImagePusherEnv(Pusher2dEnv):
         reward, info = self.compute_reward(reward_observations, action)
 
         self.forward_dynamics(action)
+
         observation = self.get_current_obs()
         done = False
 

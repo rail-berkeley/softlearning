@@ -102,12 +102,7 @@ class Pusher2dEnv(Serializable, MujocoEnv):
 
     def viewer_setup(self):
         self.viewer.cam.trackbodyid = 0
-        self.viewer.cam.distance = 4.0
-        rotation_angle = np.random.uniform(low=-0, high=360)
-        if hasattr(self, "_kwargs") and 'vp' in self._kwargs:
-            rotation_angle = self._kwargs['vp']
-        cam_dist = 4
-        cam_pos = np.array([0, 0, 0, cam_dist, -45, rotation_angle])
+        cam_pos = np.array([0, 0, 0, 4, -45, 0])
         for i in range(3):
             self.viewer.cam.lookat[i] = cam_pos[i]
         self.viewer.cam.distance = cam_pos[3]

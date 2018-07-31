@@ -1,8 +1,6 @@
 import numpy as np
 
 from rllab.core.serializable import Serializable
-from rllab.mujoco_py import MjViewer
-from rllab.misc import logger
 
 from .pusher_2d_env import Pusher2dEnv
 
@@ -12,53 +10,38 @@ class ImagePusherEnv(Pusher2dEnv):
         Serializable.quick_init(self, locals())
         self.image_size = image_size
         Pusher2dEnv.__init__(self, *args, **kwargs)
-        self.viewer_setup()
 
-    def get_current_obs(self):
-        self.viewer_setup()
-        image = self.render(mode='rgb_array')
-        image = (2.0 * image/256.0 - 1.0)
+    def _get_obs(self):
+        width, height = self.image_size[:2]
+        image = self.render(mode='rgb_array', width=width, height=height)
+        image = ((2.0 / 256.0) * image - 1.0)
 
         return np.concatenate([
             image.reshape(-1),
-            self.model.data.qpos.flat[self.JOINT_INDS],
-            self.model.data.qvel.flat[self.JOINT_INDS],
+            self.sim.data.qpos.flat[self.JOINT_INDS],
+            self.sim.data.qvel.flat[self.JOINT_INDS],
         ]).reshape(-1)
 
     def step(self, action):
         """Step, computing reward from 'true' observations and not images."""
 
-        reward_observations = super(ImagePusherEnv, self).get_current_obs()
+        reward_observations = super(ImagePusherEnv, self)._get_obs()
         reward, info = self.compute_reward(reward_observations, action)
 
-        self.forward_dynamics(action)
-        observation = self.get_current_obs()
+        self.do_simulation(action, self.frame_skip)
+
+        observation = self._get_obs()
         done = False
 
         return observation, reward, done, info
 
-    def get_viewer(self):
-        if self.viewer is None:
-            width, height = self.image_size[:2]
-            self.viewer = MjViewer(
-                visible=False, init_width=width, init_height=height)
-            self.viewer.start()
-            self.viewer.set_model(self.model)
-        return self.viewer
-
     def viewer_setup(self):
-        viewer = self.get_viewer()
-        viewer.cam.trackbodyid = 0
-        cam_dist = 3.5
-        viewer.cam.lookat[:3] = [0, 0, 0]
-        viewer.cam.distance = cam_dist
-        viewer.cam.elevation = -90
-        viewer.cam.azimuth = 0
-        viewer.cam.trackbodyid = -1
-
-    def render(self, *args, **kwargs):
-        self.viewer_setup()
-        return super(ImagePusherEnv, self).render(*args, **kwargs)
+        self.viewer.cam.trackbodyid = 0
+        self.viewer.cam.lookat[:3] = [0, 0, 0]
+        self.viewer.cam.distance = 3.5
+        self.viewer.cam.elevation = -90
+        self.viewer.cam.azimuth = 0
+        self.viewer.cam.trackbodyid = -1
 
 
 class ImageForkReacherEnv(ImagePusherEnv):
@@ -145,36 +128,10 @@ class ImageForkReacherEnv(ImagePusherEnv):
         qvel[self.PUCK_INDS] = 0
         qvel[self.TARGET_INDS] = 0
 
-        qacc = np.zeros(self.model.data.qacc.shape[0])
-        ctrl = np.zeros(self.model.data.ctrl.shape[0])
+        qacc = np.zeros(self.sim.data.qacc.shape[0])
+        ctrl = np.zeros(self.sim.data.ctrl.shape[0])
 
         full_state = np.concatenate((qpos, qvel, qacc, ctrl))
         super(Pusher2dEnv, self).reset(full_state)
 
-        return self.get_current_obs()
-
-    def log_diagnostics(self, paths):
-        arm_goal_dists = [
-            p['env_infos'][-1]['arm_goal_distance']
-            for p in paths]
-        arm_object_dists = [
-            p['env_infos'][-1]['arm_object_distance']
-            for p in paths]
-
-        logger.record_tabular(
-            'FinalArmGoalDistanceAvg', np.mean(arm_goal_dists))
-        logger.record_tabular(
-            'FinalArmGoalDistanceMax', np.max(arm_goal_dists))
-        logger.record_tabular(
-            'FinalArmGoalDistanceMin', np.min(arm_goal_dists))
-        logger.record_tabular(
-            'FinalArmGoalDistanceStd', np.std(arm_goal_dists))
-
-        logger.record_tabular(
-            'FinalArmObjectDistanceAvg', np.mean(arm_object_dists))
-        logger.record_tabular(
-            'FinalArmObjectDistanceMax', np.max(arm_object_dists))
-        logger.record_tabular(
-            'FinalArmObjectDistanceMin', np.min(arm_object_dists))
-        logger.record_tabular(
-            'FinalArmObjectDistanceStd', np.std(arm_object_dists))
+        return self._get_obs()
