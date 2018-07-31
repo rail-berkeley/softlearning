@@ -74,7 +74,7 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
     'reg': 1e-3,
     'action_prior': 'uniform',
     'reparameterize': REPARAMETERIZE,
-    'hidden_layer_width': tune.grid_search([M, M//4])
+    'hidden_layer_width': tune.grid_search([M//4])
 }
 
 GAUSSIAN_POLICY_PARAMS = {
@@ -173,9 +173,8 @@ LSP_PREPROCESSOR_PARAMS = {
     'pusher-2d': {
         'function_name': 'feedforward',
         'kwargs': {
-            'hidden_layer_sizes': tune.grid_search(['64x64', '256x256']),
-            'output_size': 6,  # 6 for preprocessed images + 6 for raw joints
-            # 'ignore_input': 6,
+            'hidden_layer_sizes': tune.grid_search(['64x64']),
+            'output_size': 6,
         }
     }
 }
