@@ -48,6 +48,8 @@ def launch_experiment(main,
 
         kwargs.update(added_project_directories=all_symlinks)
 
+    print("\nlog_dir={}\n".format(log_dir))
+
     run_experiment_lite(
         stub_method_call=main,
         mode=mode,
