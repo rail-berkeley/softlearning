@@ -173,7 +173,7 @@ LSP_PREPROCESSOR_PARAMS = {
     'pusher-2d': {
         'function_name': 'feedforward',
         'kwargs': {
-            'hidden_layer_sizes': tune.grid_search(['64x64']),
+            'hidden_layer_sizes': (M, M),
             'output_size': 6,
         }
     }
@@ -244,7 +244,7 @@ ALGORITHM_PARAMS = {
     },
     'pusher-2d': {  # 3 DoF
         'base_kwargs': {
-            'n_epochs': int(4e3 + 1),
+            'n_epochs': int(2e3 + 1),
             'n_initial_exploration_steps': int(1e4),
         }
     },
@@ -316,6 +316,7 @@ ENV_PARAMS = {
     'pusher-2d': {  # 3 DoF
         'default': {
             'arm_object_distance_cost_coeff': 0.0,
+            'goal_object_distance_cost_coeff': 3.0,
             'goal': tune.grid_search([(0, -1)]),
         }
     },
