@@ -349,6 +349,7 @@ class SAC(RLAlgorithm, Serializable):
             self.global_step,
             learning_rate=self._policy_lr,
             optimizer=tf.train.AdamOptimizer,
+            variables=self._policy.get_params_internal(),
             increment_global_step=False,
             name="policy_optimizer",
             summaries=[
@@ -360,6 +361,7 @@ class SAC(RLAlgorithm, Serializable):
             self.global_step,
             learning_rate=self._vf_lr,
             optimizer=tf.train.AdamOptimizer,
+            variables=self._vf_params,
             increment_global_step=True,
             name="vf_optimizer",
             summaries=[
