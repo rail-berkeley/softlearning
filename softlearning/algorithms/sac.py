@@ -242,18 +242,29 @@ class SAC(RLAlgorithm, Serializable):
         self._td_loss1_t = 0.5 * tf.reduce_mean((ys - self._qf1_t)**2)
         self._td_loss2_t = 0.5 * tf.reduce_mean((ys - self._qf2_t)**2)
 
-        qf1_train_op = tf.train.AdamOptimizer(
-            self._qf_lr,
-            name='td_loss_1_optimizer',
-        ).minimize(
-            loss=self._td_loss1_t,
-            var_list=self._qf1.get_params_internal())
-        qf2_train_op = tf.train.AdamOptimizer(
-            self._qf_lr,
-            name='td_loss_2_optimizer',
-        ).minimize(
-            loss=self._td_loss2_t,
-            var_list=self._qf2.get_params_internal())
+        qf1_train_op = tf.contrib.layers.optimize_loss(
+            self._td_loss1_t,
+            self.global_step,
+            learning_rate=self._qf_lr,
+            optimizer=tf.train.AdamOptimizer,
+            variables=self._qf1.get_params_internal(),
+            increment_global_step=False,
+            name="td_loss_1_optimizer",
+            summaries=[
+                "loss", "gradients", "gradient_norm", "global_gradient_norm"
+            ])
+
+        qf2_train_op = tf.contrib.layers.optimize_loss(
+            self._td_loss2_t,
+            self.global_step,
+            learning_rate=self._qf_lr,
+            optimizer=tf.train.AdamOptimizer,
+            variables=self._qf2.get_params_internal(),
+            increment_global_step=False,
+            name="td_loss_2_optimizer",
+            summaries=[
+                "loss", "gradients", "gradient_norm", "global_gradient_norm"
+            ])
 
         self._training_ops.append(qf1_train_op)
         self._training_ops.append(qf2_train_op)
