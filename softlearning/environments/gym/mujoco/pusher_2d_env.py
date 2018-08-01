@@ -32,9 +32,9 @@ class Pusher2dEnv(Serializable, MujocoEnv):
 
     def __init__(self,
                  goal=(0, -1),
-                 arm_distance_cost_coeff=0,
-                 goal_distance_cost_coeff=1.0,
-                 action_cost_coeff=0.1):
+                 arm_object_distance_cost_coeff=0,
+                 goal_object_distance_cost_coeff=1.0,
+                 ctrl_cost_coeff=0.1):
         """
         goal (`list`): List of two elements denoting the x and y coordinates of
             the goal location. Either of the coordinate can also be a string
@@ -50,9 +50,9 @@ class Pusher2dEnv(Serializable, MujocoEnv):
         self._goal_mask = [coordinate != 'any' for coordinate in goal]
         self._goal = np.array(goal)[self._goal_mask].astype(np.float32)
 
-        self._arm_distance_cost_coeff = arm_distance_cost_coeff
-        self._goal_distance_cost_coeff = goal_distance_cost_coeff
-        self._action_cost_coeff = action_cost_coeff
+        self._arm_object_distance_cost_coeff = arm_object_distance_cost_coeff
+        self._goal_object_distance_cost_coeff = goal_object_distance_cost_coeff
+        self._ctrl_cost_coeff = ctrl_cost_coeff
 
         MujocoEnv.__init__(self, model_path=self.MODEL_PATH, frame_skip=5)
 
@@ -78,25 +78,26 @@ class Pusher2dEnv(Serializable, MujocoEnv):
         obj_pos = observations[:, -3:]
         obj_pos_masked = obj_pos[:, :2][:, self._goal_mask]
 
-        goal_dists = np.linalg.norm(self._goal[None] - obj_pos_masked, axis=1)
-        arm_dists = np.linalg.norm(arm_pos - obj_pos, axis=1)
+        goal_object_distances = np.linalg.norm(
+            self._goal[None] - obj_pos_masked, axis=1)
+        arm_object_distances = np.linalg.norm(arm_pos - obj_pos, axis=1)
         ctrl_costs = np.sum(actions**2, axis=1)
 
         costs = (
-            + self._arm_distance_cost_coeff * arm_dists
-            + self._goal_distance_cost_coeff * goal_dists
-            + self._action_cost_coeff * ctrl_costs)
+            + self._arm_object_distance_cost_coeff * arm_object_distances
+            + self._goal_object_distance_cost_coeff * goal_object_distances
+            + self._ctrl_cost_coeff * ctrl_costs)
 
         rewards = -costs
 
         if not is_batch:
             rewards = rewards.squeeze()
-            arm_dists = arm_dists.squeeze()
-            goal_dists = goal_dists.squeeze()
+            arm_object_distances = arm_object_distances.squeeze()
+            goal_object_distances = goal_object_distances.squeeze()
 
         return rewards, {
-            'arm_distance': arm_dists,
-            'goal_distance': goal_dists
+            'arm_object_distance': arm_object_distances,
+            'goal_object_distance': goal_object_distances
         }
 
     def viewer_setup(self):

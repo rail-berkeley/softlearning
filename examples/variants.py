@@ -315,7 +315,7 @@ ENV_PARAMS = {
     },
     'pusher-2d': {  # 3 DoF
         'default': {
-            'arm_distance_cost_coeff': 0.0,
+            'arm_object_distance_cost_coeff': 0.0,
             'goal': tune.grid_search([(0, -1)]),
         }
     },
@@ -360,7 +360,7 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
         variant_spec['env_params'].update({
             # Can't use tuples because they break ray.tune log_syncer
             'image_size': tune.grid_search(['32x32x3']),
-            'arm_distance_cost_coeff': 0.0,
+            'arm_object_distance_cost_coeff': 0.0,
             'goal_distance_cost_coeff': 3.0,
         })
     elif task == 'image-reach':
