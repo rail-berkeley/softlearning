@@ -274,7 +274,7 @@ class SAC(RLAlgorithm, Serializable):
         of the value function and policy function update rules.
         """
 
-        if self._policy._observations_preprocessor:
+        if getattr(self._policy, '_observations_preprocessor', False):
             self.embeddings = self._policy._observations_preprocessor(
                 self._observations_ph)
             tf.contrib.layers.summarize_activation(self.embeddings)
