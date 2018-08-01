@@ -11,7 +11,8 @@ from softlearning.environments.gym.mujoco.sawyer import SawyerReachTorqueEnv
 from softlearning.environments.gym.mujoco.pusher_2d_env import Pusher2dEnv
 from softlearning.environments.gym.mujoco.image_pusher import (
     ImagePusherEnv,
-    ImageForkReacherEnv)
+    ImageForkReacherEnv,
+    BlindForkReacherEnv)
 
 GYM_ENVIRONMENTS = {
     'swimmer': {
@@ -37,6 +38,7 @@ GYM_ENVIRONMENTS = {
         'default': Pusher2dEnv,
         'image-default': ImagePusherEnv,
         'image-reach': ImageForkReacherEnv,
+        'blind-reach': BlindForkReacherEnv,
     },
     'sawyer-torque': {
         'default': SawyerReachTorqueEnv,

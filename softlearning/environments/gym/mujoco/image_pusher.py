@@ -135,3 +135,11 @@ class ImageForkReacherEnv(ImagePusherEnv):
         self.set_state(qpos, qvel)
 
         return self._get_obs()
+
+
+class BlindForkReacherEnv(ImageForkReacherEnv):
+    def _get_obs(self):
+        return np.concatenate([
+            self.sim.data.qpos.flat[self.JOINT_INDS],
+            self.sim.data.qvel.flat[self.JOINT_INDS],
+        ]).reshape(-1)

@@ -165,7 +165,7 @@ def main():
 
     universe, domain, task = parse_universe_domain_task(args)
 
-    if 'image' in task:
+    if 'image' in task or 'blind' in task:
         variant_spec = get_variant_spec_image(
             universe, domain, task, args.policy)
     else:
