@@ -170,3 +170,121 @@ class Pusher2dEnv(Serializable, MujocoEnv):
         logger.record_tabular('FinalGoalDistanceMax', np.max(goal_dists))
         logger.record_tabular('FinalGoalDistanceMin', np.min(goal_dists))
         logger.record_tabular('FinalGoalDistanceStd', np.std(goal_dists))
+
+
+class ForkReacherEnv(Pusher2dEnv):
+    def __init__(self,
+                 arm_goal_distance_cost_coeff,
+                 arm_object_distance_cost_coeff,
+                 *args,
+                 **kwargs):
+        Serializable.quick_init(self, locals())
+        self._arm_goal_distance_cost_coeff = arm_goal_distance_cost_coeff
+        self._arm_object_distance_cost_coeff = arm_object_distance_cost_coeff
+
+        super(ForkReacherEnv, self).__init__(*args, **kwargs)
+
+    def compute_reward(self, observations, actions):
+        is_batch = True
+        if observations.ndim == 1:
+            observations = observations[None]
+            actions = actions[None]
+            is_batch = False
+        else:
+            raise NotImplementedError('Might be broken.')
+
+        arm_pos = observations[:, -6:-4]
+        goal_pos = self.get_body_com('goal')[:2][None]
+        object_pos = observations[:, -3:-1]
+
+        arm_goal_dists = np.linalg.norm(arm_pos - goal_pos, axis=1)
+        arm_object_dists = np.linalg.norm(arm_pos - object_pos, axis=1)
+        ctrl_costs = np.sum(actions**2, axis=1)
+
+        costs = (
+            + self._arm_goal_distance_cost_coeff * arm_goal_dists
+            + self._arm_object_distance_cost_coeff * arm_object_dists
+            + self._action_cost_coeff * ctrl_costs)
+
+        rewards = -costs
+
+        if not is_batch:
+            rewards = rewards.squeeze()
+            arm_goal_dists = arm_goal_dists.squeeze()
+            arm_object_dists = arm_object_dists.squeeze()
+
+        return rewards, {
+            'arm_goal_distance': arm_goal_dists,
+            'arm_object_distance': arm_object_dists,
+        }
+
+    def reset(self, init_state=None):
+        if init_state:
+            return super(Pusher2dEnv, self).reset(init_state)
+
+        qpos = np.random.uniform(
+            low=-0.1, high=0.1, size=self.model.nq) + self.init_qpos.squeeze()
+
+        qpos[self.JOINT_INDS[0]] = np.random.uniform(-np.pi, np.pi)
+        qpos[self.JOINT_INDS[1]] = np.random.uniform(
+            -np.pi/2, np.pi/2) + np.pi/4
+        qpos[self.JOINT_INDS[2]] = np.random.uniform(
+            -np.pi/2, np.pi/2) + np.pi/2
+
+        target_pos = np.random.uniform([-1.0], [1.0], size=[2])
+        target_pos = np.sign(target_pos) * np.maximum(np.abs(target_pos), 1/2)
+        target_pos[np.where(target_pos == 0)] = 1.0
+        target_pos[1] += 1.0
+
+        qpos[self.TARGET_INDS] = target_pos
+        # qpos[self.TARGET_INDS] = [1.0, 2.0]
+        # qpos[self.TARGET_INDS] = self.init_qpos.squeeze()[self.TARGET_INDS]
+
+        puck_position = np.random.uniform([-1.0], [1.0], size=[2])
+        puck_position = (
+            np.sign(puck_position)
+            * np.maximum(np.abs(puck_position), 1/2))
+        puck_position[np.where(puck_position == 0)] = 1.0
+        # puck_position[1] += 1.0
+        # puck_position = np.random.uniform(
+        #     low=[0.3, -1.0], high=[1.0, -0.4]),
+
+        qpos[self.PUCK_INDS] = puck_position
+
+        qvel = self.init_qvel.copy().squeeze()
+        qvel[self.PUCK_INDS] = 0
+        qvel[self.TARGET_INDS] = 0
+
+        qacc = np.zeros(self.model.data.qacc.shape[0])
+        ctrl = np.zeros(self.model.data.ctrl.shape[0])
+
+        full_state = np.concatenate((qpos, qvel, qacc, ctrl))
+        super(Pusher2dEnv, self).reset(full_state)
+
+        return self.get_current_obs()
+
+    def log_diagnostics(self, paths):
+        arm_goal_dists = [
+            p['env_infos'][-1]['arm_goal_distance']
+            for p in paths]
+        arm_object_dists = [
+            p['env_infos'][-1]['arm_object_distance']
+            for p in paths]
+
+        logger.record_tabular(
+            'FinalArmGoalDistanceAvg', np.mean(arm_goal_dists))
+        logger.record_tabular(
+            'FinalArmGoalDistanceMax', np.max(arm_goal_dists))
+        logger.record_tabular(
+            'FinalArmGoalDistanceMin', np.min(arm_goal_dists))
+        logger.record_tabular(
+            'FinalArmGoalDistanceStd', np.std(arm_goal_dists))
+
+        logger.record_tabular(
+            'FinalArmObjectDistanceAvg', np.mean(arm_object_dists))
+        logger.record_tabular(
+            'FinalArmObjectDistanceMax', np.max(arm_object_dists))
+        logger.record_tabular(
+            'FinalArmObjectDistanceMin', np.min(arm_object_dists))
+        logger.record_tabular(
+            'FinalArmObjectDistanceStd', np.std(arm_object_dists))
