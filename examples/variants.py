@@ -318,7 +318,11 @@ ENV_PARAMS = {
             'arm_object_distance_cost_coeff': 0.0,
             'goal_object_distance_cost_coeff': 3.0,
             'goal': tune.grid_search([(0, -1)]),
-        }
+        },
+        'default-reach': {
+            'arm_goal_distance_cost_coeff': tune.grid_search([3.0]),
+            'arm_object_distance_cost_coeff': 0.0,
+        },
     },
     'sawyer-torque': {
 
