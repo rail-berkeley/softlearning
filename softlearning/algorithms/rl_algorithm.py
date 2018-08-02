@@ -154,9 +154,11 @@ class RLAlgorithm(Algorithm):
         if hasattr(policy, 'deterministic'):
             with policy.deterministic(self._eval_deterministic):
                 # TODO: max_path_length should be a property of environment.
-                paths = rollouts(evaluation_env, policy,
+                paths = rollouts(evaluation_env,
+                                 policy,
                                  self.sampler._max_path_length,
-                                 self._eval_n_episodes)
+                                 self._eval_n_episodes,
+                                 render=self._eval_render)
         else:
             paths = rollouts(evaluation_env, policy,
                              self.sampler._max_path_length,
@@ -180,9 +182,6 @@ class RLAlgorithm(Algorithm):
         env_infos = evaluation_env.get_path_infos(paths)
         for key, value in env_infos.items():
             logger.record_tabular(key, value)
-
-        if self._eval_render:
-            evaluation_env.render(paths)
 
         iteration = epoch * self._epoch_length
         batch = self.sampler.random_batch()
