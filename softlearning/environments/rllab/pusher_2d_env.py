@@ -33,18 +33,18 @@ class Pusher2dEnv(Serializable, MujocoEnv):
 
     def __init__(self,
                  goal=(0, -1),
-                 arm_distance_cost_coeff=0,
-                 goal_distance_cost_coeff=1.0,
+                 arm_object_distance_cost_coeff=0,
+                 goal_object_distance_cost_coeff=1.0,
                  action_cost_coeff=0.1):
         """
         goal (`list`): List of two elements denoting the x and y coordinates of
             the goal location. Either of the coordinate can also be a string
             'any' to make the reward not to depend on the corresponding
             coordinate.
-        arm_distance_coeff ('float'): Coefficient for the arm-to-object distance
-            cost.
-        goal_distance_coeff ('float'): Coefficient for the object-to-goal
-            distance cost.
+        arm_object_distance_cost_coeff ('float'): Coefficient for the
+            arm-to-object distance cost.
+        goal_object_distance_cost_coeff ('float'): Coefficient for the
+            goal-to-object distance cost.
         """
         Serializable.quick_init(self, locals())
         MujocoEnv.__init__(self, file_path=self.FILE_PATH)
@@ -52,8 +52,8 @@ class Pusher2dEnv(Serializable, MujocoEnv):
         self._goal_mask = [coordinate != 'any' for coordinate in goal]
         self._goal = np.array(goal)[self._goal_mask].astype(np.float32)
 
-        self._arm_distance_cost_coeff = arm_distance_cost_coeff
-        self._goal_distance_cost_coeff = goal_distance_cost_coeff
+        self._arm_object_distance_cost_coeff = arm_object_distance_cost_coeff
+        self._goal_object_distance_cost_coeff = goal_object_distance_cost_coeff
         self._action_cost_coeff = action_cost_coeff
 
         # Make the the complete robot visible when visualizing.
@@ -79,25 +79,26 @@ class Pusher2dEnv(Serializable, MujocoEnv):
         obj_pos = observations[:, -3:]
         obj_pos_masked = obj_pos[:, :2][:, self._goal_mask]
 
-        goal_dists = np.linalg.norm(self._goal[None] - obj_pos_masked, axis=1)
-        arm_dists = np.linalg.norm(arm_pos - obj_pos, axis=1)
+        goal_object_distances = np.linalg.norm(
+            self._goal[None] - obj_pos_masked, axis=1)
+        arm_object_dists = np.linalg.norm(arm_pos - obj_pos, axis=1)
         ctrl_costs = np.sum(actions**2, axis=1)
 
         costs = (
-            + self._arm_distance_cost_coeff * arm_dists
-            + self._goal_distance_cost_coeff * goal_dists
+            + self._arm_object_distance_cost_coeff * arm_object_dists
+            + self._goal_object_distance_cost_coeff * goal_object_distances
             + self._action_cost_coeff * ctrl_costs)
 
         rewards = -costs
 
         if not is_batch:
             rewards = rewards.squeeze()
-            arm_dists = arm_dists.squeeze()
-            goal_dists = goal_dists.squeeze()
+            arm_object_dists = arm_object_dists.squeeze()
+            goal_object_distances = goal_object_distances.squeeze()
 
         return rewards, {
-            'arm_distance': arm_dists,
-            'goal_distance': goal_dists
+            'arm_object_distance': arm_object_dists,
+            'goal_object_distance': goal_object_distances
         }
 
     def viewer_setup(self):
@@ -123,8 +124,8 @@ class Pusher2dEnv(Serializable, MujocoEnv):
             low=-0.1, high=0.1, size=self.model.nq) + self.init_qpos.squeeze()
         qpos[self.TARGET_INDS] = self.init_qpos.squeeze()[self.TARGET_INDS]
 
-        # TODO.before_release: Hack for reproducing the exact results we have in
-        # paper, remove before release.
+        # TODO.before_release: Hack for reproducing the exact results we have
+        # in paper, remove before release.
         while True:
             puck_position = np.random.uniform(
                 low=[0.3, -1.0], high=[1.0, -0.4]),
@@ -158,18 +159,28 @@ class Pusher2dEnv(Serializable, MujocoEnv):
 
     @overrides
     def log_diagnostics(self, paths):
-        arm_dists = [p['env_infos'][-1]['arm_distance'] for p in paths]
-        goal_dists = [p['env_infos'][-1]['goal_distance'] for p in paths]
+        arm_object_distances = [
+            p['env_infos'][-1]['arm_object_distance'] for p in paths]
+        goal_object_distances = [
+            p['env_infos'][-1]['goal_object_distance'] for p in paths]
 
-        logger.record_tabular('FinalArmDistanceAvg', np.mean(arm_dists))
-        logger.record_tabular('FinalArmDistanceMax', np.max(arm_dists))
-        logger.record_tabular('FinalArmDistanceMin', np.min(arm_dists))
-        logger.record_tabular('FinalArmDistanceStd', np.std(arm_dists))
+        logger.record_tabular(
+            'FinalArmObjectDistanceAvg', np.mean(arm_object_distances))
+        logger.record_tabular(
+            'FinalArmObjectDistanceMax', np.max(arm_object_distances))
+        logger.record_tabular(
+            'FinalArmObjectDistanceMin', np.min(arm_object_distances))
+        logger.record_tabular(
+            'FinalArmObjectDistanceStd', np.std(arm_object_distances))
 
-        logger.record_tabular('FinalGoalDistanceAvg', np.mean(goal_dists))
-        logger.record_tabular('FinalGoalDistanceMax', np.max(goal_dists))
-        logger.record_tabular('FinalGoalDistanceMin', np.min(goal_dists))
-        logger.record_tabular('FinalGoalDistanceStd', np.std(goal_dists))
+        logger.record_tabular(
+            'FinalGoalObjectDistanceAvg', np.mean(goal_object_distances))
+        logger.record_tabular(
+            'FinalGoalObjectDistanceMax', np.max(goal_object_distances))
+        logger.record_tabular(
+            'FinalGoalObjectDistanceMin', np.min(goal_object_distances))
+        logger.record_tabular(
+            'FinalGoalObjectDistanceStd', np.std(goal_object_distances))
 
 
 class ForkReacherEnv(Pusher2dEnv):
