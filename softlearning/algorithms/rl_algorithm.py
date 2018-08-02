@@ -174,6 +174,9 @@ class RLAlgorithm(Algorithm):
         logger.record_tabular('episode-length-max', np.max(episode_lengths))
         logger.record_tabular('episode-length-std', np.std(episode_lengths))
 
+        if hasattr(evaluation_env._env, 'log_diagnostics'):
+            evaluation_env._env.log_diagnostics(paths)
+
         env_infos = evaluation_env.get_path_infos(paths)
         for key, value in env_infos.items():
             logger.record_tabular(key, value)
