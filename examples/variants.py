@@ -316,11 +316,11 @@ ENV_PARAMS = {
     'pusher-2d': {  # 3 DoF
         'default': {
             'arm_object_distance_cost_coeff': 0.0,
-            'goal_object_distance_cost_coeff': 3.0,
+            'goal_object_distance_cost_coeff': 1.0,
             'goal': tune.grid_search([(0, -1)]),
         },
         'default-reach': {
-            'arm_goal_distance_cost_coeff': tune.grid_search([3.0]),
+            'arm_goal_distance_cost_coeff': tune.grid_search([1.0]),
             'arm_object_distance_cost_coeff': 0.0,
         },
     },
