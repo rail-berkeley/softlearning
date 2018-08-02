@@ -77,7 +77,7 @@ class ImageForkReacherEnv(ImagePusherEnv):
         costs = (
             + self._arm_goal_distance_cost_coeff * arm_goal_dists
             + self._arm_object_distance_cost_coeff * arm_object_dists
-            + self._action_cost_coeff * ctrl_costs)
+            + self._ctrl_cost_coeff * ctrl_costs)
 
         rewards = -costs
 
