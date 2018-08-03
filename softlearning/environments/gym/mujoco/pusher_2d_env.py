@@ -164,9 +164,9 @@ class ForkReacherEnv(Pusher2dEnv):
         else:
             raise NotImplementedError('Might be broken.')
 
-        arm_pos = observations[:, -6:-4]
-        goal_pos = self.get_body_com('goal')[:2][None]
-        object_pos = observations[:, -3:-1]
+        arm_pos = observations[:, -8:-6]
+        goal_pos = observations[:, -2:]
+        object_pos = observations[:, -5:-3]
 
         arm_goal_dists = np.linalg.norm(arm_pos - goal_pos, axis=1)
         arm_object_dists = np.linalg.norm(arm_pos - object_pos, axis=1)
@@ -233,3 +233,10 @@ class ForkReacherEnv(Pusher2dEnv):
         self.set_state(qpos, qvel)
 
         return self._get_obs()
+
+    def _get_obs(self):
+        super_observation = super(ForkReacherEnv, self)._get_obs()
+        observation = np.concatenate([
+            super_observation, self.get_body_com('goal')[:2]
+        ])
+        return observation
