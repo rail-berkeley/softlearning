@@ -320,7 +320,7 @@ ENV_PARAMS = {
             'goal': tune.grid_search([(0, -1)]),
         },
         'default-reach': {
-            'arm_goal_distance_cost_coeff': tune.grid_search([1.0]),
+            'arm_goal_distance_cost_coeff': tune.grid_search([3.0]),
             'arm_object_distance_cost_coeff': 0.0,
         },
     },
