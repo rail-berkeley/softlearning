@@ -301,7 +301,7 @@ class ForkReacherEnv(Pusher2dEnv):
             'FinalArmObjectDistanceStd', np.std(arm_object_dists))
 
     def get_current_obs(self):
-        super_observation = super(ForkReacherEnv, self)._get_obs()
+        super_observation = super(ForkReacherEnv, self).get_current_obs()
         observation = np.concatenate([
             super_observation, self.get_body_com('goal')[:2]
         ])
