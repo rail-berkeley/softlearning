@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-import numpy as np
 
 from softlearning.misc.nn import TemplateFunction
 from rllab.core.serializable import Serializable
@@ -36,8 +35,7 @@ def convnet_preprocessor_template(
             padding="same",
             activation=tf.nn.relu,
             *args,
-            **kwargs
-        )
+            **kwargs)
         pool1 = tf.layers.max_pooling2d(
             inputs=conv1, pool_size=[2, 2], strides=2)
 
@@ -54,21 +52,23 @@ def convnet_preprocessor_template(
 
         # Dense Layer
         pool2_flat = tf.layers.flatten(pool2)
+
+        concat_1 = tf.concat([pool2_flat, input_raw], axis=-1)
+
         dense1 = tf.layers.dense(
-            inputs=pool2_flat,
-            units=512,
+            inputs=concat_1,
+            units=64,
             activation=tf.nn.relu,
             *args,
             **kwargs)
+
         dense2 = tf.layers.dense(
             inputs=dense1,
-            units=output_size-input_raw.shape[-1],
+            units=output_size,
             *args,
             **kwargs)
 
-        out = tf.concat([dense2, input_raw], axis=-1)
-
-        return out
+        return dense2
 
     return tf.make_template(name, _fn, create_scope_now_=create_scope_now_)
 
