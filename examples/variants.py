@@ -361,6 +361,15 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
     variant_spec = get_variant_spec(
         universe, domain, task, policy, *args, **kwargs)
 
+    if 'image' in task:
+        variant_spec['preprocessor_params'].update({
+            'function_name': 'feedforward',
+            'kwargs': {
+                'hidden_layer_sizes': (M//4, M//4),
+                'output_size': 6,
+            }
+        })
+
     if task == 'image-default':
         variant_spec['env_params'].update({
             # Can't use tuples because they break ray.tune log_syncer
