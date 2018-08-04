@@ -6,10 +6,10 @@ import numpy as np
 
 from rllab.core.serializable import Serializable
 from softlearning.misc.utils import PROJECT_PATH
-from .helpers import random_point_in_circle, get_random_goal_logs
 from .random_goal_ant_env import RandomGoalAntEnv
 
 MODELS_PATH = os.path.abspath(os.path.join(PROJECT_PATH, 'models'))
+
 
 class CrossMazeAntEnv(RandomGoalAntEnv, Serializable):
     """Implements an ant whose goal is to reach a target in a maze"""

@@ -1,6 +1,7 @@
 """Implements a ant which is sparsely rewarded for reaching a goal"""
 
 import numpy as np
+
 from rllab.core.serializable import Serializable
 from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.misc.overrides import overrides
@@ -8,10 +9,12 @@ from rllab.envs.base import Step
 from rllab.envs.mujoco.mujoco_env import MujocoEnv
 from rllab.misc import logger, autoargs
 
-from .helpers import random_point_in_circle, get_random_goal_logs
+from softlearning.environments.helpers import random_point_in_circle
+from .helpers import get_random_goal_logs
 
 
 REWARD_TYPES = ('dense', 'sparse')
+
 
 class RandomGoalAntEnv(AntEnv):
     """Implements a ant env which is sparsely rewarded for reaching a goal"""
