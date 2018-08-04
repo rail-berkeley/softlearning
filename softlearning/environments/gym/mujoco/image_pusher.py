@@ -2,6 +2,7 @@ import numpy as np
 
 from rllab.core.serializable import Serializable
 
+from softlearning.environments.helpers import random_point_in_circle
 from .pusher_2d_env import Pusher2dEnv
 
 
@@ -101,12 +102,11 @@ class ImageForkReacherEnv(ImagePusherEnv):
         qpos[self.JOINT_INDS[2]] = np.random.uniform(
             -np.pi/2, np.pi/2) + np.pi/2
 
-        target_pos = np.random.uniform([-1.0], [1.0], size=[2])
-        target_pos = np.sign(target_pos) * np.maximum(np.abs(target_pos), 1/2)
-        target_pos[np.where(target_pos == 0)] = 1.0
-        target_pos[1] += 1.0
+        target_position = np.array(random_point_in_circle(
+            angle_range=(0, 2*np.pi), radius=(0.6, 1.2)))
+        target_position[1] += 1.0
 
-        qpos[self.TARGET_INDS] = target_pos
+        qpos[self.TARGET_INDS] = target_position
         # qpos[self.TARGET_INDS] = [1.0, 2.0]
         # qpos[self.TARGET_INDS] = self.init_qpos.squeeze()[self.TARGET_INDS]
 
