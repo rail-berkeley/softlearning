@@ -237,11 +237,11 @@ class ForkReacherEnv(Pusher2dEnv):
         qpos = np.random.uniform(
             low=-0.1, high=0.1, size=self.model.nq) + self.init_qpos.squeeze()
 
-        qpos[self.JOINT_INDS[0]] = np.random.uniform(-np.pi, np.pi)
-        qpos[self.JOINT_INDS[1]] = np.random.uniform(
-            -np.pi/2, np.pi/2) + np.pi/4
-        qpos[self.JOINT_INDS[2]] = np.random.uniform(
-            -np.pi/2, np.pi/2) + np.pi/2
+        # qpos[self.JOINT_INDS[0]] = np.random.uniform(-np.pi, np.pi)
+        # qpos[self.JOINT_INDS[1]] = np.random.uniform(
+        #     -np.pi/2, np.pi/2) + np.pi/4
+        # qpos[self.JOINT_INDS[2]] = np.random.uniform(
+        #     -np.pi/2, np.pi/2) + np.pi/2
 
         target_position = np.array(random_point_in_circle(
             angle_range=(0, 2*np.pi), radius=(0.6, 1.2)))
