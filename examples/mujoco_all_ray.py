@@ -179,14 +179,13 @@ def main():
             if args.cpus is not None
             else {'local': 8}.get(args.mode, 16))
 
+    local_dir_base = '~/ray_results'
     if args.mode == 'local':
         ray.init()
         trial_resources = {'cpu': cpus}
-        local_dir_base = './data/ray/results'
     else:
         ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
         trial_resources = {'cpu': cpus}
-        local_dir_base = '~/ray_results'
 
     if args.gpus > 0:
         trial_resources['gpu'] = args.gpus
