@@ -168,19 +168,24 @@ def run_experiment(variant, reporter):
 def main():
     parser = get_parser(allow_policy_list=True)
     parser.add_argument('--gpus', type=int, default=0)
+    parser.add_argument('--cpus', type=int, default=None)
     args = parser.parse_args()
 
     universe, domain, task = parse_universe_domain_task(args)
 
     tune.register_trainable('mujoco-runner', run_experiment)
 
+    cpus = (args.cpus
+            if args.cpus is not None
+            else {'local': 8}.get(args.mode, 16))
+
     if args.mode == 'local':
         ray.init()
-        trial_resources = {'cpu': 8}
+        trial_resources = {'cpu': cpus}
         local_dir_base = './data/ray/results'
     else:
-        trial_resources = {'cpu': 16}
         ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
+        trial_resources = {'cpu': cpus}
         local_dir_base = '~/ray_results'
 
     if args.gpus > 0:
