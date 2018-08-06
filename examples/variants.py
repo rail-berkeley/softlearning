@@ -363,9 +363,9 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
 
     if 'image' in task:
         variant_spec['preprocessor_params'].update({
-            'function_name': 'simple_convnet',
+            'function_name': 'feedforward',
             'kwargs': {
-                'image_size': '32x32x3',
+                'hidden_layer_sizes': '64x64',
                 'output_size': 6,
             }
         })
