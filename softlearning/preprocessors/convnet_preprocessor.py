@@ -32,43 +32,46 @@ def convnet_preprocessor_template(
             inputs=input_layer,
             filters=32,
             kernel_size=[5, 5],
-            padding="same",
+            padding="valid",
             activation=tf.nn.relu,
             *args,
             **kwargs)
-        pool1 = tf.layers.max_pooling2d(
-            inputs=conv1, pool_size=[2, 2], strides=2)
 
         conv2 = tf.layers.conv2d(
-            inputs=pool1,
-            filters=64,
+            inputs=conv1,
+            filters=32,
             kernel_size=[5, 5],
-            padding="same",
+            padding="valid",
             activation=tf.nn.relu,
             *args,
             **kwargs)
-        pool2 = tf.layers.max_pooling2d(
-            inputs=conv2, pool_size=[2, 2], strides=2)
 
-        # Dense Layer
-        pool2_flat = tf.layers.flatten(pool2)
-
-        concat_1 = tf.concat([pool2_flat, input_raw], axis=-1)
+        spatial_softmax = tf.contrib.layers.spatial_softmax(conv2)
+        flattened = tf.layers.flatten(spatial_softmax)
 
         dense1 = tf.layers.dense(
-            inputs=concat_1,
+            inputs=flattened,
             units=64,
             activation=tf.nn.relu,
             *args,
             **kwargs)
 
+        concatenated = tf.concat([dense1, input_raw], axis=-1)
+
         dense2 = tf.layers.dense(
-            inputs=dense1,
+            inputs=concatenated,
+            units=64,
+            activation=tf.nn.relu,
+            *args,
+            **kwargs)
+
+        dense3 = tf.layers.dense(
+            inputs=dense2,
             units=output_size,
             *args,
             **kwargs)
 
-        return dense2
+        return dense3
 
     return tf.make_template(name, _fn, create_scope_now_=create_scope_now_)
 
