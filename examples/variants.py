@@ -51,21 +51,6 @@ GMM_POLICY_PARAMS_BASE = {
     'reparameterize': False  # GMM can't be parameterized
 }
 
-GMM_POLICY_PARAMS = {
-    'swimmer': {  # 2 DoF
-    },
-    'hopper': {  # 3 DoF
-    },
-    'half-cheetah': {  # 6 DoF
-    },
-    'walker': {  # 6 DoF
-    },
-    'ant': {  # 8 DoF
-    },
-    'humanoid': {  # 17/21 DoF (gym/rllab)
-    },
-}
-
 GAUSSIAN_POLICY_PARAMS_BASE = {
     'type': 'gaussian',
     'reg': 1e-3,
@@ -99,7 +84,7 @@ POLICY_PARAMS = {
     },
     'gmm': {
         k: dict(GMM_POLICY_PARAMS_BASE, **v)
-        for k, v in GMM_POLICY_PARAMS.items()
+        for k, v in GAUSSIAN_POLICY_PARAMS.items()
     },
     'gaussian': {
         k: dict(GAUSSIAN_POLICY_PARAMS_BASE, **v)
