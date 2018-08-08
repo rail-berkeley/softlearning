@@ -40,21 +40,18 @@ COMMON_PARAMS = {
 
 ENV_PARAMS = {
     'swimmer': {  # 2 DoF
-        'prefix': 'swimmer',
         'env_name': 'swimmer-rllab',
         'max_path_length': 1000,
         'n_epochs': 1000,
         'reward_scale': 100,
     },
     'hopper': {  # 3 DoF
-        'prefix': 'hopper',
         'env_name': 'Hopper-v1',
         'max_path_length': 1000,
         'n_epochs': 3000,
         'reward_scale': 1,
     },
     'half-cheetah': {  # 6 DoF
-        'prefix': 'half-cheetah',
         'env_name': 'HalfCheetah-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
@@ -62,21 +59,18 @@ ENV_PARAMS = {
         'max_pool_size': 1E7,
     },
     'walker': {  # 6 DoF
-        'prefix': 'walker',
         'env_name': 'Walker2d-v1',
         'max_path_length': 1000,
         'n_epochs': 5000,
         'reward_scale': 3,
     },
     'ant': {  # 8 DoF
-        'prefix': 'ant',
         'env_name': 'Ant-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
         'reward_scale': 3,
     },
     'humanoid': {  # 21 DoF
-        'prefix': 'humanoid',
         'env_name': 'humanoid-rllab',
         'max_path_length': 1000,
         'n_epochs': 20000,

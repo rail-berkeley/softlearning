@@ -53,7 +53,6 @@ COMMON_PARAMS = {
 
 ENV_PARAMS = {
     'random-goal-swimmer': {  # 2 DoF
-        'prefix': 'random-goal-swimmer',
         'env_name': 'random-goal-swimmer',
         'epoch_length': 1000,
         'max_path_length': 1000,
@@ -81,7 +80,6 @@ ENV_PARAMS = {
         ])
     },
     'random-goal-ant': {  # 8 DoF
-        'prefix': 'random-goal-ant',
         'env_name': 'random-goal-ant',
         'epoch_length': 1000,
         'max_path_length': 1000,
@@ -109,7 +107,6 @@ ENV_PARAMS = {
         ])
     },
     'random-goal-humanoid': {  # 21 DoF
-        'prefix': 'random-goal-humanoid',
         'env_name': 'random-goal-humanoid',
         'epoch_length': 1000,
         'max_path_length': 1000,
@@ -137,7 +134,6 @@ ENV_PARAMS = {
         ])
     },
     'ant-resume-training': {  # 8 DoF
-        'prefix': 'ant-resume-training',
         'env_name': 'ant-rllab',
         'max_path_length': 1000,
         'n_epochs': int(4e3 + 1),
@@ -157,7 +153,6 @@ ENV_PARAMS = {
         ])
     },
     'humanoid-resume-training': {  # 21 DoF
-        'prefix': 'humanoid-resume-training',
         'env_name': 'humanoid-rllab',
         'max_path_length': 1000,
         'n_epochs': int(1e4 + 1),
