@@ -254,7 +254,6 @@ ENV_PARAMS = {
 
 def get_variant_spec(universe, domain, task, policy):
     variant_spec = {
-        'prefix': '{}/{}/{}'.format(universe, domain, task),
         'domain': domain,
         'task': task,
         'universe': universe,

@@ -159,9 +159,11 @@ def launch_experiments_rllab(variants, args, run_fn):
         sync_pkl = run_params.get('sync_pkl', variant.get('sync_pkl'))
         seed = run_params.get('seed', variant.get('seed'))
 
-        experiment_prefix = variant['prefix'] + '/' + args.exp_name
+        prefix = '{}/{}/{}'.format(
+            variant['universe'], variant['domain'], variant['task'])
+        experiment_prefix = prefix + '/' + args.exp_name
         experiment_name = '{prefix}-{exp_name}-{i:0{max_i_len}}'.format(
-            prefix=variant['prefix'],
+            prefix=prefix,
             exp_name=args.exp_name,
             i=i,
             max_i_len=int(math.ceil(math.log10(num_experiments))))
