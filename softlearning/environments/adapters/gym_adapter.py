@@ -33,7 +33,27 @@ GYM_ENVIRONMENTS = {
     'sawyer-torque': {
         'default': SawyerReachTorqueEnv,
         'reach': SawyerReachTorqueEnv,
-    }
+    },
+    'HandManipulatePen': {
+        'v0': lambda : gym.envs.make('HandManipulatePen-v0'),
+        'Dense-v0': lambda : gym.envs.make('HandManipulatePenDense-v0'),
+        'default': lambda : gym.envs.make('HandManipulatePen-v0'),
+    },
+    'HandManipulateEgg': {
+        'v0': lambda : gym.envs.make('HandManipulateEgg-v0'),
+        'Dense-v0': lambda : gym.envs.make('HandManipulateEggDense-v0'),
+        'default': lambda : gym.envs.make('HandManipulateEgg-v0'),
+    },
+    'HandManipulateBlock': {
+        'v0': lambda : gym.envs.make('HandManipulateBlock-v0'),
+        'Dense-v0': lambda : gym.envs.make('HandManipulateBlockDense-v0'),
+        'default': lambda : gym.envs.make('HandManipulateBlock-v0'),
+    },
+    'HandReach': {
+        'v0': lambda : gym.envs.make('HandReach-v0'),
+        'Dense-v0': lambda : gym.envs.make('HandReachDense-v0'),
+        'default': lambda : gym.envs.make('HandReach-v0'),
+    },
 }
 
 

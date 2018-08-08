@@ -40,7 +40,23 @@ LSP_POLICY_PARAMS = {
     'humanoid': {
         'preprocessing_layer_sizes': (M, M, 42),
         's_t_units': 21,
-    }
+    },
+    'HandManipulatePen': {  # 20 DoF
+        'preprocessing_layer_sizes': (M, M, 40),
+        's_t_units': 20,
+    },
+    'HandManipulateEgg': {  # 20 DoF
+        'preprocessing_layer_sizes': (M, M, 40),
+        's_t_units': 20,
+    },
+    'HandManipulateBlock': {  # 20 DoF
+        'preprocessing_layer_sizes': (M, M, 40),
+        's_t_units': 20,
+    },
+    'HandReach': {  # 20 DoF
+        'preprocessing_layer_sizes': (M, M, 40),
+        's_t_units': 20,
+    },
 }
 
 GMM_POLICY_PARAMS_BASE = {
@@ -74,6 +90,14 @@ GAUSSIAN_POLICY_PARAMS = {
     'pusher': {  # 3 DoF
     },
     'sawyer-torque': {
+    },
+    'HandManipulatePen': {  # 20 DoF
+    },
+    'HandManipulateEgg': {  # 20 DoF
+    },
+    'HandManipulateBlock': {  # 20 DoF
+    },
+    'HandReach': {  # 20 DoF
     },
 }
 
@@ -165,6 +189,26 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(1e3 + 1),
         }
     },
+    'HandManipulatePen': {
+        'base_kwargs': {
+            'n_epochs': int(1e4 + 1)
+        }
+    },
+    'HandManipulateEgg': {
+        'base_kwargs': {
+            'n_epochs': int(1e4 + 1)
+        }
+    },
+    'HandManipulateBlock': {
+        'base_kwargs': {
+            'n_epochs': int(1e4 + 1)
+        }
+    },
+    'HandReach': {
+        'base_kwargs': {
+            'n_epochs': int(1e4 + 1)
+        }
+    },
 }
 
 REPLAY_POOL_PARAMS = {
@@ -244,7 +288,7 @@ def get_variant_spec(universe, domain, task, policy):
         'universe': universe,
         'git_sha': get_git_rev(),
 
-        'env_params': ENV_PARAMS[domain].get(task, {}),
+        'env_params': ENV_PARAMS.get(domain, {}).get(task, {}),
         'policy_params': POLICY_PARAMS[policy][domain],
         'value_fn_params': VALUE_FUNCTION_PARAMS,
         'algorithm_params': deep_update(
@@ -253,7 +297,7 @@ def get_variant_spec(universe, domain, task, policy):
         ),
         'replay_pool_params': REPLAY_POOL_PARAMS,
         'sampler_params': SAMPLER_PARAMS,
-        'run_params': deep_update(RUN_PARAMS_BASE, RUN_PARAMS[domain]),
+        'run_params': deep_update(RUN_PARAMS_BASE, RUN_PARAMS.get(domain, {})),
     }
 
     return variant_spec
