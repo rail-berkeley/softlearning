@@ -39,12 +39,17 @@ class FlexibleReplayPool(ReplayPool, Serializable):
             self._size += count
 
     def add_sample(self, **kwargs):
+        self.add_samples(1, **kwargs)
+
+    def add_samples(self, num_samples=1, **kwargs):
         for field_name in self.field_names:
-            getattr(self, field_name)[self._pointer] = kwargs.pop(field_name)
+            idx = np.arange(
+                self._pointer, self._pointer+num_samples) % self._max_size
+            getattr(self, field_name)[idx] = kwargs.pop(field_name)
 
         assert not kwargs, ("Got unexpected fields in the sample: ", kwargs)
 
-        self._advance()
+        self._advance(num_samples)
 
     def __getstate__(self):
         pool_state = super(FlexibleReplayPool, self).__getstate__()
