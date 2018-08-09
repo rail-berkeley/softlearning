@@ -22,6 +22,7 @@ class RLAlgorithm(Algorithm):
             self,
             sampler,
             n_epochs=1000,
+            train_every_n_steps=1,
             n_train_repeat=1,
             n_initial_exploration_steps=0,
             epoch_length=1000,
@@ -48,6 +49,7 @@ class RLAlgorithm(Algorithm):
 
         self._n_epochs = n_epochs
         self._n_train_repeat = n_train_repeat
+        self._train_every_n_steps = train_every_n_steps
         self._epoch_length = epoch_length
         self._n_initial_exploration_steps = n_initial_exploration_steps
         if control_interval != 1:
@@ -123,14 +125,16 @@ class RLAlgorithm(Algorithm):
 
                 for t in range(self._epoch_length):
                     self.sampler.sample()
-                    if not self.sampler.batch_ready():
-                        continue
+                    if not self.sampler.batch_ready(): continue
                     gt.stamp('sample')
 
-                    for i in range(self._n_train_repeat):
-                        self._do_training(
-                            iteration=t + epoch * self._epoch_length,
-                            batch=self.sampler.random_batch())
+                    total_timestep = epoch * self._epoch_length + t
+                    if total_timestep % self._train_every_n_steps == 0:
+                        for i in range(self._n_train_repeat):
+                            self._do_training(
+                                iteration=total_timestep,
+                                batch=self.sampler.random_batch())
+
                     gt.stamp('train')
 
                 mean_returns = self._evaluate(policy, evaluation_env, epoch)
