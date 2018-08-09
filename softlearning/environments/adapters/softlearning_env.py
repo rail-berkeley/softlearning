@@ -159,8 +159,7 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
               'seed'. Often, the main seed equals the provided 'seed', but
               this won't be true if seed=None, for example.
         """
-        logger.warn("Could not seed environment %s", self)
-        return
+        pass
 
     def copy(self):
         """Create a deep copy the environment.
