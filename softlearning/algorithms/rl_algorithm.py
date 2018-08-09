@@ -6,7 +6,6 @@ import numpy as np
 from rllab.misc import logger
 from rllab.algos.base import Algorithm
 
-from softlearning.misc.utils import deep_clone
 from softlearning.misc import tf_utils
 from softlearning.samplers import rollouts, rollout
 
@@ -112,7 +111,7 @@ class RLAlgorithm(Algorithm):
         self._initial_exploration_hook(initial_exploration_policy)
         self.sampler.initialize(env, policy, pool)
 
-        evaluation_env = deep_clone(env) if self._eval_n_episodes else None
+        evaluation_env = env.copy() if self._eval_n_episodes else None
 
         with self._sess.as_default():
             gt.rename_root('RLAlgorithm')

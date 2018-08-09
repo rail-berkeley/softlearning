@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 
 from rllab.core.serializable import Serializable
+from softlearning.misc.utils import deep_clone
 
 
 class SoftlearningEnv(Serializable, metaclass=ABCMeta):
@@ -161,10 +162,13 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
         logger.warn("Could not seed environment %s", self)
         return
 
-    @abstractmethod
     def copy(self):
-        """Create a deep copy the environment."""
-        raise NotImplementedError
+        """Create a deep copy the environment.
+
+        TODO: Investigate if this can be done somehow else, especially for gym
+        envs.
+        """
+        return deep_clone(self)
 
     @property
     @abstractmethod

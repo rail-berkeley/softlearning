@@ -110,11 +110,7 @@ class RllabAdapter(SoftlearningEnv):
         pass  # Nothing to seed
 
     def unwrapped(self, *args, **kwargs):
-
         pass  # Nothing to unwrap
-
-    def copy(self, *args, **kwargs):
-        raise NotImplementedError
 
     def get_param_values(self, *args, **kwargs):
         raise NotImplementedError
