@@ -143,11 +143,12 @@ class RLAlgorithm(Algorithm):
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
                 for t in range(self._epoch_length):
-                    self.sampler.sample()
-                    if not self.sampler.batch_ready(): continue
+                    self._do_sampling(epoch=epoch, epoch_timestep=t)
                     gt.stamp('sample')
-                    self._do_training_repeats(epoch=epoch, epoch_timestep=t)
-                    gt.stamp('train')
+                    if self.ready_to_train:
+                        self._do_training_repeats(epoch=epoch,
+                                                  epoch_timestep=t)
+                        gt.stamp('train')
 
                 mean_returns = self._evaluate(policy, evaluation_env, epoch)
                 gt.stamp('eval')
@@ -229,6 +230,13 @@ class RLAlgorithm(Algorithm):
     @abc.abstractmethod
     def get_snapshot(self, epoch):
         raise NotImplementedError
+
+    @property
+    def ready_to_train(self):
+        return self.sampler.batch_ready()
+
+    def _do_sampling(self, epoch, epoch_timestep):
+        self.sampler.sample()
 
     def _do_training_repeats(self, epoch, epoch_timestep):
         """Repeat training _n_train_repeat times every _train_every_n_steps"""
