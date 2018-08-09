@@ -31,7 +31,8 @@ class FlexibleReplayPool(ReplayPool, Serializable):
 
         for field_name, field_attrs in fields.items():
             field_shape = [self._max_size] + list(field_attrs['shape'])
-            setattr(self, field_name, np.zeros(field_shape))
+            initializer = field_attrs.get('initializer', np.zeros)
+            setattr(self, field_name, initializer(field_shape))
 
     def _advance(self, count=1):
         self._pointer = (self._pointer + count) % self._max_size
