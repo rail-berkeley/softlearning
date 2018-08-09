@@ -111,6 +111,12 @@ class RLAlgorithm(Algorithm):
         """Hook called at the end of each epoch."""
         pass
 
+    def _training_batch(self):
+        return self.sampler.random_batch()
+
+    def _evaluation_batch(self):
+        return self._training_batch()
+
     def _train(self, env, policy, pool, initial_exploration_policy=None):
         """Return a generator that performs RL training.
 
@@ -218,7 +224,7 @@ class RLAlgorithm(Algorithm):
             evaluation_env.render(paths)
 
         iteration = epoch * self._epoch_length
-        batch = self.sampler.random_batch()
+        batch = self._evaluation_batch()
         self.log_diagnostics(iteration, batch)
 
         return np.mean(total_returns)
@@ -246,7 +252,7 @@ class RLAlgorithm(Algorithm):
         for i in range(self._n_train_repeat):
             self._do_training(
                 iteration=total_timestep,
-                batch=self.sampler.random_batch())
+                batch=self._training_batch())
 
     @abc.abstractmethod
     def _do_training(self, iteration, batch):
