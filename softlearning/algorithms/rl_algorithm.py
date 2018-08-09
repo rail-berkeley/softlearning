@@ -95,6 +95,22 @@ class RLAlgorithm(Algorithm):
                 if k in self._pool.fields
             })
 
+    def _training_before_hook(self):
+        """Method called before the actual training loops."""
+        pass
+
+    def _training_after_hook(self):
+        """Method called after the actual training loops."""
+        pass
+
+    def _epoch_before_hook(self, epoch):
+        """Hook called at the beginning of each epoch."""
+        pass
+
+    def _epoch_after_hook(self, *args, **kwargs):
+        """Hook called at the end of each epoch."""
+        pass
+
     def _train(self, env, policy, pool, initial_exploration_policy=None):
         """Return a generator that performs RL training.
 
@@ -111,6 +127,8 @@ class RLAlgorithm(Algorithm):
         self._initial_exploration_hook(initial_exploration_policy)
         self.sampler.initialize(env, policy, pool)
 
+        self._training_before_hook()
+
         evaluation_env = env.copy() if self._eval_n_episodes else None
 
         with self._sess.as_default():
@@ -120,6 +138,8 @@ class RLAlgorithm(Algorithm):
 
             for epoch in gt.timed_for(
                     range(self._n_epochs + 1), save_itrs=True):
+                self._epoch_before_hook(epoch)
+
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
                 for t in range(self._epoch_length):
@@ -152,9 +172,13 @@ class RLAlgorithm(Algorithm):
                 logger.dump_tabular(with_prefix=False)
                 logger.pop_prefix()
 
+                self._epoch_after_hook(epoch)
+
                 yield epoch, mean_returns
 
             self.sampler.terminate()
+
+        self._training_after_hook()
 
     def _evaluate(self, policy, evaluation_env, epoch):
         """Perform evaluation for the current policy."""
