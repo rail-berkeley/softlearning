@@ -43,19 +43,19 @@ LSP_POLICY_PARAMS = {
     },
     'HandManipulatePen': {  # 20 DoF
         'preprocessing_layer_sizes': (M, M, 40),
-        's_t_units': 20,
+        's_t_units': 128,
     },
     'HandManipulateEgg': {  # 20 DoF
         'preprocessing_layer_sizes': (M, M, 40),
-        's_t_units': 20,
+        's_t_units': 128,
     },
     'HandManipulateBlock': {  # 20 DoF
         'preprocessing_layer_sizes': (M, M, 40),
-        's_t_units': 20,
+        's_t_units': 128,
     },
     'HandReach': {  # 20 DoF
         'preprocessing_layer_sizes': (M, M, 40),
-        's_t_units': 20,
+        's_t_units': 128,
     },
 }
 
