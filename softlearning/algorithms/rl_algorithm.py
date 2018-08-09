@@ -126,14 +126,7 @@ class RLAlgorithm(Algorithm):
                     self.sampler.sample()
                     if not self.sampler.batch_ready(): continue
                     gt.stamp('sample')
-
-                    total_timestep = epoch * self._epoch_length + t
-                    if total_timestep % self._train_every_n_steps == 0:
-                        for i in range(self._n_train_repeat):
-                            self._do_training(
-                                iteration=total_timestep,
-                                batch=self.sampler.random_batch())
-
+                    self._do_training_repeats(epoch=epoch, epoch_timestep=t)
                     gt.stamp('train')
 
                 mean_returns = self._evaluate(policy, evaluation_env, epoch)
@@ -212,6 +205,16 @@ class RLAlgorithm(Algorithm):
     @abc.abstractmethod
     def get_snapshot(self, epoch):
         raise NotImplementedError
+
+    def _do_training_repeats(self, epoch, epoch_timestep):
+        """Repeat training _n_train_repeat times every _train_every_n_steps"""
+        total_timestep = epoch * self._epoch_length + epoch_timestep
+        if total_timestep % self._train_every_n_steps > 0: return
+
+        for i in range(self._n_train_repeat):
+            self._do_training(
+                iteration=total_timestep,
+                batch=self.sampler.random_batch())
 
     @abc.abstractmethod
     def _do_training(self, iteration, batch):
