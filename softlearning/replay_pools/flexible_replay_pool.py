@@ -81,17 +81,20 @@ class FlexibleReplayPool(ReplayPool, Serializable):
         self._size = pool_state['_size']
 
     def random_indices(self, batch_size):
+        if self._size == 0: return []
         return np.random.randint(0, self._size, batch_size)
 
     def random_batch(self, batch_size, field_name_filter=None):
+        random_indices = self.random_indices(batch_size)
+        return self.batch_by_indices(random_indices, field_name_filter)
+
+    def batch_by_indices(self, indices, field_name_filter=None):
         field_names = self.field_names
         if field_name_filter is not None:
             field_names = [
                 field_name for field_name in field_names
                 if field_name_filter(field_name)
             ]
-
-        indices = self.random_indices(batch_size)
 
         return {
             field_name: getattr(self, field_name)[indices]
