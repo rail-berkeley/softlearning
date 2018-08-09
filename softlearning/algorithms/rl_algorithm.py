@@ -8,7 +8,7 @@ from rllab.algos.base import Algorithm
 
 from softlearning.misc.utils import deep_clone
 from softlearning.misc import tf_utils
-from softlearning.samplers import rollouts
+from softlearning.samplers import rollouts, rollout
 
 
 class RLAlgorithm(Algorithm):
@@ -23,7 +23,7 @@ class RLAlgorithm(Algorithm):
             sampler,
             n_epochs=1000,
             n_train_repeat=1,
-            n_initial_exploration_steps=10000,
+            n_initial_exploration_steps=0,
             epoch_length=1000,
             eval_n_episodes=10,
             eval_deterministic=True,
@@ -70,6 +70,30 @@ class RLAlgorithm(Algorithm):
         self._policy = None
         self._pool = None
 
+    def _initial_exploration_hook(self, initial_exploration_policy):
+        if self._n_initial_exploration_steps < 1: return
+
+        if not initial_exploration_policy:
+            raise ValueError(
+                "Initial exploration policy must be provided when"
+                " n_initial_exploration_steps > 0.")
+
+        path = rollout(
+            env=self._env,
+            policy=initial_exploration_policy,
+            path_length=self._n_initial_exploration_steps,
+            break_on_terminal=False)
+
+        assert (path['observations'].shape[0]
+                == self._n_initial_exploration_steps)
+
+        self._pool.add_samples(
+            num_samples=self._n_initial_exploration_steps,
+            **{
+                k: v for k, v in path.items()
+                if k in self._pool.fields
+            })
+
     def _train(self, env, policy, pool, initial_exploration_policy=None):
         """Return a generator that performs RL training.
 
@@ -83,12 +107,8 @@ class RLAlgorithm(Algorithm):
 
         self._init_training()
 
-        if initial_exploration_policy is None:
-            self.sampler.initialize(env, policy, pool)
-            initial_exploration_done = True
-        else:
-            self.sampler.initialize(env, initial_exploration_policy, pool)
-            initial_exploration_done = False
+        self._initial_exploration_hook(initial_exploration_policy)
+        self.sampler.initialize(env, policy, pool)
 
         evaluation_env = deep_clone(env) if self._eval_n_episodes else None
 
@@ -102,11 +122,6 @@ class RLAlgorithm(Algorithm):
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
                 for t in range(self._epoch_length):
-                    if (not initial_exploration_done
-                            and (self._epoch_length * epoch
-                                 >= self._n_initial_exploration_steps)):
-                        self.sampler.set_policy(policy)
-                        initial_exploration_done = True
                     self.sampler.sample()
                     if not self.sampler.batch_ready():
                         continue
