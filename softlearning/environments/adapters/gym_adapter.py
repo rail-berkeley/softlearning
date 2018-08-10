@@ -9,6 +9,12 @@ from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym.wrappers import NormalizeActionWrapper
 from softlearning.environments.gym.mujoco.sawyer import SawyerReachTorqueEnv
 
+try:
+    from sac_envs.envs.dclaw.dclaw3_screw_v11 import DClaw3ScrewV11
+except ModuleNotFoundError as e:
+    def raise_on_use(*args, **kwargs):
+        raise e
+    DClaw3ScrewV11 = raise_on_use
 
 GYM_ENVIRONMENTS = {
     'swimmer': {
@@ -54,6 +60,10 @@ GYM_ENVIRONMENTS = {
         'Dense-v0': lambda : gym.envs.make('HandReachDense-v0'),
         'default': lambda : gym.envs.make('HandReach-v0'),
     },
+
+    'DClaw3': {
+        'ScrewV11': DClaw3ScrewV11
+    }
 }
 
 
