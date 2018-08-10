@@ -132,7 +132,8 @@ class ConditionalRealNVPFlow(tfb.ConditionalBijector):
         self._maybe_assert_valid_x(x)
 
         conditions = self._get_flow_conditions(**condition_kwargs)
-        log_det_jacobian = self.flow.forward_log_det_jacobian(x, **conditions)
+        log_det_jacobian = self.flow.forward_log_det_jacobian(
+            x, event_ndims=1, **conditions)
 
         return log_det_jacobian
 
@@ -140,7 +141,8 @@ class ConditionalRealNVPFlow(tfb.ConditionalBijector):
         self._maybe_assert_valid_y(y)
 
         conditions = self._get_flow_conditions(**condition_kwargs)
-        log_det_jacobian = self.flow.inverse_log_det_jacobian(y, **conditions)
+        log_det_jacobian = self.flow.inverse_log_det_jacobian(
+            y, event_ndims=1, **conditions)
 
         return log_det_jacobian
 
