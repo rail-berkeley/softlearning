@@ -17,6 +17,10 @@ __all__ = [
 tfb = tfp.bijectors
 
 
+class ConditionalChain(tfb.ConditionalBijector, tfb.Chain):
+    pass
+
+
 class ConditionalRealNVPFlow(tfb.ConditionalBijector):
     """TODO"""
 
@@ -81,60 +85,62 @@ class ConditionalRealNVPFlow(tfb.ConditionalBijector):
                 num_masked=D // 2,
                 shift_and_log_scale_fn=(
                     tfp.bijectors.real_nvp.real_nvp_default_template(
-                    hidden_layers=hidden_sizes,
-                    # TODO: test tf.nn.relu
-                    activation=tf.nn.tanh)))
+                        hidden_layers=hidden_sizes,
+                        # TODO: test tf.nn.relu
+                        activation=tf.nn.tanh)),
+                name='real_nvp_{}'.format(i)
+            )
 
             flow_parts.append(real_nvp_bijector)
 
             if i < num_coupling_layers - 1:
                 permute_bijector = tfb.Permute(
-                    permutation=list(reversed(range(D))))
+                    permutation=list(reversed(range(D))),
+                    name='permute_{}'.format(i))
                 flow_parts.append(permute_bijector)
 
         # Note: tfb.Chain applies the list of bijectors in the _reverse_ order
         # of what they are inputted.
-        self.flow = tfb.Chain(list(reversed(flow_parts)))
+        self.flow = ConditionalChain(list(reversed(flow_parts)))
 
-    def _get_inputs(self, x, **condition_kwargs):
-        conditions = [
-            condition_kwargs[key]
-            for key in sorted(condition_kwargs.keys())
-        ]
+    def _get_flow_conditions(self, **condition_kwargs):
+        conditions = {
+            bijector.name: condition_kwargs
+            for bijector in self.flow.bijectors
+            if isinstance(bijector, RealNVP)
+        }
 
-        input_ = tf.concat([x] + conditions, axis=1)
-
-        return input_
+        return conditions
 
     def _forward(self, x, **condition_kwargs):
         self._maybe_assert_valid_x(x)
 
-        input_ = self._get_inputs(x, **condition_kwargs)
-        out = self.flow.forward(input_)
+        conditions = self._get_flow_conditions(**condition_kwargs)
+        out = self.flow.forward(x, **conditions)
 
         return out
 
     def _inverse(self, y, **condition_kwargs):
         self._maybe_assert_valid_y(y)
 
-        input_ = self._get_inputs(y, **condition_kwargs)
-        out = self.flow.inverse(input_)
+        conditions = self._get_flow_conditions(**condition_kwargs)
+        out = self.flow.inverse(y, **conditions)
 
         return out
 
     def _forward_log_det_jacobian(self, x, **condition_kwargs):
         self._maybe_assert_valid_x(x)
 
-        input_ = self._get_inputs(x, **condition_kwargs)
-        log_det_jacobian = self.flow.forward_log_det_jacobian(input_)
+        conditions = self._get_flow_conditions(**condition_kwargs)
+        log_det_jacobian = self.flow.forward_log_det_jacobian(x, **conditions)
 
         return log_det_jacobian
 
     def _inverse_log_det_jacobian(self, y, **condition_kwargs):
         self._maybe_assert_valid_y(y)
 
-        input_ = self._get_inputs(y, **condition_kwargs)
-        log_det_jacobian = self.flow.inverse_log_det_jacobian(input_)
+        conditions = self._get_flow_conditions(**condition_kwargs)
+        log_det_jacobian = self.flow.inverse_log_det_jacobian(y, **conditions)
 
         return log_det_jacobian
 
