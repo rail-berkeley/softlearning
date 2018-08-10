@@ -16,7 +16,7 @@ LSP_POLICY_PARAMS_BASE = {
     'squash': True
 }
 
-LSP_POLICY_PARAMS = {
+LSP_POLICY_PARAMS_FOR_DOMAIN = {
     'swimmer': {  # 2 DoF
         'preprocessing_layer_sizes': (M, M, 4),
         's_t_units': 2,
@@ -74,7 +74,7 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
     'reparameterize': REPARAMETERIZE
 }
 
-GAUSSIAN_POLICY_PARAMS = {
+GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {
     'swimmer': {  # 2 DoF
     },
     'hopper': {  # 3 DoF
@@ -101,19 +101,16 @@ GAUSSIAN_POLICY_PARAMS = {
     },
 }
 
-POLICY_PARAMS = {
-    'lsp': {
-        k: dict(LSP_POLICY_PARAMS_BASE, **v)
-        for k, v in LSP_POLICY_PARAMS.items()
-    },
-    'gmm': {
-        k: dict(GMM_POLICY_PARAMS_BASE, **v)
-        for k, v in GAUSSIAN_POLICY_PARAMS.items()
-    },
-    'gaussian': {
-        k: dict(GAUSSIAN_POLICY_PARAMS_BASE, **v)
-        for k, v in GAUSSIAN_POLICY_PARAMS.items()
-    },
+POLICY_PARAMS_BASE = {
+    'lsp': LSP_POLICY_PARAMS_BASE,
+    'gmm': GMM_POLICY_PARAMS_BASE,
+    'gaussian': GAUSSIAN_POLICY_PARAMS_BASE,
+}
+
+POLICY_PARAMS_FOR_DOMAIN = {
+    'lsp': LSP_POLICY_PARAMS_FOR_DOMAIN,
+    'gmm': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
+    'gaussian': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
 }
 
 VALUE_FUNCTION_PARAMS = {
@@ -289,11 +286,14 @@ def get_variant_spec(universe, domain, task, policy):
         'git_sha': get_git_rev(),
 
         'env_params': ENV_PARAMS.get(domain, {}).get(task, {}),
-        'policy_params': POLICY_PARAMS[policy][domain],
+        'policy_params': deep_update(
+            POLICY_PARAMS_BASE[policy],
+            POLICY_PARAMS_FOR_DOMAIN[policy].get(domain, {})
+        ),
         'value_fn_params': VALUE_FUNCTION_PARAMS,
         'algorithm_params': deep_update(
             ALGORITHM_PARAMS_BASE,
-            ALGORITHM_PARAMS[domain]
+            ALGORITHM_PARAMS.get(domain, {})
         ),
         'replay_pool_params': REPLAY_POOL_PARAMS,
         'sampler_params': SAMPLER_PARAMS,
