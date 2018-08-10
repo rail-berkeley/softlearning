@@ -77,12 +77,13 @@ class ConditionalRealNVPFlow(tfb.ConditionalBijector):
 
         flow_parts = []
         for i in range(num_coupling_layers):
-            real_nvp_bijector = tfb.RealNVP(
-                num_masked=D//2,
-                shift_and_log_scale_fn=tfb.real_nvp_default_template(
+            real_nvp_bijector = tfp.bijectors.real_nvp.RealNVP(
+                num_masked=D // 2,
+                shift_and_log_scale_fn=(
+                    tfp.bijectors.real_nvp.real_nvp_default_template(
                     hidden_layers=hidden_sizes,
                     # TODO: test tf.nn.relu
-                    activation=tf.nn.tanh))
+                    activation=tf.nn.tanh)))
 
             flow_parts.append(real_nvp_bijector)
 
