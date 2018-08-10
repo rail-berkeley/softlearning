@@ -196,8 +196,9 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
 
     def get_path_infos(self, paths, *args, **kwargs):
         if len(paths) > 1:
-            raise NotImplementedError(
-                "This implementation expects only one path at a time.")
+            print("Warning: This implementation expects only one path at a"
+                  " time.")
+            return {}
 
         keys = list(paths[0]['env_infos'][0].keys())
         path_results = {
@@ -214,6 +215,5 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
             # paths so max, min, std are kinda useless.
             results[info_key + '-first'] = info_values[0]
             results[info_key + '-last'] = info_values[-1]
-            results[info_key + '-range'] = np.ptp(info_values)
 
         return results
