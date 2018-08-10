@@ -211,8 +211,6 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
 
         results = {}
         for info_key, info_values in path_results.items():
-            # Only log mean for now. We rarely have more than one path in the
-            # paths so max, min, std are kinda useless.
             results[info_key + '-first'] = info_values[0]
             results[info_key + '-last'] = info_values[-1]
 
