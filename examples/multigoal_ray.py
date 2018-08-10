@@ -4,9 +4,8 @@ import numpy as np
 import ray
 from ray import tune
 
-from rllab.envs.normalized_env import normalize
 from softlearning.algorithms import SAC
-from softlearning.environments.rllab import MultiGoalEnv
+from softlearning.environments.utils import get_environment
 from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.misc.utils import timestamp
 from softlearning.samplers import SimpleSampler
@@ -17,12 +16,12 @@ from examples.utils import get_parser
 
 
 def run(variant, reporter):
-    env = normalize(MultiGoalEnv(
-        actuation_cost_coeff=1,
-        distance_cost_coeff=0.1,
-        goal_reward=1,
-        init_sigma=0.1,
-    ))
+    env = get_environment('rllab', 'multigoal', 'default', {
+        'actuation_cost_coeff': 1,
+        'distance_cost_coeff': 0.1,
+        'goal_reward': 1,
+        'init_sigma': 0.1,
+    })
 
     pool = SimpleReplayPool(
         observation_shape=env.observation_space.shape,

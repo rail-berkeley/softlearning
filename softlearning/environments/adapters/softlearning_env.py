@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 
 from rllab.core.serializable import Serializable
+from softlearning.misc.utils import deep_clone
 
 
 class SoftlearningEnv(Serializable, metaclass=ABCMeta):
@@ -158,13 +159,15 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
               'seed'. Often, the main seed equals the provided 'seed', but
               this won't be true if seed=None, for example.
         """
-        logger.warn("Could not seed environment %s", self)
-        return
+        pass
 
-    @abstractmethod
     def copy(self):
-        """Create a deep copy the environment."""
-        raise NotImplementedError
+        """Create a deep copy the environment.
+
+        TODO: Investigate if this can be done somehow else, especially for gym
+        envs.
+        """
+        return deep_clone(self)
 
     @property
     @abstractmethod
@@ -193,8 +196,9 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
 
     def get_path_infos(self, paths, *args, **kwargs):
         if len(paths) > 1:
-            raise NotImplementedError(
-                "This implementation expects only one path at a time.")
+            print("Warning: This implementation expects only one path at a"
+                  " time.")
+            return {}
 
         keys = list(paths[0]['env_infos'][0].keys())
         path_results = {
@@ -207,10 +211,7 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
 
         results = {}
         for info_key, info_values in path_results.items():
-            # Only log mean for now. We rarely have more than one path in the
-            # paths so max, min, std are kinda useless.
             results[info_key + '-first'] = info_values[0]
             results[info_key + '-last'] = info_values[-1]
-            results[info_key + '-range'] = np.ptp(info_values)
 
         return results

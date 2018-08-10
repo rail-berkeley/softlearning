@@ -31,7 +31,8 @@ class FlexibleReplayPool(ReplayPool, Serializable):
 
         for field_name, field_attrs in fields.items():
             field_shape = [self._max_size] + list(field_attrs['shape'])
-            setattr(self, field_name, np.zeros(field_shape))
+            initializer = field_attrs.get('initializer', np.zeros)
+            setattr(self, field_name, initializer(field_shape))
 
     def _advance(self, count=1):
         self._pointer = (self._pointer + count) % self._max_size
@@ -39,12 +40,17 @@ class FlexibleReplayPool(ReplayPool, Serializable):
             self._size += count
 
     def add_sample(self, **kwargs):
+        self.add_samples(1, **kwargs)
+
+    def add_samples(self, num_samples=1, **kwargs):
         for field_name in self.field_names:
-            getattr(self, field_name)[self._pointer] = kwargs.pop(field_name)
+            idx = np.arange(
+                self._pointer, self._pointer+num_samples) % self._max_size
+            getattr(self, field_name)[idx] = kwargs.pop(field_name)
 
         assert not kwargs, ("Got unexpected fields in the sample: ", kwargs)
 
-        self._advance()
+        self._advance(num_samples)
 
     def __getstate__(self):
         pool_state = super(FlexibleReplayPool, self).__getstate__()
@@ -75,17 +81,20 @@ class FlexibleReplayPool(ReplayPool, Serializable):
         self._size = pool_state['_size']
 
     def random_indices(self, batch_size):
+        if self._size == 0: return []
         return np.random.randint(0, self._size, batch_size)
 
     def random_batch(self, batch_size, field_name_filter=None):
+        random_indices = self.random_indices(batch_size)
+        return self.batch_by_indices(random_indices, field_name_filter)
+
+    def batch_by_indices(self, indices, field_name_filter=None):
         field_names = self.field_names
         if field_name_filter is not None:
             field_names = [
                 field_name for field_name in field_names
                 if field_name_filter(field_name)
             ]
-
-        indices = self.random_indices(batch_size)
 
         return {
             field_name: getattr(self, field_name)[indices]

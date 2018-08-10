@@ -117,9 +117,6 @@ class GymAdapter(SoftlearningEnv):
     def unwrapped(self, *args, **kwargs):
         return self._env.unwrapped(*args, **kwargs)
 
-    def copy(self, *args, **kwargs):
-        return self._env.copy(*args, **kwargs)
-
     def get_param_values(self, *args, **kwargs):
         raise NotImplementedError
 

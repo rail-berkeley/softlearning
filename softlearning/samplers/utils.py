@@ -9,7 +9,8 @@ def rollout(env,
             render=False,
             speedup=10,
             callback=None,
-            render_mode='human'):
+            render_mode='human',
+            break_on_terminal=True):
     ims = []
 
     observation_shape = env.observation_space.shape
@@ -60,7 +61,10 @@ def rollout(env,
                 time.sleep(time_step / speedup)
 
         if terminal:
-            break
+            if break_on_terminal: break
+
+            observation = env.reset()
+            policy.reset()
 
     observations[t + 1] = observation
 
