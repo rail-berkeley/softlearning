@@ -121,11 +121,6 @@ VALUE_FUNCTION_PARAMS = {
 
 }
 
-
-def get_epoch_length(spec):
-    return spec['algorithm_params']['base_kwargs']['epoch_length']
-
-
 ALGORITHM_PARAMS_BASE = {
     'lr': 3e-4,
     'discount': 0.99,
@@ -136,9 +131,9 @@ ALGORITHM_PARAMS_BASE = {
     'store_extra_policy_info': False,
 
     'base_kwargs': {
-        'epoch_length': tune.grid_search([1000, 2000, 4000]),
-        'train_every_n_steps': get_epoch_length,
-        'n_train_repeat': tune.grid_search([4, 16, 64]),
+        'epoch_length': 1000,
+        'train_every_n_steps': 1,
+        'n_train_repeat': 1,
         'n_initial_exploration_steps': int(1e3),
         'eval_render': False,
         'eval_n_episodes': 1,
@@ -216,9 +211,8 @@ ALGORITHM_PARAMS = {
     },
 }
 
-
 REPLAY_POOL_PARAMS = {
-    'max_size': get_epoch_length,
+    'max_size': 1e6,
 }
 
 SAMPLER_PARAMS = {
