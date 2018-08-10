@@ -64,7 +64,7 @@ class QFPolicyPlotter:
 
     def _plot_action_samples(self):
         for ax, obs in zip(self._ax_lst, self._obs_lst):
-            actions = self._policy.get_actions(
+            (actions, _, _) = self._policy.get_actions(
                 np.ones((self._n_samples, 1)) * obs[None, :])
 
             x, y = actions[:, 0], actions[:, 1]
