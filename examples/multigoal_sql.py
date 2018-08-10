@@ -1,11 +1,9 @@
 """ Example script to perform soft Q-learning in the multigoal environment. """
 import numpy as np
 
-from rllab.envs.normalized_env import normalize
-
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softlearning.environments.rllab import MultiGoalEnv
+from softlearning.environments.utils import get_environment
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction
 from softlearning.misc.plotter import QFPolicyPlotter
@@ -14,12 +12,12 @@ from softlearning.samplers import SimpleSampler
 
 
 def test():
-    env = normalize(MultiGoalEnv(
-        actuation_cost_coeff=1,
-        distance_cost_coeff=0.1,
-        goal_reward=1,
-        init_sigma=0.1,
-    ))
+    env = get_environment('rllab', 'multigoal', 'default', {
+        'actuation_cost_coeff': 1,
+        'distance_cost_coeff': 0.1,
+        'goal_reward': 1,
+        'init_sigma': 0.1,
+    })
 
     pool = SimpleReplayPool(
         observation_shape=env.observation_space.shape,

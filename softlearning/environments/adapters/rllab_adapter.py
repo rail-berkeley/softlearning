@@ -13,7 +13,8 @@ from softlearning.environments.rllab import (
     MultiDirectionSwimmerEnv,
     MultiDirectionAntEnv,
     MultiDirectionHumanoidEnv,
-    CrossMazeAntEnv)
+    CrossMazeAntEnv,
+    MultiGoalEnv)
 
 from .softlearning_env import SoftlearningEnv
 
@@ -32,6 +33,9 @@ RLLAB_ENVIRONMENTS = {
         'default': HumanoidEnv,
         'multi-direction': MultiDirectionHumanoidEnv,
     },
+    'multigoal': {
+        'default': MultiGoalEnv
+    }
 }
 
 
