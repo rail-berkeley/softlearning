@@ -159,11 +159,10 @@ def main():
 
     if args.mode == 'local':
         ray.init()
-        local_dir_base = './data/ray/results'
     else:
         ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
-        local_dir_base = '~/ray_results'
 
+    local_dir_base = '~/ray_results'
     local_dir = '{}/{}/{}'.format(local_dir_base, domain, task)
     variant_spec['run_params']['local_dir'] = local_dir
 
