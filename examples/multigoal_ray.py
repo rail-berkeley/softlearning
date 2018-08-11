@@ -7,7 +7,7 @@ from ray import tune
 from softlearning.algorithms import SAC
 from softlearning.environments.utils import get_environment
 from softlearning.misc.plotter import QFPolicyPlotter
-from softlearning.misc.utils import timestamp
+from softlearning.misc.utils import datetimestamp
 from softlearning.samplers import SimpleSampler
 from softlearning.policies import GMMPolicy, LatentSpacePolicy
 from softlearning.replay_pools import SimpleReplayPool
@@ -144,7 +144,7 @@ def main():
     variants['local_dir'] = local_dir
 
     tune.run_experiments({
-        'multigoal-' + timestamp(): {
+        'multigoal-' + datetimestamp(): {
             'run': 'multigoal-runner',
             'trial_resources': {'cpu': 2},
             'config': variants,
