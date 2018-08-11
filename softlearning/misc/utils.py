@@ -123,7 +123,11 @@ def get_git_rev():
         import git
         repo = git.Repo(os.getcwd())
         git_rev = repo.active_branch.commit.name_rev
-    except:
+    except ImportError:
+        print(
+            "Warning: gitpython not installed."
+            " Unable to log git rev."
+            " Run `pip install gitpython` if you want git revs to be logged.")
         git_rev = None
 
     return git_rev
