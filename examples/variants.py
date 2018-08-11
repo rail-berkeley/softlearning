@@ -120,7 +120,7 @@ VALUE_FUNCTION_PARAMS = {
 
 ALGORITHM_PARAMS_BASE = {
     'lr': 3e-4,
-    'discount': 0.99,
+    'discount': 0.998,
     'target_update_interval': 1,
     'tau': 0.005,
     'target_entropy': 'auto',
