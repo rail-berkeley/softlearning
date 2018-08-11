@@ -7,7 +7,14 @@ bottleneck. In that case, it is desirable to allocate all available compute to
 optimizers rather then waiting for new sample to arrive.
 """
 from ray import tune
-from ray.tune.variant_generator import generate_variants
+try:
+    from ray.tune.variant_generator import generate_variants
+except ImportError:
+    # TODO(hartikainen): generate_variants has moved in >0.5.0, and some of my
+    # stuff uses newer version. Remove this once we bump up the version in
+    # requirements.txt
+    from ray.tune.suggest.variant_generator import generate_variants
+
 
 from softlearning.environments.utils import get_environment
 from softlearning.algorithms import SQL

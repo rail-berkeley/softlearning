@@ -4,7 +4,7 @@ from rllab.misc.instrument import run_experiment_lite
 from softlearning.algorithms import SAC
 from softlearning.environments.utils import get_environment
 from softlearning.misc.plotter import QFPolicyPlotter
-from softlearning.misc.utils import timestamp
+from softlearning.misc.utils import datetimestamp
 from softlearning.samplers import SimpleSampler
 from softlearning.policies import GMMPolicy, LatentSpacePolicy
 from softlearning.replay_pools import SimpleReplayPool
@@ -122,7 +122,7 @@ def main():
     run_experiment_lite(
         run,
         exp_prefix='multigoal',
-        exp_name=timestamp(),
+        exp_name=datetimestamp(),
         variant=variant,
         snapshot_mode='last',
         n_parallel=1,
