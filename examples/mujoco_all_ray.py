@@ -1,3 +1,5 @@
+import os
+
 import tensorflow as tf
 import ray
 from ray import tune
@@ -5,7 +7,7 @@ from ray import tune
 from softlearning.environments.utils import get_environment
 from softlearning.algorithms import SAC
 
-from softlearning.misc.utils import timestamp, set_seed
+from softlearning.misc.utils import set_seed
 from softlearning.policies import (
     GaussianPolicy,
     LatentSpacePolicy,
@@ -159,12 +161,10 @@ def main():
 
     if args.mode == 'local':
         ray.init()
-        local_dir_base = './data/ray/results'
     else:
         ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
-        local_dir_base = '~/ray_results'
 
-    local_dir = '{}/{}/{}'.format(local_dir_base, domain, task)
+    local_dir = os.path.join('~/ray_results', universe, domain, task)
     variant_spec['run_params']['local_dir'] = local_dir
 
     tune.run_experiments({
