@@ -30,12 +30,6 @@ def launch_experiment(main,
     if exp_name is None:
         exp_name = datetimestamp()
 
-    if log_dir is None:
-        log_dir = os.path.join(
-            DEFAULT_LOG_DIR,
-            "local",
-            exp_prefix.replace("_", "-"), exp_name)
-
     if include_folders is None:
         include_folders = []
 
