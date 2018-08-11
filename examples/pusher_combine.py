@@ -2,7 +2,14 @@ import joblib
 import os
 
 from ray import tune
-from ray.tune.variant_generator import generate_variants
+try:
+    from ray.tune.variant_generator import generate_variants
+except ImportError:
+    # TODO(hartikainen): generate_variants has moved in >0.5.0, and some of my
+    # stuff uses newer version. Remove this once we bump up the version in
+    # requirements.txt
+    from ray.tune.suggest.variant_generator import generate_variants
+
 
 from rllab.envs.normalized_env import normalize
 
