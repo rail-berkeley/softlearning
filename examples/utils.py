@@ -4,7 +4,7 @@ import argparse
 from distutils.util import strtobool
 
 import softlearning.environments.utils as env_utils
-from softlearning.misc.utils import datetimestamp
+from softlearning.misc.utils import datetimestamp, datestamp
 from softlearning.misc.instrument import launch_experiment
 
 
@@ -161,9 +161,11 @@ def launch_experiments_rllab(variants, args, run_fn):
         sync_pkl = run_params.get('sync_pkl', variant.get('sync_pkl'))
         seed = run_params.get('seed', variant.get('seed'))
 
-        experiment_prefix = variant['prefix'] + '/' + args.exp_name
-        experiment_name = '{prefix}-{exp_name}-{i:0{max_i_len}}'.format(
-            prefix=variant['prefix'],
+        date_prefix = datestamp()
+        experiment_prefix = os.path.join(
+            variant['prefix'],
+            '{}-{}'.format(date_prefix, args.exp_name))
+        experiment_name = '{exp_name}-{i:0{max_i_len}}'.format(
             exp_name=args.exp_name,
             i=i,
             max_i_len=int(math.ceil(math.log10(num_experiments))))
