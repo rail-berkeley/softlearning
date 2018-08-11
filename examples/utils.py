@@ -4,7 +4,7 @@ import argparse
 from distutils.util import strtobool
 
 import softlearning.environments.utils as env_utils
-from softlearning.misc.utils import timestamp
+from softlearning.misc.utils import datetimestamp
 from softlearning.misc.instrument import launch_experiment
 
 
@@ -88,7 +88,9 @@ def get_parser():
                         choices=('gaussian', 'gmm', 'lsp'),
                         default='gaussian')
     parser.add_argument('--env', type=str, default='gym-swimmer-default')
-    parser.add_argument('--exp_name', type=str, default=timestamp())
+    parser.add_argument('--exp_name',
+                        type=str,
+                        default=datetimestamp())
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--log_dir', type=str, default=None)
     parser.add_argument("--confirm_remote",

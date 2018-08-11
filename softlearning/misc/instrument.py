@@ -2,7 +2,7 @@ import os
 import uuid
 
 from rllab.misc.instrument import run_experiment_lite
-from softlearning.misc.utils import timestamp, PROJECT_PATH
+from softlearning.misc.utils import datetimestamp, PROJECT_PATH
 
 DEFAULT_LOG_DIR = PROJECT_PATH + "/data"
 
@@ -28,7 +28,7 @@ def launch_experiment(main,
                       exp_name=None,
                       **kwargs):
     if exp_name is None:
-        exp_name = timestamp()
+        exp_name = datetimestamp()
 
     if log_dir is None:
         log_dir = os.path.join(
@@ -48,7 +48,7 @@ def launch_experiment(main,
 
         kwargs.update(added_project_directories=all_symlinks)
 
-    print("\nlog_dir={}\n".format(log_dir))
+    print("\nlog_dir={}\nexp_prefix={}\n".format(log_dir, exp_prefix))
 
     run_experiment_lite(
         stub_method_call=main,

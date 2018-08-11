@@ -10,7 +10,7 @@ from softlearning.algorithms import SQL
 from softlearning.misc.instrument import launch_experiment
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softlearning.samplers import SimpleSampler
-from softlearning.misc.utils import timestamp
+from softlearning.misc.utils import datetimestamp
 from softlearning.replay_pools import SimpleReplayPool
 
 
@@ -77,14 +77,14 @@ def parse_args():
 
 def main():
     full_experiment_name = 'swimmer'
-    full_experiment_name += '-' + timestamp()
+    full_experiment_name += '-' + datetimestamp()
     args = parse_args()
     saved_file = args.file
     launch_experiment(
         run_experiment,
         mode='local',
         variant=dict(file=saved_file),
-        exp_prefix='swimmer' + '/' + 'reuse' + '/' + timestamp(),
+        exp_prefix='swimmer' + '/' + 'reuse' + '/' + datetimestamp(),
         exp_name=full_experiment_name,
         n_parallel=1,
         seed=1,

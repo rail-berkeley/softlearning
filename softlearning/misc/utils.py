@@ -21,9 +21,19 @@ def set_seed(seed):
     print("Using seed {}".format(seed))
 
 
-def timestamp():
-    now = datetime.datetime.now(dateutil.tz.tzlocal())
-    return now.strftime('%Y-%m-%d-%H-%M-%S-%f-%Z')
+def datetimestamp(divider=''):
+    now = datetime.datetime.now()
+    return now.strftime('%Y-%m-%d-%H-%M-%S-%f').replace('-', divider)
+
+
+def datestamp(divider=''):
+    return datetime.date.today().isoformat().replace('-', divider)
+
+
+def timestamp(divider=''):
+    now = datetime.datetime.now()
+    time_now = datetime.datetime.time(now)
+    return time_now.strftime('%H-%M-%S-%Z').replace('-', divider)
 
 
 def concat_obs_z(obs, z, num_skills):
