@@ -121,14 +121,18 @@ def deep_update(d, u):
 def get_git_rev():
     try:
         import git
-        repo = git.Repo(os.getcwd())
-        git_rev = repo.active_branch.commit.name_rev
     except ImportError:
         print(
             "Warning: gitpython not installed."
             " Unable to log git rev."
             " Run `pip install gitpython` if you want git revs to be logged.")
-        git_rev = None
+        return None
+
+    try:
+        repo = git.Repo(os.getcwd())
+        git_rev = repo.active_branch.commit.name_rev
+    except TypeError:
+        git_rev = repo.head.object.name_rev
 
     return git_rev
 
