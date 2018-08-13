@@ -206,6 +206,11 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(1e4 + 1)
         }
     },
+    'DClaw3': {
+        'base_kwargs': {
+            'n_epochs': int(2e4 + 1)
+        }
+    }
 }
 
 REPLAY_POOL_PARAMS = {
@@ -219,7 +224,7 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS_BASE = {
-    'seed': tune.grid_search([1, 2, 3]),
+    'seed': tune.grid_search([1, 2, 3, 4, 5]),
     'snapshot_mode': 'gap',
     'snapshot_gap': 1000,
     'sync_pkl': True,
