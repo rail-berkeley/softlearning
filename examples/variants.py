@@ -57,6 +57,10 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         'preprocessing_layer_sizes': (M, M, 40),
         's_t_units': 128,
     },
+    'DClaw3': {  # 9 DoF
+        'preprocessing_layer_sizes': (M, M, 18),
+        's_t_units': 128,
+    },
 }
 
 GMM_POLICY_PARAMS_BASE = {
