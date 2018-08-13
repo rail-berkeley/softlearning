@@ -11,6 +11,7 @@ from softlearning.environments.gym.mujoco.sawyer import SawyerReachTorqueEnv
 
 try:
     from sac_envs.envs.dclaw.dclaw3_screw_v11 import DClaw3ScrewV11
+    from softlearning.environments.gym.robotics.claw import DClaw3TMPScrewV11
 except ModuleNotFoundError as e:
     def raise_on_use(*args, **kwargs):
         raise e
@@ -60,9 +61,11 @@ GYM_ENVIRONMENTS = {
         'Dense-v0': lambda : gym.envs.make('HandReachDense-v0'),
         'default': lambda : gym.envs.make('HandReach-v0'),
     },
-
     'DClaw3': {
         'ScrewV11': DClaw3ScrewV11
+    },
+    'CustomClaw3': {
+        'ScrewV11': DClaw3TMPScrewV11
     }
 }
 
