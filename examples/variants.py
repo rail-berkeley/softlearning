@@ -124,7 +124,7 @@ VALUE_FUNCTION_PARAMS = {
 
 ALGORITHM_PARAMS_BASE = {
     'lr': 3e-4,
-    'discount': 0.998,
+    'discount': tune.grid_search([0.99, 0.998]),
     'target_update_interval': 1,
     'tau': 0.005,
     'target_entropy': 'auto',
