@@ -64,9 +64,6 @@ GYM_ENVIRONMENTS = {
     'DClaw3': {
         'ScrewV11': DClaw3ScrewV11
     },
-    'CustomClaw3': {
-        'ScrewV11': DClaw3TMPScrewV11
-    }
 }
 
 
