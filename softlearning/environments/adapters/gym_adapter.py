@@ -9,6 +9,14 @@ from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym.wrappers import NormalizeActionWrapper
 from softlearning.environments.gym.mujoco.sawyer import SawyerReachTorqueEnv
 
+try:
+    from sac_envs.envs.dclaw.dclaw3_screw_v11 import DClaw3ScrewV11
+    from sac_envs.envs.dclaw.dclaw3_screw_v2 import DClaw3ScrewV2
+    from softlearning.environments.gym.robotics.claw import DClaw3TMPScrewV11
+except ModuleNotFoundError as e:
+    def raise_on_use(*args, **kwargs):
+        raise e
+    DClaw3ScrewV11 = raise_on_use
 
 GYM_ENVIRONMENTS = {
     'swimmer': {
@@ -33,7 +41,31 @@ GYM_ENVIRONMENTS = {
     'sawyer-torque': {
         'default': SawyerReachTorqueEnv,
         'reach': SawyerReachTorqueEnv,
-    }
+    },
+    'HandManipulatePen': {
+        'v0': lambda : gym.envs.make('HandManipulatePen-v0'),
+        'Dense-v0': lambda : gym.envs.make('HandManipulatePenDense-v0'),
+        'default': lambda : gym.envs.make('HandManipulatePen-v0'),
+    },
+    'HandManipulateEgg': {
+        'v0': lambda : gym.envs.make('HandManipulateEgg-v0'),
+        'Dense-v0': lambda : gym.envs.make('HandManipulateEggDense-v0'),
+        'default': lambda : gym.envs.make('HandManipulateEgg-v0'),
+    },
+    'HandManipulateBlock': {
+        'v0': lambda : gym.envs.make('HandManipulateBlock-v0'),
+        'Dense-v0': lambda : gym.envs.make('HandManipulateBlockDense-v0'),
+        'default': lambda : gym.envs.make('HandManipulateBlock-v0'),
+    },
+    'HandReach': {
+        'v0': lambda : gym.envs.make('HandReach-v0'),
+        'Dense-v0': lambda : gym.envs.make('HandReachDense-v0'),
+        'default': lambda : gym.envs.make('HandReach-v0'),
+    },
+    'DClaw3': {
+        'ScrewV11': DClaw3ScrewV11,
+        'ScrewV2': DClaw3ScrewV2,
+    },
 }
 
 

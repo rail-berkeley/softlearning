@@ -60,44 +60,37 @@ TAG_KEYS = ['seed']
 
 ENV_PARAMS = {
     'swimmer': {  # 2 DoF
-        'prefix': 'swimmer',
         'env_name': 'Swimmer-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
     },
     'hopper': {  # 3 DoF
-        'prefix': 'hopper',
         'env_name': 'Hopper-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
     },
     'half-cheetah': {  # 6 DoF
-        'prefix': 'half-cheetah',
         'env_name': 'HalfCheetah-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
         'max_pool_size': 1E7,
     },
     'walker': {  # 6 DoF
-        'prefix': 'walker',
         'env_name': 'Walker2d-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
     },
     'ant': {  # 8 DoF
-        'prefix': 'ant',
         'env_name': 'Ant-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
     },
     'humanoid': {  # 21 DoF
-        'prefix': 'humanoid',
         'env_name': 'Humanoid-v1',
         'max_path_length': 1000,
         'n_epochs': 20000,
     },
     'point': {
-        'prefix': 'point',
         'env_name': 'point-rllab',
         'layer_size': 32,
         'max_path_length': 100,
@@ -105,19 +98,16 @@ ENV_PARAMS = {
         'target_entropy': -1,
     },
     'inverted-pendulum': {
-        'prefix': 'inverted-pendulum',
         'env_name': 'InvertedPendulum-v1',
         'max_path_length': 1000,
         'n_epochs': 1000,
     },
     'inverted-double-pendulum': {
-        'prefix': 'inverted-double-pendulum',
         'env_name': 'InvertedDoublePendulum-v1',
         'max_path_length': 1000,
         'n_epochs': 1000,
     },
     'pendulum': {
-        'prefix': 'pendulum',
         'env_name': 'Pendulum-v0',
         'max_path_length': 200,
         'layer_size': 32,
@@ -125,20 +115,17 @@ ENV_PARAMS = {
         'num_skills': 5,
     },
     'mountain-car': {
-        'prefix': 'mountain-car',
         'env_name': 'MountainCarContinuous-v0',
         'max_path_length': 1000,
         'n_epochs': 1000,
         'add_p_z': False,
     },
     'lunar-lander': {
-        'prefix': 'lunar-lander',
         'env_name': 'LunarLanderContinuous-v2',
         'max_path_length': 1000,
         'n_epochs': 1000,
     },
     'bipedal-walker': {
-        'prefix': 'bipedal-walker',
         'env_name': 'BipedalWalker-v2',
         'max_path_length': 1600,
         'n_epochs': 1000,

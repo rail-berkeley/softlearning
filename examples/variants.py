@@ -16,7 +16,7 @@ LSP_POLICY_PARAMS_BASE = {
     'squash': True
 }
 
-LSP_POLICY_PARAMS = {
+LSP_POLICY_PARAMS_FOR_DOMAIN = {
     'swimmer': {  # 2 DoF
         'preprocessing_layer_sizes': (M, M, 4),
         's_t_units': 2,
@@ -40,7 +40,27 @@ LSP_POLICY_PARAMS = {
     'humanoid': {
         'preprocessing_layer_sizes': (M, M, 42),
         's_t_units': 21,
-    }
+    },
+    'HandManipulatePen': {  # 20 DoF
+        'preprocessing_layer_sizes': (M, M, 40),
+        's_t_units': 128,
+    },
+    'HandManipulateEgg': {  # 20 DoF
+        'preprocessing_layer_sizes': (M, M, 40),
+        's_t_units': 128,
+    },
+    'HandManipulateBlock': {  # 20 DoF
+        'preprocessing_layer_sizes': (M, M, 40),
+        's_t_units': 128,
+    },
+    'HandReach': {  # 20 DoF
+        'preprocessing_layer_sizes': (M, M, 40),
+        's_t_units': 128,
+    },
+    'DClaw3': {  # 9 DoF
+        'preprocessing_layer_sizes': (M, M, 18),
+        's_t_units': 128,
+    },
 }
 
 GMM_POLICY_PARAMS_BASE = {
@@ -51,21 +71,6 @@ GMM_POLICY_PARAMS_BASE = {
     'reparameterize': False  # GMM can't be parameterized
 }
 
-GMM_POLICY_PARAMS = {
-    'swimmer': {  # 2 DoF
-    },
-    'hopper': {  # 3 DoF
-    },
-    'half-cheetah': {  # 6 DoF
-    },
-    'walker': {  # 6 DoF
-    },
-    'ant': {  # 8 DoF
-    },
-    'humanoid': {  # 17/21 DoF (gym/rllab)
-    },
-}
-
 GAUSSIAN_POLICY_PARAMS_BASE = {
     'type': 'gaussian',
     'reg': 1e-3,
@@ -73,7 +78,7 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
     'reparameterize': REPARAMETERIZE
 }
 
-GAUSSIAN_POLICY_PARAMS = {
+GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {
     'swimmer': {  # 2 DoF
     },
     'hopper': {  # 3 DoF
@@ -90,21 +95,26 @@ GAUSSIAN_POLICY_PARAMS = {
     },
     'sawyer-torque': {
     },
+    'HandManipulatePen': {  # 20 DoF
+    },
+    'HandManipulateEgg': {  # 20 DoF
+    },
+    'HandManipulateBlock': {  # 20 DoF
+    },
+    'HandReach': {  # 20 DoF
+    },
 }
 
-POLICY_PARAMS = {
-    'lsp': {
-        k: dict(LSP_POLICY_PARAMS_BASE, **v)
-        for k, v in LSP_POLICY_PARAMS.items()
-    },
-    'gmm': {
-        k: dict(GMM_POLICY_PARAMS_BASE, **v)
-        for k, v in GMM_POLICY_PARAMS.items()
-    },
-    'gaussian': {
-        k: dict(GAUSSIAN_POLICY_PARAMS_BASE, **v)
-        for k, v in GAUSSIAN_POLICY_PARAMS.items()
-    },
+POLICY_PARAMS_BASE = {
+    'lsp': LSP_POLICY_PARAMS_BASE,
+    'gmm': GMM_POLICY_PARAMS_BASE,
+    'gaussian': GAUSSIAN_POLICY_PARAMS_BASE,
+}
+
+POLICY_PARAMS_FOR_DOMAIN = {
+    'lsp': LSP_POLICY_PARAMS_FOR_DOMAIN,
+    'gmm': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
+    'gaussian': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
 }
 
 VALUE_FUNCTION_PARAMS = {
@@ -114,7 +124,7 @@ VALUE_FUNCTION_PARAMS = {
 
 ALGORITHM_PARAMS_BASE = {
     'lr': 3e-4,
-    'discount': 0.99,
+    'discount': tune.grid_search([0.99]),
     'target_update_interval': 1,
     'tau': 0.005,
     'target_entropy': 'auto',
@@ -180,6 +190,31 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(1e3 + 1),
         }
     },
+    'HandManipulatePen': {
+        'base_kwargs': {
+            'n_epochs': int(1e4 + 1)
+        }
+    },
+    'HandManipulateEgg': {
+        'base_kwargs': {
+            'n_epochs': int(1e4 + 1)
+        }
+    },
+    'HandManipulateBlock': {
+        'base_kwargs': {
+            'n_epochs': int(1e4 + 1)
+        }
+    },
+    'HandReach': {
+        'base_kwargs': {
+            'n_epochs': int(1e4 + 1)
+        }
+    },
+    'DClaw3': {
+        'base_kwargs': {
+            'n_epochs': int(2e4 + 1)
+        }
+    }
 }
 
 REPLAY_POOL_PARAMS = {
@@ -193,7 +228,7 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS_BASE = {
-    'seed': tune.grid_search([1, 2, 3]),
+    'seed': tune.grid_search([1, 2, 3, 4, 5]),
     'snapshot_mode': 'gap',
     'snapshot_gap': 1000,
     'sync_pkl': True,
@@ -248,6 +283,14 @@ ENV_PARAMS = {
     },
     'sawyer-torque': {
 
+    },
+    'DClaw3': {
+        'ScrewV2': {
+            'object_target_distance_cost_coeff': -2.0,
+            'pose_difference_cost_coeff': 1.0, # 1.0,
+            'joint_velocity_cost_coeff': 0.0,
+            'joint_acceleration_cost_coeff': 0.025,
+        }
     }
 }
 
@@ -260,16 +303,19 @@ def get_variant_spec(universe, domain, task, policy):
         'universe': universe,
         'git_sha': get_git_rev(),
 
-        'env_params': ENV_PARAMS[domain].get(task, {}),
-        'policy_params': POLICY_PARAMS[policy][domain],
+        'env_params': ENV_PARAMS.get(domain, {}).get(task, {}),
+        'policy_params': deep_update(
+            POLICY_PARAMS_BASE[policy],
+            POLICY_PARAMS_FOR_DOMAIN[policy].get(domain, {})
+        ),
         'value_fn_params': VALUE_FUNCTION_PARAMS,
         'algorithm_params': deep_update(
             ALGORITHM_PARAMS_BASE,
-            ALGORITHM_PARAMS[domain]
+            ALGORITHM_PARAMS.get(domain, {})
         ),
         'replay_pool_params': REPLAY_POOL_PARAMS,
         'sampler_params': SAMPLER_PARAMS,
-        'run_params': deep_update(RUN_PARAMS_BASE, RUN_PARAMS[domain]),
+        'run_params': deep_update(RUN_PARAMS_BASE, RUN_PARAMS.get(domain, {})),
     }
 
     return variant_spec

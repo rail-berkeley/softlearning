@@ -39,7 +39,6 @@ COMMON_PARAMS = {
 
 ENV_PARAMS = {
     'pusher': {
-        'prefix': 'pusher',
         'env_name': 'pusher',
         'max_path_length': 300,
         'n_epochs': 100,
