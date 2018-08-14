@@ -287,9 +287,9 @@ ENV_PARAMS = {
     'DClaw3': {
         'ScrewV2': {
             'object_target_distance_cost_coeff': -2.0,
-            'pose_difference_cost_coeff': 0.0, # 1.0,
+            'pose_difference_cost_coeff': 1.0, # 1.0,
             'joint_velocity_cost_coeff': 0.0,
-            'joint_acceleration_cost_coeff': 0.0, # 0.025,
+            'joint_acceleration_cost_coeff': 0.025,
         }
     }
 }
