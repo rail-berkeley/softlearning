@@ -63,7 +63,7 @@ scikit-image==0.14.0
 setuptools==39.1.0
 six==1.11.0
 tensorboard==1.10.0
-tensorflow==1.10.0
+tensorflow-gpu==1.10.0
 tensorflow-probability==0.3.0
 termcolor==1.1.0
 theano==1.0.1
