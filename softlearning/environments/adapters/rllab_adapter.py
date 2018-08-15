@@ -13,7 +13,8 @@ from softlearning.environments.rllab import (
     MultiDirectionSwimmerEnv,
     MultiDirectionAntEnv,
     MultiDirectionHumanoidEnv,
-    CrossMazeAntEnv)
+    CrossMazeAntEnv,
+    MultiGoalEnv)
 from softlearning.environments.rllab.pusher_2d_env import (
     Pusher2dEnv,
     ForkReacherEnv)
@@ -44,6 +45,9 @@ RLLAB_ENVIRONMENTS = {
 
         'image-reach': ImageForkReacherEnv,
         'image-default': ImagePusherEnv,
+    },
+    'multigoal': {
+        'default': MultiGoalEnv
     }
 }
 
@@ -123,11 +127,7 @@ class RllabAdapter(SoftlearningEnv):
         pass  # Nothing to seed
 
     def unwrapped(self, *args, **kwargs):
-
         pass  # Nothing to unwrap
-
-    def copy(self, *args, **kwargs):
-        raise NotImplementedError
 
     def get_param_values(self, *args, **kwargs):
         raise NotImplementedError

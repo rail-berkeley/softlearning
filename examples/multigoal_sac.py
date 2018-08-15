@@ -1,11 +1,10 @@
 import numpy as np
 
-from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import run_experiment_lite
 from softlearning.algorithms import SAC
-from softlearning.environments.rllab import MultiGoalEnv
+from softlearning.environments.utils import get_environment
 from softlearning.misc.plotter import QFPolicyPlotter
-from softlearning.misc.utils import timestamp
+from softlearning.misc.utils import datetimestamp
 from softlearning.samplers import SimpleSampler
 from softlearning.policies import GMMPolicy, LatentSpacePolicy
 from softlearning.replay_pools import SimpleReplayPool
@@ -14,12 +13,12 @@ from examples.utils import get_parser
 
 
 def run(variant):
-    env = normalize(MultiGoalEnv(
-        actuation_cost_coeff=1,
-        distance_cost_coeff=0.1,
-        goal_reward=1,
-        init_sigma=0.1,
-    ))
+    env = get_environment('rllab', 'multigoal', 'default', {
+        'actuation_cost_coeff': 1,
+        'distance_cost_coeff': 0.1,
+        'goal_reward': 1,
+        'init_sigma': 0.1,
+    })
 
     pool = SimpleReplayPool(
         observation_shape=env.observation_space.shape,
@@ -123,7 +122,7 @@ def main():
     run_experiment_lite(
         run,
         exp_prefix='multigoal',
-        exp_name=timestamp(),
+        exp_name=datetimestamp(),
         variant=variant,
         snapshot_mode='last',
         n_parallel=1,

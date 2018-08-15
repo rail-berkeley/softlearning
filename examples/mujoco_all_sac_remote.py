@@ -1,5 +1,12 @@
 from ray import tune
-from ray.tune.variant_generator import generate_variants
+try:
+    from ray.tune.variant_generator import generate_variants
+except ImportError:
+    # TODO(hartikainen): generate_variants has moved in >0.5.0, and some of my
+    # stuff uses newer version. Remove this once we bump up the version in
+    # requirements.txt
+    from ray.tune.suggest.variant_generator import generate_variants
+
 
 from softlearning.algorithms import SAC
 from softlearning.environments.utils import get_environment
@@ -33,21 +40,18 @@ COMMON_PARAMS = {
 
 ENV_PARAMS = {
     'swimmer': {  # 2 DoF
-        'prefix': 'swimmer',
         'env_name': 'swimmer-rllab',
         'max_path_length': 1000,
         'n_epochs': 2000,
         'target_entropy': -2.0,
     },
     'hopper': {  # 3 DoF
-        'prefix': 'hopper',
         'env_name': 'Hopper-v1',
         'max_path_length': 1000,
         'n_epochs': 3000,
         'target_entropy': -3.0,
     },
     'half-cheetah': {  # 6 DoF
-        'prefix': 'half-cheetah',
         'env_name': 'HalfCheetah-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
@@ -55,21 +59,18 @@ ENV_PARAMS = {
         'max_size': 1E7,
     },
     'walker': {  # 6 DoF
-        'prefix': 'walker',
         'env_name': 'Walker2d-v1',
         'max_path_length': 1000,
         'n_epochs': 5000,
         'target_entropy': -6.0,
     },
     'ant': {  # 8 DoF
-        'prefix': 'ant',
         'env_name': 'Ant-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
         'target_entropy': -8.0,
     },
     'humanoid': {  # 21 DoF
-        'prefix': 'humanoid',
         'env_name': 'humanoid-rllab',
         'max_path_length': 1000,
         'n_epochs': 20000,

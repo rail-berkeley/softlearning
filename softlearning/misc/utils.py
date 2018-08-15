@@ -21,9 +21,19 @@ def set_seed(seed):
     print("Using seed {}".format(seed))
 
 
-def timestamp():
-    now = datetime.datetime.now(dateutil.tz.tzlocal())
-    return now.strftime('%Y-%m-%d-%H-%M-%S-%f-%Z')
+def datetimestamp(divider=''):
+    now = datetime.datetime.now()
+    return now.strftime('%Y-%m-%d-%H-%M-%S-%f').replace('-', divider)
+
+
+def datestamp(divider=''):
+    return datetime.date.today().isoformat().replace('-', divider)
+
+
+def timestamp(divider=''):
+    now = datetime.datetime.now()
+    time_now = datetime.datetime.time(now)
+    return time_now.strftime('%H-%M-%S-%Z').replace('-', divider)
 
 
 def concat_obs_z(obs, z, num_skills):
@@ -111,10 +121,18 @@ def deep_update(d, u):
 def get_git_rev():
     try:
         import git
+    except ImportError:
+        print(
+            "Warning: gitpython not installed."
+            " Unable to log git rev."
+            " Run `pip install gitpython` if you want git revs to be logged.")
+        return None
+
+    try:
         repo = git.Repo(os.getcwd())
         git_rev = repo.active_branch.commit.name_rev
-    except:
-        git_rev = None
+    except TypeError:
+        git_rev = repo.head.object.name_rev
 
     return git_rev
 

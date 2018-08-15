@@ -1,10 +1,11 @@
+import os
 import ray
 from ray import tune
 
 from softlearning.environments.utils import get_environment
 from softlearning.algorithms import SAC
 
-from softlearning.misc.utils import timestamp, set_seed
+from softlearning.misc.utils import set_seed, datestamp
 from softlearning.policies import (
     GaussianPolicy,
     LatentSpacePolicy,
@@ -190,7 +191,7 @@ def main():
     if args.gpus > 0:
         trial_resources['gpu'] = args.gpus
 
-    local_dir = '{}/{}/{}'.format(local_dir_base, domain, task)
+    local_dir = os.path.join('~/ray_results', universe, domain, task)
 
     variant_specs = []
     for policy in args.policy:
@@ -204,8 +205,11 @@ def main():
         variant_spec['run_params']['local_dir'] = local_dir
         variant_specs.append(variant_spec)
 
+    date_prefix = datestamp()
+    experiment_id = '-'.join((date_prefix, args.exp_name))
+
     tune.run_experiments({
-        "{}-{}".format(args.exp_name, policy): {
+        "{}-{}".format(experiment_id, policy): {
             'run': 'mujoco-runner',
             'trial_resources': trial_resources,
             'config': variant_spec,

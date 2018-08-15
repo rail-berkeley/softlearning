@@ -9,7 +9,14 @@ from rllab.envs.normalized_env import normalize
 from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 
-from ray.tune.variant_generator import generate_variants
+try:
+    from ray.tune.variant_generator import generate_variants
+except ImportError:
+    # TODO(hartikainen): generate_variants has moved in >0.5.0, and some of my
+    # stuff uses newer version. Remove this once we bump up the version in
+    # requirements.txt
+    from ray.tune.suggest.variant_generator import generate_variants
+
 
 from softlearning.algorithms import SAC
 from softlearning.environments.rllab import HierarchyProxyEnv
@@ -53,7 +60,6 @@ COMMON_PARAMS = {
 
 ENV_PARAMS = {
     'random-goal-swimmer': {  # 2 DoF
-        'prefix': 'random-goal-swimmer',
         'env_name': 'random-goal-swimmer',
         'epoch_length': 1000,
         'max_path_length': 1000,
@@ -81,7 +87,6 @@ ENV_PARAMS = {
         ])
     },
     'random-goal-ant': {  # 8 DoF
-        'prefix': 'random-goal-ant',
         'env_name': 'random-goal-ant',
         'epoch_length': 1000,
         'max_path_length': 1000,
@@ -109,7 +114,6 @@ ENV_PARAMS = {
         ])
     },
     'random-goal-humanoid': {  # 21 DoF
-        'prefix': 'random-goal-humanoid',
         'env_name': 'random-goal-humanoid',
         'epoch_length': 1000,
         'max_path_length': 1000,
@@ -137,7 +141,6 @@ ENV_PARAMS = {
         ])
     },
     'ant-resume-training': {  # 8 DoF
-        'prefix': 'ant-resume-training',
         'env_name': 'ant-rllab',
         'max_path_length': 1000,
         'n_epochs': int(4e3 + 1),
@@ -157,7 +160,6 @@ ENV_PARAMS = {
         ])
     },
     'humanoid-resume-training': {  # 21 DoF
-        'prefix': 'humanoid-resume-training',
         'env_name': 'humanoid-rllab',
         'max_path_length': 1000,
         'n_epochs': int(1e4 + 1),

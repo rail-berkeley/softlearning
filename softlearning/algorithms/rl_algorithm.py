@@ -6,9 +6,8 @@ import numpy as np
 from rllab.misc import logger
 from rllab.algos.base import Algorithm
 
-from softlearning.misc.utils import deep_clone
 from softlearning.misc import tf_utils
-from softlearning.samplers import rollouts
+from softlearning.samplers import rollouts, rollout
 
 
 class RLAlgorithm(Algorithm):
@@ -22,8 +21,9 @@ class RLAlgorithm(Algorithm):
             self,
             sampler,
             n_epochs=1000,
+            train_every_n_steps=1,
             n_train_repeat=1,
-            n_initial_exploration_steps=10000,
+            n_initial_exploration_steps=0,
             epoch_length=1000,
             eval_n_episodes=10,
             eval_deterministic=True,
@@ -48,6 +48,7 @@ class RLAlgorithm(Algorithm):
 
         self._n_epochs = n_epochs
         self._n_train_repeat = n_train_repeat
+        self._train_every_n_steps = train_every_n_steps
         self._epoch_length = epoch_length
         self._n_initial_exploration_steps = n_initial_exploration_steps
         if control_interval != 1:
@@ -70,6 +71,52 @@ class RLAlgorithm(Algorithm):
         self._policy = None
         self._pool = None
 
+    def _initial_exploration_hook(self, initial_exploration_policy):
+        if self._n_initial_exploration_steps < 1: return
+
+        if not initial_exploration_policy:
+            raise ValueError(
+                "Initial exploration policy must be provided when"
+                " n_initial_exploration_steps > 0.")
+
+        path = rollout(
+            env=self._env,
+            policy=initial_exploration_policy,
+            path_length=self._n_initial_exploration_steps,
+            break_on_terminal=False)
+
+        assert (path['observations'].shape[0]
+                == self._n_initial_exploration_steps)
+
+        self._pool.add_samples(
+            num_samples=self._n_initial_exploration_steps,
+            **{
+                k: v for k, v in path.items()
+                if k in self._pool.fields
+            })
+
+    def _training_before_hook(self):
+        """Method called before the actual training loops."""
+        pass
+
+    def _training_after_hook(self):
+        """Method called after the actual training loops."""
+        pass
+
+    def _epoch_before_hook(self, epoch):
+        """Hook called at the beginning of each epoch."""
+        pass
+
+    def _epoch_after_hook(self, *args, **kwargs):
+        """Hook called at the end of each epoch."""
+        pass
+
+    def _training_batch(self):
+        return self.sampler.random_batch()
+
+    def _evaluation_batch(self):
+        return self._training_batch()
+
     def _train(self, env, policy, pool, initial_exploration_policy=None):
         """Return a generator that performs RL training.
 
@@ -83,14 +130,12 @@ class RLAlgorithm(Algorithm):
 
         self._init_training()
 
-        if initial_exploration_policy is None:
-            self.sampler.initialize(env, policy, pool)
-            initial_exploration_done = True
-        else:
-            self.sampler.initialize(env, initial_exploration_policy, pool)
-            initial_exploration_done = False
+        self._initial_exploration_hook(initial_exploration_policy)
+        self.sampler.initialize(env, policy, pool)
 
-        evaluation_env = deep_clone(env) if self._eval_n_episodes else None
+        self._training_before_hook()
+
+        evaluation_env = env.copy() if self._eval_n_episodes else None
 
         with self._sess.as_default():
             gt.rename_root('RLAlgorithm')
@@ -99,24 +144,17 @@ class RLAlgorithm(Algorithm):
 
             for epoch in gt.timed_for(
                     range(self._n_epochs + 1), save_itrs=True):
+                self._epoch_before_hook(epoch)
+
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
                 for t in range(self._epoch_length):
-                    if (not initial_exploration_done
-                            and (self._epoch_length * epoch
-                                 >= self._n_initial_exploration_steps)):
-                        self.sampler.set_policy(policy)
-                        initial_exploration_done = True
-                    self.sampler.sample()
-                    if not self.sampler.batch_ready():
-                        continue
+                    self._do_sampling(epoch=epoch, epoch_timestep=t)
                     gt.stamp('sample')
-
-                    for i in range(self._n_train_repeat):
-                        self._do_training(
-                            iteration=t + epoch * self._epoch_length,
-                            batch=self.sampler.random_batch())
-                    gt.stamp('train')
+                    if self.ready_to_train:
+                        self._do_training_repeats(epoch=epoch,
+                                                  epoch_timestep=t)
+                        gt.stamp('train')
 
                 mean_returns = self._evaluate(policy, evaluation_env, epoch)
                 gt.stamp('eval')
@@ -141,9 +179,13 @@ class RLAlgorithm(Algorithm):
                 logger.dump_tabular(with_prefix=False)
                 logger.pop_prefix()
 
+                self._epoch_after_hook(epoch)
+
                 yield epoch, mean_returns
 
             self.sampler.terminate()
+
+        self._training_after_hook()
 
     def _evaluate(self, policy, evaluation_env, epoch):
         """Perform evaluation for the current policy."""
@@ -184,7 +226,7 @@ class RLAlgorithm(Algorithm):
             logger.record_tabular(key, value)
 
         iteration = epoch * self._epoch_length
-        batch = self.sampler.random_batch()
+        batch = self._evaluation_batch()
         self.log_diagnostics(iteration, batch)
 
         return np.mean(total_returns)
@@ -196,6 +238,23 @@ class RLAlgorithm(Algorithm):
     @abc.abstractmethod
     def get_snapshot(self, epoch):
         raise NotImplementedError
+
+    @property
+    def ready_to_train(self):
+        return self.sampler.batch_ready()
+
+    def _do_sampling(self, epoch, epoch_timestep):
+        self.sampler.sample()
+
+    def _do_training_repeats(self, epoch, epoch_timestep):
+        """Repeat training _n_train_repeat times every _train_every_n_steps"""
+        total_timestep = epoch * self._epoch_length + epoch_timestep
+        if total_timestep % self._train_every_n_steps > 0: return
+
+        for i in range(self._n_train_repeat):
+            self._do_training(
+                iteration=total_timestep,
+                batch=self._training_batch())
 
     @abc.abstractmethod
     def _do_training(self, iteration, batch):

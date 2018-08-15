@@ -12,7 +12,14 @@ import joblib
 import numpy as np
 import tensorflow as tf
 from ray import tune
-from ray.tune.variant_generator import generate_variants
+try:
+    from ray.tune.variant_generator import generate_variants
+except ImportError:
+    # TODO(hartikainen): generate_variants has moved in >0.5.0, and some of my
+    # stuff uses newer version. Remove this once we bump up the version in
+    # requirements.txt
+    from ray.tune.suggest.variant_generator import generate_variants
+
 
 from softlearning.algorithms import SAC
 from softlearning.environments.rllab import FixedOptionEnv
@@ -46,21 +53,18 @@ TAG_KEYS = ['lr', 'use_pretrained_values']
 
 ENV_PARAMS = {
     'swimmer': {  # 2 DoF
-        'prefix': 'swimmer',
         'env_name': 'Swimmer-v1',
         'max_path_length': 1000,
         'n_epochs': 2000,
         'target_entropy': -2,
     },
     'hopper': {  # 3 DoF
-        'prefix': 'hopper',
         'env_name': 'Hopper-v1',
         'max_path_length': 1000,
         'n_epochs': 3000,
         'target_entropy': -3,
     },
     'half-cheetah': {  # 6 DoF
-        'prefix': 'half-cheetah',
         'env_name': 'HalfCheetah-v1',
         'max_path_length': 1000,
         'n_epochs': 1000,
@@ -68,28 +72,24 @@ ENV_PARAMS = {
         'max_size': 1E7,
     },
     'walker': {  # 6 DoF
-        'prefix': 'walker',
         'env_name': 'Walker2d-v1',
         'max_path_length': 1000,
         'n_epochs': 5000,
         'target_entropy': -6,
     },
     'ant': {  # 8 DoF
-        'prefix': 'ant',
         'env_name': 'Ant-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
         'target_entropy': -8,
     },
     'humanoid': {  # 21 DoF
-        'prefix': 'humanoid',
         'env_name': 'Humanoid-v1',
         'max_path_length': 1000,
         'n_epochs': 20000,
         'target_entropy': -21,
     },
     'point': {
-        'prefix': 'point',
         'env_name': 'point-rllab',
         'layer_size': 32,
         'max_path_length': 100,
@@ -97,21 +97,18 @@ ENV_PARAMS = {
         'target_entropy': -1,
     },
     'inverted-pendulum': {
-        'prefix': 'inverted-pendulum',
         'env_name': 'InvertedPendulum-v1',
         'max_path_length': 1000,
         'n_epochs': 1000,
         'target_entropy': -1
     },
     'inverted-double-pendulum': {
-        'prefix': 'inverted-double-pendulum',
         'env_name': 'InvertedDoublePendulum-v1',
         'max_path_length': 1000,
         'n_epochs': 1000,
         'target_entropy': -1,
     },
     'pendulum': {
-        'prefix': 'pendulum',
         'env_name': 'Pendulum-v0',
         'layer_size': 32,
         'max_path_length': 200,
@@ -119,21 +116,18 @@ ENV_PARAMS = {
         'target_entropy': -1,
     },
     'mountain-car': {
-        'prefix': 'mountain-car',
         'env_name': 'MountainCarContinuous-v0',
         'max_path_length': 1000,
         'n_epochs': 1000,
         'target_entropy': -1,
     },
     'lunar-lander': {
-        'prefix': 'lunar-lander',
         'env_name': 'LunarLanderContinuous-v2',
         'max_path_length': 1000,
         'n_epochs': 1000,
         'target_entropy': -4,
     },
     'bipedal-walker': {
-        'prefix': 'bipedal-walker',
         'env_name': 'BipedalWalker-v2',
         'max_path_length': 1000,
         'n_epochs': 1000,
