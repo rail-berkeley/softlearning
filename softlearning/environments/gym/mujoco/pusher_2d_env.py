@@ -111,26 +111,29 @@ class Pusher2dEnv(Serializable, MujocoEnv):
         self.viewer.cam.azimuth = cam_pos[5]
         self.viewer.cam.trackbodyid = -1
 
-    def reset_model(self):
-        qpos = np.random.uniform(
-            low=-0.1, high=0.1, size=self.model.nq) + self.init_qpos.squeeze()
-        qpos[self.TARGET_INDS] = self.init_qpos.squeeze()[self.TARGET_INDS]
+    def reset_model(self, qpos=None, qvel=None):
+        if qpos is None:
+            qpos = np.random.uniform(
+                low=-0.1, high=0.1, size=self.model.nq
+            ) + self.init_qpos.squeeze()
+            qpos[self.TARGET_INDS] = self.init_qpos.squeeze()[self.TARGET_INDS]
 
-        puck_position = np.random.uniform(
-            low=[0.3, -1.0], high=[1.0, -0.4]),
+            puck_position = np.random.uniform(
+                low=[0.3, -1.0], high=[1.0, -0.4]),
 
-        qpos[self.PUCK_INDS] = puck_position
+            qpos[self.PUCK_INDS] = puck_position
 
-        qvel = self.init_qvel.copy().squeeze()
-        qvel[self.PUCK_INDS] = 0
-        qvel[self.TARGET_INDS] = 0
+        if qvel is None:
+            qvel = self.init_qvel.copy().squeeze()
+            qvel[self.PUCK_INDS] = 0
+            qvel[self.TARGET_INDS] = 0
 
         # TODO: remnants from rllab -> gym conversion
         # qacc = np.zeros(self.sim.data.qacc.shape[0])
         # ctrl = np.zeros(self.sim.data.ctrl.shape[0])
         # full_state = np.concatenate((qpos, qvel, qacc, ctrl))
 
-        self.set_state(qpos, qvel)
+        self.set_state(np.array(qpos), np.array(qvel))
 
         return self._get_obs()
 
@@ -190,38 +193,41 @@ class ForkReacherEnv(Pusher2dEnv):
             'arm_object_distance': arm_object_dists,
         }
 
-    def reset_model(self):
-        qpos = np.random.uniform(
-            low=-0.1, high=0.1, size=self.model.nq) + self.init_qpos.squeeze()
+    def reset_model(self, qpos=None, qvel=None):
+        if qpos is None:
+            qpos = np.random.uniform(
+                low=-0.1, high=0.1, size=self.model.nq
+            ) + self.init_qpos.squeeze()
 
-        # qpos[self.JOINT_INDS[0]] = np.random.uniform(-np.pi, np.pi)
-        # qpos[self.JOINT_INDS[1]] = np.random.uniform(
-        #     -np.pi/2, np.pi/2) + np.pi/4
-        # qpos[self.JOINT_INDS[2]] = np.random.uniform(
-        #     -np.pi/2, np.pi/2) + np.pi/2
+            # qpos[self.JOINT_INDS[0]] = np.random.uniform(-np.pi, np.pi)
+            # qpos[self.JOINT_INDS[1]] = np.random.uniform(
+            #     -np.pi/2, np.pi/2) + np.pi/4
+            # qpos[self.JOINT_INDS[2]] = np.random.uniform(
+            #     -np.pi/2, np.pi/2) + np.pi/2
 
-        target_position = np.array(random_point_in_circle(
-            angle_range=(0, 2*np.pi), radius=(0.6, 1.2)))
-        target_position[1] += 1.0
+            target_position = np.array(random_point_in_circle(
+                angle_range=(0, 2*np.pi), radius=(0.6, 1.2)))
+            target_position[1] += 1.0
 
-        qpos[self.TARGET_INDS] = target_position
-        # qpos[self.TARGET_INDS] = [1.0, 2.0]
-        # qpos[self.TARGET_INDS] = self.init_qpos.squeeze()[self.TARGET_INDS]
+            qpos[self.TARGET_INDS] = target_position
+            # qpos[self.TARGET_INDS] = [1.0, 2.0]
+            # qpos[self.TARGET_INDS] = self.init_qpos.squeeze()[self.TARGET_INDS]
 
-        puck_position = np.random.uniform([-1.0], [1.0], size=[2])
-        puck_position = (
-            np.sign(puck_position)
-            * np.maximum(np.abs(puck_position), 1/2))
-        puck_position[np.where(puck_position == 0)] = 1.0
-        # puck_position[1] += 1.0
-        # puck_position = np.random.uniform(
-        #     low=[0.3, -1.0], high=[1.0, -0.4]),
+            puck_position = np.random.uniform([-1.0], [1.0], size=[2])
+            puck_position = (
+                np.sign(puck_position)
+                * np.maximum(np.abs(puck_position), 1/2))
+            puck_position[np.where(puck_position == 0)] = 1.0
+            # puck_position[1] += 1.0
+            # puck_position = np.random.uniform(
+            #     low=[0.3, -1.0], high=[1.0, -0.4]),
 
-        qpos[self.PUCK_INDS] = puck_position
+            qpos[self.PUCK_INDS] = puck_position
 
-        qvel = self.init_qvel.copy().squeeze()
-        qvel[self.PUCK_INDS] = 0
-        qvel[self.TARGET_INDS] = 0
+        if qvel is None:
+            qvel = self.init_qvel.copy().squeeze()
+            qvel[self.PUCK_INDS] = 0
+            qvel[self.TARGET_INDS] = 0
 
         # TODO: remnants from rllab -> gym conversion
         # qacc = np.zeros(self.sim.data.qacc.shape[0])
@@ -230,7 +236,7 @@ class ForkReacherEnv(Pusher2dEnv):
 
         # super(Pusher2dEnv, self).reset(full_state)
 
-        self.set_state(qpos, qvel)
+        self.set_state(np.array(qpos), np.array(qvel))
 
         return self._get_obs()
 
