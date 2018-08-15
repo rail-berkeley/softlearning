@@ -12,7 +12,6 @@ from softlearning.environments.gym.mujoco.sawyer import SawyerReachTorqueEnv
 try:
     from sac_envs.envs.dclaw.dclaw3_screw_v11 import DClaw3ScrewV11
     from sac_envs.envs.dclaw.dclaw3_screw_v2 import DClaw3ScrewV2
-    from softlearning.environments.gym.robotics.claw import DClaw3TMPScrewV11
 except ModuleNotFoundError as e:
     def raise_on_use(*args, **kwargs):
         raise e
