@@ -41,7 +41,7 @@ mujoco-py==1.50.1.56
 numpy==1.14.5
 path.py==11.0.1
 pluggy==0.6.0
-protobuf==3.5.2.post1
+protobuf==3.6.1
 psutil==5.4.3
 py==1.5.3
 pyasn1==0.4.2
@@ -60,10 +60,11 @@ rsa==3.4.2
 s3transfer==0.1.12
 scipy==1.0.1
 scikit-image==0.14.0
+setuptools==39.1.0
 six==1.11.0
-tensorboard==1.9.0
-tensorflow==1.9.0
-tensorflow-probability==0.2.0
+tensorboard==1.10.0
+tensorflow==1.10.0
+tensorflow-probability==0.3.0
 termcolor==1.1.0
 theano==1.0.1
 urllib3==1.22
