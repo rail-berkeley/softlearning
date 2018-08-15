@@ -17,6 +17,7 @@ except ModuleNotFoundError as e:
     def raise_on_use(*args, **kwargs):
         raise e
     DClaw3ScrewV11 = raise_on_use
+    DClaw3ScrewV2 = raise_on_use
 
 GYM_ENVIRONMENTS = {
     'swimmer': {
