@@ -180,7 +180,6 @@ def main():
             if args.cpus is not None
             else {'local': 8}.get(args.mode, 16))
 
-    local_dir_base = '~/ray_results'
     if args.mode == 'local':
         ray.init()
         trial_resources = {'cpu': cpus}
