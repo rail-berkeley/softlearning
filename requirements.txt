@@ -53,7 +53,7 @@ pytest==3.5.0
 python-dateutil==2.6.1
 pytz==2018.4
 pyyaml==3.12
-ray==0.5.0
+ray[rllib]==0.5.0
 redis==2.10.6
 requests==2.18.4
 rsa==3.4.2
