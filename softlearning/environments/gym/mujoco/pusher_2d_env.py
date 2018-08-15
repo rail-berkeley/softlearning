@@ -139,7 +139,8 @@ class Pusher2dEnv(Serializable, MujocoEnv):
 
     def _get_obs(self):
         return np.concatenate([
-            self.sim.data.qpos.flat[self.JOINT_INDS],
+            np.sin(self.sim.data.qpos.flat[self.JOINT_INDS]),
+            np.cos(self.sim.data.qpos.flat[self.JOINT_INDS]),
             self.sim.data.qvel.flat[self.JOINT_INDS],
             self.get_body_com("distal_4"),
             self.get_body_com("object"),
