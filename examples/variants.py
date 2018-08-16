@@ -294,7 +294,7 @@ REPLAY_POOL_PARAMS = {
 }
 
 SAMPLER_PARAMS = {
-    'max_path_length': 1000,
+    'max_path_length': 100,
     'min_pool_size': 1000,
     'batch_size': 256,
 }
@@ -354,7 +354,7 @@ ENV_PARAMS = {
             'goal': tune.grid_search([(0, -1)]),
         },
         'default-reach': {
-            'arm_goal_distance_cost_coeff': tune.grid_search([1.0, 3.0, 10.0]),
+            'arm_goal_distance_cost_coeff': tune.grid_search([1.0]),
             'arm_object_distance_cost_coeff': 0.0,
         },
     },
@@ -426,14 +426,14 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
         variant_spec['env_params'].update({
             # Can't use tuples because they break ray.tune log_syncer
             'image_size': tune.grid_search(['32x32x3']),
-            'arm_goal_distance_cost_coeff': tune.grid_search([3.0]),
+            'arm_goal_distance_cost_coeff': tune.grid_search([1.0]),
             'arm_object_distance_cost_coeff': 0.0,
         })
     elif task == 'blind-reach':
         variant_spec['env_params'].update({
             # Can't use tuples because they break ray.tune log_syncer
             'image_size': tune.grid_search(['32x32x3']),
-            'arm_goal_distance_cost_coeff': tune.grid_search([3.0]),
+            'arm_goal_distance_cost_coeff': tune.grid_search([1.0]),
             'arm_object_distance_cost_coeff': 0.0,
         })
 
