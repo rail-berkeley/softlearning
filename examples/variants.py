@@ -1,4 +1,5 @@
 from ray import tune
+import numpy as np
 
 from softlearning.misc.utils import get_git_rev, deep_update
 
@@ -290,6 +291,10 @@ ENV_PARAMS = {
             'pose_difference_cost_coeff': 1.0, # 1.0,
             'joint_velocity_cost_coeff': 0.0,
             'joint_acceleration_cost_coeff': 0.025,
+            'target_initial_velocity_range': (0, 0),
+            'target_initial_position_range': (np.pi, np.pi),
+            'object_initial_velocity_range': (0, 0),
+            'object_initial_position_range': (0, 0),
         }
     }
 }
