@@ -1,5 +1,6 @@
 """Implements a GymAdapter that converts Gym envs into SoftlearningEnv."""
 
+import numpy as np
 import gym
 from gym.wrappers.dict import FlattenDictWrapper
 
@@ -66,6 +67,24 @@ GYM_ENVIRONMENTS = {
         'ScrewV11': DClaw3ScrewV11,
         'ScrewV2': DClaw3ScrewV2,
     },
+    'HardwareDClaw3': {
+        'ScrewV2': lambda *args, **kwargs: (
+            DClaw3ScrewV2(
+                *args,
+                is_hardware=True,
+                pose_difference_cost_coeff=kwargs.get(
+                    'pose_difference_cost_coeff', 0),
+                joint_velocity_cost_coeff=kwargs.get(
+                    'joint_velocity_cost_coeff', 0),
+                joint_acceleration_cost_coeff=kwargs.get(
+                    'joint_acceleration_cost_coeff', 0),
+                target_initial_position_range=kwargs.get(
+                    'target_initial_position_range', (np.pi, np.pi)),
+                object_initial_position_range=kwargs.get(
+                    'object_initial_position_range', (0, 0)),
+                frame_skip=kwargs.get('frame_skip', 30),
+                **kwargs))
+    }
 }
 
 
