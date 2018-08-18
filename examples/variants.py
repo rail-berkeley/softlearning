@@ -213,7 +213,7 @@ ALGORITHM_PARAMS = {
     },
     'DClaw3': {
         'base_kwargs': {
-            'n_epochs': int(2e4 + 1)
+            'n_epochs': int(1e3 + 1)
         }
     }
 }
@@ -223,7 +223,7 @@ REPLAY_POOL_PARAMS = {
 }
 
 SAMPLER_PARAMS = {
-    'max_path_length': 1000,
+    'max_path_length': 200,
     'min_pool_size': 1000,
     'batch_size': 256,
 }
@@ -259,6 +259,9 @@ RUN_PARAMS = {
     },
     'sawyer-torque': {
         'snapshot_gap': 1000
+    },
+    'DClaw3': {
+        'snapshot_gap': 250
     }
 }
 
@@ -287,10 +290,10 @@ ENV_PARAMS = {
     },
     'DClaw3': {
         'ScrewV2': {
-            'object_target_distance_cost_coeff': -2.0,
-            'pose_difference_cost_coeff': 1.0, # 1.0,
+            'object_target_distance_cost_coeff': 2.0,
+            'pose_difference_cost_coeff': 0.0, # 0.1, # 1.0,
             'joint_velocity_cost_coeff': 0.0,
-            'joint_acceleration_cost_coeff': 0.025,
+            'joint_acceleration_cost_coeff': 0,
             'target_initial_velocity_range': (0, 0),
             'target_initial_position_range': (np.pi, np.pi),
             'object_initial_velocity_range': (0, 0),
