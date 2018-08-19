@@ -150,8 +150,8 @@ ENV RLLAB_PATH=/root/rllab \
 RUN git clone https://github.com/rll/rllab.git ${RLLAB_PATH} \
     && cd ${RLLAB_PATH} \
     && git checkout ${RLLAB_VERSION} \
-    && source activate softlearning \
-    && pip install -e ${RLLAB_PATH} \
+    && bash -c "source activate softlearning \
+                && pip install -U -e ${RLLAB_PATH}" \
     && python -m rllab.config \
     && mkdir ${RLLAB_PATH}/vendor/mujoco \
     && cp ${MUJOCO_PATH}/mjpro131/bin/libmujoco131.so \
