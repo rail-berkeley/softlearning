@@ -150,6 +150,7 @@ ENV RLLAB_PATH=/root/rllab \
 RUN git clone https://github.com/rll/rllab.git ${RLLAB_PATH} \
     && cd ${RLLAB_PATH} \
     && git checkout ${RLLAB_VERSION} \
+    && source activate softlearning \
     && pip install -e ${RLLAB_PATH} \
     && python -m rllab.config \
     && mkdir ${RLLAB_PATH}/vendor/mujoco \
