@@ -213,7 +213,7 @@ ALGORITHM_PARAMS = {
     },
     'DClaw3': {
         'base_kwargs': {
-            'n_epochs': int(1e3 + 1)
+            'n_epochs': int(5e2 + 1)
         }
     }
 }
@@ -261,7 +261,7 @@ RUN_PARAMS = {
         'snapshot_gap': 1000
     },
     'DClaw3': {
-        'snapshot_gap': 250
+        'snapshot_gap': 100
     }
 }
 
@@ -291,9 +291,10 @@ ENV_PARAMS = {
     'DClaw3': {
         'ScrewV2': {
             'object_target_distance_cost_coeff': 2.0,
-            'pose_difference_cost_coeff': 0.0, # 0.1, # 1.0,
+            'pose_difference_cost_coeff': tune.grid_search(
+                [0.01, 0.03, 0.1, 0.3, 1.0, 3.0]),
             'joint_velocity_cost_coeff': 0.0,
-            'joint_acceleration_cost_coeff': 0,
+            'joint_acceleration_cost_coeff': tune.grid_search([0]),
             'target_initial_velocity_range': (0, 0),
             'target_initial_position_range': (np.pi, np.pi),
             'object_initial_velocity_range': (0, 0),
