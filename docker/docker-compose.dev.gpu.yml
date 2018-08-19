@@ -6,10 +6,11 @@
 #     build \
 #         --build-arg MJKEY="$(cat ~/.mujoco/mjkey.txt)"
 
-version: "3"
+version: "2.4"
 services:
   softlearning-dev:
     image: softlearning:${SOFTLEARNING_DEV_TAG}
+    runtime: nvidia
     build:
       context: ../.
       dockerfile: docker/Dockerfile.softlearning.base.gpu
