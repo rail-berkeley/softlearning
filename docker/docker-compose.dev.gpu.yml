@@ -10,6 +10,7 @@ version: "2.4"
 services:
   softlearning-dev:
     image: softlearning:${SOFTLEARNING_DEV_TAG}
+    container_name: softlearning-dev
     runtime: nvidia
     build:
       context: ../.
