@@ -291,8 +291,7 @@ ENV_PARAMS = {
     'DClaw3': {
         'ScrewV2': {
             'object_target_distance_cost_coeff': 2.0,
-            'pose_difference_cost_coeff': tune.grid_search(
-                [0.01, 0.03, 0.1, 0.3, 1.0, 3.0]),
+            'pose_difference_cost_coeff': 1.0,
             'joint_velocity_cost_coeff': 0.0,
             'joint_acceleration_cost_coeff': tune.grid_search([0]),
             'target_initial_velocity_range': (0, 0),
