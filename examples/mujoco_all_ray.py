@@ -198,8 +198,8 @@ def main():
             variant_spec = get_variant_spec_image(
                 universe, domain, task, policy)
         else:
-            raise ValueError(
-                "Should not be here, this was meant to be temporary.")
+            print("WARNING: This was meant to be temporary."
+                  " Check your mujoco_all_ray.main.")
 
         variant_spec['run_params']['local_dir'] = local_dir
         variant_specs.append(variant_spec)
