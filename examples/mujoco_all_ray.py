@@ -17,7 +17,7 @@ from softlearning.replay_pools import (
     ExtraPolicyInfoReplayPool)
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import PREPROCESSOR_FUNCTIONS
-from examples.variants import get_variant_spec_image
+from examples.variants import get_variant_spec_image, get_variant_spec
 from examples.utils import (
     parse_universe_domain_task,
     get_parser,
@@ -198,8 +198,7 @@ def main():
             variant_spec = get_variant_spec_image(
                 universe, domain, task, policy)
         else:
-            print("WARNING: This was meant to be temporary."
-                  " Check your mujoco_all_ray.main.")
+            variant_spec = get_variant_spec(universe, domain, task, policy)
 
         variant_spec['run_params']['local_dir'] = local_dir
         variant_specs.append(variant_spec)
