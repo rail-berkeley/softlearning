@@ -1,0 +1,30 @@
+# WIP
+
+# Docker compose file that builds images and runs the containers needed for
+# running softlearning on cloud (e.g. with ray or rllab). You need to have your
+# MJKEY set in the environment.
+#
+# docker-compose \
+#     -f ./docker/docker-compose.dev.yml \
+#     build \
+#         --build-arg MJKEY="$(cat ~/.mujoco/mjkey.txt)"
+
+version: "3"
+services:
+  softlearning-dev:
+    image: softlearning-dev-compose-test
+    build:
+      context: ../.
+      dockerfile: docker/Dockerfile.softlearning.base.gpu
+      args:
+        - MJKEY
+    ports:
+      - "6006-6016"  # Tensorboard
+      - "5000-5010"  # Viskit
+      - "8888-8898"  # Jupyter
+    volumes:
+       - ~/.aws:/root/.aws  # If using aws, e.g. for s3
+       - ~/.config/gcloud:/root/.config/gcloud  # If using gcp, e.g. for gs
+       - ~/.mujoco:/root/.mujoco  # mjkey.txt
+       - ${RLLAB_PATH:-../../rllab}/vendor/mujoco:/root/rllab/vendor/mujoco
+       - ..:/root/softlearning-private

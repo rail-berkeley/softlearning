@@ -1,0 +1,34 @@
+# Docker compose file that builds images and runs the containers needed for
+# development. You need to have your MJKEY set in the environment.
+#
+# docker-compose \
+#     -f ./docker/docker-compose.dev.yml \
+#     build \
+#         --build-arg MJKEY="$(cat ~/.mujoco/mjkey.txt)"
+
+version: "2.4"
+services:
+  softlearning-dev:
+    image: softlearning:${SOFTLEARNING_DEV_TAG}
+    container_name: softlearning-dev
+    runtime: nvidia
+    build:
+      context: ../.
+      dockerfile: docker/Dockerfile.softlearning.base.gpu
+      args:
+        - MJKEY
+    working_dir: /root/softqlearning-private
+    ports:
+      - "6006"  # Tensorboard
+      - "5000"  # Viskit
+      - "8888"  # Jupyter
+    volumes:
+       - ~/.aws:/root/.aws  # If using aws, e.g. for s3
+       - ~/.config/gcloud:/root/.config/gcloud  # If using gcp, e.g. for gs
+       - ~/.mujoco:/root/.mujoco  # mjkey.txt
+       - ${RLLAB_PATH:-../rllab}/vendor/mujoco:/root/rllab/vendor/mujoco
+       - ..:/root/softqlearning-private
+    command:
+      - bash
+    stdin_open: true
+    tty: true
