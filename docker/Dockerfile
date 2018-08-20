@@ -22,6 +22,10 @@ RUN apt update \
         libxinerama-dev \
         libxi6 \
         libxcursor-dev \
+        libgl1-mesa-dev \
+        libgl1-mesa-glx \
+        libglew-dev \
+        libosmesa6-dev \
         ack-grep \
         vim \
         emacs \
@@ -29,7 +33,6 @@ RUN apt update \
         xpra \
         xserver-xorg-dev \
         xvfb \
-        libosmesa6-dev \
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
 

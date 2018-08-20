@@ -21,8 +21,8 @@ from softlearning.samplers import ExtraPolicyInfoSampler
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.replay_pools import ExtraPolicyInfoReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
-from softlearning.preprocessors import MLPPreprocessor
-from examples.variants import get_variant_spec
+from softlearning.preprocessors import PREPROCESSOR_FUNCTIONS
+from examples.variants import get_variant_spec, get_variant_spec_image
 from examples.utils import (
     parse_universe_domain_task,
     get_parser,
@@ -33,6 +33,7 @@ def run_experiment(variant):
     env_params = variant['env_params']
     policy_params = variant['policy_params']
     value_fn_params = variant['value_fn_params']
+    preprocessor_params = variant['preprocessor_params']
     algorithm_params = variant['algorithm_params']
     replay_pool_params = variant['replay_pool_params']
     sampler_params = variant['sampler_params']
@@ -40,6 +41,20 @@ def run_experiment(variant):
     universe = variant['universe']
     task = variant['task']
     domain = variant['domain']
+
+    # Unfortunately we have to do hack like this because ray logger fails
+    # if our variant has parentheses.
+    if 'image_size' in env_params:
+        env_params['image_size'] = tuple(
+            int(dim) for dim in env_params['image_size'].split('x'))
+
+    preprocessor_kwargs = preprocessor_params.get('kwargs', {})
+    if 'image_size' in preprocessor_kwargs:
+        preprocessor_kwargs['image_size'] = tuple(
+            int(dim) for dim in preprocessor_kwargs['image_size'].split('x'))
+    # if 'hidden_layer_sizes' in preprocessor_kwargs:
+    #     preprocessor_kwargs['hidden_layer_sizes'] = tuple(
+    #         int(dim) for dim in preprocessor_kwargs['hidden_layer_sizes'].split('x'))
 
     env = get_environment(universe, domain, task, env_params)
 
@@ -80,26 +95,19 @@ def run_experiment(variant):
         policy = GaussianPolicy(
             observation_shape=env.observation_space.shape,
             action_shape=env.action_space.shape,
-            hidden_layer_sizes=(M, M),
+            hidden_layer_sizes=[policy_params['hidden_layer_width']]*2,
             reparameterize=policy_params['reparameterize'],
             reg=1e-3,
         )
     elif policy_params['type'] == 'lsp':
-        preprocessing_layer_sizes = policy_params.get(
-            'preprocessing_layer_sizes')
-        if preprocessing_layer_sizes is not None:
-            nonlinearity = {
-                None: None,
-                'relu': tf.nn.relu,
-                'tanh': tf.nn.tanh
-            }[policy_params['preprocessing_output_nonlinearity']]
-
-            observations_preprocessor = MLPPreprocessor(
-                observation_shape=env.observation_space.shape,
-                layer_sizes=preprocessing_layer_sizes,
-                output_nonlinearity=nonlinearity)
+        if preprocessor_params and preprocessor_params.get('function_name'):
+            preprocessor_fn = PREPROCESSOR_FUNCTIONS[
+                preprocessor_params.get('function_name')]
+            preprocessor = preprocessor_fn(
+                *preprocessor_params.get('args', []),
+                **preprocessor_params.get('kwargs', {}))
         else:
-            observations_preprocessor = None
+            preprocessor = None
 
         policy_s_t_layers = policy_params['s_t_layers']
         policy_s_t_units = policy_params['s_t_units']
@@ -118,9 +126,10 @@ def run_experiment(variant):
             bijector_config=bijector_config,
             reparameterize=policy_params['reparameterize'],
             q_function=qf1,
-            observations_preprocessor=observations_preprocessor)
+            observations_preprocessor=preprocessor)
     elif policy_params['type'] == 'gmm':
-        # reparameterize should always be False if using a GMMPolicy
+        assert not policy_params['reparameterize'], (
+            "reparameterize should be False when using a GMMPolicy")
         policy = GMMPolicy(
             observation_shape=env.observation_space.shape,
             action_shape=env.action_space.shape,
@@ -164,7 +173,11 @@ def main():
 
     universe, domain, task = parse_universe_domain_task(args)
 
-    variant_spec = get_variant_spec(universe, domain, task, args.policy)
+    if 'image' in task or 'blind' in task:
+        variant_spec = get_variant_spec_image(
+            universe, domain, task, args.policy)
+    else:
+        variant_spec = get_variant_spec(universe, domain, task, args.policy)
 
     variant_spec['mode'] = args.mode
     variants = [x[1] for x in generate_variants(variant_spec)]

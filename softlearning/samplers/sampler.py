@@ -1,3 +1,5 @@
+import numpy as np
+
 from rllab.misc import logger
 
 

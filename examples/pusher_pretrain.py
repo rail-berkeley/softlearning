@@ -29,7 +29,7 @@ COMMON_PARAMS = {
     'discount': 0.99,
     'layer_size': 128,
     'batch_size': 128,
-    'max_pool_size': 1E6,
+    'max_size': 1E6,
     'n_train_repeat': 1,
     'epoch_length': 1000,
     'kernel_particles': 16,
@@ -63,7 +63,7 @@ def run_experiment(variant):
     pool = SimpleReplayPool(
         observation_shape=env.observation_space.shape,
         action_shape=env.action_space.shape,
-        max_size=variant['max_pool_size'])
+        max_size=variant['max_size'])
 
     sampler = SimpleSampler(
         max_path_length=variant['max_path_length'],

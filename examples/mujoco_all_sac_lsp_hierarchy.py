@@ -23,7 +23,7 @@ from softlearning.environments.rllab import HierarchyProxyEnv
 from softlearning.policies import LatentSpacePolicy
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
-from softlearning.preprocessors import MLPPreprocessor
+from softlearning.preprocessors import FeedforwardNetPreprocessorV2
 from softlearning.misc import tf_utils
 from softlearning.misc.utils import get_git_rev
 from examples.utils import (
@@ -40,7 +40,7 @@ COMMON_PARAMS = {
     'tau': 1e-2,
     'layer_size': 128,
     'batch_size': 128,
-    'max_pool_size': 1e6,
+    'max_size': 1e6,
     'n_train_repeat': 1,
     'epoch_length': 1000,
     'snapshot_mode': 'gap',
@@ -221,7 +221,7 @@ def run_experiment(variant):
     pool = SimpleReplayPool(
         observation_shape=env.observation_space.shape,
         action_shape=env.action_space.shape,
-        max_size=variant['max_pool_size'],
+        max_size=variant['max_size'],
     )
 
     base_kwargs = dict(
@@ -250,10 +250,10 @@ def run_experiment(variant):
 
     preprocessing_layer_sizes = variant.get('preprocessing_layer_sizes')
     observations_preprocessor = (
-        MLPPreprocessor(
-            observation_shape=env.observation_space.shape,
-            layer_sizes=preprocessing_layer_sizes,
-            name='high_level_observations_preprocessor')
+        FeedforwardNetPreprocessorV2(
+            name='high_level_observations_preprocessor',
+            hidden_layer_sizes=preprocessing_layer_sizes[:-1],
+            output_size=preprocessing_layer_sizes[-1])
         if preprocessing_layer_sizes is not None
         else None
     )

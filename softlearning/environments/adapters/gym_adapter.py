@@ -8,6 +8,14 @@ from rllab.core.serializable import Serializable
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym.wrappers import NormalizeActionWrapper
 from softlearning.environments.gym.mujoco.sawyer import SawyerReachTorqueEnv
+from softlearning.environments.gym.mujoco.pusher_2d_env import (
+    Pusher2dEnv,
+    ForkReacherEnv,
+)
+from softlearning.environments.gym.mujoco.image_pusher import (
+    ImagePusherEnv,
+    ImageForkReacherEnv,
+    BlindForkReacherEnv)
 
 try:
     from sac_envs.envs.dclaw.dclaw3_screw_v11 import DClaw3ScrewV11
@@ -37,6 +45,14 @@ GYM_ENVIRONMENTS = {
     },
     'walker': {
         'default': lambda: gym.envs.make('Walker2d-v2')
+    },
+    'pusher-2d': {
+        'default': Pusher2dEnv,
+        'default-reach': ForkReacherEnv,
+
+        'image-default': ImagePusherEnv,
+        'image-reach': ImageForkReacherEnv,
+        'blind-reach': BlindForkReacherEnv,
     },
     'sawyer-torque': {
         'default': SawyerReachTorqueEnv,
