@@ -32,7 +32,7 @@ class Sampler(object):
         return self.pool.random_batch(self._batch_size)
 
     def terminate(self):
-        self.env.terminate()
+        self.env.close()
 
     def log_diagnostics(self):
         logger.record_tabular('pool-size', self.pool.size)
