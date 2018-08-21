@@ -484,7 +484,7 @@ class DIAYN(SAC):
 
                 gt.stamp('eval')
 
-            env.terminate()
+            env.close()
 
 
     @overrides
