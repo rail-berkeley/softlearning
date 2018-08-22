@@ -294,9 +294,12 @@ REPLAY_POOL_PARAMS = {
 }
 
 SAMPLER_PARAMS = {
-    'max_path_length': 100,
-    'min_pool_size': 1000,
-    'batch_size': 256,
+    'type': 'SimpleSampler',
+    'kwargs': {
+        'max_path_length': 100,
+        'min_pool_size': 1000,
+        'batch_size': 256,
+    }
 }
 
 RUN_PARAMS_BASE = {
