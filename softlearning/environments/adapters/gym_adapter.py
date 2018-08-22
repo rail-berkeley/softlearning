@@ -102,7 +102,12 @@ GYM_ENVIRONMENTS = {
                 object_initial_position_range=kwargs.get(
                     'object_initial_position_range', (0, 0)),
                 frame_skip=kwargs.get('frame_skip', 30),
-                **kwargs))
+                **kwargs)),
+        'FlipV1': lambda *args, **kwargs: (
+            DClaw3FlipV1(
+                *args,
+                is_hardware=True,
+                **kwargs)),
     }
 }
 
