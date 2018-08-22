@@ -4,15 +4,20 @@
         <numeric name="frame_skip" data="5" />
     </custom>
     <option timestep="0.01" gravity="0 0 0" iterations="20" integrator="Euler" />
-    
+
+    <asset>
+      <texture name="texplane" type="2d" builtin="flat" rgb1="0 0 0" rgb2="0.8 0.8 0.8" width="5" height="5" />
+      <material name='MatPlane' texture="texplane" shininess="0" texrepeat="60 60" specular="0"  reflectance="0" />
+    </asset>
+
     <default>
         <joint armature='0.04' damping="1" limited="true"/>
         <geom friction=".8 .1 .1" density="300" margin="0.002" condim="1" contype="1" conaffinity="1"/>
     </default>
-    
+
     <worldbody>
-        <light diffuse=".5 .5 .5" pos="0 0 3" dir="0 0 -1"/>
-        <geom type="plane" pos="0 0.5 -0.15" size="2 2 0.1" contype="1" conaffinity="1"/>
+        <light diffuse=".5 .5 .5" pos="0 0 5" dir="0 0 -1"/>
+        <geom name="floor" rgba="0 0 0 1" type="plane" material="MatPlane" pos="0 0.5 -0.15" size="4 4 0.1" contype="1" conaffinity="1"/>
 
         <body name="palm" pos="0 0 0">
             <geom rgba="0. 1. 0. 1" type="capsule" fromto="0 0 -0.1 0 0 0.1" size="0.12"/>
@@ -37,7 +42,7 @@
                 </body>
             </body>
         </body>
-        
+
         <body name="object" pos="0 0 -0.1">
             <!--<geom rgba="1. 1. 1. 1" type="box" size="0.05 0.05 0.05" density='0.00001' contype="1" conaffinity="1"/>-->
             <geom rgba="1. 1. 1. 1" type="cylinder" size="0.1 0.1 0.1" density='0.00001' contype="1" conaffinity="1"/>

@@ -27,7 +27,7 @@ COMMON_PARAMS = {
     'discount': 0.99,
     'layer_size': 128,
     'batch_size': 128,
-    'max_pool_size': 1E6,
+    'max_size': 1E6,
     'n_train_repeat': 1,
     'epoch_length': 1000,
     'kernel_particles': 16,
@@ -57,7 +57,7 @@ ENV_PARAMS = {
         'max_path_length': 1000,
         'n_epochs': 10000,
         'reward_scale': 30,
-        'max_pool_size': 1E7,
+        'max_size': 1E7,
     },
     'walker': {  # 6 DoF
         'env_name': 'Walker2d-v1',

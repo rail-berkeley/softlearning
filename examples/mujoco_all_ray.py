@@ -1,6 +1,4 @@
 import os
-
-import tensorflow as tf
 import ray
 from ray import tune
 
@@ -13,11 +11,13 @@ from softlearning.policies import (
     LatentSpacePolicy,
     GMMPolicy,
     UniformPolicy)
-from softlearning.samplers import SimpleSampler
-from softlearning.replay_pools import SimpleReplayPool
+from softlearning.samplers import get_sampler_from_params
+from softlearning.replay_pools import (
+    SimpleReplayPool,
+    ExtraPolicyInfoReplayPool)
 from softlearning.value_functions import NNQFunction, NNVFunction
-from softlearning.preprocessors import MLPPreprocessor
-from examples.variants import get_variant_spec
+from softlearning.preprocessors import PREPROCESSOR_FUNCTIONS
+from examples.variants import get_variant_spec_image, get_variant_spec
 from examples.utils import (
     parse_universe_domain_task,
     get_parser,
@@ -33,6 +33,7 @@ def run_experiment(variant, reporter):
     env_params = variant['env_params']
     policy_params = variant['policy_params']
     value_fn_params = variant['value_fn_params']
+    preprocessor_params = variant['preprocessor_params']
     algorithm_params = variant['algorithm_params']
     replay_pool_params = variant['replay_pool_params']
     sampler_params = variant['sampler_params']
@@ -41,14 +42,34 @@ def run_experiment(variant, reporter):
     task = variant['task']
     domain = variant['domain']
 
+    # Unfortunately we have to do hack like this because ray logger fails
+    # if our variant has parentheses.
+    if 'image_size' in env_params:
+        env_params['image_size'] = tuple(
+            int(dim) for dim in env_params['image_size'].split('x'))
+
+    preprocessor_kwargs = preprocessor_params.get('kwargs', {})
+    if 'image_size' in preprocessor_kwargs:
+        preprocessor_kwargs['image_size'] = tuple(
+            int(dim) for dim in preprocessor_kwargs['image_size'].split('x'))
+    if 'hidden_layer_sizes' in preprocessor_kwargs:
+        preprocessor_kwargs['hidden_layer_sizes'] = tuple(
+            int(dim) for dim in preprocessor_kwargs['hidden_layer_sizes'].split('x'))
+
     env = get_environment(universe, domain, task, env_params)
 
-    pool = SimpleReplayPool(
-        observation_shape=env.observation_space.shape,
-        action_shape=env.action_space.shape,
-        **replay_pool_params)
+    sampler = get_sampler_from_params(sampler_params)
 
-    sampler = SimpleSampler(**sampler_params)
+    if algorithm_params['store_extra_policy_info']:
+        pool = ExtraPolicyInfoReplayPool(
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
+            **replay_pool_params)
+    else:
+        pool = SimpleReplayPool(
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
+            **replay_pool_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
@@ -79,21 +100,14 @@ def run_experiment(variant, reporter):
             reg=1e-3,
         )
     elif policy_params['type'] == 'lsp':
-        preprocessing_layer_sizes = policy_params.get(
-            'preprocessing_layer_sizes')
-        if preprocessing_layer_sizes is not None:
-            nonlinearity = {
-                None: None,
-                'relu': tf.nn.relu,
-                'tanh': tf.nn.tanh
-            }[policy_params['preprocessing_output_nonlinearity']]
-
-            observations_preprocessor = MLPPreprocessor(
-                observation_shape=env.observation_space.shape,
-                layer_sizes=preprocessing_layer_sizes,
-                output_nonlinearity=nonlinearity)
+        if preprocessor_params:
+            preprocessor_fn = PREPROCESSOR_FUNCTIONS[
+                preprocessor_params.get('function_name')]
+            preprocessor = preprocessor_fn(
+                *preprocessor_params.get('args', []),
+                **preprocessor_params.get('kwargs', {}))
         else:
-            observations_preprocessor = None
+            preprocessor = None
 
         policy_s_t_layers = policy_params['s_t_layers']
         policy_s_t_units = policy_params['s_t_units']
@@ -112,9 +126,10 @@ def run_experiment(variant, reporter):
             bijector_config=bijector_config,
             reparameterize=policy_params['reparameterize'],
             q_function=qf1,
-            observations_preprocessor=observations_preprocessor)
+            observations_preprocessor=preprocessor)
     elif policy_params['type'] == 'gmm':
-        # reparameterize should always be False if using a GMMPolicy
+        assert not policy_params['reparameterize'], (
+            "reparameterize should be False when using a GMMPolicy")
         policy = GMMPolicy(
             observation_shape=env.observation_space.shape,
             action_shape=env.action_space.shape,
@@ -138,6 +153,7 @@ def run_experiment(variant, reporter):
         vf=vf,
         lr=algorithm_params['lr'],
         target_entropy=algorithm_params['target_entropy'],
+        reward_scale=algorithm_params['reward_scale'],
         discount=algorithm_params['discount'],
         tau=algorithm_params['tau'],
         reparameterize=policy_params['reparameterize'],
@@ -151,33 +167,54 @@ def run_experiment(variant, reporter):
 
 
 def main():
-    args = get_parser().parse_args()
+    parser = get_parser(allow_policy_list=True)
+    parser.add_argument('--gpus', type=int, default=0)
+    parser.add_argument('--cpus', type=int, default=None)
+    args = parser.parse_args()
 
     universe, domain, task = parse_universe_domain_task(args)
 
-    variant_spec = get_variant_spec(universe, domain, task, args.policy)
-
     tune.register_trainable('mujoco-runner', run_experiment)
+
+    cpus = (args.cpus
+            if args.cpus is not None
+            else {'local': 8}.get(args.mode, 16))
 
     if args.mode == 'local':
         ray.init()
+        trial_resources = {'cpu': cpus}
     else:
         ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
+        trial_resources = {'cpu': cpus}
+
+    if args.gpus > 0:
+        trial_resources['gpu'] = args.gpus
+
+    local_dir = os.path.join('~/ray_results', universe, domain, task)
+
+    variant_specs = []
+    for policy in args.policy:
+        if 'image' in task:
+            variant_spec = get_variant_spec_image(
+                universe, domain, task, policy)
+        else:
+            variant_spec = get_variant_spec(universe, domain, task, policy)
+
+        variant_spec['run_params']['local_dir'] = local_dir
+        variant_specs.append(variant_spec)
 
     date_prefix = datestamp()
-    local_dir = os.path.join('~/ray_results', universe, domain, task)
-    variant_spec['run_params']['local_dir'] = local_dir
-
     experiment_id = '-'.join((date_prefix, args.exp_name))
 
     tune.run_experiments({
-        experiment_id: {
+        "{}-{}".format(experiment_id, policy): {
             'run': 'mujoco-runner',
-            'trial_resources': {'cpu': 8},
+            'trial_resources': trial_resources,
             'config': variant_spec,
             'local_dir': local_dir,
             'upload_dir': 'gs://sac-ray-test/ray/results'
         }
+        for policy, variant_spec in zip(args.policy, variant_specs)
     })
 
 

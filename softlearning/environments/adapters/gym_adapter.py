@@ -9,13 +9,23 @@ from rllab.core.serializable import Serializable
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym.wrappers import NormalizeActionWrapper
 from softlearning.environments.gym.mujoco.sawyer import SawyerReachTorqueEnv
+from softlearning.environments.gym.mujoco.pusher_2d_env import (
+    Pusher2dEnv,
+    ForkReacherEnv,
+)
+from softlearning.environments.gym.mujoco.image_pusher import (
+    ImagePusherEnv,
+    ImageForkReacherEnv,
+    BlindForkReacherEnv)
 
 try:
     from sac_envs.envs.dclaw.dclaw3_screw_v11 import DClaw3ScrewV11
     from sac_envs.envs.dclaw.dclaw3_screw_v2 import DClaw3ScrewV2
+    from sac_envs.envs.dclaw.dclaw3_flip_v1 import DClaw3FlipV1
 except ModuleNotFoundError as e:
     def raise_on_use(*args, **kwargs):
         raise e
+    DClaw3FlipV1 = raise_on_use
     DClaw3ScrewV11 = raise_on_use
     DClaw3ScrewV2 = raise_on_use
 
@@ -38,6 +48,14 @@ GYM_ENVIRONMENTS = {
     },
     'walker': {
         'default': lambda: gym.envs.make('Walker2d-v2')
+    },
+    'pusher-2d': {
+        'default': Pusher2dEnv,
+        'default-reach': ForkReacherEnv,
+
+        'image-default': ImagePusherEnv,
+        'image-reach': ImageForkReacherEnv,
+        'blind-reach': BlindForkReacherEnv,
     },
     'sawyer-torque': {
         'default': SawyerReachTorqueEnv,
@@ -66,6 +84,7 @@ GYM_ENVIRONMENTS = {
     'DClaw3': {
         'ScrewV11': DClaw3ScrewV11,
         'ScrewV2': DClaw3ScrewV2,
+        'FlipV1': DClaw3FlipV1,
     },
     'HardwareDClaw3': {
         'ScrewV2': lambda *args, **kwargs: (

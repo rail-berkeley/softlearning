@@ -11,8 +11,6 @@ LSP_POLICY_PARAMS_BASE = {
     'coupling_layers': 2,
     's_t_layers': 1,
     'action_prior': 'uniform',
-    # 'preprocessing_layer_sizes': None,
-    'preprocessing_output_nonlinearity': 'relu',
     'reparameterize': REPARAMETERIZE,
     'squash': True
 }
@@ -41,6 +39,9 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
     'humanoid': {
         'preprocessing_layer_sizes': (M, M, 42),
         's_t_units': 21,
+    },
+    'pusher-2d': {  # 3 DoF
+        's_t_units': 3,
     },
     'HandManipulatePen': {  # 20 DoF
         'preprocessing_layer_sizes': (M, M, 40),
@@ -76,7 +77,8 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
     'type': 'gaussian',
     'reg': 1e-3,
     'action_prior': 'uniform',
-    'reparameterize': REPARAMETERIZE
+    'reparameterize': REPARAMETERIZE,
+    'hidden_layer_width': tune.grid_search([M//4])
 }
 
 GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {
@@ -92,7 +94,7 @@ GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {
     },
     'humanoid': {  # 17/21 DoF (gym/rllab)
     },
-    'pusher': {  # 3 DoF
+    'pusher-2d': {  # 3 DoF
     },
     'sawyer-torque': {
     },
@@ -116,6 +118,80 @@ POLICY_PARAMS_FOR_DOMAIN = {
     'lsp': LSP_POLICY_PARAMS_FOR_DOMAIN,
     'gmm': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
     'gaussian': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
+}
+
+PREPROCESSOR_PARAMS_BASE = {
+    'function_name': None
+}
+
+LSP_PREPROCESSOR_PARAMS = {
+    'swimmer-gym': {  # 2 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 4,  # 2*DoF
+        }
+    },
+    'swimmer-rllab': {  # 2 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 4,  # 2*DoF
+        }
+    },
+    'hopper': {  # 3 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 6,  # 2*DoF
+        }
+    },
+    'half-cheetah': {  # 6 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 12,  # 2*DoF
+        }
+    },
+    'walker': {  # 6 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 12,  # 2*DoF
+        }
+    },
+    'ant-gym': {  # 8 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 16,  # 2*DoF
+        }
+    },
+    'ant-rllab': {  # 8 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 16,  # 2*DoF
+        }
+    },
+    'humanoid-gym': {  # 17 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 34,  # 2*DoF
+        }
+    },
+    'humanoid-rllab': {  # 21 DoF
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 42,  # 2*DoF
+        }
+    },
+    'pusher-2d': {
+        'function_name': 'feedforward',
+        'kwargs': {
+            'hidden_layer_sizes': (M, M),
+            'output_size': 6,
+        }
+    }
+}
+
+PREPROCESSOR_PARAMS = {
+    'lsp': LSP_PREPROCESSOR_PARAMS,
+    'gmm': {},
+    'gaussian': {},
 }
 
 VALUE_FUNCTION_PARAMS = {
@@ -176,14 +252,10 @@ ALGORITHM_PARAMS = {
             'n_epochs': int(1e4 + 1),
         }
     },
-    'humanoid-standup': {  # 17 DoF
+    'pusher-2d': {  # 3 DoF
         'base_kwargs': {
-            'n_epochs': int(1e4 + 1),
-        }
-    },
-    'pusher': {  # 3 DoF
-        'base_kwargs': {
-            'n_epochs': int(1e3 + 1),
+            'n_epochs': int(2e3 + 1),
+            'n_initial_exploration_steps': int(1e4),
         }
     },
     'sawyer-torque': {
@@ -223,9 +295,12 @@ REPLAY_POOL_PARAMS = {
 }
 
 SAMPLER_PARAMS = {
-    'max_path_length': 200,
-    'min_pool_size': 1000,
-    'batch_size': 256,
+    'type': 'SimpleSampler',
+    'kwargs': {
+        'max_path_length': 200,
+        'min_pool_size': 1000,
+        'batch_size': 256,
+    }
 }
 
 RUN_PARAMS_BASE = {
@@ -254,7 +329,7 @@ RUN_PARAMS = {
     'humanoid': {  # 17/21 DoF (gym/rllab)
         'snapshot_gap': 2000
     },
-    'pusher': {  # 21 DoF
+    'pusher-2d': {  # 21 DoF
         'snapshot_gap': 500
     },
     'sawyer-torque': {
@@ -279,11 +354,16 @@ ENV_PARAMS = {
     },
     'humanoid': {  # 17/21 DoF (gym/rllab)
     },
-    'pusher': {  # 3 DoF
+    'pusher-2d': {  # 3 DoF
         'default': {
-            'arm_distance_coeff': 0.0,
+            'arm_object_distance_cost_coeff': 0.0,
+            'goal_object_distance_cost_coeff': 1.0,
             'goal': tune.grid_search([(0, -1)]),
-        }
+        },
+        'default-reach': {
+            'arm_goal_distance_cost_coeff': tune.grid_search([1.0]),
+            'arm_object_distance_cost_coeff': 0.0,
+        },
     },
     'sawyer-torque': {
 
@@ -317,6 +397,10 @@ def get_variant_spec(universe, domain, task, policy):
             POLICY_PARAMS_FOR_DOMAIN[policy].get(domain, {})
         ),
         'value_fn_params': VALUE_FUNCTION_PARAMS,
+        'preprocessor_params': deep_update(
+            PREPROCESSOR_PARAMS_BASE,
+            PREPROCESSOR_PARAMS[policy].get(domain, {}),
+        ),
         'algorithm_params': deep_update(
             ALGORITHM_PARAMS_BASE,
             ALGORITHM_PARAMS.get(domain, {})
@@ -325,5 +409,43 @@ def get_variant_spec(universe, domain, task, policy):
         'sampler_params': SAMPLER_PARAMS,
         'run_params': deep_update(RUN_PARAMS_BASE, RUN_PARAMS.get(domain, {})),
     }
+
+    return variant_spec
+
+
+def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
+    variant_spec = get_variant_spec(
+        universe, domain, task, policy, *args, **kwargs)
+
+    if 'image' in task:
+        variant_spec['preprocessor_params'].update({
+            'function_name': 'simple_convnet',
+            'kwargs': {
+                'image_size': '32x32x3',
+                'output_size': 6,
+            }
+        })
+
+    if task == 'image-default':
+        variant_spec['env_params'].update({
+            # Can't use tuples because they break ray.tune log_syncer
+            'image_size': tune.grid_search(['32x32x3']),
+            'arm_object_distance_cost_coeff': 0.0,
+            'goal_distance_cost_coeff': 3.0,
+        })
+    elif task == 'image-reach':
+        variant_spec['env_params'].update({
+            # Can't use tuples because they break ray.tune log_syncer
+            'image_size': tune.grid_search(['32x32x3']),
+            'arm_goal_distance_cost_coeff': tune.grid_search([1.0]),
+            'arm_object_distance_cost_coeff': 0.0,
+        })
+    elif task == 'blind-reach':
+        variant_spec['env_params'].update({
+            # Can't use tuples because they break ray.tune log_syncer
+            'image_size': tune.grid_search(['32x32x3']),
+            'arm_goal_distance_cost_coeff': tune.grid_search([1.0]),
+            'arm_object_distance_cost_coeff': 0.0,
+        })
 
     return variant_spec

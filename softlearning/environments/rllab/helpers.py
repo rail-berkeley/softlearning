@@ -1,13 +1,6 @@
 import numpy as np
 
 
-def random_point_in_circle(angle_range=(0, 2*np.pi), radius=(0, 25)):
-    angle = np.random.uniform(*angle_range)
-    radius = radius if np.isscalar(radius) else np.random.uniform(*radius)
-    x, y = np.cos(angle) * radius, np.sin(angle) * radius
-    point = np.array([x, y])
-    return point
-
 def get_random_goal_logs(paths, goal_radius, fixed_goal_position=False):
     if fixed_goal_position:
         position_slice = slice(-3, -1)
@@ -55,14 +48,14 @@ def get_random_goal_logs(paths, goal_radius, fixed_goal_position=False):
             np.linalg.norm(goal_position) for goal_position in goal_positions]
         final_goal_distances = [
             np.linalg.norm(goal_position - final_position)
-            for goal_position, final_position in zip(goal_positions, final_positions)
+            for goal_position, final_position
+            in zip(goal_positions, final_positions)
         ]
         progress_towards_goals = [
             begin_goal_distance - final_goal_distance
             for (begin_goal_distance, final_goal_distance)
             in zip(begin_goal_distances, final_goal_distances)
         ]
-
 
         for series, name in zip((begin_goal_distances,
                                  final_goal_distances,
@@ -75,6 +68,7 @@ def get_random_goal_logs(paths, goal_radius, fixed_goal_position=False):
                 logs.append((fn_name.capitalize() + name, fn(series)))
 
     return logs
+
 
 def get_multi_direction_logs(paths):
     progs = [
