@@ -21,6 +21,7 @@ from softlearning.environments.gym.mujoco.image_pusher import (
 try:
     from sac_envs.envs.dclaw.dclaw3_screw_v11 import DClaw3ScrewV11
     from sac_envs.envs.dclaw.dclaw3_screw_v2 import DClaw3ScrewV2
+    from sac_envs.envs.dclaw.dclaw3_screw_v2 import ImageDClaw3Screw
     from sac_envs.envs.dclaw.dclaw3_flip_v1 import DClaw3FlipV1
 except ModuleNotFoundError as e:
     def raise_on_use(*args, **kwargs):
@@ -28,6 +29,7 @@ except ModuleNotFoundError as e:
     DClaw3FlipV1 = raise_on_use
     DClaw3ScrewV11 = raise_on_use
     DClaw3ScrewV2 = raise_on_use
+    ImageDClaw3Screw = raise_on_use
 
 GYM_ENVIRONMENTS = {
     'swimmer': {
@@ -85,6 +87,9 @@ GYM_ENVIRONMENTS = {
         'ScrewV11': DClaw3ScrewV11,
         'ScrewV2': DClaw3ScrewV2,
         'FlipV1': DClaw3FlipV1,
+    },
+    'ImageDClaw3': {
+        'Screw': ImageDClaw3Screw,
     },
     'HardwareDClaw3': {
         'ScrewV2': lambda *args, **kwargs: (
