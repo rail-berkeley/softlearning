@@ -27,6 +27,7 @@ services:
        - ~/.config/gcloud:/root/.config/gcloud  # If using gcp, e.g. for gs
        - ~/.mujoco:/root/.mujoco  # mjkey.txt
        - ${RLLAB_PATH:-../rllab}/vendor/mujoco:/root/rllab/vendor/mujoco
+       - ${SAC_ENVS_PATH:-~/github/vikashplus/sac_envs}:/root/sac_envs
        - ..:/root/softqlearning-private
     command:
       - bash
