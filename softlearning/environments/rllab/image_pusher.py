@@ -18,7 +18,7 @@ class ImagePusherEnv(Pusher2dEnv):
     def get_current_obs(self):
         self.viewer_setup()
         image = self.render(mode='rgb_array')
-        image = (2.0 * image/256.0 - 1.0)
+        image = (2.0 * image/255.0 - 1.0)
 
         return np.concatenate([
             image.reshape(-1),

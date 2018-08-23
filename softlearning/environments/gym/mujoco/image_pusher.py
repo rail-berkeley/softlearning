@@ -15,7 +15,7 @@ class ImagePusherEnv(Pusher2dEnv):
     def _get_obs(self):
         width, height = self.image_size[:2]
         image = self.render(mode='rgb_array', width=width, height=height)
-        image = ((2.0 / 256.0) * image - 1.0)
+        image = ((2.0 / 255.0) * image - 1.0)
 
         return np.concatenate([
             image.reshape(-1),
