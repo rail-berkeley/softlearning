@@ -1,5 +1,5 @@
 import pickle
-import ray  # TODO: Add ray to dependencies.
+import ray
 import tensorflow as tf
 import numpy as np
 
