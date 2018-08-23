@@ -43,32 +43,12 @@ class ReplayPool(object):
 
         :param path: Dict like one outputted by railrl.samplers.util.rollout
         """
-        for i, (
-                observation,
-                action,
-                reward,
-                next_observation,
-                terminal,
-                agent_info,
-                env_info
-        ) in enumerate(zip(
-            path["observations"],
-            path["actions"],
-            path["rewards"],
-            path["next_observations"],
-            path["terminals"],
-            path.get("agent_infos", {}),
-            path.get("env_infos", {}),
-        )):
-            self.add_sample(
-                observation=observation,
-                action=action,
-                reward=reward,
-                next_observation=next_observation,
-                terminal=terminal,
-                agent_info=agent_info,
-                env_info=env_info,
-            )
+        path_length = path['observations'].shape[0]
+        self.add_samples(num_samples=path_length, **{
+            key: value
+            for key, value in path.items()
+            if key in self.field_names
+        })
         self.terminate_episode()
 
     @abc.abstractmethod
