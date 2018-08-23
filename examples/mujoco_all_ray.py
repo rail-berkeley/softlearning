@@ -194,7 +194,7 @@ def main():
 
     variant_specs = []
     for policy in args.policy:
-        if 'image' in task:
+        if 'image' in task.lower() or 'image' in domain.lower():
             variant_spec = get_variant_spec_image(
                 universe, domain, task, policy)
         else:

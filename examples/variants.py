@@ -442,14 +442,13 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
     variant_spec = get_variant_spec(
         universe, domain, task, policy, *args, **kwargs)
 
-    if 'image' in task or 'image' in domain.lower():
-        variant_spec['preprocessor_params'].update({
-            'function_name': 'simple_convnet',
-            'kwargs': {
-                'image_size': variant_spec['env_params']['image_size'],
-                'output_size': 18,
-            }
-        })
+    variant_spec['preprocessor_params'].update({
+        'function_name': 'simple_convnet',
+        'kwargs': {
+            'image_size': variant_spec['env_params']['image_size'],
+            'output_size': 18,
+        }
+    })
 
     if task == 'image-default':
         variant_spec['env_params'].update({
