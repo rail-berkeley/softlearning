@@ -348,7 +348,7 @@ RUN_PARAMS = {
         'snapshot_gap': 100
     },
     'ImageDClaw3': {
-        'snapshot_gap': 500
+        'snapshot_gap': 250
     }
 }
 
