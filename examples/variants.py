@@ -306,7 +306,7 @@ REPLAY_POOL_PARAMS = {
 SAMPLER_PARAMS = {
     'type': 'SimpleSampler',
     'kwargs': {
-        'max_path_length': 200,
+        'max_path_length': 100,
         'min_pool_size': 1000,
         'batch_size': 256,
     }
