@@ -52,15 +52,15 @@ def convnet_preprocessor_template(
         concatenated = tf.concat([flattened, input_raw], axis=-1)
 
         dense1 = tf.layers.dense(
-            units=64,
             inputs=concatenated,
+            units=128,
             activation=tf.nn.relu,
             *args,
             **kwargs)
 
         dense2 = tf.layers.dense(
-            units=64,
             inputs=dense1,
+            units=128,
             activation=tf.nn.relu,
             *args,
             **kwargs)
