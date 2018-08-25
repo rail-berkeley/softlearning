@@ -32,7 +32,7 @@ def convnet_preprocessor_template(
             inputs=input_layer,
             filters=32,
             kernel_size=[5, 5],
-            padding="valid",
+            padding="SAME",
             activation=tf.nn.relu,
             *args,
             **kwargs)
@@ -41,7 +41,7 @@ def convnet_preprocessor_template(
             inputs=conv1,
             filters=32,
             kernel_size=[5, 5],
-            padding="valid",
+            padding="SAME",
             activation=tf.nn.relu,
             *args,
             **kwargs)
