@@ -14,6 +14,8 @@ from rllab.core.serializable import Serializable
 def convnet_preprocessor_template(
         image_size,
         output_size,
+        conv_filters=(32, 32),
+        conv_kernel_sizes=((5, 5), (5, 5)),
         data_format='channels_last',
         name="convnet_preprocessor_template",
         create_scope_now_=False,
@@ -25,28 +27,22 @@ def convnet_preprocessor_template(
         C, H, W = image_size
 
     def _fn(x):
-        input_images, input_raw = x[..., :H*W*C], x[..., H*W*C:]
+        input_images, input_raw = x[..., :H * W * C], x[..., H * W * C:]
         input_layer = tf.reshape(input_images, (-1, H, W, C))
 
-        conv1 = tf.layers.conv2d(
-            inputs=input_layer,
-            filters=32,
-            kernel_size=[5, 5],
-            padding="SAME",
-            activation=tf.nn.relu,
-            *args,
-            **kwargs)
+        conv_out = input_layer
 
-        conv2 = tf.layers.conv2d(
-            inputs=conv1,
-            filters=32,
-            kernel_size=[5, 5],
-            padding="SAME",
-            activation=tf.nn.relu,
-            *args,
-            **kwargs)
+        for filters, kernel_size in zip(conv_filters, conv_kernel_sizes):
+            conv_out = tf.layers.conv2d(
+                inputs=conv_out,
+                filters=32,
+                kernel_size=[5, 5],
+                padding="SAME",
+                activation=tf.nn.relu,
+                *args,
+                **kwargs)
 
-        spatial_softmax = tf.contrib.layers.spatial_softmax(conv2)
+        spatial_softmax = tf.contrib.layers.spatial_softmax(conv_out)
         flattened = tf.layers.flatten(spatial_softmax)
 
         concatenated = tf.concat([flattened, input_raw], axis=-1)
