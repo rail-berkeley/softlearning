@@ -49,18 +49,18 @@ def convnet_preprocessor_template(
         spatial_softmax = tf.contrib.layers.spatial_softmax(conv2)
         flattened = tf.layers.flatten(spatial_softmax)
 
+        concatenated = tf.concat([flattened, input_raw], axis=-1)
+
         dense1 = tf.layers.dense(
-            inputs=flattened,
             units=64,
+            inputs=concatenated,
             activation=tf.nn.relu,
             *args,
             **kwargs)
 
-        concatenated = tf.concat([dense1, input_raw], axis=-1)
-
         dense2 = tf.layers.dense(
-            inputs=concatenated,
             units=64,
+            inputs=dense1,
             activation=tf.nn.relu,
             *args,
             **kwargs)
