@@ -313,7 +313,7 @@ SAMPLER_PARAMS = {
 }
 
 RUN_PARAMS_BASE = {
-    'seed': tune.grid_search([1, 2, 3, 4]),
+    'seed': tune.grid_search([1, 2]),
     'snapshot_mode': 'gap',
     'snapshot_gap': 1000,
     'sync_pkl': True,
@@ -442,13 +442,17 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
     variant_spec = get_variant_spec(
         universe, domain, task, policy, *args, **kwargs)
 
-    variant_spec['preprocessor_params'].update({
-        'function_name': 'simple_convnet',
-        'kwargs': {
-            'image_size': variant_spec['env_params']['image_size'],
-            'output_size': 18,
-        }
-    })
+    if 'image' in task or 'image' in domain.lower():
+        variant_spec['preprocessor_params'].update({
+            'function_name': 'simple_convnet',
+            'kwargs': {
+                'image_size': variant_spec['env_params']['image_size'],
+                'output_size': 18,
+                'num_conv_layers': tune.grid_search([2, 3, 4]), # 4 later
+                'filters_per_layer': tune.grid_search([16, 32]),
+                'kernel_size_per_layer': (5, 5),
+            }
+        })
 
     if task == 'image-default':
         variant_spec['env_params'].update({
