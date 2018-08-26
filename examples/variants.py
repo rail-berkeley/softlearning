@@ -82,7 +82,7 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
     'reg': 1e-3,
     'action_prior': 'uniform',
     'reparameterize': REPARAMETERIZE,
-    'hidden_layer_width': tune.grid_search([M//4])
+    'hidden_layer_width': tune.grid_search([M])
 }
 
 GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {
@@ -306,7 +306,7 @@ REPLAY_POOL_PARAMS = {
 SAMPLER_PARAMS = {
     'type': 'SimpleSampler',
     'kwargs': {
-        'max_path_length': 100,
+        'max_path_length': 1000,
         'min_pool_size': 1000,
         'batch_size': 256,
     }
