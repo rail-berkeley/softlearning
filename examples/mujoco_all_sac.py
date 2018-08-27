@@ -54,6 +54,15 @@ def run_experiment(variant):
     # if 'hidden_layer_sizes' in preprocessor_kwargs:
     #     preprocessor_kwargs['hidden_layer_sizes'] = tuple(
     #         int(dim) for dim in preprocessor_kwargs['hidden_layer_sizes'].split('x'))
+    if 'num_conv_layers' in preprocessor_kwargs:
+        num_conv_layers = preprocessor_kwargs.pop('num_conv_layers')
+        filters_per_layer = preprocessor_kwargs.pop('filters_per_layer')
+        kernel_size_per_layer = preprocessor_kwargs.pop('kernel_size_per_layer')
+
+        conv_filters = (filters_per_layer, ) * num_conv_layers
+        conv_kernel_sizes = (kernel_size_per_layer, ) * num_conv_layers
+        preprocessor_kwargs['conv_filters'] = conv_filters
+        preprocessor_kwargs['conv_kernel_sizes'] = conv_kernel_sizes
 
     env = get_environment(universe, domain, task, env_params)
 
@@ -172,7 +181,9 @@ def main():
 
     universe, domain, task = parse_universe_domain_task(args)
 
-    if 'image' in task or 'blind' in task:
+    if ('image' in task.lower()
+        or 'blind' in task.lower()
+        or 'image' in domain.lower()):
         variant_spec = get_variant_spec_image(
             universe, domain, task, args.policy)
     else:

@@ -1,4 +1,5 @@
 from ray import tune
+import numpy as np
 
 from softlearning.misc.utils import get_git_rev, deep_update
 
@@ -59,6 +60,10 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         's_t_units': 128,
     },
     'DClaw3': {  # 9 DoF
+        'preprocessing_layer_sizes': (M, M, 18),
+        's_t_units': 128,
+    },
+    'ImageDClaw3': {  # 9 DoF
         'preprocessing_layer_sizes': (M, M, 18),
         's_t_units': 128,
     },
@@ -184,7 +189,7 @@ LSP_PREPROCESSOR_PARAMS = {
             'hidden_layer_sizes': (M, M),
             'output_size': 6,
         }
-    }
+    },
 }
 
 PREPROCESSOR_PARAMS = {
@@ -284,7 +289,12 @@ ALGORITHM_PARAMS = {
     },
     'DClaw3': {
         'base_kwargs': {
-            'n_epochs': int(2e4 + 1)
+            'n_epochs': int(5e2 + 1)
+        }
+    },
+    'ImageDClaw3': {
+        'base_kwargs': {
+            'n_epochs': int(5e3 + 1)
         }
     }
 }
@@ -296,14 +306,14 @@ REPLAY_POOL_PARAMS = {
 SAMPLER_PARAMS = {
     'type': 'SimpleSampler',
     'kwargs': {
-        'max_path_length': 1000,
+        'max_path_length': 200,
         'min_pool_size': 1000,
         'batch_size': 256,
     }
 }
 
 RUN_PARAMS_BASE = {
-    'seed': tune.grid_search([1, 2, 3, 4, 5]),
+    'seed': tune.grid_search([1, 2]),
     'snapshot_mode': 'gap',
     'snapshot_gap': 1000,
     'sync_pkl': True,
@@ -333,6 +343,12 @@ RUN_PARAMS = {
     },
     'sawyer-torque': {
         'snapshot_gap': 1000
+    },
+    'DClaw3': {
+        'snapshot_gap': 100
+    },
+    'ImageDClaw3': {
+        'snapshot_gap': 250
     }
 }
 
@@ -366,10 +382,27 @@ ENV_PARAMS = {
     },
     'DClaw3': {
         'ScrewV2': {
-            'object_target_distance_cost_coeff': -2.0,
-            'pose_difference_cost_coeff': 1.0, # 1.0,
+            'object_target_distance_cost_coeff': 2.0,
+            'pose_difference_cost_coeff': 0.0,
             'joint_velocity_cost_coeff': 0.0,
-            'joint_acceleration_cost_coeff': 0.025,
+            'joint_acceleration_cost_coeff': tune.grid_search([0]),
+            'target_initial_velocity_range': (0, 0),
+            'target_initial_position_range': (np.pi, np.pi),
+            'object_initial_velocity_range': (0, 0),
+            'object_initial_position_range': (-np.pi, np.pi),
+        }
+    },
+    'ImageDClaw3': {
+        'Screw': {
+            'image_size': '64x64x3',
+            'object_target_distance_cost_coeff': 2.0,
+            'pose_difference_cost_coeff': 0.0,
+            'joint_velocity_cost_coeff': 0.0,
+            'joint_acceleration_cost_coeff': tune.grid_search([0]),
+            'target_initial_velocity_range': (0, 0),
+            'target_initial_position_range': (np.pi, np.pi),
+            'object_initial_velocity_range': (0, 0),
+            'object_initial_position_range': (-np.pi, np.pi),
         }
     }
 }
@@ -409,12 +442,15 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
     variant_spec = get_variant_spec(
         universe, domain, task, policy, *args, **kwargs)
 
-    if 'image' in task:
+    if 'image' in task or 'image' in domain.lower():
         variant_spec['preprocessor_params'].update({
             'function_name': 'simple_convnet',
             'kwargs': {
-                'image_size': '32x32x3',
-                'output_size': 6,
+                'image_size': variant_spec['env_params']['image_size'],
+                'output_size': 18,
+                'num_conv_layers': tune.grid_search([2, 3, 4]), # 4 later
+                'filters_per_layer': tune.grid_search([16, 32]),
+                'kernel_size_per_layer': (5, 5),
             }
         })
 
