@@ -64,6 +64,16 @@ def run_experiment(variant, reporter):
         conv_kernel_sizes = (kernel_size_per_layer, ) * num_conv_layers
         preprocessor_kwargs['conv_filters'] = conv_filters
         preprocessor_kwargs['conv_kernel_sizes'] = conv_kernel_sizes
+    if 'num_dense_layers' in preprocessor_kwargs:
+        num_dense_layers = preprocessor_kwargs.pop(
+            'num_dense_layers')
+        dense_hidden_units_per_layer = preprocessor_kwargs.pop(
+            'dense_hidden_units_per_layer')
+
+        dense_hidden_layer_sizes = (
+            dense_hidden_units_per_layer, ) * num_dense_layers
+        preprocessor_kwargs[
+            'dense_hidden_layer_sizes'] = dense_hidden_layer_sizes
 
     env = get_environment(universe, domain, task, env_params)
 
