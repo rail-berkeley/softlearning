@@ -35,8 +35,8 @@ def convnet_preprocessor_template(
         for filters, kernel_size in zip(conv_filters, conv_kernel_sizes):
             conv_out = tf.layers.conv2d(
                 inputs=conv_out,
-                filters=32,
-                kernel_size=[5, 5],
+                filters=filters,
+                kernel_size=kernel_size,
                 padding="SAME",
                 activation=tf.nn.relu,
                 *args,
