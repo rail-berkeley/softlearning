@@ -4,7 +4,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from softlearning.misc.nn import TemplateFunction
+from softlearning.misc.nn import TemplateFunction, feedforward_net_v2
 from rllab.core.serializable import Serializable
 
 
@@ -16,6 +16,7 @@ def convnet_preprocessor_template(
         output_size,
         conv_filters=(32, 32),
         conv_kernel_sizes=((5, 5), (5, 5)),
+        dense_hidden_layer_sizes=(64, 64),
         data_format='channels_last',
         name="convnet_preprocessor_template",
         create_scope_now_=False,
@@ -47,27 +48,16 @@ def convnet_preprocessor_template(
 
         concatenated = tf.concat([flattened, input_raw], axis=-1)
 
-        dense1 = tf.layers.dense(
+        out = feedforward_net_v2(
             inputs=concatenated,
-            units=128,
+            hidden_layer_sizes=dense_hidden_layer_sizes,
+            output_size=output_size,
             activation=tf.nn.relu,
+            output_activation=None,
             *args,
             **kwargs)
 
-        dense2 = tf.layers.dense(
-            inputs=dense1,
-            units=128,
-            activation=tf.nn.relu,
-            *args,
-            **kwargs)
-
-        dense3 = tf.layers.dense(
-            inputs=dense2,
-            units=output_size,
-            *args,
-            **kwargs)
-
-        return dense3
+        return out
 
     return tf.make_template(name, _fn, create_scope_now_=create_scope_now_)
 
