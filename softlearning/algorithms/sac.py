@@ -32,6 +32,7 @@ class SAC(RLAlgorithm, Serializable):
             vf,
             pool,
             plotter=None,
+            tf_summaries=False,
 
             lr=3e-3,
             reward_scale=1.0,
@@ -92,6 +93,7 @@ class SAC(RLAlgorithm, Serializable):
         self._vf = vf
         self._pool = pool
         self._plotter = plotter
+        self._tf_summaries = tf_summaries
 
         self._policy_lr = lr
         self._qf_lr = lr
@@ -135,7 +137,9 @@ class SAC(RLAlgorithm, Serializable):
         summary_dir = logger._snapshot_dir
         self.summary_writer = tf.summary.FileWriter(
             summary_dir, self._sess.graph)
-        self._summary_ops = [tf.summary.merge_all()]
+        self._summary_ops = [tf.summary.merge_all()
+                             if self._tf_summaries
+                             else tf.no_op()]
 
         # Initialize all uninitialized variables. This prevents initializing
         # pre-trained policy and qf and vf variables.
@@ -250,9 +254,9 @@ class SAC(RLAlgorithm, Serializable):
             variables=self._qf1.get_params_internal(),
             increment_global_step=False,
             name="td_loss_1_optimizer",
-            summaries=[
+            summaries=([
                 "loss", "gradients", "gradient_norm", "global_gradient_norm"
-            ])
+            ] if self._tf_summaries else []))
 
         qf2_train_op = tf.contrib.layers.optimize_loss(
             self._td_loss2_t,
@@ -262,12 +266,11 @@ class SAC(RLAlgorithm, Serializable):
             variables=self._qf2.get_params_internal(),
             increment_global_step=False,
             name="td_loss_2_optimizer",
-            summaries=[
+            summaries=([
                 "loss", "gradients", "gradient_norm", "global_gradient_norm"
-            ])
+            ] if self._tf_summaries else []))
 
-        self._training_ops.append(qf1_train_op)
-        self._training_ops.append(qf2_train_op)
+        self._training_ops += [qf1_train_op, qf2_train_op]
 
     def _init_actor_update(self):
         """Create minimization operations for policy and state value functions.
@@ -285,7 +288,8 @@ class SAC(RLAlgorithm, Serializable):
         of the value function and policy function update rules.
         """
 
-        if getattr(self._policy, '_observations_preprocessor', False):
+        if (getattr(self._policy, '_observations_preprocessor', False)
+            and self._tf_summaries):
             self.embeddings = self._policy._observations_preprocessor(
                 self._observations_ph)
             tf.contrib.layers.summarize_activation(self.embeddings)
@@ -365,7 +369,7 @@ class SAC(RLAlgorithm, Serializable):
             name="policy_optimizer",
             summaries=[
                 "loss", "gradients", "gradient_norm", "global_gradient_norm"
-            ])
+            ] if self._tf_summaries else [])
 
         vf_train_op = tf.contrib.layers.optimize_loss(
             self._vf_loss_t,
@@ -377,7 +381,7 @@ class SAC(RLAlgorithm, Serializable):
             name="vf_optimizer",
             summaries=[
                 "loss", "gradients", "gradient_norm", "global_gradient_norm"
-            ])
+            ] if self._tf_summaries else [])
 
         self._training_ops += [policy_train_op, vf_train_op]
 
@@ -453,8 +457,9 @@ class SAC(RLAlgorithm, Serializable):
              self.global_step),
             feed_dict)
 
-        self.summary_writer.add_summary(summary_result, global_step)
-        self.summary_writer.flush()  # Not sure if this is needed
+        if summary_result:
+            self.summary_writer.add_summary(summary_result, global_step)
+            self.summary_writer.flush()  # Not sure if this is needed
 
         logger.record_tabular('qf1-avg', np.mean(qf1))
         logger.record_tabular('qf1-std', np.std(qf1))
