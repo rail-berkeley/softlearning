@@ -132,14 +132,15 @@ class SAC(RLAlgorithm, Serializable):
         self._init_critic_update()
         self._init_target_ops()
 
-        # TODO(hartikainen): This should get the logdir some other way than
-        # from the rllab logger.
-        summary_dir = logger._snapshot_dir
-        self.summary_writer = tf.summary.FileWriter(
-            summary_dir, self._sess.graph)
-        self._summary_ops = [tf.summary.merge_all()
-                             if self._tf_summaries
-                             else tf.no_op()]
+        if self._tf_summaries:
+            # TODO(hartikainen): This should get the logdir some other way than
+            # from the rllab logger.
+            summary_dir = logger._snapshot_dir
+            self.summary_writer = tf.summary.FileWriter(
+                summary_dir, self._sess.graph)
+            self._summary_ops = [tf.summary.merge_all()]
+        else:
+            self._summary_ops = [tf.no_op()]
 
         # Initialize all uninitialized variables. This prevents initializing
         # pre-trained policy and qf and vf variables.
