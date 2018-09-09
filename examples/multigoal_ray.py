@@ -36,7 +36,7 @@ def run(variant, reporter):
         'epoch_length': 100,
         'n_epochs': 1000,
         'n_train_repeat': 1,
-        'eval_render': True,
+        'eval_render': False,
         'eval_n_episodes': 10,
         'eval_deterministic': False
     }
