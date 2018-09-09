@@ -125,16 +125,9 @@ class SAC(RLAlgorithm, Serializable):
         self._Da = action_shape[0]
 
         self._build()
-
-        # Initialize all uninitialized variables. This prevents initializing
-        # pre-trained policy and qf and vf variables.
-        uninit_vars = []
-        for var in tf.global_variables():
-            try:
-                self._sess.run(var)
-            except tf.errors.FailedPreconditionError:
-                uninit_vars.append(var)
-        self._sess.run(tf.variables_initializer(uninit_vars))
+        # TODO(hartikainen): Should the _initialize_tf_variables call happen
+        # outside of this class/method?
+        self._initialize_tf_variables()
 
     def _build(self):
         self._training_ops = {}
@@ -146,6 +139,17 @@ class SAC(RLAlgorithm, Serializable):
         self._init_critic_update()
         self._init_target_update_ops()
         self._init_summary_ops()
+
+    def _initialize_tf_variables(self):
+        # Initialize all uninitialized variables. This prevents initializing
+        # pre-trained policy and qf and vf variables.
+        uninit_vars = []
+        for var in tf.global_variables():
+            try:
+                self._sess.run(var)
+            except tf.errors.FailedPreconditionError:
+                uninit_vars.append(var)
+        self._sess.run(tf.variables_initializer(uninit_vars))
 
     def train(self, *args, **kwargs):
         """Initiate training of the SAC instance."""
