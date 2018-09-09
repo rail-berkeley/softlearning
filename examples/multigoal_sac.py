@@ -6,7 +6,7 @@ from softlearning.environments.utils import get_environment
 from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.misc.utils import datetimestamp
 from softlearning.samplers import SimpleSampler
-from softlearning.policies import GMMPolicy, LatentSpacePolicy
+from softlearning.policies import GaussianPolicy, GMMPolicy, LatentSpacePolicy
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
 from examples.utils import get_parser
@@ -51,7 +51,14 @@ def run(variant):
         observation_shape=env.observation_space.shape,
         hidden_layer_sizes=[M, M])
 
-    if variant['policy_type'] == 'gmm':
+    if variant['policy_type'] == 'gaussian':
+        policy = GaussianPolicy(
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
+            hidden_layer_sizes=(M, M),
+            reparameterize=True,
+            reg=1e-3)
+    elif variant['policy_type'] == 'gmm':
         policy = GMMPolicy(
             observation_shape=env.observation_space.shape,
             action_shape=env.action_space.shape,
