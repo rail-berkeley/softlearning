@@ -118,7 +118,7 @@ class MultiGoalEnv(Env, Serializable):
         self._plot_position_cost(self._ax)
 
     @overrides
-    def render(self, paths):
+    def render(self, mode='human', paths=()):
         if self._ax is None:
             self._init_plot()
 
