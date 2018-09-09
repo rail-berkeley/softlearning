@@ -9,6 +9,10 @@ from rllab.misc import logger
 from .rl_algorithm import RLAlgorithm
 
 
+def td_target(reward, discount, next_value):
+    return reward + discount * next_value
+
+
 class SAC(RLAlgorithm, Serializable):
     """Soft Actor-Critic (SAC)
 
@@ -219,9 +223,10 @@ class SAC(RLAlgorithm, Serializable):
             vf_next_target_t = self._vf.output_for(self._next_observations_ph)
             self._vf_target_params = self._vf.get_params_internal()
 
-        q_target = tf.stop_gradient(
-            self._reward_scale * self._rewards_ph
-            + (1 - self._terminals_ph) * self._discount * vf_next_target_t
+        q_target = td_target(
+            reward=self._reward_scale * self._rewards_ph,
+            discount=self._discount,
+            next_value=(1 - self._terminals_ph) * vf_next_target_t
         )  # N
 
         return q_target
@@ -236,7 +241,7 @@ class SAC(RLAlgorithm, Serializable):
         See Equation (10) in [1], for further information of the
         Q-function update rule.
         """
-        q_target = self._get_q_target()
+        q_target = tf.stop_gradient(self._get_q_target())
 
         q_values = self._q_values = tuple(
             q_function.output_for(
