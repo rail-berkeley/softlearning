@@ -36,6 +36,12 @@ except ModuleNotFoundError as e:
     DClaw3ScrewV2 = raise_on_use_wrapper(e)
     ImageDClaw3Screw = raise_on_use_wrapper(e)
 
+try:
+    from multiworld.envs.pygame.point2d import Point2DEnv, Point2DWallEnv
+except ModuleNotFoundError as e:
+    Point2DEnv = raise_on_use_wrapper(e)
+    Point2DWallEnv = raise_on_use_wrapper(e)
+
 
 GYM_ENVIRONMENTS = {
     'swimmer': {
@@ -68,6 +74,10 @@ GYM_ENVIRONMENTS = {
     'sawyer-torque': {
         'default': SawyerReachTorqueEnv,
         'reach': SawyerReachTorqueEnv,
+    },
+    'Point2DEnv': {
+        'default': Point2DEnv,
+        'wall': Point2DWallEnv,
     },
     'HandManipulatePen': {
         'v0': lambda : gym.envs.make('HandManipulatePen-v0'),
