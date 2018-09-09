@@ -126,16 +126,6 @@ class SAC(RLAlgorithm, Serializable):
 
         self._build()
 
-        if self._tf_summaries:
-            # TODO(hartikainen): This should get the logdir some other way than
-            # from the rllab logger.
-            summary_dir = logger._snapshot_dir
-            self.summary_writer = tf.summary.FileWriter(
-                summary_dir, self._sess.graph)
-            self._summary_ops = [tf.summary.merge_all()]
-        else:
-            self._summary_ops = [tf.no_op()]
-
         # Initialize all uninitialized variables. This prevents initializing
         # pre-trained policy and qf and vf variables.
         uninit_vars = []
@@ -154,6 +144,7 @@ class SAC(RLAlgorithm, Serializable):
         self._init_actor_update()
         self._init_critic_update()
         self._init_target_update_ops()
+        self._init_summary_ops()
 
     def train(self, *args, **kwargs):
         """Initiate training of the SAC instance."""
@@ -407,6 +398,17 @@ class SAC(RLAlgorithm, Serializable):
             tf.assign(target, (1 - self._tau) * target + self._tau * source)
             for target, source in zip(target_params, source_params)
         })
+
+    def _init_summary_ops(self):
+        if self._tf_summaries:
+            # TODO(hartikainen): This should get the logdir some other way than
+            # from the rllab logger.
+            summary_dir = logger._snapshot_dir
+            self.summary_writer = tf.summary.FileWriter(
+                summary_dir, self._sess.graph)
+            self._summary_ops = [tf.summary.merge_all()]
+        else:
+            self._summary_ops = [tf.no_op()]
 
     def _init_training(self):
         self._sess.run(self._target_update_ops)
