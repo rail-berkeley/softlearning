@@ -139,6 +139,7 @@ class SAC(RLAlgorithm, Serializable):
     def _build(self):
         self._training_ops = {}
         self._target_update_ops = {}
+        self._summary_ops = {}
 
         self._init_placeholders()
         self._init_actor_update()
@@ -406,9 +407,7 @@ class SAC(RLAlgorithm, Serializable):
             summary_dir = logger._snapshot_dir
             self.summary_writer = tf.summary.FileWriter(
                 summary_dir, self._sess.graph)
-            self._summary_ops = [tf.summary.merge_all()]
-        else:
-            self._summary_ops = [tf.no_op()]
+            self._summary_ops.update({'all': tf.summary.merge_all()})
 
     def _init_training(self):
         self._sess.run(self._target_update_ops)
@@ -458,7 +457,7 @@ class SAC(RLAlgorithm, Serializable):
 
         (qf1, qf2, vf,
          td_loss1, td_loss2,
-         [summary_result], global_step) = self._sess.run(
+         summary_results, global_step) = self._sess.run(
             (self._qf1_t,
              self._qf2_t,
              self._vf_t,
@@ -468,8 +467,9 @@ class SAC(RLAlgorithm, Serializable):
              self.global_step),
             feed_dict)
 
-        if summary_result:
-            self.summary_writer.add_summary(summary_result, global_step)
+        if summary_results:
+            self.summary_writer.add_summary(
+                summary_results['all'], global_step)
             self.summary_writer.flush()  # Not sure if this is needed
 
         logger.record_tabular('qf1-avg', np.mean(qf1))
