@@ -18,18 +18,24 @@ from softlearning.environments.gym.mujoco.image_pusher import (
     ImageForkReacherEnv,
     BlindForkReacherEnv)
 
+
+def raise_on_use_wrapper(e):
+    def raise_on_use(*args, **kwargs):
+        raise e
+    return raise_on_use
+
+
 try:
     from sac_envs.envs.dclaw.dclaw3_screw_v11 import DClaw3ScrewV11
     from sac_envs.envs.dclaw.dclaw3_screw_v2 import DClaw3ScrewV2
     from sac_envs.envs.dclaw.dclaw3_screw_v2 import ImageDClaw3Screw
     from sac_envs.envs.dclaw.dclaw3_flip_v1 import DClaw3FlipV1
 except ModuleNotFoundError as e:
-    def raise_on_use(*args, **kwargs):
-        raise e
-    DClaw3FlipV1 = raise_on_use
-    DClaw3ScrewV11 = raise_on_use
-    DClaw3ScrewV2 = raise_on_use
-    ImageDClaw3Screw = raise_on_use
+    DClaw3FlipV1 = raise_on_use_wrapper(e)
+    DClaw3ScrewV11 = raise_on_use_wrapper(e)
+    DClaw3ScrewV2 = raise_on_use_wrapper(e)
+    ImageDClaw3Screw = raise_on_use_wrapper(e)
+
 
 GYM_ENVIRONMENTS = {
     'swimmer': {
