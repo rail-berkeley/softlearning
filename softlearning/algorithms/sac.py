@@ -220,13 +220,13 @@ class SAC(RLAlgorithm, Serializable):
 
     def _get_q_target(self):
         with tf.variable_scope('target'):
-            vf_next_target_t = self._vf.output_for(self._next_observations_ph)
+            vf_next_target = self._vf.output_for(self._next_observations_ph)
             self._vf_target_params = self._vf.get_params_internal()
 
         q_target = td_target(
             reward=self._reward_scale * self._rewards_ph,
             discount=self._discount,
-            next_value=(1 - self._terminals_ph) * vf_next_target_t
+            next_value=(1 - self._terminals_ph) * vf_next_target
         )  # N
 
         return q_target
@@ -315,8 +315,9 @@ class SAC(RLAlgorithm, Serializable):
 
         self._alpha = alpha
 
-        self._vf_t = self._vf.output_for(self._observations_ph, reuse=True)  # N
-        self._vf_params = self._vf.get_params_internal()
+        vf_value = self._vf_value = self._vf.output_for(
+            self._observations_ph, reuse=True)  # N
+        vf_params = self._vf_params = self._vf.get_params_internal()
 
         if self._action_prior == 'normal':
             D_s = actions.shape.as_list()[-1]
@@ -338,7 +339,7 @@ class SAC(RLAlgorithm, Serializable):
         else:
             policy_kl_loss = tf.reduce_mean(
                 log_pi * tf.stop_gradient(
-                    alpha * log_pi - min_q_log_target + self._vf_t
+                    alpha * log_pi - min_q_log_target + vf_value
                     - policy_prior_log_probs))
 
         policy_regularization_losses = tf.get_collection(
@@ -356,8 +357,8 @@ class SAC(RLAlgorithm, Serializable):
             - alpha * log_pi
             + policy_prior_log_probs)
 
-        self._vf_loss_t = tf.losses.mean_squared_error(
-            labels=vf_target, predictions=self._vf_t, weights=0.5)
+        vf_loss = self._vf_loss = tf.losses.mean_squared_error(
+            labels=vf_target, predictions=vf_value, weights=0.5)
 
         policy_train_op = tf.contrib.layers.optimize_loss(
             policy_loss,
@@ -372,11 +373,11 @@ class SAC(RLAlgorithm, Serializable):
             ] if self._tf_summaries else [])
 
         vf_train_op = tf.contrib.layers.optimize_loss(
-            self._vf_loss_t,
+            vf_loss,
             self.global_step,
             learning_rate=self._vf_lr,
             optimizer=tf.train.AdamOptimizer,
-            variables=self._vf_params,
+            variables=vf_params,
             increment_global_step=True,
             name="vf_optimizer",
             summaries=[
@@ -458,7 +459,7 @@ class SAC(RLAlgorithm, Serializable):
         (q_values, vf, q_losses,
          summary_results, alpha, global_step) = self._sess.run(
             (self._q_values,
-             self._vf_t,
+             self._vf_value,
              self._q_losses,
              self._summary_ops,
              self._alpha,
