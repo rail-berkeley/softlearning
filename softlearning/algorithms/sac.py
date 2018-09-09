@@ -217,6 +217,18 @@ class SAC(RLAlgorithm, Serializable):
                 name='raw_actions',
             )
 
+    def _get_q_target(self):
+        with tf.variable_scope('target'):
+            vf_next_target_t = self._vf.output_for(self._next_observations_ph)
+            self._vf_target_params = self._vf.get_params_internal()
+
+        q_target = tf.stop_gradient(
+            self._reward_scale * self._rewards_ph
+            + (1 - self._terminals_ph) * self._discount * vf_next_target_t
+        )  # N
+
+        return q_target
+
     def _init_critic_update(self):
         """Create minimization operation for critic Q-function.
 
@@ -227,23 +239,15 @@ class SAC(RLAlgorithm, Serializable):
         See Equation (10) in [1], for further information of the
         Q-function update rule.
         """
+        q_target = self._get_q_target()
 
         self._qf1_t = self._qf1.output_for(
             self._observations_ph, self._actions_ph, reuse=True)  # N
         self._qf2_t = self._qf2.output_for(
             self._observations_ph, self._actions_ph, reuse=True)  # N
 
-        with tf.variable_scope('target'):
-            vf_next_target_t = self._vf.output_for(self._next_observations_ph)  # N
-            self._vf_target_params = self._vf.get_params_internal()
-
-        ys = tf.stop_gradient(
-            self._reward_scale * self._rewards_ph
-            + (1 - self._terminals_ph) * self._discount * vf_next_target_t
-        )  # N
-
-        self._td_loss1_t = 0.5 * tf.reduce_mean((ys - self._qf1_t)**2)
-        self._td_loss2_t = 0.5 * tf.reduce_mean((ys - self._qf2_t)**2)
+        self._td_loss1_t = 0.5 * tf.reduce_mean((q_target - self._qf1_t)**2)
+        self._td_loss2_t = 0.5 * tf.reduce_mean((q_target - self._qf2_t)**2)
 
         qf1_train_op = tf.contrib.layers.optimize_loss(
             self._td_loss1_t,
