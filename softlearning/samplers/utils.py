@@ -7,11 +7,10 @@ def rollout(env,
             policy,
             path_length,
             render=False,
-            speedup=10,
             callback=None,
             render_mode='human',
             break_on_terminal=True):
-    ims = []
+    images = []
 
     observation_shape = env.observation_space.shape
     action_shape = env.action_space.shape
@@ -52,13 +51,10 @@ def rollout(env,
 
         if render:
             if render_mode == 'rgb_array':
-                ims.append(env.render(
-                    mode=render_mode,
-                ))
+                image = env.render(mode=render_mode)
+                images.append(image)
             else:
                 env.render()
-                time_step = 0.05
-                time.sleep(time_step / speedup)
 
         if terminal:
             if break_on_terminal: break
@@ -79,7 +75,7 @@ def rollout(env,
     }
 
     if render_mode == 'rgb_array':
-        path['ims'] = np.stack(ims, axis=0)
+        path['images'] = np.stack(images, axis=0)
 
     return path
 

@@ -10,7 +10,6 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('file', type=str, help='Path to the snapshot file.')
     parser.add_argument('--max-path-length', '-l', type=int, default=1000)
-    parser.add_argument('--speedup', '-s', type=float, default=1)
     parser.add_argument('--deterministic', '-d', dest='deterministic',
                         action='store_true')
     parser.add_argument('--no-deterministic', '-nd', dest='deterministic',
@@ -39,7 +38,7 @@ def simulate_policy(args):
                     env,
                     policy,
                     path_length=args.max_path_length,
-                    render=True, speedup=args.speedup)
+                    render=True)
 
 
 if __name__ == "__main__":
