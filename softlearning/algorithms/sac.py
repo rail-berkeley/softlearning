@@ -246,8 +246,10 @@ class SAC(RLAlgorithm, Serializable):
         self._qf2_t = self._qf2.output_for(
             self._observations_ph, self._actions_ph, reuse=True)  # N
 
-        self._td_loss1_t = 0.5 * tf.reduce_mean((q_target - self._qf1_t)**2)
-        self._td_loss2_t = 0.5 * tf.reduce_mean((q_target - self._qf2_t)**2)
+        self._td_loss1_t = tf.losses.mean_squared_error(
+            labels=q_target, predictions=self._qf1_t, weights=0.5)
+        self._td_loss2_t = tf.losses.mean_squared_error(
+            labels=q_target, predictions=self._qf2_t, weights=0.5)
 
         qf1_train_op = tf.contrib.layers.optimize_loss(
             self._td_loss1_t,
@@ -359,13 +361,13 @@ class SAC(RLAlgorithm, Serializable):
 
         # We update the vf towards the min of two Q-functions in order to
         # reduce overestimation bias from function approximation error.
-        self._vf_loss_t = 0.5 * tf.reduce_mean((
-            self._vf_t
-            - tf.stop_gradient(
-                min_log_target
-                - alpha * log_pi
-                + policy_prior_log_probs)
-        )**2)
+        vf_target = tf.stop_gradient(
+            min_log_target
+            - alpha * log_pi
+            + policy_prior_log_probs)
+
+        self._vf_loss_t = tf.losses.mean_squared_error(
+            labels=vf_target, predictions=self._vf_t, weights=0.5)
 
         policy_train_op = tf.contrib.layers.optimize_loss(
             policy_loss,
