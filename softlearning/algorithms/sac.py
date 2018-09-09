@@ -124,13 +124,7 @@ class SAC(RLAlgorithm, Serializable):
         assert len(action_shape) == 1, action_shape
         self._Da = action_shape[0]
 
-        self._training_ops = {}
-        self._target_update_ops = {}
-
-        self._init_placeholders()
-        self._init_actor_update()
-        self._init_critic_update()
-        self._init_target_update_ops()
+        self._build()
 
         if self._tf_summaries:
             # TODO(hartikainen): This should get the logdir some other way than
@@ -151,6 +145,15 @@ class SAC(RLAlgorithm, Serializable):
             except tf.errors.FailedPreconditionError:
                 uninit_vars.append(var)
         self._sess.run(tf.variables_initializer(uninit_vars))
+
+    def _build(self):
+        self._training_ops = {}
+        self._target_update_ops = {}
+
+        self._init_placeholders()
+        self._init_actor_update()
+        self._init_critic_update()
+        self._init_target_update_ops()
 
     def train(self, *args, **kwargs):
         """Initiate training of the SAC instance."""
