@@ -1,8 +1,5 @@
-import numpy as np
-
 from rllab.core.serializable import Serializable
 
-from .replay_pool import ReplayPool
 from .flexible_replay_pool import FlexibleReplayPool
 
 
@@ -20,7 +17,7 @@ class SimpleReplayPool(FlexibleReplayPool, Serializable):
             },
             # It's a bit memory inefficient to save the observations twice,
             # but it makes the code *much* easier since you no longer have
-            # toworry about termination conditions.
+            # to worry about termination conditions.
             'next_observations': {
                 'shape': self._observation_shape,
                 'dtype': 'float32'

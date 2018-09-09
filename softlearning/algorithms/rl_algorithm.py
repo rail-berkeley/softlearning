@@ -148,6 +148,8 @@ class RLAlgorithm(Algorithm):
 
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
+                self._epoch_before_hook(epoch)
+
                 for t in range(self._epoch_length):
                     self._do_sampling(epoch=epoch, epoch_timestep=t)
                     gt.stamp('sample')
@@ -183,8 +185,6 @@ class RLAlgorithm(Algorithm):
 
                 logger.dump_tabular(with_prefix=False)
                 logger.pop_prefix()
-
-                self._epoch_after_hook(epoch)
 
                 yield epoch, mean_returns
 

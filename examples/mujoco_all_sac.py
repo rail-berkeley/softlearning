@@ -88,8 +88,7 @@ def run_experiment(variant):
             action_shape=env.action_space.shape,
             hidden_layer_sizes=(M, M),
             name='qf{}'.format(i))
-        for i in range(2)
-    )
+        for i in range(2))
     vf = NNVFunction(
         observation_shape=env.observation_space.shape,
         hidden_layer_sizes=(M, M))
@@ -103,8 +102,7 @@ def run_experiment(variant):
             action_shape=env.action_space.shape,
             hidden_layer_sizes=[policy_params['hidden_layer_width']]*2,
             reparameterize=policy_params['reparameterize'],
-            reg=1e-3,
-        )
+            reg=1e-3)
     elif policy_params['type'] == 'lsp':
         if preprocessor_params and preprocessor_params.get('function_name'):
             preprocessor_fn = PREPROCESSOR_FUNCTIONS[
@@ -143,8 +141,7 @@ def run_experiment(variant):
             hidden_layer_sizes=(M, M),
             reparameterize=policy_params['reparameterize'],
             qf=q_functions[0],
-            reg=1e-3,
-        )
+            reg=1e-3)
     else:
         raise NotImplementedError(policy_params['type'])
 
@@ -165,8 +162,7 @@ def run_experiment(variant):
         target_update_interval=algorithm_params['target_update_interval'],
         action_prior=policy_params['action_prior'],
         store_extra_policy_info=algorithm_params['store_extra_policy_info'],
-        save_full_state=False,
-    )
+        save_full_state=False)
 
     # Do the training
     for epoch, mean_return in algorithm.train():

@@ -143,13 +143,15 @@ class SAC(RLAlgorithm, Serializable):
 
     def _initialize_tf_variables(self):
         # Initialize all uninitialized variables. This prevents initializing
-        # pre-trained policy and qf and vf variables.
+        # pre-trained policy and qf and vf variables. tf.metrics (used at
+        # least in the LFP-policy) uses local variables.
         uninit_vars = []
-        for var in tf.global_variables():
+        for var in tf.global_variables() + tf.local_variables():
             try:
                 self._sess.run(var)
             except tf.errors.FailedPreconditionError:
                 uninit_vars.append(var)
+
         self._sess.run(tf.variables_initializer(uninit_vars))
 
     def train(self, *args, **kwargs):
