@@ -261,13 +261,13 @@ class SAC(RLAlgorithm, Serializable):
                 self.global_step,
                 learning_rate=self._qf_lr,
                 optimizer=tf.train.AdamOptimizer,
-                variables=self._q_functions[i].get_params_internal(),
-                increment_global_step=(i == 0),
-                name="q_loss_{}_optimizer".format(i),
+                variables=q_function.get_params_internal(),
+                increment_global_step=False,
+                name="{}_optimizer".format(q_function._name),
                 summaries=((
                     "loss", "gradients", "gradient_norm", "global_gradient_norm"
                 ) if self._tf_summaries else ()))
-            for i, q_loss in enumerate(q_losses))
+            for q_function, q_loss in zip(self._q_functions, q_losses))
 
         self._training_ops.update({'qf': tf.group(q_training_ops)})
 
@@ -370,9 +370,9 @@ class SAC(RLAlgorithm, Serializable):
             variables=self._policy.get_params_internal(),
             increment_global_step=False,
             name="policy_optimizer",
-            summaries=[
+            summaries=(
                 "loss", "gradients", "gradient_norm", "global_gradient_norm"
-            ] if self._tf_summaries else [])
+            ) if self._tf_summaries else ())
 
         vf_train_op = tf.contrib.layers.optimize_loss(
             vf_loss,
@@ -382,9 +382,9 @@ class SAC(RLAlgorithm, Serializable):
             variables=vf_params,
             increment_global_step=True,
             name="vf_optimizer",
-            summaries=[
+            summaries=(
                 "loss", "gradients", "gradient_norm", "global_gradient_norm"
-            ] if self._tf_summaries else [])
+            ) if self._tf_summaries else ())
 
         self._training_ops.update({
             'policy_train_op': policy_train_op,
