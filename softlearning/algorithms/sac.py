@@ -126,12 +126,12 @@ class SAC(RLAlgorithm, Serializable):
         self._Da = action_shape[0]
 
         self._training_ops = {}
-        self._target_ops = {}
+        self._target_update_ops = {}
 
         self._init_placeholders()
         self._init_actor_update()
         self._init_critic_update()
-        self._init_target_ops()
+        self._init_target_update_ops()
 
         if self._tf_summaries:
             # TODO(hartikainen): This should get the logdir some other way than
@@ -395,13 +395,13 @@ class SAC(RLAlgorithm, Serializable):
             'vf_train_op': vf_train_op,
         })
 
-    def _init_target_ops(self):
+    def _init_target_update_ops(self):
         """Create tensorflow operations for updating target value function."""
 
         source_params = self._vf_params
         target_params = self._vf_target_params
 
-        self._target_ops.update({
+        self._target_update_ops.update({
             "{} <- {}".format(target.name, source.name):
             tf.assign(target, (1 - self._tau) * target + self._tau * source)
             for target, source in zip(target_params, source_params)
@@ -409,7 +409,7 @@ class SAC(RLAlgorithm, Serializable):
 
     @overrides
     def _init_training(self):
-        self._sess.run(self._target_ops)
+        self._sess.run(self._target_update_ops)
 
     @overrides
     def _do_training(self, iteration, batch):
@@ -421,7 +421,7 @@ class SAC(RLAlgorithm, Serializable):
 
         if iteration % self._target_update_interval == 0:
             # Run target ops here.
-            self._sess.run(self._target_ops)
+            self._sess.run(self._target_update_ops)
 
     def _get_feed_dict(self, iteration, batch):
         """Construct TensorFlow feed_dict from sample batch."""
