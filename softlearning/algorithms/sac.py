@@ -125,7 +125,8 @@ class SAC(RLAlgorithm, Serializable):
         assert len(action_shape) == 1, action_shape
         self._Da = action_shape[0]
 
-        self._training_ops = []
+        self._training_ops = {}
+        self._target_ops = {}
 
         self._init_placeholders()
         self._init_actor_update()
@@ -271,7 +272,9 @@ class SAC(RLAlgorithm, Serializable):
                 "loss", "gradients", "gradient_norm", "global_gradient_norm"
             ] if self._tf_summaries else []))
 
-        self._training_ops += [qf1_train_op, qf2_train_op]
+        self._training_ops.update({
+            'qf': (qf1_train_op, qf2_train_op)
+        })
 
     def _init_actor_update(self):
         """Create minimization operations for policy and state value functions.
@@ -312,7 +315,10 @@ class SAC(RLAlgorithm, Serializable):
                 self._policy_lr, name='alpha_optimizer')
             self._alpha_train_op = self._alpha_optimizer.minimize(
                 loss=alpha_loss, var_list=[log_alpha])
-            self._training_ops.append(self._alpha_train_op)
+
+            self._training_ops.update({
+                'temperature_alpha': self._alpha_train_op
+            })
 
         self._alpha = alpha
 
@@ -384,7 +390,10 @@ class SAC(RLAlgorithm, Serializable):
                 "loss", "gradients", "gradient_norm", "global_gradient_norm"
             ] if self._tf_summaries else [])
 
-        self._training_ops += [policy_train_op, vf_train_op]
+        self._training_ops.update({
+            'policy_train_op': policy_train_op,
+            'vf_train_op': vf_train_op,
+        })
 
     def _init_target_ops(self):
         """Create tensorflow operations for updating target value function."""
@@ -392,10 +401,11 @@ class SAC(RLAlgorithm, Serializable):
         source_params = self._vf_params
         target_params = self._vf_target_params
 
-        self._target_ops = [
+        self._target_ops.update({
+            "{} <- {}".format(target.name, source.name):
             tf.assign(target, (1 - self._tau) * target + self._tau * source)
             for target, source in zip(target_params, source_params)
-        ]
+        })
 
     @overrides
     def _init_training(self):
