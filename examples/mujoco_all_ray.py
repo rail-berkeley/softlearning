@@ -93,16 +93,14 @@ def run_experiment(variant, reporter):
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
     M = value_fn_params['layer_size']
-    qf1 = NNQFunction(
-        observation_shape=env.observation_space.shape,
-        action_shape=env.action_space.shape,
-        hidden_layer_sizes=(M, M),
-        name='qf1')
-    qf2 = NNQFunction(
-        observation_shape=env.observation_space.shape,
-        action_shape=env.action_space.shape,
-        hidden_layer_sizes=(M, M),
-        name='qf2')
+    q_functions = tuple(
+        NNQFunction(
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
+            hidden_layer_sizes=(M, M),
+            name='qf{}'.format(i))
+        for i in range(2)
+    )
     vf = NNVFunction(
         observation_shape=env.observation_space.shape,
         hidden_layer_sizes=(M, M))
@@ -144,7 +142,7 @@ def run_experiment(variant, reporter):
             squash=policy_params['squash'],
             bijector_config=bijector_config,
             reparameterize=policy_params['reparameterize'],
-            q_function=qf1,
+            q_function=q_functions[0],
             observations_preprocessor=preprocessor)
     elif policy_params['type'] == 'gmm':
         assert not policy_params['reparameterize'], (
@@ -155,7 +153,7 @@ def run_experiment(variant, reporter):
             K=policy_params['K'],
             hidden_layer_sizes=(M, M),
             reparameterize=policy_params['reparameterize'],
-            qf=qf1,
+            qf=q_functions[0],
             reg=1e-3,
         )
     else:
@@ -167,8 +165,7 @@ def run_experiment(variant, reporter):
         policy=policy,
         initial_exploration_policy=initial_exploration_policy,
         pool=pool,
-        qf1=qf1,
-        qf2=qf2,
+        q_functions=q_functions,
         vf=vf,
         lr=algorithm_params['lr'],
         target_entropy=algorithm_params['target_entropy'],

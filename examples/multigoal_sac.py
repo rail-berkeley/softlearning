@@ -39,16 +39,14 @@ def run(variant):
     }
 
     M = 128
-    qf1 = NNQFunction(
-        observation_shape=env.observation_space.shape,
-        action_shape=env.action_space.shape,
-        hidden_layer_sizes=[M, M],
-        name='qf1')
-    qf2 = NNQFunction(
-        observation_shape=env.observation_space.shape,
-        action_shape=env.action_space.shape,
-        hidden_layer_sizes=[M, M],
-        name='qf2')
+
+    q_functions = tuple(
+        NNQFunction(
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
+            hidden_layer_sizes=(M, M),
+            name='qf{}'.format(i))
+        for i in range(2))
     vf = NNVFunction(
         observation_shape=env.observation_space.shape,
         hidden_layer_sizes=[M, M])
@@ -59,7 +57,7 @@ def run(variant):
             action_shape=env.action_space.shape,
             K=4,
             hidden_layer_sizes=[M, M],
-            qf=qf1,
+            qf=q_functions[0],
             reg=0.001
         )
     elif variant['policy_type'] == 'lsp':
@@ -77,11 +75,11 @@ def run(variant):
             squash=True,
             bijector_config=bijector_config,
             observations_preprocessor=None,
-            q_function=qf1
+            q_function=q_functions[0]
         )
 
     plotter = QFPolicyPlotter(
-        qf=qf1,
+        qf=q_functions[0],
         policy=policy,
         obs_lst=np.array([[-2.5, 0.0],
                           [0.0, 0.0],
@@ -96,8 +94,7 @@ def run(variant):
         policy=policy,
         initial_exploration_policy=None,
         pool=pool,
-        qf1=qf1,
-        qf2=qf2,
+        q_functions=q_functions,
         vf=vf,
         plotter=plotter,
 
