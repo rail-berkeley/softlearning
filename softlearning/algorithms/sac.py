@@ -444,7 +444,7 @@ class SAC(RLAlgorithm, Serializable):
 
         return feed_dict
 
-    def log_diagnostics(self, iteration, batch):
+    def log_diagnostics(self, iteration, batch, paths):
         """Record diagnostic information to the logger.
 
         Records mean and standard deviation of Q-function and state

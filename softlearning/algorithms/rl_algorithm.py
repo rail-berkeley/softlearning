@@ -111,11 +111,11 @@ class RLAlgorithm(Algorithm):
         """Hook called at the end of each epoch."""
         pass
 
-    def _training_batch(self):
-        return self.sampler.random_batch()
+    def _training_batch(self, batch_size=None):
+        return self.sampler.random_batch(batch_size)
 
-    def _evaluation_batch(self):
-        return self._training_batch()
+    def _evaluation_batch(self, *args, **kwargs):
+        return self._training_batch(*args, **kwargs)
 
     def _train(self, env, policy, pool, initial_exploration_policy=None):
         """Return a generator that performs RL training.
@@ -158,6 +158,11 @@ class RLAlgorithm(Algorithm):
 
                 mean_returns = self._evaluate(policy, evaluation_env, epoch)
                 gt.stamp('eval')
+
+                path = self._pool.batch_by_indices(
+                    np.arange(self._pool._pointer-t-1, self._pool._pointer)
+                    % self._pool._max_size)
+                self._epoch_after_hook(epoch, path)
 
                 params = self.get_snapshot(epoch)
                 logger.save_itr_params(epoch, params)
@@ -227,12 +232,12 @@ class RLAlgorithm(Algorithm):
 
         iteration = epoch * self._epoch_length
         batch = self._evaluation_batch()
-        self.log_diagnostics(iteration, batch)
+        self.log_diagnostics(iteration, batch, paths)
 
         return np.mean(total_returns)
 
     @abc.abstractmethod
-    def log_diagnostics(self, iteration, batch):
+    def log_diagnostics(self, iteration, batch, paths):
         raise NotImplementedError
 
     @abc.abstractmethod
