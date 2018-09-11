@@ -118,7 +118,8 @@ class MultiGoalEnv(Env, Serializable):
         self._plot_position_cost(self._ax)
 
     @overrides
-    def render(self, mode='human', paths=()):
+    def render_rollouts(self, paths=()):
+        """Render for rendering the past rollouts of the environment."""
         if self._ax is None:
             self._init_plot()
 
@@ -134,6 +135,10 @@ class MultiGoalEnv(Env, Serializable):
 
         plt.draw()
         plt.pause(0.01)
+
+    def render(self, mode='human'):
+        """Render for rendering the current state of the environment."""
+        pass
 
     def compute_reward(self, observation, action):
         # penalize the L2 norm of acceleration
