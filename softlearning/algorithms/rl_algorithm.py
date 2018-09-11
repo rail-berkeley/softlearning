@@ -232,7 +232,7 @@ class RLAlgorithm(Algorithm):
         for key, value in env_infos.items():
             logger.record_tabular(key, value)
 
-        if hasattr(evaluation_env, 'render_rollouts'):
+        if self._eval_render and hasattr(evaluation_env, 'render_rollouts'):
             # TODO(hartikainen): Make this consistent such that there's no need
             # for the hasattr check.
             evaluation_env.render_rollouts(paths)
