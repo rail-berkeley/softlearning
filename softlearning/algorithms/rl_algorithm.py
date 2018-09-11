@@ -111,11 +111,11 @@ class RLAlgorithm(Algorithm):
         """Hook called at the end of each epoch."""
         pass
 
-    def _training_batch(self):
-        return self.sampler.random_batch()
+    def _training_batch(self, batch_size=None):
+        return self.sampler.random_batch(batch_size)
 
-    def _evaluation_batch(self):
-        return self._training_batch()
+    def _evaluation_batch(self, *args, **kwargs):
+        return self._training_batch(*args, **kwargs)
 
     def _train(self, env, policy, pool, initial_exploration_policy=None):
         """Return a generator that performs RL training.
@@ -148,6 +148,8 @@ class RLAlgorithm(Algorithm):
 
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
+                self._epoch_before_hook(epoch)
+
                 for t in range(self._epoch_length):
                     self._do_sampling(epoch=epoch, epoch_timestep=t)
                     gt.stamp('sample')
@@ -158,6 +160,23 @@ class RLAlgorithm(Algorithm):
 
                 mean_returns = self._evaluate(policy, evaluation_env, epoch)
                 gt.stamp('eval')
+
+                path_length = self.sampler._max_path_length
+                if self._epoch_length % path_length > 0:
+                    raise NotImplementedError(
+                        "TODO(hartikainen): Training paths are off when epoch"
+                        " length is not divisible by path length. Ultimately,"
+                        " this should be fixed by having a sampler method like"
+                        " `sampler.get_last_n_paths`.")
+                training_paths = [
+                    self._pool.batch_by_indices(
+                        np.arange(
+                            self._pool._pointer - (i + 1) * path_length,
+                            self._pool._pointer - i * path_length)
+                        % self._pool._max_size)
+                    for i in reversed(range((t + 1) // path_length))
+                ]
+                self._epoch_after_hook(epoch, training_paths)
 
                 params = self.get_snapshot(epoch)
                 logger.save_itr_params(epoch, params)
@@ -178,8 +197,6 @@ class RLAlgorithm(Algorithm):
 
                 logger.dump_tabular(with_prefix=False)
                 logger.pop_prefix()
-
-                self._epoch_after_hook(epoch)
 
                 yield epoch, mean_returns
 
@@ -219,20 +236,27 @@ class RLAlgorithm(Algorithm):
         logger.record_tabular('episode-length-std', np.std(episode_lengths))
 
         if hasattr(evaluation_env._env, 'log_diagnostics'):
+            # TODO(hartikainen): Make this consistent such that there's no need
+            # for the hasattr check.
             evaluation_env._env.log_diagnostics(paths)
 
         env_infos = evaluation_env.get_path_infos(paths)
         for key, value in env_infos.items():
             logger.record_tabular(key, value)
 
+        if self._eval_render and hasattr(evaluation_env, 'render_rollouts'):
+            # TODO(hartikainen): Make this consistent such that there's no need
+            # for the hasattr check.
+            evaluation_env.render_rollouts(paths)
+
         iteration = epoch * self._epoch_length
         batch = self._evaluation_batch()
-        self.log_diagnostics(iteration, batch)
+        self.log_diagnostics(iteration, batch, paths)
 
         return np.mean(total_returns)
 
     @abc.abstractmethod
-    def log_diagnostics(self, iteration, batch):
+    def log_diagnostics(self, iteration, batch, paths):
         raise NotImplementedError
 
     @abc.abstractmethod

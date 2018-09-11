@@ -126,8 +126,9 @@ class RllabAdapter(SoftlearningEnv):
     def seed(self, *args, **kwargs):
         pass  # Nothing to seed
 
+    @property
     def unwrapped(self, *args, **kwargs):
-        pass  # Nothing to unwrap
+        return getattr(self._env, 'wrapped_env', self._env)
 
     def get_param_values(self, *args, **kwargs):
         raise NotImplementedError

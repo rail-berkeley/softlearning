@@ -5,9 +5,12 @@ import tensorflow as tf
 
 from rllab.core.serializable import Serializable
 from rllab.misc import logger
-from rllab.misc.overrides import overrides
 
 from .rl_algorithm import RLAlgorithm
+
+
+def td_target(reward, discount, next_value):
+    return reward + discount * next_value
 
 
 class SAC(RLAlgorithm, Serializable):
@@ -27,8 +30,7 @@ class SAC(RLAlgorithm, Serializable):
             env,
             policy,
             initial_exploration_policy,
-            qf1,
-            qf2,
+            q_functions,
             vf,
             pool,
             plotter=None,
@@ -54,10 +56,9 @@ class SAC(RLAlgorithm, Serializable):
             policy: (`rllab.NNPolicy`): A policy function approximator.
             initial_exploration_policy: ('Policy'): A policy that we use
                 for initial exploration which is not trained by the algorithm.
-            qf1 (`valuefunction`): First Q-function approximator.
-            qf2 (`valuefunction`): Second Q-function approximator. Usage of two
-                Q-functions improves performance by reducing overestimation
-                bias.
+            q_functions: Q-function approximators. The min of these
+                approximators will be used. Usage of at least two Q-functions
+                improves performance by reducing overestimation bias.
             vf (`ValueFunction`): Soft value function approximator.
             pool (`PoolBase`): Replay pool to add gathered samples to.
             plotter (`QFPolicyPlotter`): Plotter instance to be used for
@@ -88,8 +89,7 @@ class SAC(RLAlgorithm, Serializable):
         self._env = env
         self._policy = policy
         self._initial_exploration_policy = initial_exploration_policy
-        self._qf1 = qf1
-        self._qf2 = qf2
+        self._q_functions = q_functions
         self._vf = vf
         self._pool = pool
         self._plotter = plotter
@@ -125,34 +125,35 @@ class SAC(RLAlgorithm, Serializable):
         assert len(action_shape) == 1, action_shape
         self._Da = action_shape[0]
 
-        self._training_ops = []
+        self._build()
+        # TODO(hartikainen): Should the _initialize_tf_variables call happen
+        # outside of this class/method?
+        self._initialize_tf_variables()
+
+    def _build(self):
+        self._training_ops = {}
+        self._target_update_ops = {}
+        self._summary_ops = {}
 
         self._init_placeholders()
         self._init_actor_update()
         self._init_critic_update()
-        self._init_target_ops()
+        self._init_target_update_ops()
+        self._init_summary_ops()
 
-        if self._tf_summaries:
-            # TODO(hartikainen): This should get the logdir some other way than
-            # from the rllab logger.
-            summary_dir = logger._snapshot_dir
-            self.summary_writer = tf.summary.FileWriter(
-                summary_dir, self._sess.graph)
-            self._summary_ops = [tf.summary.merge_all()]
-        else:
-            self._summary_ops = [tf.no_op()]
-
+    def _initialize_tf_variables(self):
         # Initialize all uninitialized variables. This prevents initializing
-        # pre-trained policy and qf and vf variables.
+        # pre-trained policy and qf and vf variables. tf.metrics (used at
+        # least in the LFP-policy) uses local variables.
         uninit_vars = []
-        for var in tf.global_variables():
+        for var in tf.global_variables() + tf.local_variables():
             try:
                 self._sess.run(var)
             except tf.errors.FailedPreconditionError:
                 uninit_vars.append(var)
+
         self._sess.run(tf.variables_initializer(uninit_vars))
 
-    @overrides
     def train(self, *args, **kwargs):
         """Initiate training of the SAC instance."""
 
@@ -219,6 +220,19 @@ class SAC(RLAlgorithm, Serializable):
                 name='raw_actions',
             )
 
+    def _get_q_target(self):
+        with tf.variable_scope('target'):
+            vf_next_target = self._vf.output_for(self._next_observations_ph)
+            self._vf_target_params = self._vf.get_params_internal()
+
+        q_target = td_target(
+            reward=self._reward_scale * self._rewards_ph,
+            discount=self._discount,
+            next_value=(1 - self._terminals_ph) * vf_next_target
+        )  # N
+
+        return q_target
+
     def _init_critic_update(self):
         """Create minimization operation for critic Q-function.
 
@@ -229,49 +243,33 @@ class SAC(RLAlgorithm, Serializable):
         See Equation (10) in [1], for further information of the
         Q-function update rule.
         """
+        q_target = tf.stop_gradient(self._get_q_target())
 
-        self._qf1_t = self._qf1.output_for(
-            self._observations_ph, self._actions_ph, reuse=True)  # N
-        self._qf2_t = self._qf2.output_for(
-            self._observations_ph, self._actions_ph, reuse=True)  # N
+        q_values = self._q_values = tuple(
+            q_function.output_for(
+                self._observations_ph, self._actions_ph, reuse=True)  # N
+            for q_function in self._q_functions)
 
-        with tf.variable_scope('target'):
-            vf_next_target_t = self._vf.output_for(self._next_observations_ph)  # N
-            self._vf_target_params = self._vf.get_params_internal()
+        q_losses = self._q_losses = tuple(
+            tf.losses.mean_squared_error(
+                labels=q_target, predictions=q_value, weights=0.5)
+            for q_value in q_values)
 
-        ys = tf.stop_gradient(
-            self._reward_scale * self._rewards_ph
-            + (1 - self._terminals_ph) * self._discount * vf_next_target_t
-        )  # N
+        q_training_ops = tuple(
+            tf.contrib.layers.optimize_loss(
+                q_loss,
+                self.global_step,
+                learning_rate=self._qf_lr,
+                optimizer=tf.train.AdamOptimizer,
+                variables=q_function.get_params_internal(),
+                increment_global_step=False,
+                name="{}_optimizer".format(q_function._name),
+                summaries=((
+                    "loss", "gradients", "gradient_norm", "global_gradient_norm"
+                ) if self._tf_summaries else ()))
+            for q_function, q_loss in zip(self._q_functions, q_losses))
 
-        self._td_loss1_t = 0.5 * tf.reduce_mean((ys - self._qf1_t)**2)
-        self._td_loss2_t = 0.5 * tf.reduce_mean((ys - self._qf2_t)**2)
-
-        qf1_train_op = tf.contrib.layers.optimize_loss(
-            self._td_loss1_t,
-            self.global_step,
-            learning_rate=self._qf_lr,
-            optimizer=tf.train.AdamOptimizer,
-            variables=self._qf1.get_params_internal(),
-            increment_global_step=False,
-            name="td_loss_1_optimizer",
-            summaries=([
-                "loss", "gradients", "gradient_norm", "global_gradient_norm"
-            ] if self._tf_summaries else []))
-
-        qf2_train_op = tf.contrib.layers.optimize_loss(
-            self._td_loss2_t,
-            self.global_step,
-            learning_rate=self._qf_lr,
-            optimizer=tf.train.AdamOptimizer,
-            variables=self._qf2.get_params_internal(),
-            increment_global_step=False,
-            name="td_loss_2_optimizer",
-            summaries=([
-                "loss", "gradients", "gradient_norm", "global_gradient_norm"
-            ] if self._tf_summaries else []))
-
-        self._training_ops += [qf1_train_op, qf2_train_op]
+        self._training_ops.update({'qf': tf.group(q_training_ops)})
 
     def _init_actor_update(self):
         """Create minimization operations for policy and state value functions.
@@ -312,12 +310,16 @@ class SAC(RLAlgorithm, Serializable):
                 self._policy_lr, name='alpha_optimizer')
             self._alpha_train_op = self._alpha_optimizer.minimize(
                 loss=alpha_loss, var_list=[log_alpha])
-            self._training_ops.append(self._alpha_train_op)
+
+            self._training_ops.update({
+                'temperature_alpha': self._alpha_train_op
+            })
 
         self._alpha = alpha
 
-        self._vf_t = self._vf.output_for(self._observations_ph, reuse=True)  # N
-        self._vf_params = self._vf.get_params_internal()
+        vf_value = self._vf_value = self._vf.output_for(
+            self._observations_ph, reuse=True)  # N
+        vf_params = self._vf_params = self._vf.get_params_internal()
 
         if self._action_prior == 'normal':
             D_s = actions.shape.as_list()[-1]
@@ -327,19 +329,19 @@ class SAC(RLAlgorithm, Serializable):
         elif self._action_prior == 'uniform':
             policy_prior_log_probs = 0.0
 
-        log_target1 = self._qf1.output_for(
-            self._observations_ph, actions, reuse=True)  # N
-        log_target2 = self._qf2.output_for(
-            self._observations_ph, actions, reuse=True)  # N
-        min_log_target = tf.minimum(log_target1, log_target2)
+        q_log_targets = tuple(
+            q_function.output_for(
+                self._observations_ph, actions, reuse=True)  # N
+            for q_function in self._q_functions)
+        min_q_log_target = tf.reduce_min(q_log_targets, axis=0)
 
         if self._reparameterize:
             policy_kl_loss = tf.reduce_mean(
-                alpha * log_pi - min_log_target - policy_prior_log_probs)
+                alpha * log_pi - min_q_log_target - policy_prior_log_probs)
         else:
             policy_kl_loss = tf.reduce_mean(
                 log_pi * tf.stop_gradient(
-                    alpha * log_pi - min_log_target + self._vf_t
+                    alpha * log_pi - min_q_log_target + vf_value
                     - policy_prior_log_probs))
 
         policy_regularization_losses = tf.get_collection(
@@ -352,13 +354,13 @@ class SAC(RLAlgorithm, Serializable):
 
         # We update the vf towards the min of two Q-functions in order to
         # reduce overestimation bias from function approximation error.
-        self._vf_loss_t = 0.5 * tf.reduce_mean((
-            self._vf_t
-            - tf.stop_gradient(
-                min_log_target
-                - alpha * log_pi
-                + policy_prior_log_probs)
-        )**2)
+        vf_target = tf.stop_gradient(
+            min_q_log_target
+            - alpha * log_pi
+            + policy_prior_log_probs)
+
+        vf_loss = self._vf_loss = tf.losses.mean_squared_error(
+            labels=vf_target, predictions=vf_value, weights=0.5)
 
         policy_train_op = tf.contrib.layers.optimize_loss(
             policy_loss,
@@ -368,40 +370,51 @@ class SAC(RLAlgorithm, Serializable):
             variables=self._policy.get_params_internal(),
             increment_global_step=False,
             name="policy_optimizer",
-            summaries=[
+            summaries=(
                 "loss", "gradients", "gradient_norm", "global_gradient_norm"
-            ] if self._tf_summaries else [])
+            ) if self._tf_summaries else ())
 
         vf_train_op = tf.contrib.layers.optimize_loss(
-            self._vf_loss_t,
+            vf_loss,
             self.global_step,
             learning_rate=self._vf_lr,
             optimizer=tf.train.AdamOptimizer,
-            variables=self._vf_params,
+            variables=vf_params,
             increment_global_step=True,
             name="vf_optimizer",
-            summaries=[
+            summaries=(
                 "loss", "gradients", "gradient_norm", "global_gradient_norm"
-            ] if self._tf_summaries else [])
+            ) if self._tf_summaries else ())
 
-        self._training_ops += [policy_train_op, vf_train_op]
+        self._training_ops.update({
+            'policy_train_op': policy_train_op,
+            'vf_train_op': vf_train_op,
+        })
 
-    def _init_target_ops(self):
+    def _init_target_update_ops(self):
         """Create tensorflow operations for updating target value function."""
 
         source_params = self._vf_params
         target_params = self._vf_target_params
 
-        self._target_ops = [
+        self._target_update_ops.update({
+            "{} <- {}".format(target.name, source.name):
             tf.assign(target, (1 - self._tau) * target + self._tau * source)
             for target, source in zip(target_params, source_params)
-        ]
+        })
 
-    @overrides
+    def _init_summary_ops(self):
+        if self._tf_summaries:
+            # TODO(hartikainen): This should get the logdir some other way than
+            # from the rllab logger.
+            summary_dir = logger._snapshot_dir
+            self.summary_writer = tf.summary.FileWriter(
+                summary_dir, self._sess.graph)
+            self._summary_ops.update({'all': tf.summary.merge_all()})
+
     def _init_training(self):
-        self._sess.run(self._target_ops)
+        self._sess.run(self._target_update_ops)
 
-    @overrides
     def _do_training(self, iteration, batch):
         """Runs the operations for updating training and target ops."""
 
@@ -411,7 +424,7 @@ class SAC(RLAlgorithm, Serializable):
 
         if iteration % self._target_update_interval == 0:
             # Run target ops here.
-            self._sess.run(self._target_ops)
+            self._sess.run(self._target_update_ops)
 
     def _get_feed_dict(self, iteration, batch):
         """Construct TensorFlow feed_dict from sample batch."""
@@ -433,8 +446,7 @@ class SAC(RLAlgorithm, Serializable):
 
         return feed_dict
 
-    @overrides
-    def log_diagnostics(self, iteration, batch):
+    def log_diagnostics(self, iteration, batch, paths):
         """Record diagnostic information to the logger.
 
         Records mean and standard deviation of Q-function and state
@@ -446,40 +458,35 @@ class SAC(RLAlgorithm, Serializable):
 
         feed_dict = self._get_feed_dict(iteration, batch)
 
-        (qf1, qf2, vf,
-         td_loss1, td_loss2,
-         [summary_result], global_step) = self._sess.run(
-            (self._qf1_t,
-             self._qf2_t,
-             self._vf_t,
-             self._td_loss1_t,
-             self._td_loss2_t,
+        (q_values, vf, q_losses,
+         summary_results, alpha, global_step) = self._sess.run(
+            (self._q_values,
+             self._vf_value,
+             self._q_losses,
              self._summary_ops,
+             self._alpha,
              self.global_step),
             feed_dict)
 
-        if summary_result:
-            self.summary_writer.add_summary(summary_result, global_step)
+        if summary_results:
+            self.summary_writer.add_summary(
+                summary_results['all'], global_step)
             self.summary_writer.flush()  # Not sure if this is needed
 
-        logger.record_tabular('qf1-avg', np.mean(qf1))
-        logger.record_tabular('qf1-std', np.std(qf1))
-        logger.record_tabular('qf2-avg', np.mean(qf1))
-        logger.record_tabular('qf2-std', np.std(qf1))
-        logger.record_tabular('mean-qf-diff', np.mean(np.abs(qf1-qf2)))
+        logger.record_tabular('q_values-avg', np.mean(q_values))
+        logger.record_tabular('q_values-std', np.std(q_values))
+
         logger.record_tabular('vf-avg', np.mean(vf))
         logger.record_tabular('vf-std', np.std(vf))
-        logger.record_tabular('mean-sq-bellman-error1', td_loss1)
-        logger.record_tabular('mean-sq-bellman-error2', td_loss2)
 
-        alpha = self._sess.run(self._alpha)
+        logger.record_tabular('q_loss', np.mean(q_losses))
+
         logger.record_tabular('alpha', alpha)
 
         self._policy.log_diagnostics(iteration, batch)
         if self._plotter:
             self._plotter.draw()
 
-    @overrides
     def get_snapshot(self, epoch):
         """Return loggable snapshot of the SAC algorithm.
 
@@ -497,8 +504,7 @@ class SAC(RLAlgorithm, Serializable):
             snapshot = {
                 'epoch': epoch,
                 'policy': self._policy,
-                'qf1': self._qf1,
-                'qf2': self._qf2,
+                'q_functions': self._q_functions,
                 'vf': self._vf,
                 'env': self._env,
             }
@@ -510,8 +516,9 @@ class SAC(RLAlgorithm, Serializable):
 
         d = Serializable.__getstate__(self)
         d.update({
-            'qf1-params': self._qf1.get_param_values(),
-            'qf2-params': self._qf2.get_param_values(),
+            'q_functions-params': tuple(
+                q_function.get_param_values()
+                for q_function in self._q_functions),
             'vf-params': self._vf.get_param_values(),
             'policy-params': self._policy.get_param_values(),
             'pool': self._pool.__getstate__(),
@@ -523,8 +530,10 @@ class SAC(RLAlgorithm, Serializable):
         """Set Serializable state fo the RLAlgorithm instance."""
 
         Serializable.__setstate__(self, d)
-        self._qf1.set_param_values(d['qf1-params'])
-        self._qf2.set_param_values(d['qf2-params'])
+
+        for i, q_function_params in enumerate(d['q_functions-params']):
+            self._q_functions[i].set_param_values(q_function_params)
+
         self._vf.set_param_values(d['vf-params'])
         self._policy.set_param_values(d['policy-params'])
         self._pool.__setstate__(d['pool'])

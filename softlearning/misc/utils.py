@@ -1,6 +1,5 @@
 import collections
 import datetime
-import dateutil.tz
 import os
 import random
 

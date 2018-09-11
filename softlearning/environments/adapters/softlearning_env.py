@@ -134,6 +134,15 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
         """
         raise NotImplementedError
 
+    def render_rollouts(self, paths):
+        """Renders past rollouts of the environment."""
+        if hasattr(self._env, 'render_rollouts'):
+            return self._env.render_rollouts(paths)
+
+        unwrapped_env = self.unwrapped
+        if hasattr(unwrapped_env, 'render_rollouts'):
+            return unwrapped_env.render_rollouts(paths)
+
     @abstractmethod
     def close(self):
         """Override _close in your subclass to perform any necessary cleanup.
@@ -177,7 +186,7 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
         Returns:
             gym.Env: The base non-wrapped gym.Env instance
         """
-        return self
+        return self._env
 
     def __str__(self):
         return '<{type_name}(domain={domain}, task={task}) <{env}>>'.format(

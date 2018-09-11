@@ -82,16 +82,13 @@ def run_experiment(variant):
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
     M = value_fn_params['layer_size']
-    qf1 = NNQFunction(
-        observation_shape=env.observation_space.shape,
-        action_shape=env.action_space.shape,
-        hidden_layer_sizes=(M, M),
-        name='qf1')
-    qf2 = NNQFunction(
-        observation_shape=env.observation_space.shape,
-        action_shape=env.action_space.shape,
-        hidden_layer_sizes=(M, M),
-        name='qf2')
+    q_functions = tuple(
+        NNQFunction(
+            observation_shape=env.observation_space.shape,
+            action_shape=env.action_space.shape,
+            hidden_layer_sizes=(M, M),
+            name='qf{}'.format(i))
+        for i in range(2))
     vf = NNVFunction(
         observation_shape=env.observation_space.shape,
         hidden_layer_sizes=(M, M))
@@ -105,8 +102,7 @@ def run_experiment(variant):
             action_shape=env.action_space.shape,
             hidden_layer_sizes=[policy_params['hidden_layer_width']]*2,
             reparameterize=policy_params['reparameterize'],
-            reg=1e-3,
-        )
+            reg=1e-3)
     elif policy_params['type'] == 'lsp':
         if preprocessor_params and preprocessor_params.get('function_name'):
             preprocessor_fn = PREPROCESSOR_FUNCTIONS[
@@ -133,7 +129,7 @@ def run_experiment(variant):
             squash=policy_params['squash'],
             bijector_config=bijector_config,
             reparameterize=policy_params['reparameterize'],
-            q_function=qf1,
+            q_function=q_functions[0],
             observations_preprocessor=preprocessor)
     elif policy_params['type'] == 'gmm':
         assert not policy_params['reparameterize'], (
@@ -144,9 +140,8 @@ def run_experiment(variant):
             K=policy_params['K'],
             hidden_layer_sizes=(M, M),
             reparameterize=policy_params['reparameterize'],
-            qf=qf1,
-            reg=1e-3,
-        )
+            qf=q_functions[0],
+            reg=1e-3)
     else:
         raise NotImplementedError(policy_params['type'])
 
@@ -156,8 +151,7 @@ def run_experiment(variant):
         policy=policy,
         initial_exploration_policy=initial_exploration_policy,
         pool=pool,
-        qf1=qf1,
-        qf2=qf2,
+        q_functions=q_functions,
         vf=vf,
         lr=algorithm_params['lr'],
         target_entropy=algorithm_params['target_entropy'],
@@ -168,8 +162,7 @@ def run_experiment(variant):
         target_update_interval=algorithm_params['target_update_interval'],
         action_prior=policy_params['action_prior'],
         store_extra_policy_info=algorithm_params['store_extra_policy_info'],
-        save_full_state=False,
-    )
+        save_full_state=False)
 
     # Do the training
     for epoch, mean_return in algorithm.train():
