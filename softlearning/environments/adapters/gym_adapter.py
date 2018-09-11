@@ -210,6 +210,7 @@ class GymAdapter(SoftlearningEnv):
     def seed(self, *args, **kwargs):
         return self._env.seed(*args, **kwargs)
 
+    @property
     def unwrapped(self, *args, **kwargs):
         return self._env.unwrapped(*args, **kwargs)
 

@@ -186,7 +186,7 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
         Returns:
             gym.Env: The base non-wrapped gym.Env instance
         """
-        return self
+        return self._env
 
     def __str__(self):
         return '<{type_name}(domain={domain}, task={task}) <{env}>>'.format(
