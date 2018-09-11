@@ -32,7 +32,7 @@ def test():
         'epoch_length': 100,
         'n_epochs': 1000,
         'n_train_repeat': 1,
-        'eval_render': False,
+        'eval_render': True,
         'eval_n_episodes': 10
     }
 
