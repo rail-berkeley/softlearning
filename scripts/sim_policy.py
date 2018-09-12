@@ -26,8 +26,8 @@ def simulate_policy(args):
     with tf.Session() as sess:
         data = joblib.load(args.file)
         if 'algo' in data.keys():
-            policy = data['algo'].policy
-            env = data['algo'].env
+            policy = data['algo']._policy
+            env = data['algo']._env
         else:
             policy = data['policy']
             env = data['env']
