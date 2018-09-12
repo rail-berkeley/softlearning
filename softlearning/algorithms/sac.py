@@ -45,6 +45,7 @@ class SAC(RLAlgorithm, Serializable):
             action_prior='uniform',
             reparameterize=False,
             store_extra_policy_info=False,
+            summary_dir=None,
 
             save_full_state=False,
     ):
@@ -404,13 +405,15 @@ class SAC(RLAlgorithm, Serializable):
         })
 
     def _init_summary_ops(self):
-        if self._tf_summaries:
+        summary_dir = logger._snapshot_dir
+        if self._tf_summaries and summary_dir is not None:
             # TODO(hartikainen): This should get the logdir some other way than
             # from the rllab logger.
-            summary_dir = logger._snapshot_dir
             self.summary_writer = tf.summary.FileWriter(
                 summary_dir, self._sess.graph)
             self._summary_ops.update({'all': tf.summary.merge_all()})
+        else:
+            self.summary_writer = None
 
     def _init_training(self):
         self._sess.run(self._target_update_ops)
@@ -468,7 +471,7 @@ class SAC(RLAlgorithm, Serializable):
              self.global_step),
             feed_dict)
 
-        if summary_results:
+        if summary_results and self.summary_writer is not None:
             self.summary_writer.add_summary(
                 summary_results['all'], global_step)
             self.summary_writer.flush()  # Not sure if this is needed
