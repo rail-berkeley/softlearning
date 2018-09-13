@@ -80,24 +80,33 @@ GYM_ENVIRONMENTS = {
         'wall': Point2DWallEnv,
     },
     'HandManipulatePen': {
-        'v0': lambda : gym.envs.make('HandManipulatePen-v0'),
-        'Dense-v0': lambda : gym.envs.make('HandManipulatePenDense-v0'),
-        'default': lambda : gym.envs.make('HandManipulatePen-v0'),
+        'v0': lambda: gym.envs.make('HandManipulatePen-v0'),
+        'Dense-v0': lambda: gym.envs.make('HandManipulatePenDense-v0'),
+        'default': lambda: gym.envs.make('HandManipulatePen-v0'),
     },
     'HandManipulateEgg': {
-        'v0': lambda : gym.envs.make('HandManipulateEgg-v0'),
-        'Dense-v0': lambda : gym.envs.make('HandManipulateEggDense-v0'),
-        'default': lambda : gym.envs.make('HandManipulateEgg-v0'),
+        'v0': lambda: gym.envs.make('HandManipulateEgg-v0'),
+        'Dense-v0': lambda: gym.envs.make('HandManipulateEggDense-v0'),
+        'default': lambda: gym.envs.make('HandManipulateEgg-v0'),
     },
     'HandManipulateBlock': {
-        'v0': lambda : gym.envs.make('HandManipulateBlock-v0'),
-        'Dense-v0': lambda : gym.envs.make('HandManipulateBlockDense-v0'),
-        'default': lambda : gym.envs.make('HandManipulateBlock-v0'),
+        'v0': lambda: gym.envs.make('HandManipulateBlock-v0'),
+        'Dense-v0': lambda: gym.envs.make('HandManipulateBlockDense-v0'),
+        'default': lambda: gym.envs.make('HandManipulateBlock-v0'),
     },
     'HandReach': {
-        'v0': lambda : gym.envs.make('HandReach-v0'),
-        'Dense-v0': lambda : gym.envs.make('HandReachDense-v0'),
-        'default': lambda : gym.envs.make('HandReach-v0'),
+        'v0': lambda: gym.envs.make('HandReach-v0'),
+        'Dense-v0': lambda: gym.envs.make('HandReachDense-v0'),
+        'default': lambda: gym.envs.make('HandReach-v0'),
+    },
+    'InvertedDoublePendulum': {
+        'v2': lambda: gym.envs.make('InvertedDoublePendulum-v2'),
+    },
+    'Reacher': {
+        'v2': lambda: gym.envs.make('Reacher-v2'),
+    },
+    'InvertedPendulum': {
+        'v2': lambda: gym.envs.make('InvertedPendulum-v2'),
     },
     'DClaw3': {
         'ScrewV11': DClaw3ScrewV11,
