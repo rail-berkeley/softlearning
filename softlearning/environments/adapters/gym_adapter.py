@@ -220,8 +220,8 @@ class GymAdapter(SoftlearningEnv):
         return self._env.seed(*args, **kwargs)
 
     @property
-    def unwrapped(self, *args, **kwargs):
-        return self._env.unwrapped(*args, **kwargs)
+    def unwrapped(self):
+        return self._env.unwrapped
 
     def get_param_values(self, *args, **kwargs):
         raise NotImplementedError
