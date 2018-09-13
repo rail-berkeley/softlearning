@@ -99,6 +99,15 @@ GYM_ENVIRONMENTS = {
         'Dense-v0': lambda : gym.envs.make('HandReachDense-v0'),
         'default': lambda : gym.envs.make('HandReach-v0'),
     },
+    'InvertedDoublePendulum': {
+        'v2': lambda: gym.envs.make('InvertedDoublePendulum-v2'),
+    },
+    'Reacher': {
+        'v2': lambda: gym.envs.make('Reacher-v2'),
+    },
+    'InvertedPendulum': {
+        'v2': lambda: gym.envs.make('InvertedPendulum-v2'),
+    },
     'DClaw3': {
         'ScrewV11': DClaw3ScrewV11,
         'ScrewV2': DClaw3ScrewV2,
