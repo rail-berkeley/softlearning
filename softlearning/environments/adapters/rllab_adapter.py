@@ -127,7 +127,7 @@ class RllabAdapter(SoftlearningEnv):
         pass  # Nothing to seed
 
     @property
-    def unwrapped(self, *args, **kwargs):
+    def unwrapped(self):
         return getattr(self._env, 'wrapped_env', self._env)
 
     def get_param_values(self, *args, **kwargs):
