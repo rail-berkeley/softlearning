@@ -404,6 +404,14 @@ ENV_PARAMS = {
             'object_initial_velocity_range': (0, 0),
             'object_initial_position_range': (-np.pi, np.pi),
         }
+    },
+    'Point2DEnv': {
+        'default': {
+            'observation_keys': ('observation', ),
+        },
+        'wall': {
+            'observation_keys': ('observation', ),
+        },
     }
 }
 
