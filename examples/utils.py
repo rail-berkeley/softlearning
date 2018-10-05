@@ -214,3 +214,33 @@ def launch_experiments_rllab(variant_spec, args, run_fn):
             snapshot_gap=snapshot_gap,
             confirm_remote=args.confirm_remote,
             sync_s3_pkl=sync_pkl)
+
+
+def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
+    import ray
+    from ray import tune
+
+    tune.register_trainable('mujoco-runner', experiment_fn)
+
+    if 'local' in args.mode:
+        ray.init()
+    else:
+        ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
+
+    trial_resources = {'cpu': args.cpus}
+    if args.gpus > 0:
+        trial_resources['gpu'] = args.gpus
+
+    datetime_prefix = datetimestamp()
+    experiment_id = '-'.join((datetime_prefix, args.exp_name))
+
+    tune.run_experiments({
+        "{}-{}".format(experiment_id, i): {
+            'run': 'mujoco-runner',
+            'trial_resources': trial_resources,
+            'config': variant_spec,
+            'local_dir': local_dir,
+            'upload_dir': 'gs://sac-ray-test/ray/results'
+        }
+        for i, variant_spec in enumerate(variant_specs)
+    })
