@@ -103,6 +103,8 @@ def get_parser(allow_policy_list=False):
                         type=str,
                         choices=AVAILABLE_TASKS,
                         default=DEFAULT_TASK)
+    parser.add_argument('--gpus', type=int, default=0)
+    parser.add_argument('--cpus', type=int, default=4)
     if allow_policy_list:
         parser.add_argument('--policy',
                             type=str,
