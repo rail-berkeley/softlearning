@@ -244,3 +244,11 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
         }
         for i, variant_spec in enumerate(variant_specs)
     })
+
+
+def launch_experiments_local(*args, **kwargs):
+    """Temporary wrapper for local experiment launching.
+
+    TODO(hartikainen): Reimplement this once we get rid of rllab.
+    """
+    return launch_experiments_rllab(*args, **kwargs)
