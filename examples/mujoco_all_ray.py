@@ -21,7 +21,9 @@ from examples.variants import get_variant_spec_image, get_variant_spec
 from examples.utils import (
     parse_universe_domain_task,
     get_parser,
-    setup_rllab_logger)
+    setup_rllab_logger,
+    launch_experiments_local,
+    launch_experiments_ray)
 
 
 def run_experiment(variant, reporter):
@@ -183,57 +185,18 @@ def run_experiment(variant, reporter):
 
 
 def main():
-    parser = get_parser(allow_policy_list=True)
-    parser.add_argument('--gpus', type=int, default=0)
-    parser.add_argument('--cpus', type=int, default=None)
-    args = parser.parse_args()
+    args = get_parser().parse_args()
 
     universe, domain, task = parse_universe_domain_task(args)
 
-    tune.register_trainable('mujoco-runner', run_experiment)
-
-    cpus = (args.cpus
-            if args.cpus is not None
-            else {'local': 8}.get(args.mode, 16))
-
-    if args.mode == 'local':
-        ray.init()
-        trial_resources = {'cpu': cpus}
-    else:
-        ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
-        trial_resources = {'cpu': cpus}
-
-    if args.gpus > 0:
-        trial_resources['gpu'] = args.gpus
+    variant_spec = get_variant_spec(universe, domain, task, args.policy)
 
     local_dir = os.path.join('~/ray_results', universe, domain, task)
 
-    variant_specs = []
-    for policy in args.policy:
-        if ('image' in task.lower()
-            or 'blind' in task.lower()
-            or 'image' in domain.lower()):
-            variant_spec = get_variant_spec_image(
-                universe, domain, task, policy)
-        else:
-            variant_spec = get_variant_spec(universe, domain, task, policy)
-
-        variant_spec['run_params']['local_dir'] = local_dir
-        variant_specs.append(variant_spec)
-
-    datetime_prefix = datetimestamp()
-    experiment_id = '-'.join((datetime_prefix, args.exp_name))
-
-    tune.run_experiments({
-        "{}-{}".format(experiment_id, i): {
-            'run': 'mujoco-runner',
-            'trial_resources': trial_resources,
-            'config': variant_spec,
-            'local_dir': local_dir,
-            'upload_dir': 'gs://sac-ray-test/ray/results'
-        }
-        for i, variant_spec in enumerate(variant_specs)
-    })
+    if args.mode == 'local':
+        launch_experiments_local(variant_spec, args, run_experiment)
+    else:
+        launch_experiments_ray([variant_spec], args, local_dir, run_experiment)
 
 
 if __name__ == '__main__':
