@@ -5,7 +5,7 @@ from ray import tune
 from softlearning.environments.utils import get_environment
 from softlearning.algorithms import SAC
 
-from softlearning.misc.utils import set_seed, datestamp
+from softlearning.misc.utils import set_seed, datestamp, datetimestamp
 from softlearning.policies import (
     GaussianPolicy,
     LatentSpacePolicy,
@@ -221,18 +221,18 @@ def main():
         variant_spec['run_params']['local_dir'] = local_dir
         variant_specs.append(variant_spec)
 
-    date_prefix = datestamp()
-    experiment_id = '-'.join((date_prefix, args.exp_name))
+    datetime_prefix = datetimestamp()
+    experiment_id = '-'.join((datetime_prefix, args.exp_name))
 
     tune.run_experiments({
-        "{}-{}".format(experiment_id, policy): {
+        "{}-{}".format(experiment_id, i): {
             'run': 'mujoco-runner',
             'trial_resources': trial_resources,
             'config': variant_spec,
             'local_dir': local_dir,
             'upload_dir': 'gs://sac-ray-test/ray/results'
         }
-        for policy, variant_spec in zip(args.policy, variant_specs)
+        for i, variant_spec in enumerate(variant_specs)
     })
 
 

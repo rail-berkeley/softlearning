@@ -6,16 +6,7 @@ Usage:
 import os
 
 import numpy as np
-
 from ray import tune
-try:
-    from ray.tune.variant_generator import generate_variants
-except ImportError:
-    # TODO(hartikainen): generate_variants has moved in >0.5.0, and some of my
-    # stuff uses newer version. Remove this once we bump up the version in
-    # requirements.txt
-    from ray.tune.suggest.variant_generator import generate_variants
-
 
 from rllab.envs.env_spec import EnvSpec
 from rllab import spaces
@@ -242,8 +233,7 @@ def main():
             'domain': domain,
         })
 
-    variants = [x[1] for x in generate_variants(variant_spec)]
-    launch_experiments_rllab(variants, args, run_experiment)
+    launch_experiments_rllab(variant_spec, args, run_experiment)
 
 
 if __name__ == '__main__':

@@ -1,13 +1,5 @@
 import tensorflow as tf
 
-try:
-    from ray.tune.variant_generator import generate_variants
-except ImportError:
-    # TODO(hartikainen): generate_variants has moved in >0.5.0, and some of my
-    # stuff uses newer version. Remove this once we bump up the version in
-    # requirements.txt
-    from ray.tune.suggest.variant_generator import generate_variants
-
 from softlearning.environments.utils import get_environment
 from softlearning.algorithms import SAC
 
@@ -183,8 +175,7 @@ def main():
         variant_spec = get_variant_spec(universe, domain, task, args.policy)
 
     variant_spec['mode'] = args.mode
-    variants = [x[1] for x in generate_variants(variant_spec)]
-    launch_experiments_rllab(variants, args, run_experiment)
+    launch_experiments_rllab(variant_spec, args, run_experiment)
 
 
 if __name__ == '__main__':

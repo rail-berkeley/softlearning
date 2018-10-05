@@ -9,15 +9,6 @@ from rllab.envs.normalized_env import normalize
 from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 
-try:
-    from ray.tune.variant_generator import generate_variants
-except ImportError:
-    # TODO(hartikainen): generate_variants has moved in >0.5.0, and some of my
-    # stuff uses newer version. Remove this once we bump up the version in
-    # requirements.txt
-    from ray.tune.suggest.variant_generator import generate_variants
-
-
 from softlearning.algorithms import SAC
 from softlearning.environments.rllab import HierarchyProxyEnv
 from softlearning.policies import LatentSpacePolicy
@@ -338,8 +329,7 @@ def main():
             'domain': domain,
         })
 
-    variants = [x[1] for x in generate_variants(variant_spec)]
-    launch_experiments_rllab(variants, args, run_experiment)
+     launch_experiments_rllab(variant_spec, args, run_experiment)
 
 
 if __name__ == '__main__':

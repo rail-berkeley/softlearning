@@ -3,6 +3,14 @@ import math
 import argparse
 from distutils.util import strtobool
 
+try:
+    from ray.tune.variant_generator import generate_variants
+except ImportError:
+    # TODO(hartikainen): generate_variants has moved in >0.5.0, and some of my
+    # stuff uses newer version. Remove this once we bump up the version in
+    # requirements.txt
+    from ray.tune.suggest.variant_generator import generate_variants
+
 import softlearning.environments.utils as env_utils
 from softlearning.misc.utils import datetimestamp, datestamp
 from softlearning.misc.instrument import launch_experiment
@@ -164,7 +172,8 @@ def setup_rllab_logger(variant):
     # logger.push_prefix("[%s] " % args.exp_name)
 
 
-def launch_experiments_rllab(variants, args, run_fn):
+def launch_experiments_rllab(variant_spec, args, run_fn):
+    variants = [x[1] for x in generate_variants(variant_spec)]
     num_experiments = len(variants)
 
     print('Launching {} experiments.'.format(num_experiments))
