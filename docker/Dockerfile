@@ -98,6 +98,9 @@ RUN git clone https://github.com/rll/rllab.git ${RLLAB_PATH} \
     && cp ${MUJOCO_PATH}/mjpro131/bin/libglfw.so.3 \
           ${RLLAB_PATH}/vendor/mujoco/
 
+# We need to add /root/code/rllab to PYTHONPATH in order for rllab to find its stuff
+ENV PYTHONPATH /root/code/rllab:${PYTHONPATH}
+
 COPY ./docker/entrypoint.sh /entrypoint.sh
 
 ENV DISPLAY=:0
