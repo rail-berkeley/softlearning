@@ -100,4 +100,6 @@ RUN git clone https://github.com/rll/rllab.git ${RLLAB_PATH} \
 
 COPY ./docker/entrypoint.sh /entrypoint.sh
 
+ENV DISPLAY=:0
+
 ENTRYPOINT ["/entrypoint.sh"]

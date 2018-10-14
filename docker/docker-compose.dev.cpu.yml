@@ -18,7 +18,7 @@ services:
         - MJKEY
     working_dir: /root/softqlearning-private
     environment:
-      - DISPLAY=0
+      - DISPLAY=:0
     ports:
       - "6006"  # Tensorboard
       - "5000"  # Viskit
