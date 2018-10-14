@@ -70,6 +70,18 @@ ENV PYTHONPATH ${RLLAB_PATH}:${PYTHONPATH}
 
 
 # ========= MuJoCo ===============
+# Rllab requires mujoco 1.31
+ENV MUJOCO_VERSION=131 \
+    MUJOCO_PATH=/root/.mujoco
+
+RUN MUJOCO_ZIP="mjpro${MUJOCO_VERSION}_linux.zip" \
+    && mkdir -p ${MUJOCO_PATH} \
+    && wget -P ${MUJOCO_PATH} https://www.roboti.us/download/${MUJOCO_ZIP} \
+    && unzip ${MUJOCO_PATH}/${MUJOCO_ZIP} -d ${MUJOCO_PATH} \
+    && cp ${MUJOCO_PATH}/mjpro${MUJOCO_VERSION}/bin/libmujoco${MUJOCO_VERSION}.so ${RLLAB_PATH}/vendor/mujoco/ \
+    && cp ${MUJOCO_PATH}/mjpro${MUJOCO_VERSION}/bin/libglfw.so.3 ${RLLAB_PATH}/vendor/mujoco/ \
+    && rm ${MUJOCO_PATH}/${MUJOCO_ZIP}
+
 ENV MUJOCO_VERSION=150 \
     MUJOCO_PATH=/root/.mujoco
 
