@@ -2,10 +2,7 @@
 
 from abc import ABCMeta, abstractmethod
 
-import numpy as np
-
 from serializable import Serializable
-from softlearning.misc.utils import deep_clone
 
 
 class SoftlearningEnv(Serializable, metaclass=ABCMeta):
@@ -176,7 +173,7 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
         TODO: Investigate if this can be done somehow else, especially for gym
         envs.
         """
-        return deep_clone(self)
+        return Serializable.clone(self)
 
     @property
     @abstractmethod
