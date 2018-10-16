@@ -147,18 +147,10 @@ class GymAdapter(SoftlearningEnv):
                  domain,
                  task,
                  *args,
-                 # normalize=True,
-                 # observation_keys=None,
-                 # unwrap_time_limit=True,
+                 normalize=True,
+                 observation_keys=None,
+                 unwrap_time_limit=True,
                  **kwargs):
-        # TODO(hartikainen): The reason that `normalize`, `observation_keys`,
-        # and `unwrap_time_limit` are not direct keyword arguments is that the
-        # rllab Serializable currently just ignores them. Having those in
-        # **kwargs works as a temporary solution but should be fixed in the
-        # future.
-        normalize = kwargs.get('normalize', True)
-        observation_keys = kwargs.get('observation_keys')
-        unwrap_time_limit = kwargs.get('unwrap_time_limit', True)
         self.normalize = normalize
         self.observation_keys = observation_keys
         self.unwrap_time_limit = unwrap_time_limit
