@@ -3,7 +3,7 @@ import os.path as osp
 import numpy as np
 from gym.envs.mujoco.mujoco_env import MujocoEnv
 
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 
 from softlearning.misc.utils import PROJECT_PATH
 from softlearning.environments.helpers import random_point_in_circle
@@ -46,7 +46,7 @@ class Pusher2dEnv(Serializable, MujocoEnv):
         goal_distance_coeff ('float'): Coefficient for the object-to-goal
             distance cost.
         """
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         self._goal_mask = [coordinate != 'any' for coordinate in goal]
         self._goal = np.array(goal)[self._goal_mask].astype(np.float32)
@@ -153,7 +153,7 @@ class ForkReacherEnv(Pusher2dEnv):
                  arm_object_distance_cost_coeff,
                  *args,
                  **kwargs):
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         self._arm_goal_distance_cost_coeff = arm_goal_distance_cost_coeff
         self._arm_object_distance_cost_coeff = arm_object_distance_cost_coeff

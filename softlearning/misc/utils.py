@@ -5,8 +5,8 @@ import random
 
 import tensorflow as tf
 import numpy as np
+from serializable import Serializable
 
-from rllab.core.serializable import Serializable
 
 PROJECT_PATH = os.path.dirname(
     os.path.realpath(os.path.join(__file__, '..', '..')))

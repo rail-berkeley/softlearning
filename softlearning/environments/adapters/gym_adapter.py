@@ -4,8 +4,6 @@ import numpy as np
 import gym
 from gym.wrappers.dict import FlattenDictWrapper
 
-from rllab.core.serializable import Serializable
-
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym.wrappers import NormalizeActionWrapper
 from softlearning.environments.gym.mujoco.sawyer import SawyerReachTorqueEnv
@@ -165,7 +163,7 @@ class GymAdapter(SoftlearningEnv):
         self.observation_keys = observation_keys
         self.unwrap_time_limit = unwrap_time_limit
 
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
         super(GymAdapter, self).__init__(domain, task, *args, **kwargs)
 
         env = GYM_ENVIRONMENTS[domain][task](*args, **kwargs)

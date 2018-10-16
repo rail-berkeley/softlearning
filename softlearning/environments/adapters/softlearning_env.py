@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 from softlearning.misc.utils import deep_clone
 
 
@@ -51,7 +51,7 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
         *args    --
         **kwargs --
         """
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
         self._domain = domain
         self._task = task
 

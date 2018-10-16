@@ -3,7 +3,6 @@
 import gym.spaces
 
 import rllab.spaces
-from rllab.core.serializable import Serializable
 from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
@@ -71,7 +70,7 @@ class RllabAdapter(SoftlearningEnv):
     """Adapter that implements the SoftlearningEnv for Rllab envs."""
 
     def __init__(self, domain, task, *args, normalize=True, **kwargs):
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
         super(RllabAdapter, self).__init__(domain, task, *args, **kwargs)
 
         env = RLLAB_ENVIRONMENTS[domain][task](*args, **kwargs)

@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 import tensorflow as tf
 
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 from sandbox.rocky.tf.core.parameterized import Parameterized
 
 from softlearning.misc import tf_utils
@@ -59,7 +59,7 @@ def feedforward_net_template(
 class TemplateFunction(Parameterized, Serializable, metaclass=ABCMeta):
     def __init__(self, *args, **kwargs):
         Parameterized.__init__(self)
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         self._function = self.template_function(*args, **kwargs)
 
@@ -77,7 +77,7 @@ class TemplateFunction(Parameterized, Serializable, metaclass=ABCMeta):
 
 class FeedforwardFunction(TemplateFunction):
     def __init__(self, *args, name='feedforward_function', **kwargs):
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         super(FeedforwardFunction, self).__init__(*args, name=name, **kwargs)
 
@@ -128,7 +128,7 @@ def feedforward_net(inputs,
 class MLPFunction(Parameterized, Serializable):
     def __init__(self, inputs, name, layer_sizes, output_nonlinearity=None):
         Parameterized.__init__(self)
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         self._name = name
         self._inputs = inputs

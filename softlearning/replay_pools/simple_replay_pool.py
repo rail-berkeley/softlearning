@@ -1,11 +1,11 @@
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 
 from .flexible_replay_pool import FlexibleReplayPool
 
 
 class SimpleReplayPool(FlexibleReplayPool, Serializable):
     def __init__(self, observation_shape, action_shape, *args, **kwargs):
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         self._observation_shape = observation_shape
         self._action_shape = action_shape

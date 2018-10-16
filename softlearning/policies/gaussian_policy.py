@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from rllab.misc.overrides import overrides
 from rllab.misc import logger
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 
 from softlearning.distributions import Normal
 from softlearning.policies import NNPolicy
@@ -37,7 +37,7 @@ class GaussianPolicy(NNPolicy, Serializable):
             reparameterize ('bool'): If True, gradients will flow directly
                 through the action samples.
         """
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         self._hidden_layers = hidden_layer_sizes
         assert len(observation_shape) == 1, observation_shape

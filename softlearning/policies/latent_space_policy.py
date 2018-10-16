@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow_probability import distributions as tfpd
 
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 from rllab.misc import logger
 
 from softlearning.distributions import RealNVPBijector
@@ -40,7 +40,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
             n_map_action_candidates ('int'): Number of action candidates for
             estimating the maximum a posteriori (deterministic) action.
         """
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         assert len(observation_shape) == 1, observation_shape
         self._Ds = observation_shape[0]

@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 
 from rllab.misc.overrides import overrides
 from sandbox.rocky.tf.policies.base import Policy
@@ -13,7 +13,7 @@ class NNPolicy(Policy, Serializable):
                  action_shape,
                  observation_ph,
                  actions):
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         self._observation_shape = observation_shape
         self._action_shape = action_shape

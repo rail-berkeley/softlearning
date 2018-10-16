@@ -1,13 +1,13 @@
 import numpy as np
 
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 from .replay_pool import ReplayPool
 
 
 class FlexibleReplayPool(ReplayPool, Serializable):
     def __init__(self, max_size, fields):
         ReplayPool.__init__(self)
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         max_size = int(max_size)
         self._max_size = max_size
