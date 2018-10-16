@@ -6,11 +6,9 @@ from gym.wrappers.dict import FlattenDictWrapper
 
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym.wrappers import NormalizeActionWrapper
-from softlearning.environments.gym.mujoco.sawyer import SawyerReachTorqueEnv
 from softlearning.environments.gym.mujoco.pusher_2d_env import (
     Pusher2dEnv,
-    ForkReacherEnv,
-)
+    ForkReacherEnv)
 from softlearning.environments.gym.mujoco.image_pusher import (
     ImagePusherEnv,
     ImageForkReacherEnv,
@@ -68,10 +66,6 @@ GYM_ENVIRONMENTS = {
         'image-default': ImagePusherEnv,
         'image-reach': ImageForkReacherEnv,
         'blind-reach': BlindForkReacherEnv,
-    },
-    'sawyer-torque': {
-        'default': SawyerReachTorqueEnv,
-        'reach': SawyerReachTorqueEnv,
     },
     'Point2DEnv': {
         'default': Point2DEnv,
