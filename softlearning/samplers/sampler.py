@@ -1,13 +1,20 @@
-import numpy as np
+from collections import deque
+from itertools import islice
 
 from rllab.misc import logger
 
 
 class Sampler(object):
-    def __init__(self, max_path_length, min_pool_size, batch_size):
+    def __init__(self,
+                 max_path_length,
+                 min_pool_size,
+                 batch_size,
+                 store_last_n_paths=10):
         self._max_path_length = max_path_length
         self._min_pool_size = min_pool_size
         self._batch_size = batch_size
+        self._store_last_n_paths = store_last_n_paths
+        self._last_n_paths = deque(maxlen=store_last_n_paths)
 
         self.env = None
         self.policy = None
@@ -20,6 +27,17 @@ class Sampler(object):
 
     def set_policy(self, policy):
         self.policy = policy
+
+    def clear_last_n_paths(self):
+        self._last_n_paths.clear()
+
+    def get_last_n_paths(self, n=None):
+        if n is None:
+            n = self._store_last_n_paths
+
+        last_n_paths = tuple(islice(self._last_n_paths, None, n))
+
+        return last_n_paths
 
     def sample(self):
         raise NotImplementedError

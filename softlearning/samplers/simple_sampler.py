@@ -34,14 +34,19 @@ class SimpleSampler(Sampler):
             next_observations=next_observation)
 
         if terminal or self._path_length >= self._max_path_length:
+            last_path = self.pool.last_n_batch(self._path_length)
+            self._last_n_paths.appendleft(last_path)
+
             self.policy.reset()
             self._current_observation = self.env.reset()
+
             self._path_length = 0
+            self._path_return = 0
+
             self._max_path_return = max(self._max_path_return,
                                         self._path_return)
             self._last_path_return = self._path_return
 
-            self._path_return = 0
             self._n_episodes += 1
 
         else:
