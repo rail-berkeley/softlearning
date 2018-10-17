@@ -237,9 +237,11 @@ def launch_experiments_rllab(variant_spec, args, run_fn):
             i=i,
             max_i_len=int(math.ceil(math.log10(num_experiments))))
 
+        mode = args.mode.replace('rllab', '').strip('-')
+
         launch_experiment(
             run_fn,
-            mode=args.mode,
+            mode=mode,
             variant=variant,
             exp_prefix=experiment_prefix,
             exp_name=experiment_name,
