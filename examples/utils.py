@@ -159,6 +159,20 @@ def get_parser(allow_policy_list=False):
     return parser
 
 
+def variant_equals(*keys):
+    def get_from_spec(spec):
+        # TODO(hartikainen): This may break in some cases. ray.tune seems to
+        # add a 'config' key at the top of the spec, whereas `generate_variants`
+        # does not.
+        node = spec.get('config', spec)
+        for key in keys:
+            node = node[key]
+
+        return node
+
+    return get_from_spec
+
+
 DEFAULT_SNAPSHOT_MODE = 'none'
 DEFAULT_SNAPSHOT_GAP = 1000
 
@@ -210,6 +224,8 @@ def launch_experiments_rllab(variant_spec, args, run_fn):
         snapshot_gap = run_params.get(
             'snapshot_gap', variant.get('snapshot_gap'))
         sync_pkl = run_params.get('sync_pkl', variant.get('sync_pkl'))
+        sync_png = run_params.get('sync_png', variant.get('sync_png', True))
+        sync_log = run_params.get('sync_log', variant.get('sync_log', True))
         seed = run_params.get('seed', variant.get('seed'))
 
         date_prefix = datestamp()
@@ -234,7 +250,9 @@ def launch_experiments_rllab(variant_spec, args, run_fn):
             snapshot_mode=snapshot_mode,
             snapshot_gap=snapshot_gap,
             confirm_remote=args.confirm_remote,
-            sync_s3_pkl=sync_pkl)
+            sync_s3_pkl=sync_pkl,
+            sync_s3_png=sync_png,
+            sync_s3_log=sync_log)
 
 
 def _normalize_trial_resources(resources, cpu, gpu):
