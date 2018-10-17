@@ -104,6 +104,7 @@ def get_parser(allow_policy_list=False):
                         type=str,
                         choices=AVAILABLE_TASKS,
                         default=DEFAULT_TASK)
+    parser.add_argument('--num-samples', type=int, default=1)
 
     parser.add_argument('--resources', type=json.loads, default=None,
                         help=("Resources to allocate to ray process. Passed"
@@ -281,6 +282,7 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
             'trial_resources': trial_resources,
             'config': variant_spec,
             'local_dir': local_dir,
+            'num_samples': args.num_samples,
             'upload_dir': 'gs://sac-ray-test/ray/results'
         }
         for i, variant_spec in enumerate(variant_specs)
