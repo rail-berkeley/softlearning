@@ -3,9 +3,10 @@ FROM continuumio/anaconda3
 MAINTAINER Kristian Hartikainen <kristian.hartikainen@gmail.com>
 
 # ========== Special Deps ==========
-RUN apt update \
-    && apt upgrade -y \
-    && apt -y install \
+RUN export DEBIAN_FRONTEND=noninteractive \
+    && apt update \
+    && apt upgrade -yq \
+    && apt -yq install \
         build-essential \
         curl \
         git \
