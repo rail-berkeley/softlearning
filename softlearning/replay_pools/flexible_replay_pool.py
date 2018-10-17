@@ -90,6 +90,11 @@ class FlexibleReplayPool(ReplayPool, Serializable):
         random_indices = self.random_indices(batch_size)
         return self.batch_by_indices(random_indices, field_name_filter)
 
+    def last_n_batch(self, last_n, field_name_filter=None):
+        last_n_indices = np.arange(
+            self._pointer - last_n, self._pointer) % self._max_size
+        return self.batch_by_indices(last_n_indices, field_name_filter)
+
     def batch_by_indices(self, indices, field_name_filter=None):
         field_names = self.field_names
         if field_name_filter is not None:
