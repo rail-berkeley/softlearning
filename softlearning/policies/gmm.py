@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from rllab.misc.overrides import overrides
 from rllab.misc import logger
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 
 from softlearning.distributions import GMM
 from softlearning.policies import NNPolicy
@@ -44,7 +44,7 @@ class GMMPolicy(NNPolicy, Serializable):
                between -1 and 1 with tanh.
             qf (`ValueFunction`): Q-function approximator.
         """
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         self._hidden_layers = hidden_layer_sizes
         assert len(observation_shape) == 1, observation_shape

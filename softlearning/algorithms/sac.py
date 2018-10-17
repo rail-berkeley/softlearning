@@ -3,7 +3,7 @@ from numbers import Number
 import numpy as np
 import tensorflow as tf
 
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 from rllab.misc import logger
 
 from .rl_algorithm import RLAlgorithm
@@ -76,7 +76,7 @@ class SAC(RLAlgorithm, Serializable):
                 snapshot. See `self.get_snapshot` for more information.
         """
 
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         self.global_step = tf.get_variable(
             "global_step",

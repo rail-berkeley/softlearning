@@ -1,4 +1,4 @@
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 
 from rllab.misc.overrides import overrides
 from sandbox.rocky.tf.policies.base import Policy
@@ -12,7 +12,7 @@ class UniformPolicy(Policy, Serializable):
     Used for an initial exploration period instead of an undertrained policy.
     """
     def __init__(self, observation_shape, action_shape):
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         assert len(observation_shape) == 1, observation_shape
         self._Ds = observation_shape[0]

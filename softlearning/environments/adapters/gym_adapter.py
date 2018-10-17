@@ -4,8 +4,6 @@ import numpy as np
 import gym
 from gym.wrappers.dict import FlattenDictWrapper
 
-from rllab.core.serializable import Serializable
-
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym.wrappers import NormalizeActionWrapper
 from softlearning.environments.gym.mujoco.sawyer import SawyerReachTorqueEnv
@@ -149,23 +147,15 @@ class GymAdapter(SoftlearningEnv):
                  domain,
                  task,
                  *args,
-                 # normalize=True,
-                 # observation_keys=None,
-                 # unwrap_time_limit=True,
+                 normalize=True,
+                 observation_keys=None,
+                 unwrap_time_limit=True,
                  **kwargs):
-        # TODO(hartikainen): The reason that `normalize`, `observation_keys`,
-        # and `unwrap_time_limit` are not direct keyword arguments is that the
-        # rllab Serializable currently just ignores them. Having those in
-        # **kwargs works as a temporary solution but should be fixed in the
-        # future.
-        normalize = kwargs.get('normalize', True)
-        observation_keys = kwargs.get('observation_keys')
-        unwrap_time_limit = kwargs.get('unwrap_time_limit', True)
         self.normalize = normalize
         self.observation_keys = observation_keys
         self.unwrap_time_limit = unwrap_time_limit
 
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
         super(GymAdapter, self).__init__(domain, task, *args, **kwargs)
 
         env = GYM_ENVIRONMENTS[domain][task](*args, **kwargs)

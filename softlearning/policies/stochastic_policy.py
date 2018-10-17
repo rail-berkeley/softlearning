@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 
 from softlearning.misc.nn import feedforward_net
 
@@ -16,7 +16,7 @@ class StochasticNNPolicy(NNPolicy, Serializable):
                  hidden_layer_sizes,
                  squash=True,
                  name='policy'):
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         # name is set again in the superclass __init__ function, but
         # actions_for needs name to be set.

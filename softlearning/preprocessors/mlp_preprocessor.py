@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 
 from sandbox.rocky.tf.core.parameterized import Parameterized
 
@@ -46,7 +46,7 @@ def feedforward_net_preprocessor_template(
 
 class FeedforwardNetPreprocessorV2(TemplateFunction, Serializable):
     def __init__(self, *args, name='feedforward_net_preprocessor', **kwargs):
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         super(FeedforwardNetPreprocessorV2, self).__init__(
             *args, name=name, **kwargs)
@@ -64,7 +64,7 @@ class FeedforwardNetPreprocessor(Parameterized, Serializable):
                  name='observations_preprocessor'):
 
         Parameterized.__init__(self)
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         assert len(input_shape) == 1, input_shape
         self._Do = input_shape[0]

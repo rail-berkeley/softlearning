@@ -5,7 +5,7 @@ from __future__ import print_function
 import tensorflow as tf
 
 from softlearning.misc.nn import TemplateFunction, feedforward_net_v2
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 
 
 # tf.enable_eager_execution()
@@ -64,7 +64,7 @@ def convnet_preprocessor_template(
 
 class ConvnetPreprocessor(TemplateFunction):
     def __init__(self, *args, name='convnet_preprocessor', **kwargs):
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         super(ConvnetPreprocessor, self).__init__(
             *args, name=name, **kwargs)

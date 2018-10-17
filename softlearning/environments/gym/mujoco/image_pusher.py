@@ -1,14 +1,12 @@
 import numpy as np
 
-from rllab.core.serializable import Serializable
-
 from softlearning.environments.helpers import random_point_in_circle
 from .pusher_2d_env import Pusher2dEnv
 
 
 class ImagePusherEnv(Pusher2dEnv):
     def __init__(self, image_size, *args, **kwargs):
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
         self.image_size = image_size
         Pusher2dEnv.__init__(self, *args, **kwargs)
 
@@ -51,7 +49,7 @@ class ImageForkReacherEnv(ImagePusherEnv):
                  arm_object_distance_cost_coeff,
                  *args,
                  **kwargs):
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         self._arm_goal_distance_cost_coeff = arm_goal_distance_cost_coeff
         self._arm_object_distance_cost_coeff = arm_object_distance_cost_coeff

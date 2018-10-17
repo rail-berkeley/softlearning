@@ -1,6 +1,6 @@
 """Diversity Is All You Need (DIAYN)"""
 
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 from rllab.misc import logger
 from rllab.misc.overrides import overrides
 
@@ -69,7 +69,7 @@ class DIAYN(SAC):
             add_p_z (`bool`): Whether th include log p(z) in the pseudo-reward.
         """
 
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
         super(SAC, self).__init__(**base_kwargs)
 
         self._env = env

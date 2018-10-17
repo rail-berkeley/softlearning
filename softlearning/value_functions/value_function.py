@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from rllab.core.serializable import Serializable
+from serializable import Serializable
 
 from softlearning.misc.nn import MLPFunction
 from softlearning.misc import tf_utils
@@ -12,7 +12,7 @@ class NNVFunction(MLPFunction):
                  observation_shape,
                  hidden_layer_sizes=(128, 128),
                  name='vf'):
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         assert len(observation_shape) == 1, observation_shape
         self._Do = observation_shape[0]
@@ -36,7 +36,7 @@ class NNQFunction(MLPFunction):
                  action_shape,
                  hidden_layer_sizes=(128, 128),
                  name='qf'):
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         assert len(observation_shape) == 1, observation_shape
         self._Do = observation_shape[0]
@@ -67,7 +67,7 @@ class NNDiscriminatorFunction(MLPFunction):
                  num_skills=None,
                  name='discriminator_function'):
         assert num_skills is not None
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         assert len(observation_shape) == 1, observation_shape
         self._Do = observation_shape[0]
@@ -93,7 +93,7 @@ class SumQFunction(Serializable):
                  observation_shape,
                  action_shape,
                  q_functions):
-        Serializable.quick_init(self, locals())
+        self._Serializable__initialize(locals())
 
         self.q_functions = q_functions
 
