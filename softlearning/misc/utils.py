@@ -105,14 +105,16 @@ def deep_clone(obj):
     return out
 
 
-def deep_update(d, u):
+def deep_update(d, *us):
     d = d.copy()
-    u = u.copy()
-    for k, v in u.items():
-        d[k] = (
-            deep_update(d.get(k, {}), v)
-            if isinstance(v, collections.Mapping)
-            else v)
+
+    for u in us:
+        u = u.copy()
+        for k, v in u.items():
+            d[k] = (
+                deep_update(d.get(k, {}), v)
+                if isinstance(v, collections.Mapping)
+                else v)
 
     return d
 
