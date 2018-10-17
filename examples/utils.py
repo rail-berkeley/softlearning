@@ -1,7 +1,8 @@
-import os
-import math
 import argparse
 from distutils.util import strtobool
+import json
+import math
+import os
 
 try:
     from ray.tune.variant_generator import generate_variants
@@ -103,8 +104,27 @@ def get_parser(allow_policy_list=False):
                         type=str,
                         choices=AVAILABLE_TASKS,
                         default=DEFAULT_TASK)
-    parser.add_argument('--gpus', type=int, default=0)
-    parser.add_argument('--cpus', type=int, default=4)
+
+    parser.add_argument('--resources', type=json.loads, default=None,
+                        help=("Resources to allocate to ray process. Passed"
+                              " to `ray.init`."))
+    parser.add_argument('--cpus', type=int, default=None,
+                        help=("Cpus to allocate to ray process. Passed"
+                              " to `ray.init`."))
+    parser.add_argument('--gpus', type=int, default=None,
+                        help=("Gpus to allocate to ray process. Passed"
+                              " to `ray.init`."))
+
+    parser.add_argument('--trial-resources', type=json.loads, default={},
+                        help=("Resources to allocate for each trial. Passed"
+                              " to `tune.run_experiments`."))
+    parser.add_argument('--trial-cpus', type=int, default=None,
+                        help=("Resources to allocate for each trial. Passed"
+                              " to `tune.run_experiments`."))
+    parser.add_argument('--trial-gpus', type=float, default=None,
+                        help=("Resources to allocate for each trial. Passed"
+                              " to `tune.run_experiments`."))
+
     if allow_policy_list:
         parser.add_argument('--policy',
                             type=str,
@@ -216,6 +236,19 @@ def launch_experiments_rllab(variant_spec, args, run_fn):
             sync_s3_pkl=sync_pkl)
 
 
+def _normalize_trial_resources(resources, cpu, gpu):
+    if resources is None:
+        resources = {}
+
+    if cpu is not None:
+        resources['cpu'] = cpu
+
+    if gpu is not None:
+        resources['gpu'] = gpu
+
+    return resources
+
+
 def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
     import ray
     from ray import tune
@@ -223,13 +256,21 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
     tune.register_trainable('mujoco-runner', experiment_fn)
 
     if 'local' in args.mode:
-        ray.init()
+        ray.init(
+            resources=args.resources,
+            num_cpus=args.cpus,
+            num_gpus=args.gpus,
+        )
     else:
         ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
+        using_new_gcs = os.environ.get('RAY_USE_NEW_GCS', False) == 'on'
+        using_xray = os.environ.get('RAY_USE_XRAY', False) == '1'
+        if using_new_gcs and using_xray:
+            policy = ray.experimental.SimpleGcsFlushPolicy()
+            ray.experimental.set_flushing_policy(policy)
 
-    trial_resources = {'cpu': args.cpus}
-    if args.gpus > 0:
-        trial_resources['gpu'] = args.gpus
+    trial_resources = _normalize_trial_resources(
+        args.trial_resources, args.trial_cpus, args.trial_gpus)
 
     datetime_prefix = datetimestamp()
     experiment_id = '-'.join((datetime_prefix, args.exp_name))
