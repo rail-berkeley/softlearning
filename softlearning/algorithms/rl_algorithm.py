@@ -150,8 +150,6 @@ class RLAlgorithm(Algorithm):
 
             for epoch in gt.timed_for(
                     range(self._n_epochs + 1), save_itrs=True):
-                self._epoch_before_hook(epoch)
-
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
                 self._epoch_before_hook(epoch)
