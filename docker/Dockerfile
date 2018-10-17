@@ -2,11 +2,11 @@ FROM continuumio/anaconda3
 
 MAINTAINER Kristian Hartikainen <kristian.hartikainen@gmail.com>
 
-
 # ========== Special Deps ==========
-RUN apt update \
-    && apt upgrade -y \
-    && apt -y install \
+RUN export DEBIAN_FRONTEND=noninteractive \
+    && apt update \
+    && apt upgrade -yq \
+    && apt -yq install \
         build-essential \
         curl \
         git \
@@ -42,8 +42,7 @@ WORKDIR /root/softlearning
 
 COPY ./environment.yml /tmp/
 COPY ./requirements.txt /tmp/
-RUN conda update -y --name base conda \
-    && conda env update -f /tmp/environment.yml \
+RUN conda env update -f /tmp/environment.yml \
     && rm /tmp/requirements.txt \
     && rm /tmp/environment.yml
 
@@ -52,6 +51,35 @@ ENV PATH /opt/conda/envs/softlearning/bin:$PATH
 RUN echo "source activate softlearning" >> /root/.bashrc
 ENV BASH_ENV /root/.bashrc
 
+# ========= MuJoCo ===============
+ARG MJKEY
+
+# Rllab requires mujoco 1.31
+ENV MUJOCO_VERSION=131 \
+    MUJOCO_PATH=/root/.mujoco
+
+RUN MUJOCO_ZIP="mjpro${MUJOCO_VERSION}_linux.zip" \
+    && mkdir -p ${MUJOCO_PATH} \
+    && wget -P ${MUJOCO_PATH} https://www.roboti.us/download/${MUJOCO_ZIP} \
+    && unzip ${MUJOCO_PATH}/${MUJOCO_ZIP} -d ${MUJOCO_PATH} \
+    && rm ${MUJOCO_PATH}/${MUJOCO_ZIP}
+
+# Mujoco for gym and mujoco_py
+ENV MUJOCO_VERSION=150 \
+    MUJOCO_PATH=/root/.mujoco
+
+RUN MUJOCO_ZIP="mjpro${MUJOCO_VERSION}_linux.zip" \
+    && mkdir -p ${MUJOCO_PATH} \
+    && wget -P ${MUJOCO_PATH} https://www.roboti.us/download/${MUJOCO_ZIP} \
+    && unzip ${MUJOCO_PATH}/${MUJOCO_ZIP} -d ${MUJOCO_PATH} \
+    && rm ${MUJOCO_PATH}/${MUJOCO_ZIP}
+
+ENV LD_LIBRARY_PATH /root/.mujoco/mjpro${MUJOCO_VERSION}/bin:${LD_LIBRARY_PATH}
+
+# Trigger mujoco_py compilation using the MJKEY provided. Delete MJKEY afterwards.
+RUN echo "${MJKEY}" > /root/.mujoco/mjkey.txt \
+    && bash -c "python -c 'import mujoco_py'" \
+    && rm /root/.mujoco/mjkey.txt
 
 # ========= rllab ===============
 # We need to clone rllab repo in order to use the
@@ -63,30 +91,19 @@ ENV RLLAB_PATH=/root/rllab \
 RUN git clone https://github.com/rll/rllab.git ${RLLAB_PATH} \
     && cd ${RLLAB_PATH} \
     && git checkout ${RLLAB_VERSION} \
+    && bash -c "pip install -U -e ${RLLAB_PATH}" \
+    && python -m rllab.config \
     && mkdir ${RLLAB_PATH}/vendor/mujoco \
-    && python -m rllab.config
-
-ENV PYTHONPATH ${RLLAB_PATH}:${PYTHONPATH}
-
-
-# ========= MuJoCo ===============
-ENV MUJOCO_VERSION=150 \
-    MUJOCO_PATH=/root/.mujoco
-
-RUN MUJOCO_ZIP="mjpro${MUJOCO_VERSION}_linux.zip" \
-    && mkdir -p ${MUJOCO_PATH} \
-    && wget -P ${MUJOCO_PATH} https://www.roboti.us/download/${MUJOCO_ZIP} \
-    && unzip ${MUJOCO_PATH}/${MUJOCO_ZIP} -d ${MUJOCO_PATH} \
-    && cp ${MUJOCO_PATH}/mjpro${MUJOCO_VERSION}/bin/libmujoco${MUJOCO_VERSION}.so ${RLLAB_PATH}/vendor/mujoco/ \
-    && cp ${MUJOCO_PATH}/mjpro${MUJOCO_VERSION}/bin/libglfw.so.3 ${RLLAB_PATH}/vendor/mujoco/ \
-    && rm ${MUJOCO_PATH}/${MUJOCO_ZIP}
-
-ENV LD_LIBRARY_PATH /root/.mujoco/mjpro${MUJOCO_VERSION}/bin:${LD_LIBRARY_PATH}
-
+    && cp ${MUJOCO_PATH}/mjpro131/bin/libmujoco131.so \
+          ${RLLAB_PATH}/vendor/mujoco/ \
+    && cp ${MUJOCO_PATH}/mjpro131/bin/libglfw.so.3 \
+          ${RLLAB_PATH}/vendor/mujoco/
 
 # We need to add /root/code/rllab to PYTHONPATH in order for rllab to find its stuff
-ENV  PYTHONPATH /root/code/rllab:${PYTHONPATH}
+ENV PYTHONPATH /root/code/rllab:${PYTHONPATH}
 
 COPY ./docker/entrypoint.sh /entrypoint.sh
+
+ENV DISPLAY=:0
 
 ENTRYPOINT ["/entrypoint.sh"]

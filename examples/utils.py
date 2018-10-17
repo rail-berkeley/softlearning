@@ -1,7 +1,16 @@
-import os
-import math
 import argparse
 from distutils.util import strtobool
+import json
+import math
+import os
+
+try:
+    from ray.tune.variant_generator import generate_variants
+except ImportError:
+    # TODO(hartikainen): generate_variants has moved in >0.5.0, and some of my
+    # stuff uses newer version. Remove this once we bump up the version in
+    # requirements.txt
+    from ray.tune.suggest.variant_generator import generate_variants
 
 import softlearning.environments.utils as env_utils
 from softlearning.misc.utils import datetimestamp, datestamp
@@ -95,6 +104,28 @@ def get_parser(allow_policy_list=False):
                         type=str,
                         choices=AVAILABLE_TASKS,
                         default=DEFAULT_TASK)
+    parser.add_argument('--num-samples', type=int, default=1)
+
+    parser.add_argument('--resources', type=json.loads, default=None,
+                        help=("Resources to allocate to ray process. Passed"
+                              " to `ray.init`."))
+    parser.add_argument('--cpus', type=int, default=None,
+                        help=("Cpus to allocate to ray process. Passed"
+                              " to `ray.init`."))
+    parser.add_argument('--gpus', type=int, default=None,
+                        help=("Gpus to allocate to ray process. Passed"
+                              " to `ray.init`."))
+
+    parser.add_argument('--trial-resources', type=json.loads, default={},
+                        help=("Resources to allocate for each trial. Passed"
+                              " to `tune.run_experiments`."))
+    parser.add_argument('--trial-cpus', type=int, default=None,
+                        help=("Resources to allocate for each trial. Passed"
+                              " to `tune.run_experiments`."))
+    parser.add_argument('--trial-gpus', type=float, default=None,
+                        help=("Resources to allocate for each trial. Passed"
+                              " to `tune.run_experiments`."))
+
     if allow_policy_list:
         parser.add_argument('--policy',
                             type=str,
@@ -126,6 +157,20 @@ def get_parser(allow_policy_list=False):
                         ))
 
     return parser
+
+
+def variant_equals(*keys):
+    def get_from_spec(spec):
+        # TODO(hartikainen): This may break in some cases. ray.tune seems to
+        # add a 'config' key at the top of the spec, whereas `generate_variants`
+        # does not.
+        node = spec.get('config', spec)
+        for key in keys:
+            node = node[key]
+
+        return node
+
+    return get_from_spec
 
 
 DEFAULT_SNAPSHOT_MODE = 'none'
@@ -164,7 +209,8 @@ def setup_rllab_logger(variant):
     # logger.push_prefix("[%s] " % args.exp_name)
 
 
-def launch_experiments_rllab(variants, args, run_fn):
+def launch_experiments_rllab(variant_spec, args, run_fn):
+    variants = [x[1] for x in generate_variants(variant_spec)]
     num_experiments = len(variants)
 
     print('Launching {} experiments.'.format(num_experiments))
@@ -178,6 +224,8 @@ def launch_experiments_rllab(variants, args, run_fn):
         snapshot_gap = run_params.get(
             'snapshot_gap', variant.get('snapshot_gap'))
         sync_pkl = run_params.get('sync_pkl', variant.get('sync_pkl'))
+        sync_png = run_params.get('sync_png', variant.get('sync_png', True))
+        sync_log = run_params.get('sync_log', variant.get('sync_log', True))
         seed = run_params.get('seed', variant.get('seed'))
 
         date_prefix = datestamp()
@@ -189,9 +237,11 @@ def launch_experiments_rllab(variants, args, run_fn):
             i=i,
             max_i_len=int(math.ceil(math.log10(num_experiments))))
 
+        mode = args.mode.replace('rllab', '').strip('-')
+
         launch_experiment(
             run_fn,
-            mode=args.mode,
+            mode=mode,
             variant=variant,
             exp_prefix=experiment_prefix,
             exp_name=experiment_name,
@@ -202,4 +252,66 @@ def launch_experiments_rllab(variants, args, run_fn):
             snapshot_mode=snapshot_mode,
             snapshot_gap=snapshot_gap,
             confirm_remote=args.confirm_remote,
-            sync_s3_pkl=sync_pkl)
+            sync_s3_pkl=sync_pkl,
+            sync_s3_png=sync_png,
+            sync_s3_log=sync_log)
+
+
+def _normalize_trial_resources(resources, cpu, gpu):
+    if resources is None:
+        resources = {}
+
+    if cpu is not None:
+        resources['cpu'] = cpu
+
+    if gpu is not None:
+        resources['gpu'] = gpu
+
+    return resources
+
+
+def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
+    import ray
+    from ray import tune
+
+    tune.register_trainable('mujoco-runner', experiment_fn)
+
+    if 'local' in args.mode:
+        ray.init(
+            resources=args.resources,
+            num_cpus=args.cpus,
+            num_gpus=args.gpus,
+        )
+    else:
+        ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
+        using_new_gcs = os.environ.get('RAY_USE_NEW_GCS', False) == 'on'
+        using_xray = os.environ.get('RAY_USE_XRAY', False) == '1'
+        if using_new_gcs and using_xray:
+            policy = ray.experimental.SimpleGcsFlushPolicy()
+            ray.experimental.set_flushing_policy(policy)
+
+    trial_resources = _normalize_trial_resources(
+        args.trial_resources, args.trial_cpus, args.trial_gpus)
+
+    datetime_prefix = datetimestamp()
+    experiment_id = '-'.join((datetime_prefix, args.exp_name))
+
+    tune.run_experiments({
+        "{}-{}".format(experiment_id, i): {
+            'run': 'mujoco-runner',
+            'trial_resources': trial_resources,
+            'config': variant_spec,
+            'local_dir': local_dir,
+            'num_samples': args.num_samples,
+            'upload_dir': 'gs://sac-ray-test/ray/results'
+        }
+        for i, variant_spec in enumerate(variant_specs)
+    })
+
+
+def launch_experiments_local(*args, **kwargs):
+    """Temporary wrapper for local experiment launching.
+
+    TODO(hartikainen): Reimplement this once we get rid of rllab.
+    """
+    return launch_experiments_rllab(*args, **kwargs)
