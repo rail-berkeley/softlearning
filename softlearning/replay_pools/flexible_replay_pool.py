@@ -1,5 +1,3 @@
-from abc import abstractmethod
-
 import numpy as np
 
 from rllab.core.serializable import Serializable
@@ -37,8 +35,7 @@ class FlexibleReplayPool(ReplayPool, Serializable):
 
     def _advance(self, count=1):
         self._pointer = (self._pointer + count) % self._max_size
-        if self._size + count <= self._max_size:
-            self._size += count
+        self._size = min(self._size + count, self._max_size)
 
     def add_sample(self, **kwargs):
         self.add_samples(1, **kwargs)
@@ -46,8 +43,12 @@ class FlexibleReplayPool(ReplayPool, Serializable):
     def add_samples(self, num_samples=1, **kwargs):
         for field_name in self.field_names:
             idx = np.arange(
-                self._pointer, self._pointer+num_samples) % self._max_size
-            getattr(self, field_name)[idx] = kwargs.pop(field_name)
+                self._pointer, self._pointer + num_samples) % self._max_size
+            values = (
+                kwargs.pop(field_name, None)
+                if field_name in kwargs
+                else self.fields[field_name]['default_value'])
+            getattr(self, field_name)[idx] = values
 
         assert not kwargs, ("Got unexpected fields in the sample: ", kwargs)
 
@@ -82,7 +83,7 @@ class FlexibleReplayPool(ReplayPool, Serializable):
         self._size = pool_state['_size']
 
     def random_indices(self, batch_size):
-        if self._size == 0: return []
+        if self._size == 0: return ()
         return np.random.randint(0, self._size, batch_size)
 
     def random_batch(self, batch_size, field_name_filter=None):
