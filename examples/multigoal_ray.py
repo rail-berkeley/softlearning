@@ -24,7 +24,7 @@ def run(variant, reporter):
     })
 
     pool = SimpleReplayPool(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
         max_size=1e6)
 
@@ -44,18 +44,18 @@ def run(variant, reporter):
     M = 128
     q_functions = tuple(
         NNQFunction(
-            observation_shape=env.observation_space.shape,
+            observation_shape=env.active_observation_shape,
             action_shape=env.action_space.shape,
             hidden_layer_sizes=(M, M),
             name='qf{}'.format(i))
         for i in range(2))
     vf = NNVFunction(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         hidden_layer_sizes=[M, M])
 
     if variant['policy_type'] == 'gmm':
         policy = GMMPolicy(
-            observation_shape=env.observation_space.shape,
+            observation_shape=env.active_observation_shape,
             action_shape=env.action_space.shape,
             K=4,
             hidden_layer_sizes=[M, M],
@@ -71,7 +71,7 @@ def run(variant, reporter):
         }
 
         policy = LatentSpacePolicy(
-            observation_shape=env.observation_space.shape,
+            observation_shape=env.active_observation_shape,
             action_shape=env.action_space.shape,
             mode="train",
             squash=True,

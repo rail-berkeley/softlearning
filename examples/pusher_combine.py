@@ -58,13 +58,13 @@ def run_experiment(variant):
     pool = UnionPool(pools=(pool1, pool2))
 
     qf = SumQFunction(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
         q_functions=(qf1, qf2))
 
     M = variant['layer_size']
     policy = StochasticNNPolicy(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
         hidden_layer_sizes=(M, M),
         name='policy{i}'.format(i=0))

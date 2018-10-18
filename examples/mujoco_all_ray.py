@@ -83,12 +83,12 @@ def run_experiment(variant, reporter):
 
     if algorithm_params['store_extra_policy_info']:
         pool = ExtraPolicyInfoReplayPool(
-            observation_shape=env.observation_space.shape,
+            observation_shape=env.active_observation_shape,
             action_shape=env.action_space.shape,
             **replay_pool_params)
     else:
         pool = SimpleReplayPool(
-            observation_shape=env.observation_space.shape,
+            observation_shape=env.active_observation_shape,
             action_shape=env.action_space.shape,
             **replay_pool_params)
 
@@ -97,22 +97,22 @@ def run_experiment(variant, reporter):
     M = value_fn_params['layer_size']
     q_functions = tuple(
         NNQFunction(
-            observation_shape=env.observation_space.shape,
+            observation_shape=env.active_observation_shape,
             action_shape=env.action_space.shape,
             hidden_layer_sizes=(M, M),
             name='qf{}'.format(i))
         for i in range(2)
     )
     vf = NNVFunction(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         hidden_layer_sizes=(M, M))
     initial_exploration_policy = UniformPolicy(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape)
 
     if policy_params['type'] == 'gaussian':
         policy = GaussianPolicy(
-            observation_shape=env.observation_space.shape,
+            observation_shape=env.active_observation_shape,
             action_shape=env.action_space.shape,
             hidden_layer_sizes=(M, M),
             reparameterize=policy_params['reparameterize'],
@@ -139,7 +139,7 @@ def run_experiment(variant, reporter):
         }
 
         policy = LatentSpacePolicy(
-            observation_shape=env.observation_space.shape,
+            observation_shape=env.active_observation_shape,
             action_shape=env.action_space.shape,
             squash=policy_params['squash'],
             bijector_config=bijector_config,
@@ -150,7 +150,7 @@ def run_experiment(variant, reporter):
         assert not policy_params['reparameterize'], (
             "reparameterize should be False when using a GMMPolicy")
         policy = GMMPolicy(
-            observation_shape=env.observation_space.shape,
+            observation_shape=env.active_observation_shape,
             action_shape=env.action_space.shape,
             K=policy_params['K'],
             hidden_layer_sizes=(M, M),
