@@ -58,6 +58,13 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
         raise NotImplementedError
 
     @property
+    def active_observation_shape(self):
+        return self.observation_space.shape
+
+    def convert_to_active_observation(self, observation):
+        return observation
+
+    @property
     @abstractmethod
     def action_space(self):
         raise NotImplementedError
