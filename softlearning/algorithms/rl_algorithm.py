@@ -71,7 +71,7 @@ class RLAlgorithm(Algorithm):
         self._policy = None
         self._pool = None
 
-    def _initial_exploration_hook(self, initial_exploration_policy):
+    def _initial_exploration_hook(self, env, initial_exploration_policy, pool):
         if self._n_initial_exploration_steps < 1: return
 
         if not initial_exploration_policy:
@@ -79,27 +79,9 @@ class RLAlgorithm(Algorithm):
                 "Initial exploration policy must be provided when"
                 " n_initial_exploration_steps > 0.")
 
-        # TODO(hartikainen): This needs to be cleaned up. RLAlgorithm
-        # should be aware of path length.
-        num_rollouts = (
-            self._n_initial_exploration_steps // self.sampler._max_path_length)
-        for i in range(num_rollouts):
-            path = rollout(
-                env=self._env,
-                policy=initial_exploration_policy,
-                path_length=self.sampler._max_path_length,
-                break_on_terminal=False)
-
-            assert (path['observations'].shape[0]
-                    == self.sampler._max_path_length), (
-                        path['observations'].shape[0])
-
-            self._pool.add_samples(
-                num_samples=path['observations'].shape[0],
-                **{
-                    k: v for k, v in path.items()
-                    if k in self._pool.fields
-                })
+        self.sampler.initialize(env, initial_exploration_policy, pool)
+        for i in range(self._n_initial_exploration_steps):
+            self.sampler.sample()
 
     def _training_before_hook(self):
         """Method called before the actual training loops."""
@@ -136,7 +118,7 @@ class RLAlgorithm(Algorithm):
 
         self._init_training()
 
-        self._initial_exploration_hook(initial_exploration_policy)
+        self._initial_exploration_hook(env, initial_exploration_policy, pool)
         self.sampler.initialize(env, policy, pool)
 
         self._training_before_hook()
