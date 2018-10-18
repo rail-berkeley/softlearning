@@ -20,7 +20,9 @@ class SimpleSampler(Sampler):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
 
-        (action, _, _), _ = self.policy.get_action(self._current_observation)
+        (action, _, _), _ = self.policy.get_action(
+            self.env.convert_to_active_observation(self._current_observation))
+
         next_observation, reward, terminal, info = self.env.step(action)
         self._path_length += 1
         self._path_return += reward
@@ -51,6 +53,14 @@ class SimpleSampler(Sampler):
 
         else:
             self._current_observation = next_observation
+
+        return self._current_observation, reward, terminal, info
+
+    def random_batch(self, batch_size=None, **kwargs):
+        batch_size = batch_size or self._batch_size
+        observation_keys = getattr(self.env, 'observation_keys', None)
+        return self.pool.random_batch(
+            batch_size, observation_keys=observation_keys, **kwargs)
 
     def log_diagnostics(self):
         super(SimpleSampler, self).log_diagnostics()

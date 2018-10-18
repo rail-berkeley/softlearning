@@ -46,9 +46,9 @@ class Sampler(object):
         enough_samples = self.pool.size >= self._min_pool_size
         return enough_samples
 
-    def random_batch(self, batch_size=None):
+    def random_batch(self, batch_size=None, **kwargs):
         batch_size = batch_size or self._batch_size
-        return self.pool.random_batch(batch_size)
+        return self.pool.random_batch(batch_size, **kwargs)
 
     def terminate(self):
         self.env.close()
