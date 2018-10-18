@@ -6,6 +6,9 @@ from gym.wrappers.dict import FlattenDictWrapper
 
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym.wrappers import NormalizeActionWrapper
+from softlearning.environments.gym.mujoco.ant_env import AntEnv as CustomAntEnv
+from softlearning.environments.gym.mujoco.humanoid_env import (
+    HumanoidEnv as CustomHumanoidEnv)
 from softlearning.environments.gym.mujoco.pusher_2d_env import (
     Pusher2dEnv,
     ForkReacherEnv)
@@ -44,11 +47,13 @@ GYM_ENVIRONMENTS = {
         'default': lambda: gym.envs.make('Swimmer-v2')
     },
     'ant': {
-        'default': lambda: gym.envs.make('Ant-v2')
+        'default': lambda: gym.envs.make('Ant-v2'),
+        'custom-default': CustomAntEnv,
     },
     'humanoid': {
         'default': lambda: gym.envs.make('Humanoid-v2'),
-        'standup': lambda: gym.envs.make('HumanoidStandup-v2')
+        'standup': lambda: gym.envs.make('HumanoidStandup-v2'),
+        'custom-default': CustomHumanoidEnv,
     },
     'hopper': {
         'default': lambda: gym.envs.make('Hopper-v2')

@@ -363,8 +363,18 @@ ENV_PARAMS = {
     'walker': {  # 6 DoF
     },
     'ant': {  # 8 DoF
+        'custom-default': {
+            'survive_reward': 0.0,
+            'healthy_z_range': (-np.inf, np.inf),
+            'exclude_current_positions_from_observation': False,
+        }
     },
     'humanoid': {  # 17/21 DoF (gym/rllab)
+        'custom-default': {
+            'survive_reward': 0.0,
+            'healthy_z_range': (-np.inf, np.inf),
+            'exclude_current_positions_from_observation': False,
+        }
     },
     'pusher-2d': {  # 3 DoF
         'default': {
