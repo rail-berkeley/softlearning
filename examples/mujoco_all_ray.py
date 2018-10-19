@@ -11,7 +11,7 @@ from softlearning.policies import (
     LatentSpacePolicy,
     GMMPolicy,
     UniformPolicy)
-from softlearning.samplers import get_sampler_from_params
+from softlearning.samplers.utils import get_sampler_from_variant
 from softlearning.replay_pools import (
     SimpleReplayPool,
     ExtraPolicyInfoReplayPool)
@@ -67,7 +67,7 @@ def run_experiment(variant, reporter):
 
     env = get_environment(universe, domain, task, env_params)
 
-    sampler = get_sampler_from_params(sampler_params)
+    sampler = get_sampler_from_variant(variant)
 
     if algorithm_params['store_extra_policy_info']:
         pool = ExtraPolicyInfoReplayPool(
