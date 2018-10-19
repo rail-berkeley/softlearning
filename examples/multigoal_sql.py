@@ -20,7 +20,7 @@ def test():
     })
 
     pool = SimpleReplayPool(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
         max_size=1e6)
 
@@ -38,13 +38,13 @@ def test():
 
     M = 128
     policy = StochasticNNPolicy(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
         hidden_layer_sizes=(M, M),
         squash=True)
 
     qf = NNQFunction(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
         hidden_layer_sizes=[M, M])
 

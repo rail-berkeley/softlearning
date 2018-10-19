@@ -53,7 +53,7 @@ def run_experiment(variant):
         raise ValueError
 
     pool = SimpleReplayPool(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
         max_size=variant['max_size'])
 
@@ -74,13 +74,13 @@ def run_experiment(variant):
 
     M = variant['layer_size']
     qf = NNQFunction(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
         hidden_layer_sizes=(M, M),
         name='qf_{i}'.format(i=task_id))
 
     policy = StochasticNNPolicy(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
         hidden_layer_sizes=(M, M),
         name='policy_{i}'.format(i=task_id))

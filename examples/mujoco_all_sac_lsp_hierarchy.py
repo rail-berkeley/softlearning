@@ -210,7 +210,7 @@ def run_experiment(variant):
     env = HierarchyProxyEnv(wrapped_env=base_env,
                             low_level_policy=low_level_policy)
     pool = SimpleReplayPool(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
         max_size=variant['max_size'],
     )
@@ -229,13 +229,13 @@ def run_experiment(variant):
 
     M = variant['layer_size']
     qf = NNQFunction(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
         hidden_layer_sizes=[M, M],
     )
 
     vf = NNVFunction(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         hidden_layer_sizes=[M, M],
     )
 
@@ -261,7 +261,7 @@ def run_experiment(variant):
     }
 
     policy = LatentSpacePolicy(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
         mode="train",
         squash=False,

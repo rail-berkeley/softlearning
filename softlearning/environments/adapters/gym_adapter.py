@@ -169,7 +169,6 @@ class GymAdapter(SoftlearningEnv):
         if isinstance(env.observation_space, gym.spaces.Dict):
             observation_keys = (
                 observation_keys or list(env.observation_space.spaces.keys()))
-            env = FlattenDictWrapper(env, observation_keys)
         if normalize:
             env = NormalizeActionWrapper(env)
 
@@ -178,13 +177,39 @@ class GymAdapter(SoftlearningEnv):
     @property
     def observation_space(self):
         observation_space = self._env.observation_space
-
-        if len(observation_space.shape) > 1:
-            raise NotImplementedError(
-                "Observation space ({}) is not flat, make sure to check the"
-                " implemenation. ".format(observation_space))
-
         return observation_space
+
+    @property
+    def active_observation_shape(self):
+        """Shape for the active observation based on observation_keys."""
+        if not isinstance(self._env.observation_space, gym.spaces.Dict):
+            return super(GymAdapter, self).active_observation_shape
+
+        observation_keys = (
+            self.observation_keys
+            or list(self._env.observation_space.spaces.keys()))
+
+        active_size = sum(
+            np.prod(self._env.observation_space.spaces[key].shape)
+            for key in observation_keys)
+
+        active_observation_shape = (active_size, )
+
+        return active_observation_shape
+
+    def convert_to_active_observation(self, observation):
+        if not isinstance(self._env.observation_space, gym.spaces.Dict):
+            return observation
+
+        observation_keys = (
+            self.observation_keys
+            or list(self._env.observation_space.spaces.keys()))
+
+        observation = np.concatenate([
+            observation[key] for key in observation_keys
+        ], axis=-1)
+
+        return observation
 
     @property
     def action_space(self, *args, **kwargs):
@@ -192,7 +217,7 @@ class GymAdapter(SoftlearningEnv):
         if len(action_space.shape) > 1:
             raise NotImplementedError(
                 "Action space ({}) is not flat, make sure to check the"
-                " implemenation. ".format(action_space))
+                " implemenation.".format(action_space))
         return action_space
 
     def step(self, action, *args, **kwargs):

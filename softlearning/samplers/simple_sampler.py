@@ -20,7 +20,9 @@ class SimpleSampler(Sampler):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
 
-        (action, _, _), _ = self.policy.get_action(self._current_observation)
+        (action, _, _), _ = self.policy.get_action(
+            self.env.convert_to_active_observation(self._current_observation))
+
         next_observation, reward, terminal, info = self.env.step(action)
         self._path_length += 1
         self._path_return += reward
@@ -34,18 +36,31 @@ class SimpleSampler(Sampler):
             next_observations=next_observation)
 
         if terminal or self._path_length >= self._max_path_length:
+            last_path = self.pool.last_n_batch(self._path_length)
+            self._last_n_paths.appendleft(last_path)
+
             self.policy.reset()
             self._current_observation = self.env.reset()
+
             self._path_length = 0
+            self._path_return = 0
+
             self._max_path_return = max(self._max_path_return,
                                         self._path_return)
             self._last_path_return = self._path_return
 
-            self._path_return = 0
             self._n_episodes += 1
 
         else:
             self._current_observation = next_observation
+
+        return self._current_observation, reward, terminal, info
+
+    def random_batch(self, batch_size=None, **kwargs):
+        batch_size = batch_size or self._batch_size
+        observation_keys = getattr(self.env, 'observation_keys', None)
+        return self.pool.random_batch(
+            batch_size, observation_keys=observation_keys, **kwargs)
 
     def log_diagnostics(self):
         super(SimpleSampler, self).log_diagnostics()

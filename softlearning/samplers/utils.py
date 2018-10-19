@@ -1,6 +1,7 @@
-import time
-
 import numpy as np
+
+from softlearning.replay_pools import SimpleReplayPool
+from .simple_sampler import SimpleSampler
 
 
 def rollout(env,
@@ -10,44 +11,28 @@ def rollout(env,
             callback=None,
             render_mode='human',
             break_on_terminal=True):
+    observation_space = env.observation_space
+    action_space = env.action_space
+
+    pool = SimpleReplayPool(
+        observation_space, action_space, max_size=path_length)
+    sampler = SimpleSampler(
+        max_path_length=path_length,
+        min_pool_size=None,
+        batch_size=None)
+
+    sampler.initialize(env, policy, pool)
+
     images = []
-
-    observation_shape = env.observation_space.shape
-    action_shape = env.action_space.shape
-
-    assert len(observation_shape) == 1, observation_shape
-    Do = observation_shape[0]
-    assert len(action_shape) == 1, action_shape
-    Da = action_shape[0]
-
-    observation = env.reset()
-    policy.reset()
-
-    observations = np.zeros((path_length + 1, Do))
-    actions = np.zeros((path_length, Da))
-    terminals = np.zeros((path_length, ))
-    rewards = np.zeros((path_length, ))
-    agent_infos = []
     env_infos = []
 
-    t = 0  # To make edge case path_length=0 work.
+    t = 0
     for t in range(path_length):
-        (action, _, _), agent_info = policy.get_action(observation)
+        observation, reward, terminal, info = sampler.sample()
+        env_infos.append(info)
 
         if callback is not None:
-            callback(observation, action)
-
-        next_obs, reward, terminal, env_info = env.step(action)
-
-        agent_infos.append(agent_info)
-        env_infos.append(env_info)
-
-        actions[t] = action
-        terminals[t] = terminal
-        rewards[t] = reward
-        observations[t] = observation
-
-        observation = next_obs
+            callback(observation)
 
         if render:
             if render_mode == 'rgb_array':
@@ -57,22 +42,13 @@ def rollout(env,
                 env.render()
 
         if terminal:
+            policy.reset()
             if break_on_terminal: break
 
-            observation = env.reset()
-            policy.reset()
+    assert pool._size == t + 1
 
-    observations[t + 1] = observation
-
-    path = {
-        'observations': observations[:t + 1],
-        'actions': actions[:t + 1],
-        'rewards': rewards[:t + 1],
-        'terminals': terminals[:t + 1],
-        'next_observations': observations[1:t + 2],
-        'agent_infos': agent_infos,
-        'env_infos': env_infos
-    }
+    path = pool.batch_by_indices(np.arange(pool._size))
+    path['env_infos'] = env_infos
 
     if render_mode == 'rgb_array':
         path['images'] = np.stack(images, axis=0)

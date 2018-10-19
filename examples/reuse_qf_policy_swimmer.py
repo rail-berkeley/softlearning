@@ -18,7 +18,7 @@ def run_experiment(variant):
     env = normalize(SwimmerEnv())
 
     pool = SimpleReplayPool(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
         max_size=1e6)
 

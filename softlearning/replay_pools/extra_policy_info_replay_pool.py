@@ -9,11 +9,11 @@ class ExtraPolicyInfoReplayPool(SimpleReplayPool, Serializable):
 
         fields = {
             'raw_actions': {
-                'shape': self._action_shape,
+                'shape': self._action_space.shape,
                 'dtype': 'float32'
             },
             'log_pis': {
-                'shape': [],
+                'shape': (),
                 'dtype': 'float32'
             }
         }
