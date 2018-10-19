@@ -1,7 +1,7 @@
 from ray import tune
 
 from softlearning.algorithms import SAC
-from softlearning.environments.utils import get_environment
+from softlearning.environments.utils import get_environment_from_variant
 from softlearning.samplers import RemoteSampler
 from softlearning.policies.gmm import GMMPolicy
 from softlearning.environments.rllab import DelayedEnv
@@ -72,11 +72,7 @@ ENV_PARAMS = {
 
 
 def run_experiment(variant):
-    universe = variant['universe']
-    task = variant['task']
-    domain = variant['domain']
-
-    env = get_environment(universe, domain, task, env_params={})
+    env = get_environment_from_variant(variant)
     env = DelayedEnv(env, delay=0.01)
 
     pool = SimpleReplayPool(

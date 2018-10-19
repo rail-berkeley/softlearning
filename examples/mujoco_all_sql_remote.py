@@ -8,7 +8,7 @@ optimizers rather then waiting for new sample to arrive.
 """
 from ray import tune
 
-from softlearning.environments.utils import get_environment
+from softlearning.environments.utils import get_environment_from_variant
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softlearning.replay_pools import SimpleReplayPool
@@ -83,10 +83,7 @@ def run_experiment(variant):
 
     assert universe in ['rllab', 'gym'], universe
 
-    task = variant['task']
-    domain = variant['domain']
-
-    env = get_environment(universe, domain, task, env_params={})
+    env = get_environment_from_variant(variant)
     env = DelayedEnv(env, delay=0.01)
 
     pool = SimpleReplayPool(

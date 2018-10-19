@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from softlearning.environments.utils import get_environment
+from softlearning.environments.utils import get_environment_from_variant
 from softlearning.algorithms import SAC
 
 from softlearning.policies import (
@@ -21,16 +21,13 @@ from examples.utils import (
 
 
 def run_experiment(variant):
-    env_params = variant['env_params']
     policy_params = variant['policy_params']
     value_fn_params = variant['value_fn_params']
     preprocessor_params = variant['preprocessor_params']
     algorithm_params = variant['algorithm_params']
     replay_pool_params = variant['replay_pool_params']
 
-    universe = variant['universe']
-    task = variant['task']
-    domain = variant['domain']
+    env = get_environment_from_variant(variant)
 
     preprocessor_kwargs = preprocessor_params.get('kwargs', {})
     if 'num_conv_layers' in preprocessor_kwargs:
@@ -42,8 +39,6 @@ def run_experiment(variant):
         conv_kernel_sizes = (kernel_size_per_layer, ) * num_conv_layers
         preprocessor_kwargs['conv_filters'] = conv_filters
         preprocessor_kwargs['conv_kernel_sizes'] = conv_kernel_sizes
-
-    env = get_environment(universe, domain, task, env_params)
 
     sampler = get_sampler_from_variant(variant)
 

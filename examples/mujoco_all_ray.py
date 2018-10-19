@@ -2,7 +2,7 @@ import os
 import ray
 from ray import tune
 
-from softlearning.environments.utils import get_environment
+from softlearning.environments.utils import get_environment_from_variant
 from softlearning.algorithms import SAC
 
 from softlearning.misc.utils import set_seed, datestamp, datetimestamp
@@ -32,17 +32,11 @@ def run_experiment(variant, reporter):
     setup_rllab_logger(variant)
     set_seed(variant['run_params']['seed'])
 
-    env_params = variant['env_params']
     policy_params = variant['policy_params']
     value_fn_params = variant['value_fn_params']
     preprocessor_params = variant['preprocessor_params']
     algorithm_params = variant['algorithm_params']
     replay_pool_params = variant['replay_pool_params']
-    sampler_params = variant['sampler_params']
-
-    universe = variant['universe']
-    task = variant['task']
-    domain = variant['domain']
 
     preprocessor_kwargs = preprocessor_params.get('kwargs', {})
     if 'num_conv_layers' in preprocessor_kwargs:
@@ -65,8 +59,7 @@ def run_experiment(variant, reporter):
         preprocessor_kwargs[
             'dense_hidden_layer_sizes'] = dense_hidden_layer_sizes
 
-    env = get_environment(universe, domain, task, env_params)
-
+    env = get_environment_from_variant(variant)
     sampler = get_sampler_from_variant(variant)
 
     if algorithm_params['store_extra_policy_info']:

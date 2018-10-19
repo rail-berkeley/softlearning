@@ -1,6 +1,6 @@
 from ray import tune
 
-from softlearning.environments.utils import get_environment
+from softlearning.environments.utils import get_environment_from_variant
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softlearning.replay_pools import SimpleReplayPool
@@ -79,11 +79,7 @@ ENV_PARAMS = {
 
 
 def run_experiment(variant):
-    universe = variant['universe']
-    task = variant['task']
-    domain = variant['domain']
-
-    env = get_environment(universe, domain, task, env_params={})
+    env = get_environment_from_variant(variant)
 
     pool = SimpleReplayPool(
         observation_shape=env.active_observation_shape,
