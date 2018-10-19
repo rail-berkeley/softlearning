@@ -74,20 +74,16 @@ class SimpleReplayPool(FlexibleReplayPool, Serializable):
             return super(SimpleReplayPool, self).add_samples(
                 num_samples, **kwargs)
 
-        try:
-            kwargs.update(
-                **{
-                    'observations.{}'.format(key): value
-                    for key, value in kwargs['observations'].items()
-                },
-                **{
-                    'next_observations.{}'.format(key): value
-                    for key, value in kwargs['next_observations'].items()
-                },
-            )
-        except Exception as e:
-            from pdb import set_trace; from pprint import pprint; set_trace()
-            pass
+        kwargs.update(
+           **{
+               'observations.{}'.format(key): value
+               for key, value in kwargs['observations'].items()
+           },
+           **{
+               'next_observations.{}'.format(key): value
+               for key, value in kwargs['next_observations'].items()
+           },
+        )
 
         del kwargs['observations']
         del kwargs['next_observations']
