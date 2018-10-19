@@ -5,7 +5,7 @@ from ray import tune
 from softlearning.environments.utils import get_environment_from_variant
 from softlearning.algorithms import SAC
 
-from softlearning.misc.utils import set_seed, datestamp, datetimestamp
+from softlearning.misc.utils import set_seed, setup_rllab_logger
 from softlearning.policies import (
     GaussianPolicy,
     LatentSpacePolicy,
@@ -21,7 +21,6 @@ from examples.variants import get_variant_spec_image, get_variant_spec
 from examples.utils import (
     parse_universe_domain_task,
     get_parser,
-    setup_rllab_logger,
     launch_experiments_local,
     launch_experiments_ray)
 

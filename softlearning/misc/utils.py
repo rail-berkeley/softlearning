@@ -5,11 +5,46 @@ import random
 
 import tensorflow as tf
 import numpy as np
-from serializable import Serializable
 
 
 PROJECT_PATH = os.path.dirname(
     os.path.realpath(os.path.join(__file__, '..', '..')))
+
+
+DEFAULT_SNAPSHOT_MODE = 'none'
+DEFAULT_SNAPSHOT_GAP = 1000
+
+
+def setup_rllab_logger(variant):
+    """Temporary setup for rllab logger previously handled by run_experiment.
+
+    TODO.hartikainen: Remove this once we have gotten rid of rllab logger.
+    """
+
+    from rllab.misc import logger
+
+    run_params = variant['run_params']
+
+    ray_log_dir = os.getcwd()
+    log_dir = os.path.join(ray_log_dir, 'rllab-logger')
+
+    tabular_log_file = os.path.join(log_dir, 'progress.csv')
+    text_log_file = os.path.join(log_dir, 'debug.log')
+    variant_log_file = os.path.join(log_dir, 'variant.json')
+
+    logger.log_variant(variant_log_file, variant)
+    logger.add_text_output(text_log_file)
+    logger.add_tabular_output(tabular_log_file)
+
+    logger.set_snapshot_dir(log_dir)
+    logger.set_snapshot_mode(
+        run_params.get('snapshot_mode', DEFAULT_SNAPSHOT_MODE))
+    logger.set_snapshot_gap(
+        run_params.get('snapshot_gap', DEFAULT_SNAPSHOT_GAP))
+    logger.set_log_tabular_only(False)
+
+    # TODO.hartikainen: need to remove something, or push_prefix, pop_prefix?
+    # logger.push_prefix("[%s] " % args.exp_name)
 
 
 def set_seed(seed):
