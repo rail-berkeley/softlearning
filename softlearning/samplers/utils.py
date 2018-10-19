@@ -1,7 +1,22 @@
+import sys
+
 import numpy as np
 
 from softlearning.replay_pools import SimpleReplayPool
 from .simple_sampler import SimpleSampler
+
+
+def get_sampler_from_variant(variant):
+    sampler_params = variant['sampler_params']
+    sampler_type = sampler_params['type']
+    # Use getattr instead of import here since otherwise we would
+    # have a circular import between remote_sampler and utils.
+    SamplerClass = getattr(sys.modules[__package__], sampler_type)
+    sampler_args = sampler_params.get('args', ())
+    sampler_kwargs = sampler_params.get('kwargs', {})
+    sampler = SamplerClass(*sampler_args, **sampler_kwargs)
+
+    return sampler
 
 
 def rollout(env,
