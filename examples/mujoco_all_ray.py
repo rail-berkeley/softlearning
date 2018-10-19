@@ -44,19 +44,7 @@ def run_experiment(variant, reporter):
     task = variant['task']
     domain = variant['domain']
 
-    # Unfortunately we have to do hack like this because ray logger fails
-    # if our variant has parentheses.
-    if 'image_size' in env_params:
-        env_params['image_size'] = tuple(
-            int(dim) for dim in env_params['image_size'].split('x'))
-
     preprocessor_kwargs = preprocessor_params.get('kwargs', {})
-    if 'image_size' in preprocessor_kwargs:
-        preprocessor_kwargs['image_size'] = tuple(
-            int(dim) for dim in preprocessor_kwargs['image_size'].split('x'))
-    if 'hidden_layer_sizes' in preprocessor_kwargs:
-        preprocessor_kwargs['hidden_layer_sizes'] = tuple(
-            int(dim) for dim in preprocessor_kwargs['hidden_layer_sizes'].split('x'))
     if 'num_conv_layers' in preprocessor_kwargs:
         num_conv_layers = preprocessor_kwargs.pop('num_conv_layers')
         filters_per_layer = preprocessor_kwargs.pop('filters_per_layer')
