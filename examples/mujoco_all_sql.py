@@ -19,7 +19,7 @@ COMMON_PARAMS = {
     'discount': 0.99,
     'layer_size': 128,
     'batch_size': 128,
-    'max_size': 1E6,
+    'max_pool_size': 1E6,
     'n_train_repeat': 1,
     'epoch_length': 1000,
     'kernel_particles': 16,
@@ -49,7 +49,7 @@ ENV_PARAMS = {
         'max_path_length': 1000,
         'n_epochs': 10000,
         'reward_scale': 30,
-        'max_size': 1E7,
+        'max_pool_size': 1E7,
     },
     'walker': {  # 6 DoF
         'env_name': 'Walker2d-v1',
@@ -82,8 +82,8 @@ def run_experiment(variant):
     env = get_environment_from_variant(variant)
 
     pool = SimpleReplayPool(
-        observation_shape=env.active_observation_shape,
-        action_shape=env.action_space.shape,
+        observation_space=env.observation_space,
+        action_space=env.action_space,
         max_size=variant['max_pool_size'])
 
     sampler = SimpleSampler(
@@ -137,14 +137,17 @@ def main():
 
     universe, domain, task = parse_universe_domain_task(args)
 
-    variant_spec = dict(
-        COMMON_PARAMS,
+    variant_spec = {
+        **COMMON_PARAMS,
         **ENV_PARAMS[domain],
         **{
+            'prefix': '{}/{}/{}'.format(universe, domain, task),
             'universe': universe,
             'task': task,
             'domain': domain,
-        })
+            'env_params': {},
+        }
+    }
 
     launch_experiments_rllab(variant_spec, args, run_experiment)
 

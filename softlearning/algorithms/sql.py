@@ -317,7 +317,7 @@ class SQL(RLAlgorithm):
         return feeds
 
     @overrides
-    def log_diagnostics(self, iteration, batch):
+    def log_diagnostics(self, iteration, batch, paths):
         """Record diagnostic information.
 
         Records the mean and standard deviation of Q-function and the
