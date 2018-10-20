@@ -58,10 +58,11 @@ ALGORITHM_CLASSES = {
 }
 
 
-def get_algorithm_from_variant(algorithm_type,
-                               variant,
+def get_algorithm_from_variant(variant,
                                *args,
                                **kwargs):
+    algorithm_params = variant['algorithm_params']
+    algorithm_type = algorithm_params.pop('type')
     algorithm = ALGORITHM_CLASSES[algorithm_type](
         variant, *args, **kwargs)
 

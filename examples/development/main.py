@@ -37,7 +37,6 @@ def run_experiment(variant, reporter=None):
     initial_exploration_policy = get_policy('UniformPolicy', env)
 
     algorithm = get_algorithm_from_variant(
-        algorithm_type='SAC',
         variant=variant,
         env=env,
         policy=policy,

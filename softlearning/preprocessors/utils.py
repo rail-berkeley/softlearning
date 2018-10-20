@@ -45,6 +45,9 @@ PREPROCESSOR_FUNCTIONS = {
 def get_preprocessor_from_variant(variant):
     preprocessor_params = variant['preprocessor_params']
 
+    if not preprocessor_params:
+        return None
+
     preprocessor = PREPROCESSOR_FUNCTIONS[
         preprocessor_params.get('type')](variant)
 

@@ -17,9 +17,9 @@ DEFAULT_REPLAY_POOL = 'SimpleReplayPool'
 
 
 def get_replay_pool_from_variant(variant, env):
-    replay_pool_params = variant['replay_pool_params']
+    replay_pool_params = variant['replay_pool_params'].copy()
 
-    pool_type = replay_pool_params.get('type', DEFAULT_REPLAY_POOL)
+    pool_type = replay_pool_params.pop('type', DEFAULT_REPLAY_POOL)
 
     pool = POOL_CLASSES[pool_type](
         observation_space=env.observation_space,

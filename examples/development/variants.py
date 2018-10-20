@@ -264,6 +264,8 @@ PREPROCESSOR_PARAMS.update({
 })
 
 ALGORITHM_PARAMS_BASE = {
+    'type': 'SAC',
+
     'lr': 3e-4,
     'discount': tune.grid_search([0.99]),
     'target_update_interval': 1,
