@@ -1,3 +1,7 @@
+import os
+
+from ray import tune
+
 from softlearning.environments.utils import get_environment_from_variant
 from softlearning.algorithms.utils import get_algorithm_from_variant
 from softlearning.policies.utils import get_policy_from_variant, get_policy
@@ -14,7 +18,8 @@ from examples.variants import get_variant_spec, get_variant_spec_image
 from examples.utils import (
     parse_universe_domain_task,
     get_parser,
-    launch_experiments_rllab)
+    launch_experiments_rllab,
+    launch_experiments_ray)
 
 
 def run_experiment(variant, reporter=None):
@@ -63,7 +68,17 @@ def main():
         variant_spec = get_variant_spec(universe, domain, task, args.policy)
 
     variant_spec['mode'] = args.mode
-    launch_experiments_rllab(variant_spec, args, run_experiment)
+
+    local_dir = os.path.join('~/ray_results', universe, domain, task)
+
+    if args.mode == 'local':
+        launch_experiments_rllab(variant_spec, args, run_experiment)
+    elif 'rllab' in args.mode:
+        args.mode = args.mode.replace('rllab', '').strip('-')
+        launch_experiments_rllab(variant_spec, args, run_experiment)
+    else:
+        launch_experiments_ray(
+            [variant_spec], args, local_dir, run_experiment)
 
 
 if __name__ == '__main__':
