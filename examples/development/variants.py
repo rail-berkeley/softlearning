@@ -176,13 +176,13 @@ POLICY_PARAMS_FOR_DOMAIN.update({
 
 PREPROCESSOR_PARAMS_BASE = {
     'LatentSpacePolicy': {
-        'function_name': 'feedforward'
+        'type': 'FeedforwardNetPreprocessorV2'
     },
     'GMMPolicy': {
-        'function_name': None
+        'type': None
     },
     'GaussianPolicy': {
-        'function_name': None
+        'type': None
     },
 }
 
@@ -243,7 +243,7 @@ LSP_PREPROCESSOR_PARAMS = {
         }
     },
     'pusher-2d': {
-        'function_name': 'feedforward',
+        'type': 'FeedforwardNetPreprocessorV2',
         'kwargs': {
             'hidden_layer_sizes': (M, M),
             'output_size': 6,
@@ -529,7 +529,7 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
 
     if 'image' in task or 'image' in domain.lower():
         variant_spec['preprocessor_params'].update({
-            'function_name': 'simple_convnet',
+            'type': 'ConvnetPreprocessor',
             'kwargs': {
                 'image_size': variant_spec['env_params']['image_size'],
                 'output_size': 18,

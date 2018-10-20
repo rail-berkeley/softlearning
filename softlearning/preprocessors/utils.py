@@ -36,8 +36,8 @@ def get_feedforward_preprocessor(variant):
 
 
 PREPROCESSOR_FUNCTIONS = {
-    'simple_convnet': get_simple_convnet_preprocessor,
-    'feedforward': get_feedforward_preprocessor,
+    'ConvnetPreprocessor': get_simple_convnet_preprocessor,
+    'FeedforwardNetPreprocessorV2': get_feedforward_preprocessor,
     None: lambda *args, **kwargs: None
 }
 
@@ -46,6 +46,6 @@ def get_preprocessor_from_variant(variant):
     preprocessor_params = variant['preprocessor_params']
 
     preprocessor = PREPROCESSOR_FUNCTIONS[
-        preprocessor_params.get('function_name')](variant)
+        preprocessor_params.get('type')](variant)
 
     return preprocessor
