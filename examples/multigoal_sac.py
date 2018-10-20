@@ -1,6 +1,11 @@
-import numpy as np
+import os
 
-from rllab.misc.instrument import run_experiment_lite
+import argparse
+
+import numpy as np
+import ray
+from ray import tune
+
 from softlearning.algorithms import SAC
 from softlearning.environments.utils import get_environment
 from softlearning.misc.plotter import QFPolicyPlotter
@@ -9,10 +14,13 @@ from softlearning.samplers import SimpleSampler
 from softlearning.policies import GaussianPolicy, GMMPolicy, LatentSpacePolicy
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions import NNQFunction, NNVFunction
-from examples.utils import get_parser
+from examples.utils import (
+    get_parser,
+    launch_experiments_rllab,
+    launch_experiments_ray)
 
 
-def run(variant):
+def run_experiment(variant, reporter=None):
     env = get_environment('rllab', 'multigoal', 'default', {
         'actuation_cost_coeff': 1,
         'distance_cost_coeff': 0.1,
@@ -21,8 +29,8 @@ def run(variant):
     })
 
     pool = SimpleReplayPool(
-        observation_shape=env.active_observation_shape,
-        action_shape=env.action_space.shape,
+        observation_space=env.observation_space,
+        action_space=env.action_space,
         max_size=1e6)
 
     sampler = SimpleSampler(
@@ -39,7 +47,6 @@ def run(variant):
     }
 
     M = 128
-
     q_functions = tuple(
         NNQFunction(
             observation_shape=env.active_observation_shape,
@@ -90,7 +97,8 @@ def run(variant):
         policy=policy,
         obs_lst=np.array([[-2.5, 0.0],
                           [0.0, 0.0],
-                          [2.5, 2.5]]),
+                          [2.5, 2.5],
+                          [-2.5, -2.5]]),
         default_action=[np.nan, np.nan],
         n_samples=100
     )
@@ -110,29 +118,35 @@ def run(variant):
         discount=0.99,
         tau=1e-4,
 
-        save_full_state=True
+        save_full_state=True,
     )
-    # Do the training
+
     for epoch, mean_return in algorithm.train():
-        pass
+        if reporter is not None:
+            reporter(timesteps_total=epoch, mean_accuracy=mean_return)
 
 
 def main():
     args = get_parser().parse_args()
-    variant = {
-        'policy_type': args.policy
+
+    universe, domain, task = 'general', 'multigoal', 'default'
+    local_dir = os.path.join(
+        '~/ray_results', universe, domain, task)
+
+    variant_spec = {
+        'seed': 1,
+        'prefix': '{}/{}/{}'.format(universe, domain, task),
+        'policy_type': args.policy,
+        'local_dir': local_dir,
     }
 
-    run_experiment_lite(
-        run,
-        exp_prefix='multigoal',
-        exp_name=datetimestamp(),
-        variant=variant,
-        snapshot_mode='last',
-        n_parallel=1,
-        seed=1,
-        mode='local',
-    )
+    if args.mode == 'local':
+        launch_experiments_rllab(variant_spec, args, run_experiment)
+    elif 'rllab' in args.mode:
+        args.mode = args.mode.replace('rllab', '').strip('-')
+        launch_experiments_rllab(variant_spec, args, run_experiment)
+    else:
+        launch_experiments_ray([variant_spec], args, local_dir, run_experiment)
 
 
 if __name__ == "__main__":
