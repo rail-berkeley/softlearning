@@ -156,7 +156,7 @@ def run_experiment(variant, reporter):
         tau=algorithm_params['tau'],
         reparameterize=policy_params['reparameterize'],
         target_update_interval=algorithm_params['target_update_interval'],
-        action_prior=policy_params['action_prior'],
+        action_prior=algorithm_params['action_prior'],
         save_full_state=False,
         store_extra_policy_info=algorithm_params['store_extra_policy_info'])
 

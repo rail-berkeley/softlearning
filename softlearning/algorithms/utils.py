@@ -1,11 +1,11 @@
-from softlearning.algorithms import MetricLearnerAlgorithm
+from .sac import SAC
 
 
 def create_metric_learner_algorithm(variant,
                                     env,
                                     policy,
-                                    Qs,
-                                    V,
+                                    q_functions,
+                                    vf,
                                     initial_exploration_policy,
                                     replay_pool,
                                     sampler,
@@ -21,11 +21,9 @@ def create_metric_learner_algorithm(variant,
         policy=policy,
         initial_exploration_policy=initial_exploration_policy,
         pool=replay_pool,
-        q_functions=Qs,
-        vf=V,
+        q_functions=q_functions,
+        vf=vf,
         reparameterize=policy_params['reparameterize'],
-        action_prior=policy_params['action_prior'],
-        save_full_state=False,
         **algorithm_params,
         **kwargs)
 
@@ -36,8 +34,27 @@ def create_metric_learner_algorithm(variant,
     return algorithm
 
 
+def create_SAC_algorithm(variant, *args, sampler, **kwargs):
+    algorithm_params = variant['algorithm_params']
+    policy_params = variant['policy_params']
+
+    base_kwargs = {
+        'sampler': sampler,
+        **algorithm_params.pop('base_kwargs'),
+    }
+
+    algorithm = SAC(
+        base_kwargs=base_kwargs,
+        **algorithm_params,
+        reparameterize=policy_params['reparameterize'],
+        **kwargs)
+
+    return algorithm
+
+
 ALGORITHM_CLASSES = {
-    'MetricLearnerAlgorithm': create_metric_learner_algorithm
+    'MetricLearnerAlgorithm': create_metric_learner_algorithm,
+    'SAC': create_SAC_algorithm,
 }
 
 

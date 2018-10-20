@@ -7,82 +7,119 @@ M = 256
 REPARAMETERIZE = True
 
 LSP_POLICY_PARAMS_BASE = {
-    'type': 'lsp',
-    'coupling_layers': 2,
-    's_t_layers': 1,
-    'action_prior': 'uniform',
+    'type': 'LatentSpacePolicy',
     'reparameterize': REPARAMETERIZE,
     'squash': True
 }
 
+NUM_COUPLING_LAYERS = 2
+
 LSP_POLICY_PARAMS_FOR_DOMAIN = {
     'swimmer': {  # 2 DoF
-        'preprocessing_layer_sizes': (M, M, 4),
-        's_t_units': 2,
+        'bijector_config': {
+            'num_coupling_layers': NUM_COUPLING_LAYERS,
+            'translation_hidden_sizes': (2, ),
+            'scale_hidden_sizes': (2, ),
+        },
     },
     'hopper': {  # 3 DoF
-        'preprocessing_layer_sizes': (M, M, 6),
-        's_t_units': 3,
+        'bijector_config': {
+            'num_coupling_layers': NUM_COUPLING_LAYERS,
+            'translation_hidden_sizes': (3, ),
+            'scale_hidden_sizes': (3, ),
+        },
     },
     'half-cheetah': {  # 6 DoF
-        'preprocessing_layer_sizes': (M, M, 12),
-        's_t_units': 6,
+        'bijector_config': {
+            'num_coupling_layers': NUM_COUPLING_LAYERS,
+            'translation_hidden_sizes': (6, ),
+            'scale_hidden_sizes': (6, ),
+        },
     },
     'walker': {  # 6 DoF
-        'preprocessing_layer_sizes': (M, M, 12),
-        's_t_units': 6,
+        'bijector_config': {
+            'num_coupling_layers': NUM_COUPLING_LAYERS,
+            'translation_hidden_sizes': (6, ),
+            'scale_hidden_sizes': (6, ),
+        },
     },
     'ant': {  # 8 DoF
-        'preprocessing_layer_sizes': (M, M, 16),
-        's_t_units': 8,
+        'bijector_config': {
+            'num_coupling_layers': NUM_COUPLING_LAYERS,
+            'translation_hidden_sizes': (8, ),
+            'scale_hidden_sizes': (8, ),
+        },
     },
     'humanoid': {
-        'preprocessing_layer_sizes': (M, M, 42),
-        's_t_units': 21,
+        'bijector_config': {
+            'num_coupling_layers': NUM_COUPLING_LAYERS,
+            'translation_hidden_sizes': (21, ),
+            'scale_hidden_sizes': (21, ),
+        },
     },
     'pusher-2d': {  # 3 DoF
-        's_t_units': 3,
+        'bijector_config': {
+            'num_coupling_layers': NUM_COUPLING_LAYERS,
+            'translation_hidden_sizes': (3, ),
+            'scale_hidden_sizes': (3, ),
+        },
     },
     'HandManipulatePen': {  # 20 DoF
-        'preprocessing_layer_sizes': (M, M, 40),
-        's_t_units': 128,
+        'bijector_config': {
+            'num_coupling_layers': NUM_COUPLING_LAYERS,
+            'translation_hidden_sizes': (128, ),
+            'scale_hidden_sizes': (128, ),
+        },
     },
     'HandManipulateEgg': {  # 20 DoF
-        'preprocessing_layer_sizes': (M, M, 40),
-        's_t_units': 128,
+        'bijector_config': {
+            'num_coupling_layers': NUM_COUPLING_LAYERS,
+            'translation_hidden_sizes': (128, ),
+            'scale_hidden_sizes': (128, ),
+        },
     },
     'HandManipulateBlock': {  # 20 DoF
-        'preprocessing_layer_sizes': (M, M, 40),
-        's_t_units': 128,
+        'bijector_config': {
+            'num_coupling_layers': NUM_COUPLING_LAYERS,
+            'translation_hidden_sizes': (128, ),
+            'scale_hidden_sizes': (128, ),
+        },
     },
     'HandReach': {  # 20 DoF
-        'preprocessing_layer_sizes': (M, M, 40),
-        's_t_units': 128,
+        'bijector_config': {
+            'num_coupling_layers': NUM_COUPLING_LAYERS,
+            'translation_hidden_sizes': (128, ),
+            'scale_hidden_sizes': (128, ),
+        },
     },
     'DClaw3': {  # 9 DoF
-        'preprocessing_layer_sizes': (M, M, 18),
-        's_t_units': 128,
+        'bijector_config': {
+            'num_coupling_layers': NUM_COUPLING_LAYERS,
+            'translation_hidden_sizes': (128, ),
+            'scale_hidden_sizes': (128, ),
+        },
     },
     'ImageDClaw3': {  # 9 DoF
-        'preprocessing_layer_sizes': (M, M, 18),
-        's_t_units': 128,
+        'bijector_config': {
+            'num_coupling_layers': NUM_COUPLING_LAYERS,
+            'translation_hidden_sizes': (128, ),
+            'scale_hidden_sizes': (128, ),
+        },
     },
 }
 
 GMM_POLICY_PARAMS_BASE = {
-    'type': 'gmm',
+    'type': 'GMMPolicy',
     'K': 1,
     'reg': 1e-3,
-    'action_prior': 'uniform',
     'reparameterize': False  # GMM can't be parameterized
 }
 
 GAUSSIAN_POLICY_PARAMS_BASE = {
-    'type': 'gaussian',
+    'type': 'GaussianPolicy',
     'reg': 1e-3,
-    'action_prior': 'uniform',
     'reparameterize': REPARAMETERIZE,
-    'hidden_layer_width': tune.grid_search([M])
+    'hidden_layer_sizes': (M, M)
 }
 
 GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {
@@ -113,29 +150,51 @@ GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {
 }
 
 POLICY_PARAMS_BASE = {
-    'lsp': LSP_POLICY_PARAMS_BASE,
-    'gmm': GMM_POLICY_PARAMS_BASE,
-    'gaussian': GAUSSIAN_POLICY_PARAMS_BASE,
+    'LatentSpacePolicy': LSP_POLICY_PARAMS_BASE,
+    'GMMPolicy': GMM_POLICY_PARAMS_BASE,
+    'GaussianPolicy': GAUSSIAN_POLICY_PARAMS_BASE,
 }
+
+POLICY_PARAMS_BASE.update({
+    'lsp': POLICY_PARAMS_BASE['LatentSpacePolicy'],
+    'gmm': POLICY_PARAMS_BASE['GMMPolicy'],
+    'gaussian': POLICY_PARAMS_BASE['GaussianPolicy'],
+})
+
 
 POLICY_PARAMS_FOR_DOMAIN = {
-    'lsp': LSP_POLICY_PARAMS_FOR_DOMAIN,
-    'gmm': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
-    'gaussian': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
+    'LatentSpacePolicy': LSP_POLICY_PARAMS_FOR_DOMAIN,
+    'GMMPolicy': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
+    'GaussianPolicy': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
 }
+
+POLICY_PARAMS_FOR_DOMAIN.update({
+    'lsp': POLICY_PARAMS_FOR_DOMAIN['LatentSpacePolicy'],
+    'gmm': POLICY_PARAMS_FOR_DOMAIN['GMMPolicy'],
+    'gaussian': POLICY_PARAMS_FOR_DOMAIN['GaussianPolicy'],
+})
 
 PREPROCESSOR_PARAMS_BASE = {
-    'function_name': None
+    'LatentSpacePolicy': {
+        'function_name': 'feedforward'
+    },
+    'GMMPolicy': {
+        'function_name': None
+    },
+    'GaussianPolicy': {
+        'function_name': None
+    },
 }
 
+PREPROCESSOR_PARAMS_BASE.update({
+    'lsp': PREPROCESSOR_PARAMS_BASE['LatentSpacePolicy'],
+    'gmm': PREPROCESSOR_PARAMS_BASE['GMMPolicy'],
+    'gaussian': PREPROCESSOR_PARAMS_BASE['GaussianPolicy'],
+})
+
+
 LSP_PREPROCESSOR_PARAMS = {
-    'swimmer-gym': {  # 2 DoF
-        'kwargs': {
-            'hidden_layer_sizes': (M, M),
-            'output_size': 4,  # 2*DoF
-        }
-    },
-    'swimmer-rllab': {  # 2 DoF
+    'swimmer': {  # 2 DoF
         'kwargs': {
             'hidden_layer_sizes': (M, M),
             'output_size': 4,  # 2*DoF
@@ -193,10 +252,16 @@ LSP_PREPROCESSOR_PARAMS = {
 }
 
 PREPROCESSOR_PARAMS = {
-    'lsp': LSP_PREPROCESSOR_PARAMS,
-    'gmm': {},
-    'gaussian': {},
+    'LatentSpacePolicy': LSP_PREPROCESSOR_PARAMS,
+    'GMMPolicy': {},
+    'GaussianPolicy': {},
 }
+
+PREPROCESSOR_PARAMS.update({
+    'lsp': PREPROCESSOR_PARAMS['LatentSpacePolicy'],
+    'gmm': PREPROCESSOR_PARAMS['GMMPolicy'],
+    'gaussian': PREPROCESSOR_PARAMS['GaussianPolicy'],
+})
 
 VALUE_FUNCTION_PARAMS = {
     'layer_size': M,
@@ -211,6 +276,8 @@ ALGORITHM_PARAMS_BASE = {
     'target_entropy': 'auto',
     'reward_scale': 1.0,
     'store_extra_policy_info': False,
+    'action_prior': 'uniform',
+    'save_full_state': False,
 
     'base_kwargs': {
         'epoch_length': 1000,
@@ -441,7 +508,7 @@ def get_variant_spec(universe, domain, task, policy):
         ),
         'value_fn_params': VALUE_FUNCTION_PARAMS,
         'preprocessor_params': deep_update(
-            PREPROCESSOR_PARAMS_BASE,
+            PREPROCESSOR_PARAMS_BASE[policy],
             PREPROCESSOR_PARAMS[policy].get(domain, {}),
         ),
         'algorithm_params': deep_update(
