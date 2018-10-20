@@ -263,11 +263,6 @@ PREPROCESSOR_PARAMS.update({
     'gaussian': PREPROCESSOR_PARAMS['GaussianPolicy'],
 })
 
-VALUE_FUNCTION_PARAMS = {
-    'layer_size': M,
-
-}
-
 ALGORITHM_PARAMS_BASE = {
     'lr': 3e-4,
     'discount': tune.grid_search([0.99]),
@@ -506,7 +501,14 @@ def get_variant_spec(universe, domain, task, policy):
             POLICY_PARAMS_BASE[policy],
             POLICY_PARAMS_FOR_DOMAIN[policy].get(domain, {})
         ),
-        'value_fn_params': VALUE_FUNCTION_PARAMS,
+        'V_params': {
+            'type': 'NNVFunction',
+            'hidden_layer_sizes': (M, M),
+        },
+        'Q_params': {
+            'type': 'NNQFunction',
+            'hidden_layer_sizes': (M, M),
+        },
         'preprocessor_params': deep_update(
             PREPROCESSOR_PARAMS_BASE[policy],
             PREPROCESSOR_PARAMS[policy].get(domain, {}),
