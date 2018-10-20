@@ -502,11 +502,11 @@ def get_variant_spec(universe, domain, task, policy):
             POLICY_PARAMS_FOR_DOMAIN[policy].get(domain, {})
         ),
         'V_params': {
-            'type': 'NNVFunction',
+            'type': 'feedforward_V_function',
             'hidden_layer_sizes': (M, M),
         },
         'Q_params': {
-            'type': 'NNQFunction',
+            'type': 'double_feedforward_Q_function',
             'hidden_layer_sizes': (M, M),
         },
         'preprocessor_params': deep_update(

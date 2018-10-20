@@ -26,7 +26,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
                  reparameterize=False,
                  observations_preprocessor=None,
                  fix_h_on_reset=False,
-                 q_function=None,
+                 Q=None,
                  n_map_action_candidates=100,
                  name="lsp_policy"):
         """Initialize LatentSpacePolicy.
@@ -51,7 +51,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         self._squash = squash
         self._reparameterize = reparameterize
         self._fix_h_on_reset = fix_h_on_reset
-        self._q_function = q_function
+        self._Q = Q
         self._n_map_action_candidates = n_map_action_candidates
 
         self._fixed_h = None
@@ -195,9 +195,9 @@ class LatentSpacePolicy(NNPolicy, Serializable):
                 observations,
                 with_log_pis=False,
                 with_raw_actions=with_raw_actions)
-            q_values = self._q_function.eval(observations, action_candidates)
-            best_action_index = np.argmax(q_values)
+            Q_values = self._Q.predict((observations, action_candidates))
 
+            best_action_index = np.argmax(Q_values)
             best_action = action_candidates[best_action_index]
             best_raw_action = (
                 raw_action_candidates[best_action_index]

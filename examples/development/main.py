@@ -42,8 +42,8 @@ def run_experiment(variant, reporter=None):
         env=env,
         policy=policy,
         initial_exploration_policy=initial_exploration_policy,
-        q_functions=Qs,
-        vf=V,
+        Qs=Qs,
+        V=V,
         pool=replay_pool,
         sampler=sampler,
     )

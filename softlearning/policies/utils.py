@@ -6,7 +6,7 @@ from .uniform_policy import UniformPolicy
 from .gaussian_policy import GaussianPolicy
 
 
-def get_gaussian_policy(env, q_function, preprocessor, **kwargs):
+def get_gaussian_policy(env, Q, preprocessor, **kwargs):
     policy = GaussianPolicy(
         observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
@@ -15,7 +15,7 @@ def get_gaussian_policy(env, q_function, preprocessor, **kwargs):
     return policy
 
 
-def get_gmm_policy(env, q_function, **kwargs):
+def get_gmm_policy(env, Q, **kwargs):
     policy = GMMPolicy(
         observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
@@ -24,11 +24,11 @@ def get_gmm_policy(env, q_function, **kwargs):
     return policy
 
 
-def get_latent_space_policy(env, q_function, preprocessor, **kwargs):
+def get_latent_space_policy(env, Q, preprocessor, **kwargs):
     policy = LatentSpacePolicy(
         observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
-        q_function=q_function,
+        Q=Q,
         observations_preprocessor=preprocessor,
         **kwargs)
 
@@ -66,7 +66,7 @@ def get_policy_from_variant(variant, env, Qs, preprocessor):
     policy = get_policy(
         policy_type,
         env,
-        q_function=Qs[0],
+        Q=Qs[0],
         preprocessor=preprocessor,
         **policy_params)
 
