@@ -1,7 +1,5 @@
 import os
 
-from ray import tune
-
 from softlearning.environments.utils import get_environment_from_variant
 from softlearning.algorithms.utils import get_algorithm_from_variant
 from softlearning.policies.utils import get_policy_from_variant, get_policy
@@ -14,12 +12,14 @@ from softlearning.value_functions.utils import (
 
 from softlearning.misc.utils import set_seed, setup_rllab_logger
 
-from examples.variants import get_variant_spec, get_variant_spec_image
 from examples.utils import (
     parse_universe_domain_task,
     get_parser,
     launch_experiments_rllab,
     launch_experiments_ray)
+from examples.development.variants import (
+    get_variant_spec,
+    get_variant_spec_image)
 
 
 def run_experiment(variant, reporter=None):
