@@ -34,28 +34,6 @@ def feedforward_net_v2(inputs,
     return out
 
 
-def feedforward_net_template(
-        hidden_layer_sizes,
-        output_size,
-        activation=tf.nn.relu,
-        output_activation=None,
-        name="feedforward_net_template",
-        create_scope_now_=False,
-        *args,
-        **kwargs):
-    def _fn(inputs):
-        return feedforward_net_v2(
-            inputs,
-            hidden_layer_sizes,
-            output_size,
-            activation=tf.nn.relu,
-            output_activation=None,
-            *args,
-            **kwargs)
-
-    return tf.make_template(name, _fn, create_scope_now_=create_scope_now_)
-
-
 class TemplateFunction(Parameterized, Serializable, metaclass=ABCMeta):
     def __init__(self, *args, **kwargs):
         Parameterized.__init__(self)
@@ -73,17 +51,6 @@ class TemplateFunction(Parameterized, Serializable, metaclass=ABCMeta):
 
     def get_params_internal(self):
         return self._function.trainable_variables
-
-
-class FeedforwardFunction(TemplateFunction):
-    def __init__(self, *args, name='feedforward_function', **kwargs):
-        self._Serializable__initialize(locals())
-
-        super(FeedforwardFunction, self).__init__(*args, name=name, **kwargs)
-
-    @property
-    def template_function(self):
-        return feedforward_net_template
 
 
 def feedforward_net(inputs,

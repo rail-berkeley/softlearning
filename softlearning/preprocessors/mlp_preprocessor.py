@@ -5,9 +5,7 @@ from serializable import Serializable
 from sandbox.rocky.tf.core.parameterized import Parameterized
 
 from softlearning.misc.nn import (
-    MLPFunction,
     TemplateFunction,
-    feedforward_net_template,
     feedforward_net_v2,
 )
 
