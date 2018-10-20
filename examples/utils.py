@@ -184,9 +184,9 @@ def launch_experiments_rllab(variant_spec, args, run_fn):
 
         run_params = variant.get('run_params', {})
         snapshot_mode = run_params.get(
-            'snapshot_mode', variant.get('snapshot_mode'))
+            'snapshot_mode', variant.get('snapshot_mode', 'none'))
         snapshot_gap = run_params.get(
-            'snapshot_gap', variant.get('snapshot_gap'))
+            'snapshot_gap', variant.get('snapshot_gap', 0))
         sync_pkl = run_params.get('sync_pkl', variant.get('sync_pkl'))
         sync_png = run_params.get('sync_png', variant.get('sync_png', True))
         sync_log = run_params.get('sync_log', variant.get('sync_log', True))
