@@ -8,6 +8,35 @@ from sandbox.rocky.tf.core.parameterized import Parameterized
 from softlearning.misc import tf_utils
 
 
+def feedforward_model(inputs,
+                      hidden_layer_sizes,
+                      output_size,
+                      activation='relu',
+                      output_activation='linear',
+                      name=None,
+                      *args,
+                      **kwargs):
+    if isinstance(inputs, (list, tuple)):
+        concatenated = (
+            tf.keras.layers.Concatenate(axis=-1)(inputs)
+            if len(inputs) > 1
+            else inputs[0])
+    else:
+        concatenated = inputs
+
+    out = concatenated
+    for units in hidden_layer_sizes:
+        out = tf.keras.layers.Dense(
+            units, *args, activation=activation, **kwargs)(out)
+
+    out = tf.keras.layers.Dense(
+        output_size, *args, activation=output_activation, **kwargs)(out)
+
+    model = tf.keras.Model(inputs, out, name=name)
+
+    return model
+
+
 def feedforward_net_v2(inputs,
                        hidden_layer_sizes,
                        output_size,

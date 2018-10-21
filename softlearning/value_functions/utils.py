@@ -1,25 +1,8 @@
 import tensorflow as tf
 import gym
 
+from softlearning.misc.nn import feedforward_model
 from . import metric_learning
-
-
-def create_value_function(inputs, hidden_layer_sizes, name=None):
-    # concatenated = tf.keras.layers.Concatenate(axis=-1)(inputs)
-    concatenated = (
-        tf.keras.layers.Concatenate(axis=-1)(inputs)
-        if len(inputs) > 1
-        else inputs[0])
-
-    out = concatenated
-    for layer_size in hidden_layer_sizes:
-        out = tf.keras.layers.Dense(layer_size, activation='relu')(out)
-
-    out = tf.keras.layers.Dense(1, activation='linear')(out)
-
-    model = tf.keras.Model(inputs, out, name=name)
-
-    return model
 
 
 def observation_space_to_input(observation_space, name='observations'):
@@ -42,28 +25,57 @@ def action_space_to_input(action_space, name='actions'):
     return input_
 
 
-def create_feedforward_Q_function(variant, env, name='Q'):
+def create_feedforward_Q_function(observation_space,
+                                  action_space,
+                                  name='Q',
+                                  **kwargs):
     observations = observation_space_to_input(
-        env.observation_space, name='observations')
-    actions = action_space_to_input(env.action_space, name='actions')
+        observation_space, name='observations')
+    actions = action_space_to_input(action_space, name='actions')
 
     inputs = [observations, actions]
-    hidden_layer_sizes = variant['Q_params']['hidden_layer_sizes']
 
-    Q_function = create_value_function(
-        inputs, hidden_layer_sizes, name=name)
+    Q_function = feedforward_model(inputs, output_size=1, name=name, **kwargs)
 
     return Q_function
 
 
-def create_double_feedforward_Q_function(variant, env):
+def create_double_feedforward_Q_function(*args, **kwargs):
     # TODO(hartikainen): The double Q-function should support the same
     # interface as the regular ones. Implement the double min-thing
     # as a Keras layer.
     Qs = tuple(
-        create_feedforward_Q_function(variant, env, name='Q{}'.format(i))
+        create_feedforward_Q_function(*args, name='Q{}'.format(i), **kwargs)
         for i in range(2))
     return Qs
+
+
+def create_feedforward_V_function(observation_space,
+                                  name='V',
+                                  **kwargs):
+    observations = observation_space_to_input(
+        observation_space, name='observations')
+
+    inputs = [observations]
+
+    V_function = feedforward_model(inputs, output_size=1, name=name, **kwargs)
+
+    return V_function
+
+
+def create_feedforward_discriminator_function(env,
+                                              num_skills,
+                                              name='discriminator',
+                                              **kwargs):
+    observations = observation_space_to_input(
+        env.observation_space, name=name)
+
+    inputs = [observations]
+
+    discriminator = feedforward_model(
+        inputs, output_size=num_skills, **kwargs)
+
+    return discriminator
 
 
 Q_FUNCTION_FUNCTIONS = {
@@ -73,32 +85,23 @@ Q_FUNCTION_FUNCTIONS = {
 }
 
 
-def get_Q_function_from_variant(variant, env):
-    Q_params = variant['Q_params']
-    Q_function = Q_FUNCTION_FUNCTIONS[Q_params['type']](variant, env)
-    return Q_function
-
-
-def create_feedforward_V_function(variant, env, name='V'):
-    observations = observation_space_to_input(
-        env.observation_space, name='observations')
-
-    hidden_layer_sizes = variant['V_params']['hidden_layer_sizes']
-
-    inputs = [observations]
-    V_function = create_value_function(
-        inputs, hidden_layer_sizes, name=name)
-
-    return V_function
-
-
 V_FUNCTION_FUNCTIONS = {
     'feedforward_V_function': create_feedforward_V_function,
     'metric_V_function': metric_learning.create_metric_V_function,
 }
 
 
+def get_Q_function_from_variant(variant, env):
+    Q_params = variant['Q_params'].copy()
+    kwargs = Q_params.get('kwargs', {})
+    Q_function = Q_FUNCTION_FUNCTIONS[
+        Q_params['type']](env.observation_space, env.action_space, **kwargs)
+    return Q_function
+
+
 def get_V_function_from_variant(variant, env):
-    V_params = variant['V_params']
-    V_function = V_FUNCTION_FUNCTIONS[V_params['type']](variant, env)
+    V_params = variant['V_params'].copy()
+    kwargs = V_params.get('kwargs', {})
+    V_function = V_FUNCTION_FUNCTIONS[
+        V_params['type']](env.observation_space, **kwargs)
     return V_function

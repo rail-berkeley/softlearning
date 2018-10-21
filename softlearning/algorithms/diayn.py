@@ -26,8 +26,8 @@ class DIAYN(SAC):
                  env,
                  policy,
                  discriminator,
-                 qf,
-                 vf,
+                 Q,
+                 V,
                  pool,
                  plotter=None,
                  lr=3E-3,
@@ -48,8 +48,8 @@ class DIAYN(SAC):
             env (`rllab.Env`): rllab environment object.
             policy: (`rllab.NNPolicy`): A policy function approximator.
             discriminator: (`rllab.NNPolicy`): A discriminator for z.
-            qf (`ValueFunction`): Q-function approximator.
-            vf (`ValueFunction`): Soft value function approximator.
+            Q (`ValueFunction`): Q-function approximator.
+            V (`ValueFunction`): Soft value function approximator.
             pool (`PoolBase`): Replay pool to add gathered samples to.
             plotter (`QFPolicyPlotter`): Plotter instance to be used for
                 visualizing Q-function during training.
@@ -75,15 +75,17 @@ class DIAYN(SAC):
         self._env = env
         self._policy = policy
         self._discriminator = discriminator
-        self._qf = qf
-        self._vf = vf
+        self._Q = Q
+        self._V = V
+        self._V_target = tf.keras.models.clone_model(self._V)
         self._pool = pool
         self._plotter = plotter
+        self._initial_exploration_policy = None
 
         self._policy_lr = lr
         self._discriminator_lr = lr
-        self._qf_lr = lr
-        self._vf_lr = lr
+        self._Q_lr = lr
+        self._V_lr = lr
         self._scale_entropy = scale_entropy
         self._discount = discount
         self._tau = tau
@@ -110,7 +112,6 @@ class DIAYN(SAC):
         self._init_actor_update()
         self._init_critic_update()
         self._init_discriminator_update()
-        self._init_target_ops()
 
         self._sess.run(tf.global_variables_initializer())
 
@@ -172,15 +173,13 @@ class DIAYN(SAC):
         Q-function update rule.
         """
 
-        self._qf_t = self._qf.get_output_for(
-            self._obs_pl, self._action_pl, reuse=True)  # N
+        self._Q_t = self._Q([self._obs_pl, self._action_pl])  # N
 
         (obs, z_one_hot) = self._split_obs()
         if self._include_actions:
-            logits = self._discriminator.get_output_for(obs, self._action_pl,
-                                                        reuse=True)
+            logits = self._discriminator([obs, self._action_pl])
         else:
-            logits = self._discriminator.get_output_for(obs, reuse=True)
+            logits = self._discriminator([obs])
         reward_pl = -1 * tf.nn.softmax_cross_entropy_with_logits(labels=z_one_hot,
                                                                  logits=logits)
         reward_pl = tf.check_numerics(reward_pl, 'Check numerics (1): reward_pl')
@@ -192,22 +191,20 @@ class DIAYN(SAC):
             reward_pl = tf.check_numerics(reward_pl, 'Check numerics: reward_pl')
         self._reward_pl = reward_pl
 
-        with tf.variable_scope('target'):
-            vf_next_target_t = self._vf.get_output_for(self._obs_next_pl)  # N
-            self._vf_target_params = self._vf.get_params_internal()
+        V_next_target_t = self._V_target([self._obs_next_pl])  # N
+        self._V_target_params = self._V_target.trainable_variables
 
         ys = tf.stop_gradient(
-            reward_pl + (1 - self._terminal_pl) * self._discount * vf_next_target_t
+            reward_pl + (1 - self._terminal_pl) * self._discount * V_next_target_t
         )  # N
 
-        self._td_loss_t = 0.5 * tf.reduce_mean((ys - self._qf_t)**2)
+        self._td_loss_t = 0.5 * tf.reduce_mean((ys - self._Q_t)**2)
 
-        qf_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
+        Q_train_op = tf.train.AdamOptimizer(self._Q_lr).minimize(
             loss=self._td_loss_t,
-            var_list=self._qf.get_params_internal()
-        )
+            var_list=self._Q.trainable_variables)
 
-        self._training_ops.append(qf_train_op)
+        self._training_ops.append(Q_train_op)
 
     def _init_actor_update(self):
         """Create minimization operations for policy and state value functions.
@@ -225,49 +222,45 @@ class DIAYN(SAC):
         of the value function and policy function update rules.
         """
 
-        self._policy_dist = self._policy.get_distribution_for(
-            self._obs_pl, reuse=True)
-        log_pi_t = self._policy_dist.log_p_t  # N
+        actions, log_pi_t = self._policy.actions_for(
+            observations=self._obs_pl, with_log_pis=True, reuse=True)
 
-        self._vf_t = self._vf.get_output_for(self._obs_pl, reuse=True)  # N
-        self._vf_params = self._vf.get_params_internal()
+        self._V_t = self._V([self._obs_pl])
+        self._V_params = self._V.trainable_variables
 
-        log_target_t = self._qf.get_output_for(
-            self._obs_pl, tf.tanh(self._policy_dist.x_t), reuse=True)  # N
-        corr = self._squash_correction(self._policy_dist.x_t)
-        corr = tf.check_numerics(corr, 'Check numerics: corr')
-
-        scaled_log_pi = self._scale_entropy * (log_pi_t - corr)
+        log_target_t = self._Q([self._obs_pl, actions])
+        scaled_log_pi = self._scale_entropy * (log_pi_t)
 
         self._kl_surrogate_loss_t = tf.reduce_mean(log_pi_t * tf.stop_gradient(
-            scaled_log_pi - log_target_t + self._vf_t)
+            scaled_log_pi - log_target_t + self._V_t)
         )
 
-        self._vf_loss_t = 0.5 * tf.reduce_mean(
-            (self._vf_t - tf.stop_gradient(log_target_t - scaled_log_pi))**2
+        self._V_loss_t = 0.5 * tf.reduce_mean(
+            (self._V_t - tf.stop_gradient(log_target_t - scaled_log_pi))**2
         )
+
+        policy_loss = (self._kl_surrogate_loss_t
+                       + self._policy.distribution.reg_loss_t)
 
         policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
-            loss=self._kl_surrogate_loss_t + self._policy_dist.reg_loss_t,
+            loss=policy_loss,
             var_list=self._policy.get_params_internal()
         )
 
-        vf_train_op = tf.train.AdamOptimizer(self._vf_lr).minimize(
-            loss=self._vf_loss_t,
-            var_list=self._vf_params
+        V_train_op = tf.train.AdamOptimizer(self._V_lr).minimize(
+            loss=self._V_loss_t,
+            var_list=self._V_params
         )
 
         self._training_ops.append(policy_train_op)
-        self._training_ops.append(vf_train_op)
-
+        self._training_ops.append(V_train_op)
 
     def _init_discriminator_update(self):
         (obs, z_one_hot) = self._split_obs()
         if self._include_actions:
-            logits = self._discriminator.get_output_for(obs, self._action_pl,
-                                                        reuse=True)
+            logits = self._discriminator([obs, self._action_pl])
         else:
-            logits = self._discriminator.get_output_for(obs, reuse=True)
+            logits = self._discriminator([obs])
 
         self._discriminator_loss = tf.reduce_mean(
             tf.nn.softmax_cross_entropy_with_logits(labels=z_one_hot,
@@ -276,10 +269,9 @@ class DIAYN(SAC):
         optimizer = tf.train.AdamOptimizer(self._discriminator_lr)
         discriminator_train_op = optimizer.minimize(
             loss=self._discriminator_loss,
-            var_list=self._discriminator.get_params_internal()
+            var_list=self._discriminator.trainable_variables
         )
         self._training_ops.append(discriminator_train_op)
-
 
     def _get_feed_dict(self, batch):
         """Construct TensorFlow feed_dict from sample batch."""
@@ -321,7 +313,6 @@ class DIAYN(SAC):
 
         with open(filename, 'w') as f:
             json.dump(obs_vec, f)
-
 
     def _evaluate(self, epoch):
         """Perform evaluation for the current policy.
@@ -367,9 +358,8 @@ class DIAYN(SAC):
         batch = self._pool.random_batch(self._batch_size)
         self.log_diagnostics(batch)
 
-    def _train(self, env, policy, pool):
+    def _train(self, env, policy, pool, initial_exploration_policy=None):
         """When training our policy expects an augmented observation."""
-        self._init_training(env, policy, pool)
 
         with self._sess.as_default():
             observation = env.reset()
@@ -380,6 +370,8 @@ class DIAYN(SAC):
             last_path_return = 0
             max_path_return = -np.inf
             n_episodes = 0
+
+            self.sampler.initialize(env, policy, pool)
 
             if self._learn_p_z:
                 log_p_z_list = [deque(maxlen=self._max_path_length) for _ in range(self._num_skills)]
@@ -486,7 +478,6 @@ class DIAYN(SAC):
 
             env.close()
 
-
     @overrides
     def log_diagnostics(self, batch):
         """Record diagnostic information to the logger.
@@ -500,13 +491,13 @@ class DIAYN(SAC):
 
         feed_dict = self._get_feed_dict(batch)
         log_pairs = [
-            ('qf', self._qf_t),
-            ('vf', self._vf_t),
+            ('Q', self._Q_t),
+            ('V', self._V_t),
             ('bellman-error', self._td_loss_t),
             ('discriminator-loss', self._discriminator_loss),
-            ('vf-loss', self._vf_loss_t),
+            ('V-loss', self._V_loss_t),
             ('kl-surrogate-loss', self._kl_surrogate_loss_t),
-            ('policy-reg-loss', self._policy_dist.reg_loss_t),
+            ('policy-reg-loss', self._policy.distribution.reg_loss_t),
             ('discriminator_reward', self._reward_pl),
             ('log_p_z', self._log_p_z),
         ]
@@ -545,8 +536,8 @@ class DIAYN(SAC):
             return dict(
                 epoch=epoch,
                 policy=self._policy,
-                qf=self._qf,
-                vf=self._vf,
+                Q=self._Q,
+                V=self._V,
                 env=self._env,
                 discriminator=self._discriminator,
             )
@@ -556,8 +547,8 @@ class DIAYN(SAC):
 
         d = Serializable.__getstate__(self)
         d.update({
-            'qf-params': self._qf.get_param_values(),
-            'vf-params': self._vf.get_param_values(),
+            'Q-params': self._Q.get_weights(),
+            'V-params': self._V.get_weights(),
             'discriminator-params': self._discriminator.get_param_values(),
             'policy-params': self._policy.get_param_values(),
             'pool': self._pool.__getstate__(),
@@ -569,8 +560,8 @@ class DIAYN(SAC):
         """Set Serializable state fo the RLAlgorithm instance."""
 
         Serializable.__setstate__(self, d)
-        self._qf.set_param_values(d['qf-params'])
-        self._vf.set_param_values(d['qf-params'])
+        self._Q.set_weights(d['Q-params'])
+        self._V.set_weights(d['Q-params'])
         self._discriminator.set_param_values(d['discriminator-params'])
         self._policy.set_param_values(d['policy-params'])
         self._pool.__setstate__(d['pool'])

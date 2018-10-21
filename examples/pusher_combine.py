@@ -9,7 +9,6 @@ from softlearning.misc import tf_utils
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softlearning.replay_pools import UnionPool
-from softlearning.value_functions import SumQFunction
 from softlearning.policies import StochasticNNPolicy
 from softlearning.environments.rllab.pusher import PusherEnv
 from softlearning.samplers import DummySampler
@@ -39,28 +38,34 @@ ENV_PARAMS = {
 }
 
 
-def load_pool_and_qf(filename):
+def load_pool_and_Q(filename):
     with tf_utils.get_default_session().as_default():
         data = joblib.load(os.path.join(PROJECT_PATH, filename))
 
-    return data['replay_pool'], data['qf']
+    return data['replay_pool'], data['Q']
 
 
 def run_experiment(variant):
     env = normalize(PusherEnv(goal=variant.get('goal')))
 
-    pool1, qf1 = load_pool_and_qf(variant['snapshot1'])
-    pool2, qf2 = load_pool_and_qf(variant['snapshot2'])
+    pool1, Q1 = load_pool_and_Q(variant['snapshot1'])
+    pool2, Q2 = load_pool_and_Q(variant['snapshot2'])
 
     sampler = DummySampler(
         batch_size=variant['batch_size'],
         max_path_length=variant['max_path_length'])
     pool = UnionPool(pools=(pool1, pool2))
 
-    qf = SumQFunction(
+    raise NotImplementedError(
+        "TODO(hartikainen): This was temporarily deprecated by hartikainen"
+        " on 2018/10/20, due to the refactor of value functions and "
+        " algorithms. This should be change to use the Keras SumQunction"
+        " once we have implemented it.")
+
+    Q = SumQunction(
         observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
-        q_functions=(qf1, qf2))
+        q_functions=(Q1, Q2))
 
     M = variant['layer_size']
     policy = StochasticNNPolicy(
@@ -81,7 +86,7 @@ def run_experiment(variant):
         base_kwargs=base_kwargs,
         env=env,
         pool=pool,
-        qf=qf,
+        Q=Q,
         policy=policy,
         kernel_fn=adaptive_isotropic_gaussian_kernel,
         kernel_n_particles=variant['kernel_particles'],
@@ -89,8 +94,8 @@ def run_experiment(variant):
         policy_lr=variant['policy_lr'],
         save_full_state=False,
         train_policy=True,
-        train_qf=False,
-        use_saved_qf=True)
+        train_Q=False,
+        use_saved_Q=True)
 
     # Do the training
     for epoch, mean_return in algorithm.train():

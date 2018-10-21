@@ -18,7 +18,6 @@ from softlearning.environments.rllab import FixedOptionEnv
 from softlearning.samplers import rollouts
 from softlearning.policies.hierarchical_policy import FixedOptionPolicy
 from softlearning.replay_pools import SimpleReplayPool
-from softlearning.value_functions import NNQFunction, NNVFunction
 from examples.utils import (
     parse_universe_domain_task,
     get_parser,
@@ -38,7 +37,7 @@ COMMON_PARAMS = {
     'snapshot_mode': 'gap',
     'snapshot_gap': 10,
     'sync_pkl': True,
-    'use_pretrained_values': False, # Whether to use qf and vf from pretraining
+    'use_pretrained_values': False, # Whether to use Q and V from pretraining
 }
 
 TAG_KEYS = ['lr', 'use_pretrained_values']
@@ -183,31 +182,29 @@ def run_experiment(variant):
         M = variant['layer_size']
 
         if variant['use_pretrained_values']:
-            qf = data['qf']
-            vf = data['vf']
+            Q = data['Q']
+            V = data['V']
         else:
-            del data['qf']
-            del data['vf']
+            del data['Q']
+            del data['V']
 
-            qf = NNQFunction(
-                env_spec=fixed_z_env.spec,
-                hidden_layer_sizes=[M, M],
-                var_scope='qf-finetune',
-            )
+            raise NotImplementedError(
+                "TODO(hartikainen): This was broken on 2018/10/20 when I"
+                " refactored our value functions and algorithms to use"
+                " keras layers.")
 
-            vf = NNVFunction(
-                env_spec=fixed_z_env.spec,
-                hidden_layer_sizes=[M, M],
-                var_scope='vf-finetune',
-            )
+            Q = create_feedforward_Q_function(
+                variant, aug_obs_space, env.action_space)
+            V = create_feedforward_V_function(
+                variant['V_params'], aug_obs_space)
 
         algorithm = SAC(
             base_kwargs=base_kwargs,
             env=fixed_z_env,
             policy=policy,
             pool=pool,
-            qf=qf,
-            vf=vf,
+            Q=Q,
+            V=V,
             lr=variant['lr'],
             target_entropy=variant['target_entropy'],
             discount=variant['discount'],

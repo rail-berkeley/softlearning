@@ -5,7 +5,7 @@ from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softlearning.environments.utils import get_environment
 from softlearning.replay_pools import SimpleReplayPool
-from softlearning.value_functions import NNQFunction
+from softlearning.value_functions.utils import create_feedforward_Q_function
 from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.policies import StochasticNNPolicy
 from softlearning.samplers import SimpleSampler
@@ -43,13 +43,12 @@ def test():
         hidden_layer_sizes=(M, M),
         squash=True)
 
-    qf = NNQFunction(
-        observation_shape=env.active_observation_shape,
-        action_shape=env.action_space.shape,
-        hidden_layer_sizes=[M, M])
+    Q = create_feedforward_Q_function({
+        'Q_params': {'hidden_layer_sizes': (M, M)}
+    }, env.observation_space, env.action_space)
 
     plotter = QFPolicyPlotter(
-        qf=qf,
+        Q=Q,
         policy=policy,
         obs_lst=np.array([[-2.5, 0.0], [0.0, 0.0], [2.5, 2.5]]),
         default_action=[np.nan, np.nan],
@@ -59,11 +58,11 @@ def test():
         base_kwargs=base_kwargs,
         env=env,
         pool=pool,
-        qf=qf,
+        Q=Q,
         policy=policy,
         plotter=plotter,
         policy_lr=3e-4,
-        qf_lr=3e-4,
+        Q_lr=3e-4,
         value_n_particles=16,
         td_target_update_interval=1000,
         kernel_fn=adaptive_isotropic_gaussian_kernel,

@@ -80,7 +80,7 @@ class SAC(RLAlgorithm, Serializable):
 
         self.global_step = tf.get_variable(
             "global_step",
-            [],
+            (),
             trainable=False,
             dtype=tf.int64,
             initializer=tf.constant_initializer(0, dtype=tf.int64))

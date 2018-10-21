@@ -13,7 +13,9 @@ from softlearning.misc.utils import datetimestamp
 from softlearning.samplers import SimpleSampler
 from softlearning.policies import GaussianPolicy, GMMPolicy, LatentSpacePolicy
 from softlearning.replay_pools import SimpleReplayPool
-from softlearning.value_functions import NNQFunction, NNVFunction
+from softlearning.value_functions.utils import (
+    get_Q_function_from_variant,
+    get_V_function_from_variant)
 from examples.utils import (
     get_parser,
     launch_experiments_rllab,
@@ -46,35 +48,27 @@ def run_experiment(variant, reporter=None):
         'eval_deterministic': False
     }
 
-    M = 128
-    q_functions = tuple(
-        NNQFunction(
-            observation_shape=env.active_observation_shape,
-            action_shape=env.action_space.shape,
-            hidden_layer_sizes=(M, M),
-            name='qf{}'.format(i))
-        for i in range(2))
-    vf = NNVFunction(
-        observation_shape=env.active_observation_shape,
-        hidden_layer_sizes=[M, M])
+    M = variant['layer_size']
+    Qs = get_Q_function_from_variant(variant, env)
+    V = get_V_function_from_variant(variant, env)
 
-    if variant['policy_type'] == 'gaussian':
+    if variant['policy'] == 'gaussian':
         policy = GaussianPolicy(
             observation_shape=env.active_observation_shape,
             action_shape=env.action_space.shape,
             hidden_layer_sizes=(M, M),
             reparameterize=True,
             reg=1e-3)
-    elif variant['policy_type'] == 'gmm':
+    elif variant['policy'] == 'gmm':
         policy = GMMPolicy(
             observation_shape=env.active_observation_shape,
             action_shape=env.action_space.shape,
             K=4,
             hidden_layer_sizes=[M, M],
-            qf=q_functions[0],
+            Q=Qs[0],
             reg=0.001
         )
-    elif variant['policy_type'] == 'lsp':
+    elif variant['policy'] == 'lsp':
         bijector_config = {
             "scale_regularization": 0.0,
             "num_coupling_layers": 2,
@@ -89,11 +83,11 @@ def run_experiment(variant, reporter=None):
             squash=True,
             bijector_config=bijector_config,
             observations_preprocessor=None,
-            q_function=q_functions[0]
+            Q=Qs[0]
         )
 
     plotter = QFPolicyPlotter(
-        qf=q_functions[0],
+        Q=Qs[0],
         policy=policy,
         obs_lst=np.array([[-2.5, 0.0],
                           [0.0, 0.0],
@@ -109,8 +103,8 @@ def run_experiment(variant, reporter=None):
         policy=policy,
         initial_exploration_policy=None,
         pool=pool,
-        q_functions=q_functions,
-        vf=vf,
+        Qs=Qs,
+        V=V,
         plotter=plotter,
 
         lr=3e-4,
@@ -133,11 +127,29 @@ def main():
     local_dir = os.path.join(
         '~/ray_results', universe, domain, task)
 
+    layer_size = 64
     variant_spec = {
         'seed': 1,
-        'prefix': '{}/{}/{}'.format(universe, domain, task),
-        'policy_type': args.policy,
+
+        'universe': universe,
+        'domain': domain,
+        'task': task,
+
+        'policy': args.policy,
         'local_dir': local_dir,
+        'layer_size': layer_size,
+        'V_params': {
+            'type': 'feedforward_V_function',
+            'kwargs': {
+                'hidden_layer_sizes': (layer_size, layer_size),
+            }
+        },
+        'Q_params': {
+            'type': 'double_feedforward_Q_function',
+            'kwargs': {
+                'hidden_layer_sizes': (layer_size, layer_size),
+            }
+        },
     }
 
     if args.mode == 'local':

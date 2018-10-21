@@ -4,7 +4,7 @@ from softlearning.environments.utils import get_environment_from_variant
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softlearning.replay_pools import SimpleReplayPool
-from softlearning.value_functions import NNQFunction
+from softlearning.value_functions.utils import get_Q_function_from_variant
 from softlearning.policies import StochasticNNPolicy
 from softlearning.samplers import SimpleSampler
 from examples.utils import (
@@ -12,12 +12,13 @@ from examples.utils import (
     get_parser,
     launch_experiments_rllab)
 
+LAYER_SIZE = 128
 COMMON_PARAMS = {
     'seed': tune.grid_search([1, 2, 3]),
-    'policy_lr': 3E-4,
-    'qf_lr': 3E-4,
+    'policy_lr': 3e-4,
+    'Q_lr': 3e-4,
     'discount': 0.99,
-    'layer_size': 128,
+    'layer_size': LAYER_SIZE,
     'batch_size': 128,
     'max_pool_size': 1E6,
     'n_train_repeat': 1,
@@ -28,6 +29,12 @@ COMMON_PARAMS = {
     'td_target_update_interval': 1000,
     'snapshot_mode': 'last',
     'snapshot_gap': 100,
+    'Q_params': {
+        'type': 'double_feedforward_Q_function',
+        'kwargs': {
+            'hidden_layer_sizes': (LAYER_SIZE, LAYER_SIZE),
+        }
+    },
 }
 
 
@@ -99,29 +106,26 @@ def run_experiment(variant):
         eval_n_episodes=1,
         sampler=sampler)
 
-    M = variant['layer_size']
-    qf = NNQFunction(
-        observation_shape=env.active_observation_shape,
-        action_shape=env.action_space.shape,
-        hidden_layer_sizes=(M, M))
+    layer_size = variant['layer_size']
+    Q = get_Q_function_from_variant(variant, env)
 
     policy = StochasticNNPolicy(
         observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
-        hidden_layer_sizes=(M, M))
+        hidden_layer_sizes=(layer_size, layer_size))
 
     algorithm = SQL(
         base_kwargs=base_kwargs,
         env=env,
         pool=pool,
-        qf=qf,
+        Q=Q,
         policy=policy,
         kernel_fn=adaptive_isotropic_gaussian_kernel,
         kernel_n_particles=variant['kernel_particles'],
         kernel_update_ratio=variant['kernel_update_ratio'],
         value_n_particles=variant['value_n_particles'],
         td_target_update_interval=variant['td_target_update_interval'],
-        qf_lr=variant['qf_lr'],
+        Q_lr=variant['Q_lr'],
         policy_lr=variant['policy_lr'],
         discount=variant['discount'],
         reward_scale=variant['reward_scale'],

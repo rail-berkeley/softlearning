@@ -505,11 +505,15 @@ def get_variant_spec(universe, domain, task, policy):
         ),
         'V_params': {
             'type': 'feedforward_V_function',
-            'hidden_layer_sizes': (M, M),
+            'kwargs': {
+                'hidden_layer_sizes': (M, M),
+            }
         },
         'Q_params': {
             'type': 'double_feedforward_Q_function',
-            'hidden_layer_sizes': (M, M),
+            'kwargs': {
+                'hidden_layer_sizes': (M, M),
+            }
         },
         'preprocessor_params': deep_update(
             PREPROCESSOR_PARAMS_BASE[policy],

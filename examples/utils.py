@@ -194,7 +194,10 @@ def launch_experiments_rllab(variant_spec, args, run_fn):
 
         date_prefix = datestamp()
         experiment_prefix = os.path.join(
-            variant['prefix'],
+            variant.get('prefix', (
+                '{}/{}/{}'.format(variant['universe'],
+                                  variant['domain'],
+                                  variant['task']))),
             '{}-{}'.format(date_prefix, args.exp_name))
         experiment_name = '{exp_name}-{i:0{max_i_len}}'.format(
             exp_name=args.exp_name,

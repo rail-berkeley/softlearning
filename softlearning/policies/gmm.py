@@ -30,7 +30,7 @@ class GMMPolicy(NNPolicy, Serializable):
                  reg=1e-3,
                  squash=True,
                  reparameterize=False,
-                 qf=None,
+                 Q=None,
                  name='gmm_policy'):
         """
         Args:
@@ -42,7 +42,7 @@ class GMMPolicy(NNPolicy, Serializable):
             reg (`float`): Regularization coeffiecient for the GMM parameters.
             squash (`bool`): If True, squash the GMM the gmm action samples
                between -1 and 1 with tanh.
-            qf (`ValueFunction`): Q-function approximator.
+            Q (`ValueFunction`): Q-function approximator.
         """
         self._Serializable__initialize(locals())
 
@@ -55,7 +55,7 @@ class GMMPolicy(NNPolicy, Serializable):
         self._is_deterministic = False
         self._fixed_h = None
         self._squash = squash
-        self._qf = qf
+        self._Q = Q
         self._reg = reg
 
         # We can only reparameterize if there was one component in the GMM,
@@ -63,6 +63,7 @@ class GMMPolicy(NNPolicy, Serializable):
         assert not reparameterize, "GMMPolicy can't be reparameterized."
         self._reparameterize = reparameterize
 
+        self.NO_OP = tf.no_op()
         self.name = name
         self.build()
 
@@ -149,7 +150,7 @@ class GMMPolicy(NNPolicy, Serializable):
         `LatentSpacePolicy.get_actions`.
         """
         if self._is_deterministic: # Handle the deterministic case separately.
-            if self._qf is None: raise AttributeError
+            if self._Q is None: raise AttributeError
 
             assert not with_log_pis, 'No log pi for deterministic action'
 
@@ -161,12 +162,12 @@ class GMMPolicy(NNPolicy, Serializable):
                 self.distribution.mus_t, feed_dict)[0]  # K x Da
 
             squashed_mus = np.tanh(mus) if self._squash else mus
-            qs = self._qf.eval(observations, squashed_mus)
+            Q_np = self._Q.predict((observations, squashed_mus))
 
             if self._fixed_h is not None:
                 h = self._fixed_h  # TODO.code_consolidation: needs to be tiled
             else:
-                h = np.argmax(qs)  # TODO.code_consolidation: check the axis
+                h = np.argmax(Q_np)  # TODO.code_consolidation: check the axis
 
             actions = squashed_mus[h, :][None]
             raw_actions = mus[h, :][None]

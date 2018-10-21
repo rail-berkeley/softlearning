@@ -8,33 +8,34 @@ import os
 import numpy as np
 from ray import tune
 
-from rllab.envs.env_spec import EnvSpec
-from rllab import spaces
+from gym import spaces
 
 from softlearning.algorithms import DIAYN
 from softlearning.environments.utils import get_environment_from_variant
 from softlearning.policies.gmm import GMMPolicy
 from softlearning.replay_pools import SimpleReplayPool
-from softlearning.value_functions import (
-    NNQFunction,
-    NNVFunction,
-    NNDiscriminatorFunction)
+from softlearning.samplers.utils import get_sampler_from_variant
+from softlearning.value_functions.utils import (
+    create_feedforward_V_function,
+    create_feedforward_Q_function,
+    create_feedforward_discriminator_function)
 
 from examples.utils import (
     parse_universe_domain_task,
     get_parser,
     launch_experiments_rllab)
 
-
 COMMON_PARAMS = {
+    'algorithm_params': {
+        'type': 'DIAYN'
+    },
     'seed': tune.grid_search([1]),
     'lr': 3E-4,
     'discount': 0.99,
     'tau': 0.01,
     'K': 4,
-    'layer_size': 300,
+    'layer_size': 256,
     'batch_size': 128,
-    'max_size': 1E6,
     'n_train_repeat': 1,
     'epoch_length': 1000,
     'snapshot_mode': 'gap',
@@ -45,6 +46,26 @@ COMMON_PARAMS = {
     'include_actions': False,
     'learn_p_z': False,
     'add_p_z': True,
+    'Q_params': {
+        'hidden_layer_sizes': lambda spec: ((
+            spec['layer_size'], spec['layer_size']))
+    },
+    'V_params': {
+        'hidden_layer_sizes': lambda spec: ((
+            spec['layer_size'], spec['layer_size']))
+    },
+    'discriminator_params': {'hidden_layer_sizes': (256, 256)},
+    'sampler_params': {
+        'type': 'SimpleSampler',
+        'kwargs': {
+            'max_path_length': 1000,
+            'min_pool_size': 1000,
+            'batch_size': 256,
+        }
+    },
+    'replay_pool_params': {
+        'max_size': 1e6
+    },
 }
 
 TAG_KEYS = ['seed']
@@ -64,7 +85,6 @@ ENV_PARAMS = {
         'env_name': 'HalfCheetah-v1',
         'max_path_length': 1000,
         'n_epochs': 10000,
-        'max_size': 1E7,
     },
     'walker': {  # 6 DoF
         'env_name': 'Walker2d-v1',
@@ -128,24 +148,21 @@ ENV_PARAMS = {
 def run_experiment(variant):
     env = get_environment_from_variant(variant)
 
-    obs_space = env.spec.observation_space
-    assert isinstance(obs_space, spaces.Box)
+    obs_space = env.observation_space
     low = np.hstack([obs_space.low, np.full(variant['num_skills'], 0)])
     high = np.hstack([obs_space.high, np.full(variant['num_skills'], 1)])
     aug_obs_space = spaces.Box(low=low, high=high)
-    aug_env_spec = EnvSpec(aug_obs_space, env.spec.action_space)
-    pool = SimpleReplayPool(
-        observation_shape=aug_env_spec.observation_space.shape,
-        action_shape=aug_env_spec.action_space.shape,
-        max_size=variant['max_size'],
-    )
+
+    replay_pool = SimpleReplayPool(
+        observation_space=aug_obs_space,
+        action_space=env.observation_space,
+        **variant['replay_pool_params'])
+    sampler = get_sampler_from_variant(variant)
 
     base_kwargs = dict(
-        min_pool_size=variant['max_path_length'],
+        sampler=sampler,
         epoch_length=variant['epoch_length'],
         n_epochs=variant['n_epochs'],
-        max_path_length=variant['max_path_length'],
-        batch_size=variant['batch_size'],
         n_train_repeat=variant['n_train_repeat'],
         eval_render=False,
         eval_n_episodes=1,
@@ -153,41 +170,31 @@ def run_experiment(variant):
     )
 
     M = variant['layer_size']
-    qf = NNQFunction(
-        observation_shape=aug_env_spec.observation_space.shape,
-        action_shape=aug_env_spec.action_space.shape,
-        hidden_layer_sizes=[M, M],
-    )
-
-    vf = NNVFunction(
-        observation_shape=aug_env_spec.observation_space.shape,
-        hidden_layer_sizes=[M, M],
-    )
+    Q = create_feedforward_Q_function(
+        variant, aug_obs_space, env.action_space)
+    V = create_feedforward_V_function(
+        variant['V_params'], aug_obs_space)
 
     policy = GMMPolicy(
-        observation_shape=aug_env_spec.observation_space.shape,
-        action_shape=aug_env_spec.action_space.shape,
+        observation_shape=aug_obs_space.shape,
+        action_shape=env.action_space.shape,
         K=variant['K'],
         hidden_layer_sizes=[M, M],
-        qf=qf,
+        Q=Q,
         reg=0.001,
     )
 
-    discriminator = NNDiscriminatorFunction(
-        observation_shape=env.observation_space.shape,
-        action_shape=env.action_space.shape,
-        hidden_layer_sizes=[M, M],
-        num_skills=variant['num_skills'],
-    )
+    discriminator = create_feedforward_discriminator_function(
+        variant, env)
 
     algorithm = DIAYN(
         base_kwargs=base_kwargs,
         env=env,
         policy=policy,
         discriminator=discriminator,
-        pool=pool,
-        qf=qf,
-        vf=vf,
+        pool=replay_pool,
+        Q=Q,
+        V=V,
 
         lr=variant['lr'],
         scale_entropy=variant['scale_entropy'],
@@ -220,13 +227,14 @@ def main():
         COMMON_PARAMS,
         **ENV_PARAMS[args.env],
         **{
-            'log_dir_base': args.log_dir,
+            'log_dir_base': args.log_dir or '',
             'log_dir': build_tagged_log_dir
         },
         **{
             'universe': universe,
             'task': task,
             'domain': domain,
+            'env_params': {}
         })
 
     launch_experiments_rllab(variant_spec, args, run_experiment)

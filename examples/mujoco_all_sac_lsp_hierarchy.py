@@ -13,7 +13,9 @@ from softlearning.algorithms import SAC
 from softlearning.environments.rllab import HierarchyProxyEnv
 from softlearning.policies import LatentSpacePolicy
 from softlearning.replay_pools import SimpleReplayPool
-from softlearning.value_functions import NNQFunction, NNVFunction
+from softlearning.value_functions.utils import (
+    get_Q_function_from_variant,
+    get_V_function_from_variant)
 from softlearning.preprocessors import FeedforwardNetPreprocessorV2
 from softlearning.misc import tf_utils
 from softlearning.misc.utils import get_git_rev
@@ -23,13 +25,14 @@ from examples.utils import (
     launch_experiments_rllab)
 
 
+LAYER_SIZE = 128
 COMMON_PARAMS = {
     'seed': lambda spec: np.random.randint(1, 100),
     'lr': 3e-4,
     'discount': 0.99,
     'target_update_interval': 1,
     'tau': 1e-2,
-    'layer_size': 128,
+    'layer_size': LAYER_SIZE,
     'batch_size': 128,
     'max_size': 1e6,
     'n_train_repeat': 1,
@@ -37,6 +40,16 @@ COMMON_PARAMS = {
     'snapshot_mode': 'gap',
     'snapshot_gap': 1000,
     'sync_pkl': True,
+
+    'Q_params': {
+        'type': 'double_feedforward_Q_function',
+        'hidden_layer_sizes': (LAYER_SIZE, LAYER_SIZE),
+    },
+    'V_params': {
+        'type': 'feedforward_V_function',
+        'hidden_layer_sizes': (LAYER_SIZE, LAYER_SIZE),
+    },
+
     # lsp configs
     'policy_coupling_layers': 2,
     'policy_s_t_layers': 1,
@@ -45,7 +58,8 @@ COMMON_PARAMS = {
     'preprocessing_layer_sizes': None,
     'preprocessing_output_nonlinearity': 'relu',
 
-    'git_sha': get_git_rev()
+    'git_sha': get_git_rev(),
+
 }
 
 
@@ -227,17 +241,8 @@ def run_experiment(variant):
         eval_deterministic=True,
     )
 
-    M = variant['layer_size']
-    qf = NNQFunction(
-        observation_shape=env.active_observation_shape,
-        action_shape=env.action_space.shape,
-        hidden_layer_sizes=[M, M],
-    )
-
-    vf = NNVFunction(
-        observation_shape=env.active_observation_shape,
-        hidden_layer_sizes=[M, M],
-    )
+    Qs = get_Q_function_from_variant(variant, env)
+    V = get_V_function_from_variant(variant, env)
 
     preprocessing_layer_sizes = variant.get('preprocessing_layer_sizes')
     observations_preprocessor = (
@@ -276,8 +281,8 @@ def run_experiment(variant):
         env=env,
         policy=policy,
         pool=pool,
-        qf=qf,
-        vf=vf,
+        Q=Qs,
+        V=V,
 
         lr=variant['lr'],
         target_entropy=variant['target_entropy'],
@@ -329,7 +334,7 @@ def main():
             'domain': domain,
         })
 
-     launch_experiments_rllab(variant_spec, args, run_experiment)
+    launch_experiments_rllab(variant_spec, args, run_experiment)
 
 
 if __name__ == '__main__':
