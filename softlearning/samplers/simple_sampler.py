@@ -44,12 +44,12 @@ class SimpleSampler(BaseSampler):
             self.policy.reset()
             self._current_observation = self.env.reset()
 
-            self._path_length = 0
-            self._path_return = 0
-
             self._max_path_return = max(self._max_path_return,
                                         self._path_return)
             self._last_path_return = self._path_return
+
+            self._path_length = 0
+            self._path_return = 0
 
             self._n_episodes += 1
 
