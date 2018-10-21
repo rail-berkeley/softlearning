@@ -185,7 +185,7 @@ def run_experiment(variant):
     )
 
     discriminator = create_feedforward_discriminator_function(
-        variant, env)
+        variant, env.active_observation_shape)
 
     algorithm = DIAYN(
         base_kwargs=base_kwargs,

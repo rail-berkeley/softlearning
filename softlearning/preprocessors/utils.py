@@ -1,5 +1,6 @@
+import tensorflow as tf
+
 from .mlp_preprocessor import feedforward_preprocessor_model
-from softlearning.value_functions.utils import observation_space_to_input
 
 
 def get_convnet_preprocessor(observation_space,
@@ -9,11 +10,11 @@ def get_convnet_preprocessor(observation_space,
     raise NotImplementedError
 
 
-def get_feedforward_preprocessor(observation_space,
+def get_feedforward_preprocessor(observation_shape,
                                  name='feedforward_preprocessor',
                                  **kwargs):
-    observations = observation_space_to_input(
-        observation_space, name='observations')
+    observations = tf.keras.layers.Input(
+        shape=observation_shape, name='observations')
 
     preprocessor = feedforward_preprocessor_model(
         inputs=observations, name=name, **kwargs)
@@ -38,6 +39,6 @@ def get_preprocessor_from_variant(variant, env):
 
     preprocessor = PREPROCESSOR_FUNCTIONS[
         preprocessor_params.get('type')](
-            env.observation_space, *args, **kwargs)
+            env.active_observation_shape, *args, **kwargs)
 
     return preprocessor

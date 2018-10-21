@@ -37,7 +37,7 @@ def get_latent_space_policy(env, Q, preprocessor, **kwargs):
 
 def get_uniform_policy(env, *args, **kwargs):
     policy = UniformPolicy(
-        observation_shape=env.observation_space.shape,
+        observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape)
 
     return policy

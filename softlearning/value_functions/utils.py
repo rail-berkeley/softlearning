@@ -1,41 +1,19 @@
 import tensorflow as tf
-import gym
 
 from softlearning.misc.nn import feedforward_model
-from . import metric_learning
 
 
-def observation_space_to_input(observation_space, name='observations'):
-    if isinstance(observation_space, gym.spaces.Dict):
-        inputs = [
-            tf.keras.layers.Input(
-                shape=space.shape, name=f'{name}.{space_name}')
-            for space_name, space in observation_space.spaces.items()
-        ]
-        input_ = tf.keras.layers.Concatenate(axis=-1)(inputs)
-    else:
-        input_ = tf.keras.layers.Input(
-            shape=observation_space.shape, name=name)
-
-    return input_
-
-
-def action_space_to_input(action_space, name='actions'):
-    input_ = tf.keras.layers.Input(shape=action_space.shape, name=name)
-    return input_
-
-
-def create_feedforward_Q_function(observation_space,
-                                  action_space,
+def create_feedforward_Q_function(observation_shape,
+                                  action_shape,
                                   name='Q',
                                   **kwargs):
-    observations = observation_space_to_input(
-        observation_space, name='observations')
-    actions = action_space_to_input(action_space, name='actions')
+    observations = tf.keras.layers.Input(
+        shape=observation_shape, name='observations')
+    actions = tf.keras.layers.Input(
+        shape=action_shape, name='actions')
 
-    inputs = [observations, actions]
-
-    Q_function = feedforward_model(inputs, output_size=1, name=name, **kwargs)
+    Q_function = feedforward_model(
+        [observations, actions], output_size=1, name=name, **kwargs)
 
     return Q_function
 
@@ -50,30 +28,61 @@ def create_double_feedforward_Q_function(*args, **kwargs):
     return Qs
 
 
-def create_feedforward_V_function(observation_space,
+def create_metric_Q_function(observation_shape,
+                             action_shape,
+                             name='metric_Q',
+                             **kwargs):
+    observations1 = tf.keras.layers.Input(
+        shape=observation_shape, name='observations1')
+    observations2 = tf.keras.layers.Input(
+        shape=observation_shape, name='observations2')
+    actions = tf.keras.layers.Input(
+        shape=action_shape, name='actions')
+
+    Q_function = feedforward_model(
+        [observations1, observations2, actions],
+        output_size=1,
+        name=name,
+        **kwargs)
+
+    return Q_function
+
+
+def create_feedforward_V_function(observation_shape,
                                   name='V',
                                   **kwargs):
-    observations = observation_space_to_input(
-        observation_space, name='observations')
+    observations = tf.keras.layers.Input(
+        shape=observation_shape, name='observations')
 
-    inputs = [observations]
-
-    V_function = feedforward_model(inputs, output_size=1, name=name, **kwargs)
+    V_function = feedforward_model(
+        [observations], output_size=1, name=name, **kwargs)
 
     return V_function
 
 
-def create_feedforward_discriminator_function(env,
+def create_metric_V_function(observation_shape,
+                             name='metric_V',
+                             **kwargs):
+    observations1 = tf.keras.layers.Input(
+        shape=observation_shape, name='observations1')
+    observations2 = tf.keras.layers.Input(
+        shape=observation_shape, name='observations2')
+
+    V_function = feedforward_model(
+        [observations1, observations2], output_size=1, name=name, **kwargs)
+
+    return V_function
+
+
+def create_feedforward_discriminator_function(observation_shape,
                                               num_skills,
                                               name='discriminator',
                                               **kwargs):
-    observations = observation_space_to_input(
-        env.observation_space, name=name)
-
-    inputs = [observations]
+    observations = tf.keras.layers.Input(
+        shape=observation_shape, name='observations')
 
     discriminator = feedforward_model(
-        inputs, output_size=num_skills, **kwargs)
+        [observations], output_size=num_skills, **kwargs)
 
     return discriminator
 
@@ -81,13 +90,13 @@ def create_feedforward_discriminator_function(env,
 Q_FUNCTION_FUNCTIONS = {
     'feedforward_Q_function': create_feedforward_Q_function,
     'double_feedforward_Q_function': create_double_feedforward_Q_function,
-    'metric_Q_function': metric_learning.create_metric_Q_function,
+    'metric_Q_function': create_metric_Q_function,
 }
 
 
 V_FUNCTION_FUNCTIONS = {
     'feedforward_V_function': create_feedforward_V_function,
-    'metric_V_function': metric_learning.create_metric_V_function,
+    'metric_V_function': create_metric_V_function,
 }
 
 
@@ -95,7 +104,10 @@ def get_Q_function_from_variant(variant, env):
     Q_params = variant['Q_params'].copy()
     kwargs = Q_params.get('kwargs', {})
     Q_function = Q_FUNCTION_FUNCTIONS[
-        Q_params['type']](env.observation_space, env.action_space, **kwargs)
+        Q_params['type']](
+            env.active_observation_shape,
+            env.action_space.shape,
+            **kwargs)
     return Q_function
 
 
@@ -103,5 +115,7 @@ def get_V_function_from_variant(variant, env):
     V_params = variant['V_params'].copy()
     kwargs = V_params.get('kwargs', {})
     V_function = V_FUNCTION_FUNCTIONS[
-        V_params['type']](env.observation_space, **kwargs)
+        V_params['type']](
+            env.active_observation_shape,
+            **kwargs)
     return V_function
