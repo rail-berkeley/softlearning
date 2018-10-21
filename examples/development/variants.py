@@ -176,7 +176,7 @@ POLICY_PARAMS_FOR_DOMAIN.update({
 
 PREPROCESSOR_PARAMS_BASE = {
     'LatentSpacePolicy': {
-        'type': 'FeedforwardNetPreprocessorV2'
+        'type': 'feedforward_preprocessor'
     },
     'GMMPolicy': {
         'type': None
@@ -243,7 +243,6 @@ LSP_PREPROCESSOR_PARAMS = {
         }
     },
     'pusher-2d': {
-        'type': 'FeedforwardNetPreprocessorV2',
         'kwargs': {
             'hidden_layer_sizes': (M, M),
             'output_size': 6,
@@ -537,7 +536,7 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
 
     if 'image' in task or 'image' in domain.lower():
         variant_spec['preprocessor_params'].update({
-            'type': 'ConvnetPreprocessor',
+            'type': 'convnet_preprocessor',
             'kwargs': {
                 'image_size': variant_spec['env_params']['image_size'],
                 'output_size': 18,

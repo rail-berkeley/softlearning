@@ -1,77 +1,44 @@
 import tensorflow as tf
 
-from serializable import Serializable
 
-from sandbox.rocky.tf.core.parameterized import Parameterized
-
-from softlearning.misc.nn import (
-    TemplateFunction,
-    feedforward_net_v2,
-)
-
-
-def feedforward_net_preprocessor_template(
+def feedforward_preprocessor_model(
+        inputs,
         hidden_layer_sizes,
         output_size,
         ignore_input=0,
         activation=tf.nn.relu,
-        output_activation=None,
-        name="feedforward_net_preprocessor_template",
-        create_scope_now_=False,
+        output_activation='linear',
+        name="feedforward_preprocessor",
         *args,
         **kwargs):
-    def _fn(inputs):
+
+    def split_passthrough_layer(x):
         if ignore_input > 0:
-            inputs_to_preprocess = inputs[..., :-ignore_input]
-            passthrough = inputs[..., -ignore_input:]
+            inputs_to_preprocess = x[..., :-ignore_input]
+            passthrough = x[..., -ignore_input:]
         else:
-            inputs_to_preprocess = inputs
-            passthrough = inputs[..., 0:0]
+            inputs_to_preprocess = x
+            passthrough = x[..., 0:0]
 
-        preprocessed = feedforward_net_v2(
-            inputs_to_preprocess,
-            hidden_layer_sizes,
-            output_size-ignore_input,
-            activation=tf.nn.relu,
-            output_activation=None,
-            *args,
-            **kwargs)
+        return inputs_to_preprocess, passthrough
 
-        return tf.concat([preprocessed, passthrough], axis=-1)
+    inputs_to_preprocess, passthrough = tf.keras.layers.Lambda(
+        split_passthrough_layer)(inputs)
 
-    return tf.make_template(name, _fn, create_scope_now_=create_scope_now_)
+    out = inputs_to_preprocess
+    for units in hidden_layer_sizes:
+        out = tf.keras.layers.Dense(
+            units, *args, activation=activation, **kwargs)(out)
 
+    preprocessed = tf.keras.layers.Dense(
+        output_size-ignore_input,
+        *args,
+        activation=output_activation,
+        **kwargs)(out)
 
-class FeedforwardNetPreprocessorV2(TemplateFunction, Serializable):
-    def __init__(self, *args, name='feedforward_net_preprocessor', **kwargs):
-        self._Serializable__initialize(locals())
+    concatenated = tf.keras.layers.Concatenate(
+        axis=-1)([preprocessed, passthrough])
 
-        super(FeedforwardNetPreprocessorV2, self).__init__(
-            *args, name=name, **kwargs)
+    model = tf.keras.Model(inputs, concatenated, name=name)
 
-    @property
-    def template_function(self):
-        return feedforward_net_preprocessor_template
-
-
-class FeedforwardNetPreprocessor(Parameterized, Serializable):
-    def __init__(self,
-                 input_shape,
-                 layer_sizes,
-                 output_nonlinearity=None,
-                 name='observations_preprocessor'):
-
-        Parameterized.__init__(self)
-        self._Serializable__initialize(locals())
-
-        assert len(input_shape) == 1, input_shape
-        self._Do = input_shape[0]
-        self._observations_ph = tf.placeholder(
-            tf.float32, shape=(None, self._Do), name='observations')
-
-        super(FeedforwardNetPreprocessor, self).__init__(
-            (self._observations_ph, ),
-            name=name,
-            layer_sizes=layer_sizes,
-            output_nonlinearity=output_nonlinearity
-        )
+    return model

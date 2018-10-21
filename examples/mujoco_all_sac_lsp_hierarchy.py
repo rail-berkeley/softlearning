@@ -16,7 +16,7 @@ from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions.utils import (
     get_Q_function_from_variant,
     get_V_function_from_variant)
-from softlearning.preprocessors import FeedforwardNetPreprocessorV2
+from softlearning.preprocessors.utils import get_preprocessor_from_variant
 from softlearning.misc import tf_utils
 from softlearning.misc.utils import get_git_rev
 from examples.utils import (
@@ -244,15 +244,7 @@ def run_experiment(variant):
     Qs = get_Q_function_from_variant(variant, env)
     V = get_V_function_from_variant(variant, env)
 
-    preprocessing_layer_sizes = variant.get('preprocessing_layer_sizes')
-    observations_preprocessor = (
-        FeedforwardNetPreprocessorV2(
-            name='high_level_observations_preprocessor',
-            hidden_layer_sizes=preprocessing_layer_sizes[:-1],
-            output_size=preprocessing_layer_sizes[-1])
-        if preprocessing_layer_sizes is not None
-        else None
-    )
+    observations_preprocessor = get_preprocessor_from_variant(variant, env)
 
     policy_s_t_layers = variant['policy_s_t_layers']
     policy_s_t_units = variant['policy_s_t_units']

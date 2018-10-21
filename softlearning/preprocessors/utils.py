@@ -1,54 +1,43 @@
-from .convnet_preprocessor import ConvnetPreprocessor
-from .mlp_preprocessor import (
-    FeedforwardNetPreprocessor,
-    FeedforwardNetPreprocessorV2)
+from .mlp_preprocessor import feedforward_preprocessor_model
+from softlearning.value_functions.utils import observation_space_to_input
 
 
-def get_simple_convnet_preprocessor(variant):
-    preprocessor_params = variant['preprocessor_params']
-    preprocessor_kwargs = preprocessor_params.get('kwargs', {})
-
-    if 'num_conv_layers' in preprocessor_kwargs:
-        num_conv_layers = preprocessor_kwargs.pop('num_conv_layers')
-        filters_per_layer = preprocessor_kwargs.pop('filters_per_layer')
-        kernel_size_per_layer = preprocessor_kwargs.pop('kernel_size_per_layer')
-
-        conv_filters = (filters_per_layer, ) * num_conv_layers
-        conv_kernel_sizes = (kernel_size_per_layer, ) * num_conv_layers
-        preprocessor_kwargs['conv_filters'] = conv_filters
-        preprocessor_kwargs['conv_kernel_sizes'] = conv_kernel_sizes
-
-    preprocessor = ConvnetPreprocessor(
-        *preprocessor_params.get('args', ()),
-        **preprocessor_params.get('kwargs', {}))
-
-    return preprocessor
+def get_convnet_preprocessor(observation_space,
+                             name='convnet_preprocessor',
+                             **kwargs):
+    preprocessor = None
+    raise NotImplementedError
 
 
-def get_feedforward_preprocessor(variant):
-    preprocessor_params = variant['preprocessor_params']
+def get_feedforward_preprocessor(observation_space,
+                                 name='feedforward_preprocessor',
+                                 **kwargs):
+    observations = observation_space_to_input(
+        observation_space, name='observations')
 
-    preprocessor = FeedforwardNetPreprocessorV2(
-        *preprocessor_params.get('args', ()),
-        **preprocessor_params.get('kwargs', {}))
+    preprocessor = feedforward_preprocessor_model(
+        inputs=observations, name=name, **kwargs)
 
     return preprocessor
 
 
 PREPROCESSOR_FUNCTIONS = {
-    'ConvnetPreprocessor': get_simple_convnet_preprocessor,
-    'FeedforwardNetPreprocessorV2': get_feedforward_preprocessor,
+    'convnet_preprocessor': get_convnet_preprocessor,
+    'feedforward_preprocessor': get_feedforward_preprocessor,
     None: lambda *args, **kwargs: None
 }
 
 
-def get_preprocessor_from_variant(variant):
+def get_preprocessor_from_variant(variant, env):
     preprocessor_params = variant['preprocessor_params']
 
     if not preprocessor_params:
         return None
+    args = preprocessor_params.get('args', ())
+    kwargs = preprocessor_params.get('kwargs', {})
 
     preprocessor = PREPROCESSOR_FUNCTIONS[
-        preprocessor_params.get('type')](variant)
+        preprocessor_params.get('type')](
+            env.observation_space, *args, **kwargs)
 
     return preprocessor

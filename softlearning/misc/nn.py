@@ -44,6 +44,9 @@ def feedforward_net_v2(inputs,
                        output_activation=None,
                        *args,
                        **kwargs):
+    if isinstance(inputs, (list, tuple)):
+        inputs = tf.concat(inputs, axis=-1)
+
     out = inputs
     for units in hidden_layer_sizes:
         out = tf.layers.dense(
