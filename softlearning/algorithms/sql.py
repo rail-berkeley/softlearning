@@ -59,7 +59,7 @@ class SQL(RLAlgorithm):
                 passed to the base `RLAlgorithm` constructor.
             env (`rllab.Env`): rllab environment object.
             pool (`PoolBase`): Replay pool to add gathered samples to.
-            Q (`NNQFunction`): Q-function approximator.
+            Q: Q-function approximator.
             policy: (`rllab.NNPolicy`): A policy function approximator.
             plotter (`QFPolicyPlotter`): Plotter instance to be used for
                 visualizing Q-function during training.

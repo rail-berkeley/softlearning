@@ -176,7 +176,7 @@ POLICY_PARAMS_FOR_DOMAIN.update({
 
 PREPROCESSOR_PARAMS_BASE = {
     'LatentSpacePolicy': {
-        'type': 'feedforward_preprocessor'
+        'type': 'feedforward_preprocessor',
     },
     'GMMPolicy': {
         'type': None

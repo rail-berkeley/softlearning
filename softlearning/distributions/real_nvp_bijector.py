@@ -9,9 +9,12 @@ import tensorflow_probability as tfp
 
 import numpy as np
 
+from softlearning.misc.nn import feedforward_net_v2
+
 __all__ = [
     "RealNVPBijector",
 ]
+
 
 tfb = tfp.bijectors
 
@@ -28,40 +31,6 @@ def checkerboard(shape, parity='even', dtype=tf.bool):
     num_elements = np.prod(shape)
     tiled = tf.tile(unit, ((num_elements // 2) + 1, ))[:num_elements]
     return tf.cast(tf.reshape(tiled, shape), dtype)
-
-
-def feedforward_net(inputs,
-                    layer_sizes,
-                    activation_fn=tf.nn.tanh,
-                    output_nonlinearity=None,
-                    regularizer=None):
-    prev_size = inputs.get_shape().as_list()[-1]
-    out = inputs
-    for i, layer_size in enumerate(layer_sizes):
-        weight_initializer = tf.contrib.layers.xavier_initializer()
-        weight = tf.get_variable(
-            name="weight_{i}".format(i=i),
-            shape=(prev_size, layer_size),
-            initializer=weight_initializer,
-            regularizer=regularizer)
-
-        bias_initializer = tf.initializers.random_normal()
-        bias = tf.get_variable(
-            name="bias_{i}".format(i=i),
-            shape=(layer_size, ),
-            initializer=bias_initializer)
-
-        prev_size = layer_size
-        z = tf.matmul(out, weight) + bias
-
-        if i < len(layer_sizes) - 1 and activation_fn is not None:
-            out = activation_fn(z)
-        elif i == len(layer_sizes) - 1 and output_nonlinearity is not None:
-            out = output_nonlinearity(z)
-        else:
-            out = z
-
-    return out
 
 
 class CouplingBijector(tfb.ConditionalBijector):
@@ -295,16 +264,17 @@ class RealNVPBijector(tfb.ConditionalBijector):
         scale_hidden_sizes = self._scale_hidden_sizes
 
         def translation_wrapper(inputs, condition, output_size):
-            return feedforward_net(
-                tf.concat((inputs, condition), axis=1),
-                # TODO: should allow multi_dimensional inputs/outputs
-                layer_sizes=(*translation_hidden_sizes, output_size))
+            return feedforward_net_v2(
+                (inputs, condition),
+                hidden_layer_sizes=translation_hidden_sizes,
+                output_size=output_size)
 
         def scale_wrapper(inputs, condition, output_size):
-            return feedforward_net(
-                tf.concat((inputs, condition), axis=1),
-                # TODO: should allow multi_dimensional inputs/outputs
-                layer_sizes=(*scale_hidden_sizes, output_size))
+            return feedforward_net_v2(
+                (inputs, condition),
+                hidden_layer_sizes=scale_hidden_sizes,
+                output_size=output_size
+            )
 
         self.layers = [
             CouplingBijector(

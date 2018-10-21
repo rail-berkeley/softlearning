@@ -3,7 +3,7 @@
 import tensorflow as tf
 import numpy as np
 
-from softlearning.misc.nn import feedforward_net
+from softlearning.misc.nn import feedforward_net_v2
 
 LOG_SIG_CAP_MAX = 2
 LOG_SIG_CAP_MIN = -20
@@ -22,7 +22,8 @@ class GMM(object):
     ):
         self._cond_t_lst = cond_t_lst
         self._reg = reg
-        self._layer_sizes = list(hidden_layers_sizes) + [K * (2 * Dx + 1)]
+        self._hidden_layer_sizes = tuple(hidden_layers_sizes)
+        self._output_size = K * (2 * Dx + 1)
         self._reparameterize = reparameterize
 
         self._Dx = Dx
@@ -63,10 +64,11 @@ class GMM(object):
             )
 
         else:
-            w_and_mu_and_logsig_t = feedforward_net(
+            w_and_mu_and_logsig_t = feedforward_net_v2(
                 inputs=self._cond_t_lst,
-                layer_sizes=self._layer_sizes,
-                output_nonlinearity=None,
+                hidden_layer_sizes=self._hidden_layer_sizes,
+                output_size=self._output_size,
+                output_activation='linear',
             )  # ... x K*Dx*2+K
 
         w_and_mu_and_logsig_t = tf.reshape(

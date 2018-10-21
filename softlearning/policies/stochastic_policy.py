@@ -2,7 +2,7 @@ import tensorflow as tf
 
 from serializable import Serializable
 
-from softlearning.misc.nn import feedforward_net
+from softlearning.misc.nn import feedforward_net_v2
 
 from .nn_policy import NNPolicy
 
@@ -23,7 +23,8 @@ class StochasticNNPolicy(NNPolicy, Serializable):
         self.name = name
         self._action_shape = (*action_shape,)
         self._observation_shape = (*observation_shape,)
-        self._layer_sizes = (*hidden_layer_sizes, *action_shape)
+        self._hidden_layer_sizes = tuple(hidden_layer_sizes)
+        self._output_size = self._action_shape
         self._squash = squash
 
         self._observation_ph = tf.placeholder(
@@ -54,10 +55,11 @@ class StochasticNNPolicy(NNPolicy, Serializable):
         latents = tf.random_normal(latent_shape)
 
         with tf.variable_scope(self.name, reuse=reuse):
-            raw_actions = feedforward_net(
+            raw_actions = feedforward_net_v2(
                 (observations, latents),
-                layer_sizes=self._layer_sizes,
-                activation_fn=tf.nn.relu,
-                output_nonlinearity=None)
+                hidden_layer_sizes=self._hidden_layer_sizes,
+                output_size=self._action_shape[0],
+                activation='relu',
+                output_activation='linear')
 
         return tf.tanh(raw_actions) if self._squash else raw_actions

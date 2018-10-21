@@ -2,7 +2,7 @@
 
 import tensorflow as tf
 
-from softlearning.misc.nn import feedforward_net
+from softlearning.misc.nn import feedforward_net_v2
 
 LOG_SIG_CAP_MAX = 2
 LOG_SIG_CAP_MIN = -20
@@ -19,7 +19,8 @@ class Normal(object):
     ):
         self._cond_t_lst = cond_t_lst
         self._reg = reg
-        self._layer_sizes = list(hidden_layers_sizes) + [2 * Dx]
+        self._hidden_layer_sizes = tuple(hidden_layers_sizes)
+        self._output_size = 2 * Dx
         self._reparameterize = reparameterize
 
         self._Dx = Dx
@@ -43,10 +44,11 @@ class Normal(object):
                 initializer=tf.random_normal_initializer(0, 0.1)
             )
         else:
-            mu_and_logsig_t = feedforward_net(
+            mu_and_logsig_t = feedforward_net_v2(
                 inputs=self._cond_t_lst,
-                layer_sizes=self._layer_sizes,
-                output_nonlinearity=None,
+                hidden_layer_sizes=self._hidden_layer_sizes,
+                output_size=self._output_size,
+                output_activation='linear',
             )
 
         self._mu_t = mu_and_logsig_t[..., :Dx]
