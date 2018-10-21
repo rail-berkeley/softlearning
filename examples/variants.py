@@ -5,6 +5,7 @@ from softlearning.misc.utils import get_git_rev, deep_update
 
 M = 256
 REPARAMETERIZE = True
+STORE_EXTRA_POLICY_INFO = False
 
 LSP_POLICY_PARAMS_BASE = {
     'type': 'lsp',
@@ -210,7 +211,7 @@ ALGORITHM_PARAMS_BASE = {
     'tau': 0.005,
     'target_entropy': 'auto',
     'reward_scale': 1.0,
-    'store_extra_policy_info': False,
+    'store_extra_policy_info': STORE_EXTRA_POLICY_INFO,
 
     'base_kwargs': {
         'epoch_length': 1000,
@@ -304,7 +305,7 @@ REPLAY_POOL_PARAMS = {
 }
 
 SAMPLER_PARAMS = {
-    'type': 'SimpleSampler',
+    'type': 'ExtraPolicyInfoSampler' if STORE_EXTRA_POLICY_INFO else 'SimpleSampler',
     'kwargs': {
         'max_path_length': 1000,
         'min_pool_size': 1000,

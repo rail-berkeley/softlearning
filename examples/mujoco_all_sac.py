@@ -62,8 +62,8 @@ def run_experiment(variant):
 
     if algorithm_params['store_extra_policy_info']:
         pool = ExtraPolicyInfoReplayPool(
-            observation_shape=env.active_observation_shape,
-            action_shape=env.action_space.shape,
+            observation_space=env.observation_space,
+            action_space=env.action_space,
             **replay_pool_params)
     else:
         pool = SimpleReplayPool(
