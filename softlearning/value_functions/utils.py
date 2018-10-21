@@ -1,6 +1,7 @@
 import tensorflow as tf
 
 from softlearning.misc.nn import feedforward_model
+from . import metric_learning
 
 
 def create_feedforward_Q_function(observation_shape,
@@ -28,26 +29,6 @@ def create_double_feedforward_Q_function(*args, **kwargs):
     return Qs
 
 
-def create_metric_Q_function(observation_shape,
-                             action_shape,
-                             name='metric_Q',
-                             **kwargs):
-    observations1 = tf.keras.layers.Input(
-        shape=observation_shape, name='observations1')
-    observations2 = tf.keras.layers.Input(
-        shape=observation_shape, name='observations2')
-    actions = tf.keras.layers.Input(
-        shape=action_shape, name='actions')
-
-    Q_function = feedforward_model(
-        [observations1, observations2, actions],
-        output_size=1,
-        name=name,
-        **kwargs)
-
-    return Q_function
-
-
 def create_feedforward_V_function(observation_shape,
                                   name='V',
                                   **kwargs):
@@ -56,20 +37,6 @@ def create_feedforward_V_function(observation_shape,
 
     V_function = feedforward_model(
         [observations], output_size=1, name=name, **kwargs)
-
-    return V_function
-
-
-def create_metric_V_function(observation_shape,
-                             name='metric_V',
-                             **kwargs):
-    observations1 = tf.keras.layers.Input(
-        shape=observation_shape, name='observations1')
-    observations2 = tf.keras.layers.Input(
-        shape=observation_shape, name='observations2')
-
-    V_function = feedforward_model(
-        [observations1, observations2], output_size=1, name=name, **kwargs)
 
     return V_function
 
@@ -90,13 +57,13 @@ def create_feedforward_discriminator_function(observation_shape,
 Q_FUNCTION_FUNCTIONS = {
     'feedforward_Q_function': create_feedforward_Q_function,
     'double_feedforward_Q_function': create_double_feedforward_Q_function,
-    'metric_Q_function': create_metric_Q_function,
+    'metric_Q_function': metric_learning.create_metric_Q_function,
 }
 
 
 V_FUNCTION_FUNCTIONS = {
     'feedforward_V_function': create_feedforward_V_function,
-    'metric_V_function': create_metric_V_function,
+    'metric_V_function': metric_learning.create_metric_V_function,
 }
 
 
