@@ -482,28 +482,8 @@ class SAC(RLAlgorithm, Serializable):
             self._plotter.draw()
 
     def get_snapshot(self, epoch):
-        """Return loggable snapshot of the SAC algorithm.
-
-        If `self._save_full_state == True`, returns snapshot of the complete
-        SAC instance. If `self._save_full_state == False`, returns snapshot
-        of policy, Q-function, state value function, and environment instances.
-        """
-
-        if self._save_full_state:
-            snapshot = {
-                'epoch': epoch,
-                'algo': self
-            }
-        else:
-            snapshot = {
-                'epoch': epoch,
-                'policy': self._policy,
-                'Qs': self._Qs,
-                'V': self._V,
-                'env': self._env,
-            }
-
-        return snapshot
+        """TODO(hartikainen): This is temporarily empty due to refactor."""
+        return None
 
     def __getstate__(self):
         """Get Serializable state of the RLALgorithm instance."""
