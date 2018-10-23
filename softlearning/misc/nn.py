@@ -40,7 +40,7 @@ def feedforward_model(input_shapes,
 def feedforward_net_v2(inputs,
                        hidden_layer_sizes,
                        output_size,
-                       activation=tf.nn.relu,
+                       activation='relu',
                        output_activation='linear',
                        *args,
                        **kwargs):

@@ -78,21 +78,16 @@ class SAC(RLAlgorithm, Serializable):
 
         self._Serializable__initialize(locals())
 
-        self.global_step = tf.get_variable(
-            "global_step",
-            (),
-            trainable=False,
-            dtype=tf.int64,
-            initializer=tf.constant_initializer(0, dtype=tf.int64))
-
         super(SAC, self).__init__(**base_kwargs)
 
         self._env = env
         self._policy = policy
         self._initial_exploration_policy = initial_exploration_policy
+
         self._Qs = Qs
         self._V = V
         self._V_target = tf.keras.models.clone_model(self._V)
+
         self._pool = pool
         self._plotter = plotter
         self._tf_summaries = tf_summaries
@@ -123,9 +118,9 @@ class SAC(RLAlgorithm, Serializable):
         action_shape = self._env.action_space.shape
 
         assert len(observation_shape) == 1, observation_shape
-        self._Do = observation_shape[0]
+        self._observation_shape = observation_shape
         assert len(action_shape) == 1, action_shape
-        self._Da = action_shape[0]
+        self._action_shape = action_shape
 
         self._build()
         # TODO(hartikainen): Should the _initialize_tf_variables call happen
@@ -134,9 +129,9 @@ class SAC(RLAlgorithm, Serializable):
 
     def _build(self):
         self._training_ops = {}
-        self._target_update_ops = {}
         self._summary_ops = {}
 
+        self._init_global_step()
         self._init_placeholders()
         self._init_actor_update()
         self._init_critic_update()
@@ -166,6 +161,18 @@ class SAC(RLAlgorithm, Serializable):
             *args,
             **kwargs)
 
+    def _init_global_step(self):
+        self.global_step = tf.get_variable(
+            "global_step",
+            (),
+            trainable=False,
+            dtype=tf.int64,
+            initializer=tf.constant_initializer(0, dtype=tf.int64))
+
+        self._training_ops.update({
+            'global_step': tf.assign_add(self.global_step, 1)
+        })
+
     def _init_placeholders(self):
         """Create input placeholders for the SAC algorithm.
 
@@ -181,19 +188,19 @@ class SAC(RLAlgorithm, Serializable):
 
         self._observations_ph = tf.placeholder(
             tf.float32,
-            shape=(None, self._Do),
+            shape=(None, *self._observation_shape),
             name='observation',
         )
 
         self._next_observations_ph = tf.placeholder(
             tf.float32,
-            shape=(None, self._Do),
+            shape=(None, *self._observation_shape),
             name='next_observation',
         )
 
         self._actions_ph = tf.placeholder(
             tf.float32,
-            shape=(None, self._Da),
+            shape=(None, *self._action_shape),
             name='actions',
         )
 
@@ -217,12 +224,12 @@ class SAC(RLAlgorithm, Serializable):
             )
             self._raw_actions_ph = tf.placeholder(
                 tf.float32,
-                shape=(None, self._Da),
+                shape=(None, *self._action_shape),
                 name='raw_actions',
             )
 
     def _get_Q_target(self):
-        V_next_target = self._V_target(self._next_observations_ph)
+        V_next_target = self._V_target([self._next_observations_ph])
 
         Q_target = td_target(
             reward=self._reward_scale * self._rewards_ph,
@@ -319,12 +326,12 @@ class SAC(RLAlgorithm, Serializable):
 
         self._alpha = alpha
 
-        V_value = self._V_value = self._V(self._observations_ph)  # N
+        V_value = self._V_value = self._V([self._observations_ph])  # N
 
         if self._action_prior == 'normal':
-            D_s = actions.shape.as_list()[-1]
             policy_prior = tf.contrib.distributions.MultivariateNormalDiag(
-                loc=tf.zeros(D_s), scale_diag=tf.ones(D_s))
+                loc=tf.zeros(self._action_shape),
+                scale_diag=tf.ones(self._action_shape))
             policy_prior_log_probs = policy_prior.log_prob(actions)
         elif self._action_prior == 'uniform':
             policy_prior_log_probs = 0.0
@@ -383,15 +390,15 @@ class SAC(RLAlgorithm, Serializable):
             learning_rate=self._V_lr,
             optimizer=tf.train.AdamOptimizer,
             variables=self._V.trainable_variables,
-            increment_global_step=True,
+            increment_global_step=False,
             name="V_optimizer",
             summaries=(
                 "loss", "gradients", "gradient_norm", "global_gradient_norm"
             ) if self._tf_summaries else ())
 
         self._training_ops.update({
-            'policy_train_op': policy_train_op,
-            'V_train_op': V_train_op,
+            'policy': policy_train_op,
+            'V': V_train_op,
         })
 
     def _init_summary_ops(self):
@@ -406,7 +413,7 @@ class SAC(RLAlgorithm, Serializable):
             self.summary_writer = None
 
     def _init_training(self):
-        pass
+        self._update_target()
 
     def _update_target(self):
         source_params = self._V.get_weights()
