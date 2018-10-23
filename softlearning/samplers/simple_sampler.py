@@ -36,7 +36,9 @@ class SimpleSampler(BaseSampler):
             next_observations=next_observation)
 
         if terminal or self._path_length >= self._max_path_length:
-            last_path = self.pool.last_n_batch(self._path_length)
+            last_path = self.pool.last_n_batch(
+                self._path_length,
+                observation_keys=getattr(self.env, 'observation_keys', None))
             self._last_n_paths.appendleft(last_path)
 
             self.policy.reset()
@@ -59,6 +61,7 @@ class SimpleSampler(BaseSampler):
     def random_batch(self, batch_size=None, **kwargs):
         batch_size = batch_size or self._batch_size
         observation_keys = getattr(self.env, 'observation_keys', None)
+
         return self.pool.random_batch(
             batch_size, observation_keys=observation_keys, **kwargs)
 
