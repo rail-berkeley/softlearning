@@ -170,18 +170,6 @@ def run_experiment(variant):
             max_size=variant['max_size'],
         )
 
-        base_kwargs = dict(
-            min_pool_size=variant['max_path_length'],
-            epoch_length=variant['epoch_length'],
-            n_epochs=variant['n_epochs'],
-            max_path_length=variant['max_path_length'],
-            batch_size=variant['batch_size'],
-            n_train_repeat=variant['n_train_repeat'],
-            eval_render=False,
-            eval_n_episodes=1,
-            eval_deterministic=True,
-        )
-
         M = variant['layer_size']
 
         if variant['use_pretrained_values']:
@@ -200,7 +188,16 @@ def run_experiment(variant):
             V = create_V_function_from_variant(variant, env)
 
         algorithm = SAC(
-            base_kwargs=base_kwargs,
+            min_pool_size=variant['max_path_length'],
+            epoch_length=variant['epoch_length'],
+            n_epochs=variant['n_epochs'],
+            max_path_length=variant['max_path_length'],
+            batch_size=variant['batch_size'],
+            n_train_repeat=variant['n_train_repeat'],
+            eval_render=False,
+            eval_n_episodes=1,
+            eval_deterministic=True,
+
             env=fixed_z_env,
             policy=policy,
             pool=pool,

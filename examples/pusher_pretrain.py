@@ -68,14 +68,6 @@ def run_experiment(variant):
         min_pool_size=variant['max_path_length'],
         batch_size=variant['batch_size'])
 
-    base_kwargs = dict(
-        epoch_length=variant['epoch_length'],
-        n_epochs=variant['n_epochs'],
-        n_train_repeat=variant['n_train_repeat'],
-        eval_render=False,
-        eval_n_episodes=1,
-        sampler=sampler)
-
     task_id = abs(pickle.dumps(variant).__hash__())
 
     M = variant['layer_size']
@@ -88,7 +80,13 @@ def run_experiment(variant):
         name='policy_{i}'.format(i=task_id))
 
     algorithm = SQL(
-        base_kwargs=base_kwargs,
+        epoch_length=variant['epoch_length'],
+        n_epochs=variant['n_epochs'],
+        n_train_repeat=variant['n_train_repeat'],
+        eval_render=False,
+        eval_n_episodes=1,
+        sampler=sampler,
+
         env=env,
         pool=pool,
         Q=Q,

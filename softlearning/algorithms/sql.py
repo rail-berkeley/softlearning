@@ -32,7 +32,6 @@ class SQL(RLAlgorithm):
 
     def __init__(
             self,
-            base_kwargs,
             env,
             pool,
             Q,
@@ -52,11 +51,10 @@ class SQL(RLAlgorithm):
             save_full_state=False,
             train_Q=True,
             train_policy=True,
+            **kwargs,
     ):
         """
         Args:
-            base_kwargs (dict): Dictionary of base arguments that are directly
-                passed to the base `RLAlgorithm` constructor.
             env (`rllab.Env`): rllab environment object.
             pool (`PoolBase`): Replay pool to add gathered samples to.
             Q: Q-function approximator.
@@ -85,7 +83,7 @@ class SQL(RLAlgorithm):
             save_full_state ('boolean'): If true, saves the full algorithm
                 state, including the replay pool.
         """
-        super(SQL, self).__init__(**base_kwargs)
+        super(SQL, self).__init__(**kwargs)
 
         self.env = env
         self.pool = pool

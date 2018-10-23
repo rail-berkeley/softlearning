@@ -38,16 +38,6 @@ def run_experiment(variant, reporter=None):
     sampler = SimpleSampler(
         max_path_length=30, min_pool_size=100, batch_size=64)
 
-    base_kwargs = {
-        'sampler': sampler,
-        'epoch_length': 100,
-        'n_epochs': 1000,
-        'n_train_repeat': 1,
-        'eval_render': True,
-        'eval_n_episodes': 10,
-        'eval_deterministic': False
-    }
-
     M = variant['layer_size']
     Qs = get_Q_function_from_variant(variant, env)
     V = get_V_function_from_variant(variant, env)
@@ -98,7 +88,14 @@ def run_experiment(variant, reporter=None):
     )
 
     algorithm = SAC(
-        base_kwargs=base_kwargs,
+        sampler=sampler,
+        epoch_length=100,
+        n_epochs=1000,
+        n_train_repeat=1,
+        eval_render=True,
+        eval_n_episodes=10,
+        eval_deterministic=False,
+
         env=env,
         policy=policy,
         initial_exploration_policy=None,

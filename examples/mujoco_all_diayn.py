@@ -159,16 +159,6 @@ def run_experiment(variant):
         **variant['replay_pool_params'])
     sampler = get_sampler_from_variant(variant)
 
-    base_kwargs = dict(
-        sampler=sampler,
-        epoch_length=variant['epoch_length'],
-        n_epochs=variant['n_epochs'],
-        n_train_repeat=variant['n_train_repeat'],
-        eval_render=False,
-        eval_n_episodes=1,
-        eval_deterministic=True,
-    )
-
     M = variant['layer_size']
     Q = create_Q_function_from_variant(
         variant['Q_params'],
@@ -192,7 +182,14 @@ def run_experiment(variant):
         **variant['discriminator_params'])
 
     algorithm = DIAYN(
-        base_kwargs=base_kwargs,
+        sampler=sampler,
+        epoch_length=variant['epoch_length'],
+        n_epochs=variant['n_epochs'],
+        n_train_repeat=variant['n_train_repeat'],
+        eval_render=False,
+        eval_n_episodes=1,
+        eval_deterministic=True,
+
         env=env,
         policy=policy,
         discriminator=discriminator,

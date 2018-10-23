@@ -98,14 +98,6 @@ def run_experiment(variant):
         min_pool_size=variant['max_path_length'],
         batch_size=variant['batch_size'])
 
-    base_kwargs = dict(
-        epoch_length=variant['epoch_length'],
-        n_epochs=variant['n_epochs'],
-        n_train_repeat=variant['n_train_repeat'],
-        eval_render=False,
-        eval_n_episodes=1,
-        sampler=sampler)
-
     layer_size = variant['layer_size']
     Q = get_Q_function_from_variant(variant, env)
 
@@ -115,7 +107,13 @@ def run_experiment(variant):
         hidden_layer_sizes=(layer_size, layer_size))
 
     algorithm = SQL(
-        base_kwargs=base_kwargs,
+        epoch_length=variant['epoch_length'],
+        n_epochs=variant['n_epochs'],
+        n_train_repeat=variant['n_train_repeat'],
+        eval_render=False,
+        eval_n_episodes=1,
+        sampler=sampler,
+
         env=env,
         pool=pool,
         Q=Q,

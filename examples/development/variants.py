@@ -254,6 +254,14 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
+        'epoch_length': 1000,
+        'train_every_n_steps': 1,
+        'n_train_repeat': 1,
+        'n_initial_exploration_steps': int(1e3),
+        'eval_render': False,
+        'eval_n_episodes': 1,
+        'eval_deterministic': True,
+
         'lr': 3e-4,
         'discount': 0.99,
         'target_update_interval': 1,
@@ -263,16 +271,6 @@ ALGORITHM_PARAMS_BASE = {
         'store_extra_policy_info': False,
         'action_prior': 'uniform',
         'save_full_state': False,
-
-        'base_kwargs': {
-            'epoch_length': 1000,
-            'train_every_n_steps': 1,
-            'n_train_repeat': 1,
-            'n_initial_exploration_steps': int(1e3),
-            'eval_render': False,
-            'eval_n_episodes': 1,
-            'eval_deterministic': True,
-        }
     }
 }
 
@@ -298,13 +296,11 @@ ALGORITHM_PARAMS_PER_DOMAIN = {
     **{
         domain: {
             'kwargs': {
-                'base_kwargs': {
-                    'n_epochs': NUM_EPOCHS_PER_DOMAIN[domain],
-                    'n_initial_exploration_steps': (
-                        MAX_PATH_LENGTH_PER_DOMAIN.get(
-                            domain, DEFAULT_MAX_PATH_LENGTH
-                        ) * 10),
-                },
+                'n_epochs': NUM_EPOCHS_PER_DOMAIN[domain],
+                'n_initial_exploration_steps': (
+                    MAX_PATH_LENGTH_PER_DOMAIN.get(
+                        domain, DEFAULT_MAX_PATH_LENGTH
+                    ) * 10),
             }
         } for domain in NUM_EPOCHS_PER_DOMAIN
     }

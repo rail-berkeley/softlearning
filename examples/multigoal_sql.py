@@ -27,15 +27,6 @@ def test():
     sampler = SimpleSampler(
         max_path_length=30, min_pool_size=100, batch_size=64)
 
-    base_kwargs = {
-        'sampler': sampler,
-        'epoch_length': 100,
-        'n_epochs': 1000,
-        'n_train_repeat': 1,
-        'eval_render': True,
-        'eval_n_episodes': 10
-    }
-
     M = 128
     policy = StochasticNNPolicy(
         observation_shape=env.active_observation_shape,
@@ -55,7 +46,13 @@ def test():
         n_samples=100)
 
     algorithm = SQL(
-        base_kwargs=base_kwargs,
+        sampler= sampler,
+        epoch_length= 100,
+        n_epochs= 1000,
+        n_train_repeat= 1,
+        eval_render= True,
+        eval_n_episodes= 10,
+
         env=env,
         pool=pool,
         Q=Q,

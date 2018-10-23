@@ -74,16 +74,14 @@ def run_experiment(variant):
         hidden_layer_sizes=(M, M),
         name='policy{i}'.format(i=0))
 
-    base_kwargs = dict(
+    algorithm = SQL(
         epoch_length=variant['epoch_length'],
         n_epochs=variant['n_epochs'],
         n_train_repeat=1,
         eval_render=False,
         eval_n_episodes=1,
-        sampler=sampler)
+        sampler=sampler,
 
-    algorithm = SQL(
-        base_kwargs=base_kwargs,
         env=env,
         pool=pool,
         Q=Q,

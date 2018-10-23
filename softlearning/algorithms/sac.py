@@ -25,8 +25,6 @@ class SAC(RLAlgorithm, Serializable):
 
     def __init__(
             self,
-            base_kwargs,
-
             env,
             policy,
             initial_exploration_policy,
@@ -48,11 +46,10 @@ class SAC(RLAlgorithm, Serializable):
             summary_dir=None,
 
             save_full_state=False,
+            **kwargs,
     ):
         """
         Args:
-            base_kwargs (dict): dictionary of base arguments that are directly
-                passed to the base `RLAlgorithm` constructor.
             env (`rllab.Env`): rllab environment object.
             policy: (`rllab.NNPolicy`): A policy function approximator.
             initial_exploration_policy: ('Policy'): A policy that we use
@@ -78,7 +75,7 @@ class SAC(RLAlgorithm, Serializable):
 
         self._Serializable__initialize(locals())
 
-        super(SAC, self).__init__(**base_kwargs)
+        super(SAC, self).__init__(**kwargs)
 
         self._env = env
         self._policy = policy

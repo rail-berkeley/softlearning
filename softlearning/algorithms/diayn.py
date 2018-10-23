@@ -22,7 +22,6 @@ EPS = 1E-6
 
 class DIAYN(SAC):
     def __init__(self,
-                 base_kwargs,
                  env,
                  policy,
                  discriminator,
@@ -43,8 +42,6 @@ class DIAYN(SAC):
                  add_p_z=True):
         """
         Args:
-            base_kwargs (dict): dictionary of base arguments that are directly
-                passed to the base `RLAlgorithm` constructor.
             env (`rllab.Env`): rllab environment object.
             policy: (`rllab.NNPolicy`): A policy function approximator.
             discriminator: (`rllab.NNPolicy`): A discriminator for z.
@@ -70,7 +67,7 @@ class DIAYN(SAC):
         """
 
         self._Serializable__initialize(locals())
-        super(SAC, self).__init__(**base_kwargs)
+        super(SAC, self).__init__(**kwargs)
 
         self._env = env
         self._policy = policy

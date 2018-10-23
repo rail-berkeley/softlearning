@@ -27,14 +27,6 @@ def run_experiment(variant):
         min_pool_size=1000,
         batch_size=128)
 
-    base_kwargs = dict(
-        epoch_length=1000,
-        n_epochs=500,
-        n_train_repeat=1,
-        eval_render=False,
-        eval_n_episodes=1,
-        sampler=sampler)
-
     with tf.Session().as_default():
         data = joblib.load(variant['file'])
         if 'algo' in data.keys():
@@ -45,7 +37,13 @@ def run_experiment(variant):
             saved_policy = data['policy']
 
         algorithm = SQL(
-            base_kwargs=base_kwargs,
+            epoch_length=1000,
+            n_epochs=500,
+            n_train_repeat=1,
+            eval_render=False,
+            eval_n_episodes=1,
+            sampler=sampler,
+
             env=env,
             pool=pool,
             qf=saved_qf,
