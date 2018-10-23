@@ -3,11 +3,20 @@ from copy import deepcopy
 from . import vanilla
 
 
+def create_double_value_function(value_fn, *args, **kwargs):
+    # TODO(hartikainen): The double Q-function should support the same
+    # interface as the regular ones. Implement the double min-thing
+    # as a Keras layer.
+    value_fns = tuple(value_fn(*args, **kwargs) for i in range(2))
+    return value_fns
+
+
 VALUE_FUNCTIONS = {
-    'feedforward_value_function': (
-        vanilla.create_feedforward_value_function),
-    'double_feedforward_value_function': (
-        vanilla.create_double_feedforward_value_function),
+    'feedforward_V_function': (
+        vanilla.create_feedforward_V_function),
+    'double_feedforward_Q_function': lambda *args, **kwargs: (
+        create_double_value_function(
+            vanilla.create_feedforward_Q_function, *args, **kwargs)),
 }
 
 
@@ -16,9 +25,11 @@ def get_Q_function_from_variant(variant, env, *args, **kwargs):
     Q_type = Q_params['type']
     Q_kwargs = deepcopy(Q_params['kwargs'])
 
-    input_shapes = (env.active_observation_shape, env.action_space.shape)
-
-    return VALUE_FUNCTIONS[Q_type](input_shapes, **Q_kwargs, **kwargs)
+    return VALUE_FUNCTIONS[Q_type](
+        observation_shape=env.active_observation_shape,
+        action_shape=env.action_space.shape,
+        **Q_kwargs,
+        **kwargs)
 
 
 def get_V_function_from_variant(variant, env, *args, **kwargs):
@@ -26,7 +37,8 @@ def get_V_function_from_variant(variant, env, *args, **kwargs):
     V_type = V_params['type']
     V_kwargs = deepcopy(V_params['kwargs'])
 
-    input_shapes = (env.active_observation_shape, )
-
     return VALUE_FUNCTIONS[V_type](
-        input_shapes, *args, **V_kwargs, **kwargs)
+        observation_shape=env.active_observation_shape,
+        *args,
+        **V_kwargs,
+        **kwargs)
