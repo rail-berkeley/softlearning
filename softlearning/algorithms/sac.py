@@ -199,20 +199,20 @@ class SAC(RLAlgorithm, Serializable):
 
         self._rewards_ph = tf.placeholder(
             tf.float32,
-            shape=(None, ),
+            shape=(None, 1),
             name='rewards',
         )
 
         self._terminals_ph = tf.placeholder(
             tf.float32,
-            shape=(None, ),
+            shape=(None, 1),
             name='terminals',
         )
 
         if self._store_extra_policy_info:
             self._log_pis_ph = tf.placeholder(
                 tf.float32,
-                shape=(None, ),
+                shape=(None, 1),
                 name='log_pis',
             )
             self._raw_actions_ph = tf.placeholder(
@@ -243,6 +243,8 @@ class SAC(RLAlgorithm, Serializable):
         Q-function update rule.
         """
         Q_target = tf.stop_gradient(self._get_Q_target())
+
+        assert Q_target.shape.as_list() == [None, 1]
 
         Q_values = self._Q_values = tuple(
             Q([self._observations_ph, self._actions_ph])
@@ -333,13 +335,17 @@ class SAC(RLAlgorithm, Serializable):
         min_Q_log_target = tf.reduce_min(Q_log_targets, axis=0)
 
         if self._reparameterize:
-            policy_kl_loss = tf.reduce_mean(
+            policy_kl_losses = (
                 alpha * log_pi - min_Q_log_target - policy_prior_log_probs)
         else:
-            policy_kl_loss = tf.reduce_mean(
+            policy_kl_losses = (
                 log_pi * tf.stop_gradient(
                     alpha * log_pi - min_Q_log_target + V_value
                     - policy_prior_log_probs))
+
+        assert policy_kl_losses.shape.as_list() == [None, 1]
+
+        policy_kl_loss = tf.reduce_mean(policy_kl_losses)
 
         policy_regularization_losses = tf.get_collection(
             tf.GraphKeys.REGULARIZATION_LOSSES,

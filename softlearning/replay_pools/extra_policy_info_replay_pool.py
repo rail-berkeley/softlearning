@@ -13,7 +13,7 @@ class ExtraPolicyInfoReplayPool(SimpleReplayPool, Serializable):
                 'dtype': 'float32'
             },
             'log_pis': {
-                'shape': (),
+                'shape': (1, ),
                 'dtype': 'float32'
             }
         }

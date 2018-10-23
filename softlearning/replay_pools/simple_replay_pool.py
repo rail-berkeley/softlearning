@@ -56,12 +56,12 @@ class SimpleReplayPool(FlexibleReplayPool, Serializable):
                     'dtype': 'float32'
                 },
                 'rewards': {
-                    'shape': (),
+                    'shape': (1, ),
                     'dtype': 'float32'
                 },
                 # self.terminals[i] = a terminal was received at time i
                 'terminals': {
-                    'shape': (),
+                    'shape': (1, ),
                     'dtype': 'bool'
                 },
             }

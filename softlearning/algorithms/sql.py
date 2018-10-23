@@ -137,25 +137,33 @@ class SQL(RLAlgorithm):
 
         self._observations_ph = tf.placeholder(
             tf.float32,
-            shape=[None] + self._observation_shape,
+            shape=(None, *self._observation_shape),
             name='observations')
 
         self._next_observations_ph = tf.placeholder(
             tf.float32,
-            shape=[None] + self._observation_shape,
+            shape=(None, *self._observation_shape),
             name='next_observations')
 
         self._actions_ph = tf.placeholder(
-            tf.float32, shape=[None] + self._action_shape, name='actions')
+            tf.float32,
+            shape=(None, *self._action_shape),
+            name='actions')
 
         self._next_actions_ph = tf.placeholder(
-            tf.float32, shape=[None] + self._action_shape, name='next_actions')
+            tf.float32,
+            shape=(None, *self._action_shape),
+            name='next_actions')
 
         self._rewards_ph = tf.placeholder(
-            tf.float32, shape=[None], name='rewards')
+            tf.float32,
+            shape=(None, 1),
+            name='rewards')
 
         self._terminals_ph = tf.placeholder(
-            tf.float32, shape=[None], name='terminals')
+            tf.float32,
+            shape=(None, 1),
+            name='terminals')
 
     def _create_td_update(self):
         """Create a minimization operation for Q-function update."""
@@ -216,8 +224,8 @@ class SQL(RLAlgorithm):
             observations=self._observations_ph,
             n_action_samples=self._kernel_n_particles,
             reuse=True)
-        assert_shape(actions,
-                     [None, self._kernel_n_particles] + self._action_shape)
+        assert_shape(
+            actions, (None, self._kernel_n_particles, *self._action_shape))
 
         # SVGD requires computing two empirical expectations over actions
         # (see Appendix C1.1.). To that end, we first sample a single set of
