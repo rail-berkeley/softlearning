@@ -16,6 +16,9 @@ from ray import tune
 from softlearning.algorithms import SAC
 from softlearning.environments.rllab import FixedOptionEnv
 from softlearning.samplers import rollouts
+from softlearning.value_functions.utils import (
+    create_Q_function_from_variant,
+    create_V_function_from_variant)
 from softlearning.policies.hierarchical_policy import FixedOptionPolicy
 from softlearning.replay_pools import SimpleReplayPool
 from examples.utils import (
@@ -193,10 +196,8 @@ def run_experiment(variant):
                 " refactored our value functions and algorithms to use"
                 " keras layers.")
 
-            Q = create_feedforward_Q_function(
-                variant, aug_obs_space, env.action_space)
-            V = create_feedforward_V_function(
-                variant['V_params'], aug_obs_space)
+            Q = create_Q_function_from_variant(variant, env)
+            V = create_V_function_from_variant(variant, env)
 
         algorithm = SAC(
             base_kwargs=base_kwargs,

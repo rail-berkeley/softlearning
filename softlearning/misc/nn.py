@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-def feedforward_model(inputs,
+def feedforward_model(input_shapes,
                       hidden_layer_sizes,
                       output_size,
                       activation='relu',
@@ -9,15 +9,22 @@ def feedforward_model(inputs,
                       name=None,
                       *args,
                       **kwargs):
-    if isinstance(inputs, (list, tuple)):
-        concatenated = (
-            tf.keras.layers.Concatenate(axis=-1)(inputs)
-            if len(inputs) > 1
-            else inputs[0])
-    else:
-        concatenated = inputs
+    if not isinstance(input_shapes[0], (list, tuple)):
+        raise NotImplementedError(
+            "TODO(hartikainen): feedforward_model currently expects a list of"
+            " shapes as an input. It might be possible that you passed in a"
+            " list/tuple of dimension objects. Those should be accepted"
+            " but have not yet been implemented.")
+    inputs = [
+        tf.keras.layers.Input(shape=input_shape)
+        for input_shape in input_shapes
+    ]
 
-    out = concatenated
+    if len(inputs) > 1:
+        out = tf.keras.layers.Concatenate(axis=-1)(inputs)
+    else:
+        out = inputs[0]
+
     for units in hidden_layer_sizes:
         out = tf.keras.layers.Dense(
             units, *args, activation=activation, **kwargs)(out)
@@ -25,7 +32,7 @@ def feedforward_model(inputs,
     out = tf.keras.layers.Dense(
         output_size, *args, activation=output_activation, **kwargs)(out)
 
-    model = tf.keras.Model(inputs, out, name=name)
+    model = tf.keras.Model(inputs=inputs, outputs=out)
 
     return model
 

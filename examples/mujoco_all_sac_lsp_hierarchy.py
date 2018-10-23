@@ -42,11 +42,11 @@ COMMON_PARAMS = {
     'sync_pkl': True,
 
     'Q_params': {
-        'type': 'double_feedforward_Q_function',
+        'type': 'double_feedforward_value_function',
         'hidden_layer_sizes': (LAYER_SIZE, LAYER_SIZE),
     },
     'V_params': {
-        'type': 'feedforward_V_function',
+        'type': 'feedforward_value_function',
         'hidden_layer_sizes': (LAYER_SIZE, LAYER_SIZE),
     },
 

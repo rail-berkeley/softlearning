@@ -503,13 +503,13 @@ def get_variant_spec(universe, domain, task, policy):
             POLICY_PARAMS_FOR_DOMAIN[policy].get(domain, {})
         ),
         'V_params': {
-            'type': 'feedforward_V_function',
+            'type': 'feedforward_value_function',
             'kwargs': {
                 'hidden_layer_sizes': (M, M),
             }
         },
         'Q_params': {
-            'type': 'double_feedforward_Q_function',
+            'type': 'double_feedforward_value_function',
             'kwargs': {
                 'hidden_layer_sizes': (M, M),
             }

@@ -15,10 +15,10 @@ from softlearning.environments.utils import get_environment_from_variant
 from softlearning.policies.gmm import GMMPolicy
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.samplers.utils import get_sampler_from_variant
+from softlearning.misc.nn import feedforward_model
 from softlearning.value_functions.utils import (
-    create_feedforward_V_function,
-    create_feedforward_Q_function,
-    create_feedforward_discriminator_function)
+    create_Q_function_from_variant,
+    create_V_function_from_variant)
 
 from examples.utils import (
     parse_universe_domain_task,
@@ -170,10 +170,12 @@ def run_experiment(variant):
     )
 
     M = variant['layer_size']
-    Q = create_feedforward_Q_function(
-        variant, aug_obs_space, env.action_space)
-    V = create_feedforward_V_function(
-        variant['V_params'], aug_obs_space)
+    Q = create_Q_function_from_variant(
+        variant['Q_params'],
+        input_shapes=(aug_obs_space.shape, env.action_space.shape))
+    V = create_V_function_from_variant(
+        variant['V_params'],
+        input_shapes=(aug_obs_space.shape, ))
 
     policy = GMMPolicy(
         observation_shape=aug_obs_space.shape,
@@ -184,8 +186,10 @@ def run_experiment(variant):
         reg=0.001,
     )
 
-    discriminator = create_feedforward_discriminator_function(
-        variant, env.active_observation_shape)
+    discriminator = feedforward_model(
+        input_shapes=(env.active_observation_shape, ),
+        output_size=variant['num_skills'],
+        **variant['discriminator_params'])
 
     algorithm = DIAYN(
         base_kwargs=base_kwargs,

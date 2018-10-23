@@ -32,7 +32,7 @@ COMMON_PARAMS = {
     'snapshot_gap': 100,
     'save_full_state': True,
     'Q_params': {
-        'type': 'double_feedforward_Q_function',
+        'type': 'double_feedforward_value_function',
         'kwargs': {
             'hidden_layer_sizes': (LAYER_SIZE, LAYER_SIZE),
         }
