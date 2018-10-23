@@ -8,146 +8,129 @@ REPARAMETERIZE = True
 
 LSP_POLICY_PARAMS_BASE = {
     'type': 'LatentSpacePolicy',
-    'reparameterize': REPARAMETERIZE,
-    'squash': True
+    'kwargs': {
+        'reparameterize': REPARAMETERIZE,
+        'squash': True,
+    }
 }
 
 NUM_COUPLING_LAYERS = 2
 
 LSP_POLICY_PARAMS_FOR_DOMAIN = {
-    'swimmer': {  # 2 DoF
-        'bijector_config': {
-            'num_coupling_layers': NUM_COUPLING_LAYERS,
-            'translation_hidden_sizes': (2, ),
-            'scale_hidden_sizes': (2, ),
+    'kwargs': {
+        'swimmer': {  # 2 DoF
+            'bijector_config': {
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'translation_hidden_sizes': (2, ),
+                'scale_hidden_sizes': (2, ),
+            },
         },
-    },
-    'hopper': {  # 3 DoF
-        'bijector_config': {
-            'num_coupling_layers': NUM_COUPLING_LAYERS,
-            'translation_hidden_sizes': (3, ),
-            'scale_hidden_sizes': (3, ),
+        'hopper': {  # 3 DoF
+            'bijector_config': {
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'translation_hidden_sizes': (3, ),
+                'scale_hidden_sizes': (3, ),
+            },
         },
-    },
-    'half-cheetah': {  # 6 DoF
-        'bijector_config': {
-            'num_coupling_layers': NUM_COUPLING_LAYERS,
-            'translation_hidden_sizes': (6, ),
-            'scale_hidden_sizes': (6, ),
+        'half-cheetah': {  # 6 DoF
+            'bijector_config': {
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'translation_hidden_sizes': (6, ),
+                'scale_hidden_sizes': (6, ),
+            },
         },
-    },
-    'walker': {  # 6 DoF
-        'bijector_config': {
-            'num_coupling_layers': NUM_COUPLING_LAYERS,
-            'translation_hidden_sizes': (6, ),
-            'scale_hidden_sizes': (6, ),
+        'walker': {  # 6 DoF
+            'bijector_config': {
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'translation_hidden_sizes': (6, ),
+                'scale_hidden_sizes': (6, ),
+            },
         },
-    },
-    'ant': {  # 8 DoF
-        'bijector_config': {
-            'num_coupling_layers': NUM_COUPLING_LAYERS,
-            'translation_hidden_sizes': (8, ),
-            'scale_hidden_sizes': (8, ),
+        'ant': {  # 8 DoF
+            'bijector_config': {
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'translation_hidden_sizes': (8, ),
+                'scale_hidden_sizes': (8, ),
+            },
         },
-    },
-    'humanoid': {
-        'bijector_config': {
-            'num_coupling_layers': NUM_COUPLING_LAYERS,
-            'translation_hidden_sizes': (21, ),
-            'scale_hidden_sizes': (21, ),
+        'humanoid': {
+            'bijector_config': {
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'translation_hidden_sizes': (21, ),
+                'scale_hidden_sizes': (21, ),
+            },
         },
-    },
-    'pusher-2d': {  # 3 DoF
-        'bijector_config': {
-            'num_coupling_layers': NUM_COUPLING_LAYERS,
-            'translation_hidden_sizes': (3, ),
-            'scale_hidden_sizes': (3, ),
+        'pusher-2d': {  # 3 DoF
+            'bijector_config': {
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'translation_hidden_sizes': (3, ),
+                'scale_hidden_sizes': (3, ),
+            },
         },
-    },
-    'HandManipulatePen': {  # 20 DoF
-        'bijector_config': {
-            'num_coupling_layers': NUM_COUPLING_LAYERS,
-            'translation_hidden_sizes': (128, ),
-            'scale_hidden_sizes': (128, ),
+        'HandManipulatePen': {  # 20 DoF
+            'bijector_config': {
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'translation_hidden_sizes': (128, ),
+                'scale_hidden_sizes': (128, ),
+            },
         },
-    },
-    'HandManipulateEgg': {  # 20 DoF
-        'bijector_config': {
-            'num_coupling_layers': NUM_COUPLING_LAYERS,
-            'translation_hidden_sizes': (128, ),
-            'scale_hidden_sizes': (128, ),
+        'HandManipulateEgg': {  # 20 DoF
+            'bijector_config': {
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'translation_hidden_sizes': (128, ),
+                'scale_hidden_sizes': (128, ),
+            },
         },
-    },
-    'HandManipulateBlock': {  # 20 DoF
-        'bijector_config': {
-            'num_coupling_layers': NUM_COUPLING_LAYERS,
-            'translation_hidden_sizes': (128, ),
-            'scale_hidden_sizes': (128, ),
+        'HandManipulateBlock': {  # 20 DoF
+            'bijector_config': {
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'translation_hidden_sizes': (128, ),
+                'scale_hidden_sizes': (128, ),
+            },
         },
-    },
-    'HandReach': {  # 20 DoF
-        'bijector_config': {
-            'num_coupling_layers': NUM_COUPLING_LAYERS,
-            'translation_hidden_sizes': (128, ),
-            'scale_hidden_sizes': (128, ),
+        'HandReach': {  # 20 DoF
+            'bijector_config': {
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'translation_hidden_sizes': (128, ),
+                'scale_hidden_sizes': (128, ),
+            },
         },
-    },
-    'DClaw3': {  # 9 DoF
-        'bijector_config': {
-            'num_coupling_layers': NUM_COUPLING_LAYERS,
-            'translation_hidden_sizes': (128, ),
-            'scale_hidden_sizes': (128, ),
+        'DClaw3': {  # 9 DoF
+            'bijector_config': {
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'translation_hidden_sizes': (128, ),
+                'scale_hidden_sizes': (128, ),
+            },
         },
-    },
-    'ImageDClaw3': {  # 9 DoF
-        'bijector_config': {
-            'num_coupling_layers': NUM_COUPLING_LAYERS,
-            'translation_hidden_sizes': (128, ),
-            'scale_hidden_sizes': (128, ),
+        'ImageDClaw3': {  # 9 DoF
+            'bijector_config': {
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'translation_hidden_sizes': (128, ),
+                'scale_hidden_sizes': (128, ),
+            },
         },
     },
 }
 
 GMM_POLICY_PARAMS_BASE = {
     'type': 'GMMPolicy',
-    'K': 1,
-    'reg': 1e-3,
-    'reparameterize': False  # GMM can't be parameterized
+    'kwargs': {
+        'K': 1,
+        'reg': 1e-3,
+        'reparameterize': False,  # GMM can't be parameterized
+    }
 }
 
 GAUSSIAN_POLICY_PARAMS_BASE = {
     'type': 'GaussianPolicy',
-    'reg': 1e-3,
-    'reparameterize': REPARAMETERIZE,
-    'hidden_layer_sizes': (M, M)
+    'kwargs': {
+        'reg': 1e-3,
+        'reparameterize': REPARAMETERIZE,
+        'hidden_layer_sizes': (M, M),
+    }
 }
 
-GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {
-    'swimmer': {  # 2 DoF
-    },
-    'hopper': {  # 3 DoF
-    },
-    'half-cheetah': {  # 6 DoF
-    },
-    'walker': {  # 6 DoF
-    },
-    'ant': {  # 8 DoF
-    },
-    'humanoid': {  # 17/21 DoF (gym/rllab)
-    },
-    'pusher-2d': {  # 3 DoF
-    },
-    'sawyer-torque': {
-    },
-    'HandManipulatePen': {  # 20 DoF
-    },
-    'HandManipulateEgg': {  # 20 DoF
-    },
-    'HandManipulateBlock': {  # 20 DoF
-    },
-    'HandReach': {  # 20 DoF
-    },
-}
+GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {}
 
 POLICY_PARAMS_BASE = {
     'LatentSpacePolicy': LSP_POLICY_PARAMS_BASE,
@@ -262,159 +245,70 @@ PREPROCESSOR_PARAMS.update({
     'gaussian': PREPROCESSOR_PARAMS['GaussianPolicy'],
 })
 
+DEFAULT_MAX_PATH_LENGTH = 1000
+MAX_PATH_LENGTH_PER_DOMAIN = {
+    'Point2DEnv': 50
+}
+
 ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
-    'lr': 3e-4,
-    'discount': tune.grid_search([0.99]),
-    'target_update_interval': 1,
-    'tau': 0.005,
-    'target_entropy': 'auto',
-    'reward_scale': 1.0,
-    'store_extra_policy_info': False,
-    'action_prior': 'uniform',
-    'save_full_state': False,
-
-    'base_kwargs': {
-        'epoch_length': 1000,
-        'train_every_n_steps': 1,
-        'n_train_repeat': 1,
-        'n_initial_exploration_steps': int(1e3),
-        'eval_render': False,
-        'eval_n_episodes': 1,
-        'eval_deterministic': True,
-    }
-}
-
-ALGORITHM_PARAMS = {
-    'swimmer': {  # 2 DoF
-        'base_kwargs': {
-            'n_epochs': int(5e2 + 1),
-        }
-    },
-    'hopper': {  # 3 DoF
-        'base_kwargs': {
-            'n_epochs': int(3e3 + 1),
-        }
-    },
-    'half-cheetah': {  # 6 DoF
-        'base_kwargs': {
-            'n_epochs': int(3e3 + 1),
-            'n_initial_exploration_steps': int(1e4),
-        }
-    },
-    'walker': {  # 6 DoF
-        'base_kwargs': {
-            'n_epochs': int(3e3 + 1),
-        }
-    },
-    'ant': {  # 8 DoF
-        'base_kwargs': {
-            'n_epochs': int(3e3 + 1),
-            'n_initial_exploration_steps': int(1e4),
-        }
-    },
-    'humanoid': {  # 17/21 DoF (gym/rllab)
-        'base_kwargs': {
-            'n_epochs': int(1e4 + 1),
-        }
-    },
-    'pusher-2d': {  # 3 DoF
-        'base_kwargs': {
-            'n_epochs': int(2e3 + 1),
-            'n_initial_exploration_steps': int(1e4),
-        }
-    },
-    'sawyer-torque': {
-        'base_kwargs': {
-            'n_epochs': int(1e3 + 1),
-        }
-    },
-    'HandManipulatePen': {
-        'base_kwargs': {
-            'n_epochs': int(1e4 + 1)
-        }
-    },
-    'HandManipulateEgg': {
-        'base_kwargs': {
-            'n_epochs': int(1e4 + 1)
-        }
-    },
-    'HandManipulateBlock': {
-        'base_kwargs': {
-            'n_epochs': int(1e4 + 1)
-        }
-    },
-    'HandReach': {
-        'base_kwargs': {
-            'n_epochs': int(1e4 + 1)
-        }
-    },
-    'DClaw3': {
-        'base_kwargs': {
-            'n_epochs': int(5e2 + 1)
-        }
-    },
-    'ImageDClaw3': {
-        'base_kwargs': {
-            'n_epochs': int(5e3 + 1)
-        }
-    }
-}
-
-REPLAY_POOL_PARAMS = {
-    'max_size': 1e6,
-}
-
-SAMPLER_PARAMS = {
-    'type': 'SimpleSampler',
     'kwargs': {
-        'max_path_length': 1000,
-        'min_pool_size': 1000,
-        'batch_size': 256,
+        'lr': 3e-4,
+        'discount': 0.99,
+        'target_update_interval': 1,
+        'tau': 0.005,
+        'target_entropy': 'auto',
+        'reward_scale': 1.0,
+        'store_extra_policy_info': False,
+        'action_prior': 'uniform',
+        'save_full_state': False,
+
+        'base_kwargs': {
+            'epoch_length': 1000,
+            'train_every_n_steps': 1,
+            'n_train_repeat': 1,
+            'n_initial_exploration_steps': int(1e3),
+            'eval_render': False,
+            'eval_n_episodes': 1,
+            'eval_deterministic': True,
+        }
     }
 }
 
-RUN_PARAMS_BASE = {
-    'seed': tune.grid_search([1, 2]),
-    'snapshot_mode': 'gap',
-    'snapshot_gap': 1000,
-    'sync_pkl': True,
+NUM_EPOCHS_PER_DOMAIN = {
+    'swimmer': int(5e2 + 1),
+    'hopper': int(3e3 + 1),
+    'half-cheetah': int(3e3 + 1),
+    'walker': int(3e3 + 1),
+    'ant': int(3e3 + 1),
+    'humanoid': int(1e4 + 1),
+    'pusher-2d': int(2e3 + 1),
+    'sawyer-torque': int(1e3 + 1),
+    'HandManipulatePen': int(1e4 + 1),
+    'HandManipulateEgg': int(1e4 + 1),
+    'HandManipulateBlock': int(1e4 + 1),
+    'HandReach': int(1e4 + 1),
+    'DClaw3': int(5e2 + 1),
+    'ImageDClaw3': int(5e3 + 1),
+    'Point2DEnv': int(200 + 1)
 }
 
-RUN_PARAMS = {
-    'swimmer': {  # 2 DoF
-        'snapshot_gap': 200
-    },
-    'hopper': {  # 3 DoF
-        'snapshot_gap': 600
-    },
-    'half-cheetah': {  # 6 DoF
-        'snapshot_gap': 2000
-    },
-    'walker': {  # 6 DoF
-        'snapshot_gap': 1000
-    },
-    'ant': {  # 8 DoF
-        'snapshot_gap': 2000
-    },
-    'humanoid': {  # 17/21 DoF (gym/rllab)
-        'snapshot_gap': 2000
-    },
-    'pusher-2d': {  # 21 DoF
-        'snapshot_gap': 500
-    },
-    'sawyer-torque': {
-        'snapshot_gap': 1000
-    },
-    'DClaw3': {
-        'snapshot_gap': 100
-    },
-    'ImageDClaw3': {
-        'snapshot_gap': 250
+ALGORITHM_PARAMS_PER_DOMAIN = {
+    **{
+        domain: {
+            'kwargs': {
+                'base_kwargs': {
+                    'n_epochs': NUM_EPOCHS_PER_DOMAIN[domain],
+                    'n_initial_exploration_steps': (
+                        MAX_PATH_LENGTH_PER_DOMAIN.get(
+                            domain, DEFAULT_MAX_PATH_LENGTH
+                        ) * 10),
+                },
+            }
+        } for domain in NUM_EPOCHS_PER_DOMAIN
     }
 }
-
 
 ENV_PARAMS = {
     'swimmer': {  # 2 DoF
@@ -488,10 +382,11 @@ ENV_PARAMS = {
     }
 }
 
+NUM_SNAPSHOTS = 5
+
 
 def get_variant_spec(universe, domain, task, policy):
     variant_spec = {
-        'prefix': '{}/{}/{}'.format(universe, domain, task),
         'domain': domain,
         'task': task,
         'universe': universe,
@@ -520,11 +415,30 @@ def get_variant_spec(universe, domain, task, policy):
         ),
         'algorithm_params': deep_update(
             ALGORITHM_PARAMS_BASE,
-            ALGORITHM_PARAMS.get(domain, {})
+            ALGORITHM_PARAMS_PER_DOMAIN[domain]
         ),
-        'replay_pool_params': REPLAY_POOL_PARAMS,
-        'sampler_params': SAMPLER_PARAMS,
-        'run_params': deep_update(RUN_PARAMS_BASE, RUN_PARAMS.get(domain, {})),
+        'replay_pool_params': {
+            'type': 'SimpleReplayPool',
+            'kwargs': {
+                'max_size': 1e6,
+            }
+        },
+        'sampler_params': {
+            'type': 'SimpleSampler',
+            'kwargs': {
+                'max_path_length': MAX_PATH_LENGTH_PER_DOMAIN.get(
+                    domain, DEFAULT_MAX_PATH_LENGTH),
+                'min_pool_size': MAX_PATH_LENGTH_PER_DOMAIN.get(
+                    domain, DEFAULT_MAX_PATH_LENGTH),
+                'batch_size': 256,
+            }
+        },
+        'run_params': {
+            'seed': tune.grid_search([1, 2]),
+            'snapshot_mode': 'gap',
+            'snapshot_gap': NUM_EPOCHS_PER_DOMAIN[domain] // NUM_SNAPSHOTS,
+            'sync_pkl': True,
+        },
     }
 
     return variant_spec

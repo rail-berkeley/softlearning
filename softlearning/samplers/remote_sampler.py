@@ -7,11 +7,11 @@ from rllab.misc.overrides import overrides
 from rllab.misc import logger
 
 from softlearning.misc import tf_utils
-from .sampler import Sampler
+from .sampler_base import BaseSampler
 from .utils import rollout
 
 
-class RemoteSampler(Sampler):
+class RemoteSampler(BaseSampler):
     def __init__(self, **kwargs):
         super(RemoteSampler, self).__init__(**kwargs)
 

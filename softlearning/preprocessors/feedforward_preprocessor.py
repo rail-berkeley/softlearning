@@ -2,7 +2,7 @@ import tensorflow as tf
 
 
 def feedforward_preprocessor_model(
-        inputs,
+        input_shape,
         hidden_layer_sizes,
         output_size,
         ignore_input=0,
@@ -11,6 +11,8 @@ def feedforward_preprocessor_model(
         name="feedforward_preprocessor",
         *args,
         **kwargs):
+
+    inputs = tf.keras.layers.Input(shape=input_shape)
 
     def split_passthrough_layer(x):
         if ignore_input > 0:

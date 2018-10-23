@@ -1,5 +1,5 @@
-from .nn_policy import NNPolicy
-from .stochastic_policy import StochasticNNPolicy
+from copy import deepcopy
+
 from .gmm import GMMPolicy
 from .latent_space_policy import LatentSpacePolicy
 from .uniform_policy import UniformPolicy
@@ -51,23 +51,30 @@ POLICY_FUNCTIONS = {
 }
 
 
-def get_policy(policy_type, env, **kwargs):
-    return POLICY_FUNCTIONS[policy_type](env, **kwargs)
+def get_policy(policy_type, *args, **kwargs):
+    return POLICY_FUNCTIONS[policy_type](*args, **kwargs)
 
 
-def get_policy_from_variant(variant, env, Qs, preprocessor):
-    policy_params = variant['policy_params'].copy()
-    policy_type = policy_params.pop('type')
+def get_policy_from_variant(variant,
+                            env,
+                            Qs,
+                            preprocessor,
+                            *args,
+                            **kwargs):
+    policy_params = variant['policy_params']
+    policy_type = policy_params['type']
+    policy_kwargs = deepcopy(policy_params['kwargs'])
 
     if policy_type == 'GMMPolicy':
-        assert not policy_params['reparameterize'], (
+        assert not policy_params['kwargs']['reparameterize'], (
             "GMMPolicy cannot be reparameterized")
 
-    policy = get_policy(
-        policy_type,
+    policy = POLICY_FUNCTIONS[policy_type](
         env,
+        *args,
         Q=Qs[0],
         preprocessor=preprocessor,
-        **policy_params)
+        **policy_kwargs,
+        **kwargs)
 
     return policy

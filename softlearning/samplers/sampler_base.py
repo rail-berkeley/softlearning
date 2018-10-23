@@ -4,7 +4,7 @@ from itertools import islice
 from rllab.misc import logger
 
 
-class Sampler(object):
+class BaseSampler(object):
     def __init__(self,
                  max_path_length,
                  min_pool_size,

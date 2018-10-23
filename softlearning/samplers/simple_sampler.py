@@ -1,10 +1,10 @@
 import numpy as np
 
 from rllab.misc import logger
-from .sampler import Sampler
+from .sampler_base import BaseSampler
 
 
-class SimpleSampler(Sampler):
+class SimpleSampler(BaseSampler):
     def __init__(self, **kwargs):
         super(SimpleSampler, self).__init__(**kwargs)
 

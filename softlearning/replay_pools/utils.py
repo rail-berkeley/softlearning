@@ -1,29 +1,33 @@
-from .simple_replay_pool import SimpleReplayPool
-from .image_replay_pool import ImageReplayPool
-from .extra_policy_info_replay_pool import ExtraPolicyInfoReplayPool
-from .union_pool import UnionPool
-# from .distance_pool import DistanceReplayPool
+from copy import deepcopy
+
+from . import (
+    simple_replay_pool,
+    image_replay_pool,
+    extra_policy_info_replay_pool,
+    union_pool)
 
 
 POOL_CLASSES = {
-    # 'DistanceReplayPool': DistanceReplayPool,
-    'ExtraPolicyInfoReplayPool': ExtraPolicyInfoReplayPool,
-    'SimpleReplayPool': SimpleReplayPool,
-    'UnionPool': UnionPool,
-    'ImageReplayPool': ImageReplayPool,
+    'SimpleReplayPool': simple_replay_pool.SimpleReplayPool,
+    'ImageReplayPool': image_replay_pool.ImageReplayPool,
+    'ExtraPolicyInfoReplayPool': (
+        extra_policy_info_replay_pool.ExtraPolicyInfoReplayPool),
+    'UnionPool': union_pool.UnionPool,
 }
 
 DEFAULT_REPLAY_POOL = 'SimpleReplayPool'
 
 
-def get_replay_pool_from_variant(variant, env):
-    replay_pool_params = variant['replay_pool_params'].copy()
+def get_replay_pool_from_variant(variant, env, *args, **kwargs):
+    replay_pool_params = variant['replay_pool_params']
+    replay_pool_type = replay_pool_params['type']
+    replay_pool_kwargs = deepcopy(replay_pool_params['kwargs'])
 
-    pool_type = replay_pool_params.pop('type', DEFAULT_REPLAY_POOL)
-
-    pool = POOL_CLASSES[pool_type](
+    replay_pool = POOL_CLASSES[replay_pool_type](
+        *args,
         observation_space=env.observation_space,
         action_space=env.action_space,
-        **replay_pool_params)
+        **replay_pool_kwargs,
+        **kwargs)
 
-    return pool
+    return replay_pool

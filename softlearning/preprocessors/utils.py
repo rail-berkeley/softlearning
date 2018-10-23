@@ -1,6 +1,6 @@
-import tensorflow as tf
+from copy import deepcopy
 
-from .mlp_preprocessor import feedforward_preprocessor_model
+from .feedforward_preprocessor import feedforward_preprocessor_model
 
 
 def get_convnet_preprocessor(observation_space,
@@ -13,11 +13,8 @@ def get_convnet_preprocessor(observation_space,
 def get_feedforward_preprocessor(observation_shape,
                                  name='feedforward_preprocessor',
                                  **kwargs):
-    observations = tf.keras.layers.Input(
-        shape=observation_shape, name='observations')
-
     preprocessor = feedforward_preprocessor_model(
-        inputs=observations, name=name, **kwargs)
+        input_shape=observation_shape, name=name, **kwargs)
 
     return preprocessor
 
@@ -29,16 +26,19 @@ PREPROCESSOR_FUNCTIONS = {
 }
 
 
-def get_preprocessor_from_variant(variant, env):
+def get_preprocessor_from_variant(variant, env, *args, **kwargs):
     preprocessor_params = variant['preprocessor_params']
+    preprocessor_type = preprocessor_params.get('type')
+    preprocessor_kwargs = deepcopy(preprocessor_params.get('kwargs', {}))
 
-    if not preprocessor_params:
+    if not preprocessor_params or preprocessor_type is None:
         return None
-    args = preprocessor_params.get('args', ())
-    kwargs = preprocessor_params.get('kwargs', {})
 
     preprocessor = PREPROCESSOR_FUNCTIONS[
-        preprocessor_params.get('type')](
-            env.active_observation_shape, *args, **kwargs)
+        preprocessor_type](
+            env.active_observation_shape,
+            *args,
+            **preprocessor_kwargs,
+            **kwargs)
 
     return preprocessor
