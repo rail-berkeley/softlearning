@@ -230,6 +230,17 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         return super(LatentSpacePolicy, self).get_actions(
             observations, with_log_pis, with_raw_actions)
 
+    def get_params_internal(self, *args, **kwargs):
+        params = super(LatentSpacePolicy, self).get_params_internal(
+            *args, **kwargs)
+
+        if self._observations_preprocessor is not None:
+            preprocessor_params = (
+                self._observations_preprocessor.trainable_variables)
+            params = (*params, *preprocessor_params)
+
+        return params
+
     @contextmanager
     def deterministic(self, set_deterministic=True, h=None):
         """Context manager for changing the determinism of the policy.
