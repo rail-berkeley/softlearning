@@ -75,6 +75,35 @@ class ConditionalRealNVPFlowTest(tf.test.TestCase):
         self.assertAllClose(x_, inverse_y_, rtol=1e-4, atol=0.0)
         self.assertAllClose(ildj_, -fldj_, rtol=1e-6, atol=0.0)
 
+    def test_should_reuse_scale_and_log_scale_variables(self):
+        x_ = np.reshape(np.linspace(-1.0, 1.0, 8, dtype=np.float32), (-1, 4))
+
+        flow = ConditionalRealNVPFlow(
+            num_coupling_layers=2,
+            hidden_layer_sizes=(64,),
+            event_dims=x_.shape[1:],
+        )
+
+        x = tf.constant(x_)
+
+        assert not tf.trainable_variables()
+
+        forward_x = flow.forward(x)
+
+        self.assertEqual(
+            len(tf.trainable_variables()), 4 * flow._num_coupling_layers)
+
+        inverse_y = flow.inverse(tf.identity(forward_x))
+        forward_inverse_y = flow.forward(inverse_y)
+        fldj = flow.forward_log_det_jacobian(x, event_ndims=1)
+        ildj = flow.inverse_log_det_jacobian(
+            tf.identity(forward_x), event_ndims=1)
+
+        self.evaluate(tf.global_variables_initializer())
+
+        self.assertEqual(
+            len(tf.trainable_variables()), 4 * flow._num_coupling_layers)
+
 
 if __name__ == '__main__':
     tf.test.main()
