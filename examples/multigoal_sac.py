@@ -136,13 +136,13 @@ def main():
         'local_dir': local_dir,
         'layer_size': layer_size,
         'V_params': {
-            'type': 'feedforward_value_function',
+            'type': 'feedforward_V_function',
             'kwargs': {
                 'hidden_layer_sizes': (layer_size, layer_size),
             }
         },
         'Q_params': {
-            'type': 'double_feedforward_value_function',
+            'type': 'double_feedforward_Q_function',
             'kwargs': {
                 'hidden_layer_sizes': (layer_size, layer_size),
             }
