@@ -50,7 +50,6 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
         """
         self._graph_parents = []
         self._name = name
-        self._validate_args = validate_args
 
         self._num_coupling_layers = num_coupling_layers
         self._hidden_layer_sizes = tuple(hidden_layer_sizes)
@@ -115,8 +114,6 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
         return conditions
 
     def _forward(self, x, **condition_kwargs):
-        self._maybe_assert_valid_x(x)
-
         conditions = self._get_flow_conditions(**condition_kwargs)
         for bijector in self.flow:
             x = bijector.forward(x, **conditions.get(bijector.name, {}))
@@ -128,8 +125,6 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
         return x
 
     def _inverse(self, y, **condition_kwargs):
-        self._maybe_assert_valid_y(y)
-
         conditions = self._get_flow_conditions(**condition_kwargs)
         for bijector in reversed(self.flow):
             y = bijector.inverse(y, **conditions.get(bijector.name, {}))
@@ -141,8 +136,6 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
         return y
 
     def _forward_log_det_jacobian(self, x, **condition_kwargs):
-        self._maybe_assert_valid_x(x)
-
         conditions = self._get_flow_conditions(**condition_kwargs)
 
         # TODO(hartikainen): Once tfp.bijectors.Chain supports conditioning,
@@ -175,8 +168,6 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
         return fldj
 
     def _inverse_log_det_jacobian(self, y, **condition_kwargs):
-        self._maybe_assert_valid_y(y)
-
         conditions = self._get_flow_conditions(**condition_kwargs)
 
         # TODO(hartikainen): Once tfp.bijectors.Chain supports conditioning,
@@ -212,18 +203,6 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
             y = b.inverse(y, **conditions.get(b.name, {}))
 
         return ildj
-
-    def _maybe_assert_valid_x(self, x):
-        """TODO"""
-        if not self.validate_args:
-            return x
-        raise NotImplementedError("_maybe_assert_valid_x")
-
-    def _maybe_assert_valid_y(self, y):
-        """TODO"""
-        if not self.validate_args:
-            return y
-        raise NotImplementedError("_maybe_assert_valid_y")
 
 
 def conditioned_real_nvp_template(hidden_layers,
