@@ -51,8 +51,7 @@ COMMON_PARAMS = {
     },
 
     # lsp configs
-    'policy_coupling_layers': 2,
-    'policy_s_t_layers': 1,
+    'policy_use_batch_normalization': False,
     'policy_scale_regularization': 0.0,
     'regularize_actions': True,
     'preprocessing_layer_sizes': None,
@@ -72,7 +71,7 @@ ENV_PARAMS = {
         'target_entropy': -2.0,
 
         'preprocessing_layer_sizes': (128, 128, 4),
-        'policy_s_t_units': 2,
+        'policy_hidden_layer_sizes': (2, 2),
 
         'snapshot_gap': 500,
 
@@ -99,7 +98,7 @@ ENV_PARAMS = {
         'target_entropy': -8.0,
 
         'preprocessing_layer_sizes': (128, 128, 16),
-        'policy_s_t_units': 8,
+        'policy_hidden_layer_sizes': (8, 8),
 
         'snapshot_gap': 1000,
 
@@ -126,7 +125,7 @@ ENV_PARAMS = {
         'target_entropy': -21.0,
 
         'preprocessing_layer_sizes': (128, 128, 42),
-        'policy_s_t_units': 21,
+        'policy_hidden_layer_sizes': (21, 21),
 
         'snapshot_gap': 1000,
 
@@ -152,7 +151,7 @@ ENV_PARAMS = {
         'target_entropy': -8.0,
 
         'preprocessing_layer_sizes': (128, 128, 16),
-        'policy_s_t_units': 8,
+        'policy_hidden_layer_sizes': (8, 8),
 
         'snapshot_gap': 1000,
 
@@ -171,7 +170,7 @@ ENV_PARAMS = {
         'target_entropy': -21.0,
 
         'preprocessing_layer_sizes': (128, 128, 42),
-        'policy_s_t_units': 21,
+        'policy_hidden_layer_sizes': (21, 21),
 
         'snapshot_gap': 2000,
 
@@ -234,15 +233,10 @@ def run_experiment(variant):
 
     observations_preprocessor = get_preprocessor_from_variant(variant, env)
 
-    policy_s_t_layers = variant['policy_s_t_layers']
-    policy_s_t_units = variant['policy_s_t_units']
-    s_t_hidden_sizes = [policy_s_t_units] * policy_s_t_layers
-
     bijector_config = {
         "scale_regularization": 0.0,
         "num_coupling_layers": variant['policy_coupling_layers'],
-        "translation_hidden_sizes": s_t_hidden_sizes,
-        "scale_hidden_sizes": s_t_hidden_sizes,
+        "hidden_layer_sizes": variant['policy_hidden_layer_sizes'],
     }
 
     policy = LatentSpacePolicy(

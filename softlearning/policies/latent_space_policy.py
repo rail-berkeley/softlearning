@@ -138,8 +138,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         config = self._bijector_config
         self.bijector = ConditionalRealNVPFlow(
             num_coupling_layers=config.get("num_coupling_layers"),
-            translation_hidden_sizes=config.get("translation_hidden_sizes"),
-            scale_hidden_sizes=config.get("scale_hidden_sizes"),
+            hidden_layer_sizes=config.get("hidden_layer_sizes"),
             event_ndims=1,
             event_dims=(self._Da, ))
 

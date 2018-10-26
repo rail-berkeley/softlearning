@@ -62,8 +62,8 @@ def run_experiment(variant, reporter=None):
         bijector_config = {
             "scale_regularization": 0.0,
             "num_coupling_layers": 2,
-            "translation_hidden_sizes": (M,),
-            "scale_hidden_sizes": (M,),
+            "hidden_layer_sizes": (M, ),
+            "use_batch_normalization": False,
         }
 
         policy = LatentSpacePolicy(

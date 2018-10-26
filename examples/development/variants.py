@@ -20,93 +20,67 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
     'kwargs': {
         'swimmer': {  # 2 DoF
             'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'translation_hidden_sizes': (2, ),
-                'scale_hidden_sizes': (2, ),
+                'hidden_layer_sizes': (2,) * NUM_COUPLING_LAYERS,
             },
         },
         'hopper': {  # 3 DoF
             'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'translation_hidden_sizes': (3, ),
-                'scale_hidden_sizes': (3, ),
+                'hidden_layer_sizes': (3,) * NUM_COUPLING_LAYERS,
             },
         },
         'half-cheetah': {  # 6 DoF
             'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'translation_hidden_sizes': (6, ),
-                'scale_hidden_sizes': (6, ),
+                'hidden_layer_sizes': (6,) * NUM_COUPLING_LAYERS,
             },
         },
         'walker': {  # 6 DoF
             'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'translation_hidden_sizes': (6, ),
-                'scale_hidden_sizes': (6, ),
+                'hidden_layer_sizes': (6,) * NUM_COUPLING_LAYERS,
             },
         },
         'ant': {  # 8 DoF
             'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'translation_hidden_sizes': (8, ),
-                'scale_hidden_sizes': (8, ),
+                'hidden_layer_sizes': (8,) * NUM_COUPLING_LAYERS,
             },
         },
         'humanoid': {
             'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'translation_hidden_sizes': (21, ),
-                'scale_hidden_sizes': (21, ),
+                'hidden_layer_sizes': (21,) * NUM_COUPLING_LAYERS,
             },
         },
         'pusher-2d': {  # 3 DoF
             'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'translation_hidden_sizes': (3, ),
-                'scale_hidden_sizes': (3, ),
+                'hidden_layer_sizes': (3,) * NUM_COUPLING_LAYERS,
             },
         },
         'HandManipulatePen': {  # 20 DoF
             'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'translation_hidden_sizes': (128, ),
-                'scale_hidden_sizes': (128, ),
+                'hidden_layer_sizes': (128,) * NUM_COUPLING_LAYERS,
             },
         },
         'HandManipulateEgg': {  # 20 DoF
             'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'translation_hidden_sizes': (128, ),
-                'scale_hidden_sizes': (128, ),
+                'hidden_layer_sizes': (128,) * NUM_COUPLING_LAYERS,
             },
         },
         'HandManipulateBlock': {  # 20 DoF
             'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'translation_hidden_sizes': (128, ),
-                'scale_hidden_sizes': (128, ),
+                'hidden_layer_sizes': (128,) * NUM_COUPLING_LAYERS,
             },
         },
         'HandReach': {  # 20 DoF
             'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'translation_hidden_sizes': (128, ),
-                'scale_hidden_sizes': (128, ),
+                'hidden_layer_sizes': (128,) * NUM_COUPLING_LAYERS,
             },
         },
         'DClaw3': {  # 9 DoF
             'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'translation_hidden_sizes': (128, ),
-                'scale_hidden_sizes': (128, ),
+                'hidden_layer_sizes': (128,) * NUM_COUPLING_LAYERS,
             },
         },
         'ImageDClaw3': {  # 9 DoF
             'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'translation_hidden_sizes': (128, ),
-                'scale_hidden_sizes': (128, ),
+                'hidden_layer_sizes': (128,) * NUM_COUPLING_LAYERS,
             },
         },
     },

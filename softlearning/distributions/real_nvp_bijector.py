@@ -26,8 +26,7 @@ class ConditionalRealNVPFlow(tfb.ConditionalBijector):
 
     def __init__(self,
                  num_coupling_layers=2,
-                 translation_hidden_sizes=(25,),
-                 scale_hidden_sizes=(25,),
+                 hidden_layer_sizes=(64,),
                  event_ndims=1,
                  event_dims=None,
                  validate_args=False,
@@ -55,8 +54,7 @@ class ConditionalRealNVPFlow(tfb.ConditionalBijector):
         self._validate_args = validate_args
 
         self._num_coupling_layers = num_coupling_layers
-        self._translation_hidden_sizes = tuple(translation_hidden_sizes)
-        self._scale_hidden_sizes = tuple(scale_hidden_sizes)
+        self._hidden_layer_sizes = tuple(hidden_layer_sizes)
 
         self._event_dims = event_dims
 
@@ -69,29 +67,21 @@ class ConditionalRealNVPFlow(tfb.ConditionalBijector):
             name=name)
 
     def build(self):
-        num_coupling_layers = self._num_coupling_layers
-        translation_hidden_sizes = self._translation_hidden_sizes
-        scale_hidden_sizes = self._scale_hidden_sizes
-        hidden_sizes = [
-            x + y for x, y in
-            zip(translation_hidden_sizes, scale_hidden_sizes)
-        ]
-
         D = np.prod(self._event_dims)
 
         flow_parts = []
-        for i in range(num_coupling_layers):
+        for i in range(self._num_coupling_layers):
             real_nvp_bijector = tfp.bijectors.real_nvp.RealNVP(
                 num_masked=D // 2,
                 shift_and_log_scale_fn=conditioned_real_nvp_template(
-                    hidden_layers=hidden_sizes,
+                    hidden_layers=self._hidden_layer_sizes,
                     # TODO: test tf.nn.relu
                     activation=tf.nn.tanh),
                 name='real_nvp_{}'.format(i))
 
             flow_parts.append(real_nvp_bijector)
 
-            if i < num_coupling_layers - 1:
+            if i < self._num_coupling_layers - 1:
                 permute_bijector = tfb.Permute(
                     permutation=list(reversed(range(D))),
                     name='permute_{}'.format(i))
