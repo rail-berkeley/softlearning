@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-import tensorflow_probability as tfp
+from tensorflow_probability import bijectors
 
 import numpy as np
 
@@ -14,14 +14,13 @@ __all__ = [
 ]
 
 
-tfb = tfp.bijectors
 
 
-class ConditionalChain(tfb.ConditionalBijector, tfb.Chain):
+class ConditionalChain(bijectors.ConditionalBijector, bijectors.Chain):
     pass
 
 
-class ConditionalRealNVPFlow(tfb.ConditionalBijector):
+class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
     """TODO"""
 
     def __init__(self,
@@ -71,7 +70,7 @@ class ConditionalRealNVPFlow(tfb.ConditionalBijector):
 
         flow_parts = []
         for i in range(self._num_coupling_layers):
-            real_nvp_bijector = tfp.bijectors.real_nvp.RealNVP(
+            real_nvp_bijector = bijectors.RealNVP(
                 num_masked=D // 2,
                 shift_and_log_scale_fn=conditioned_real_nvp_template(
                     hidden_layers=self._hidden_layer_sizes,
@@ -82,20 +81,19 @@ class ConditionalRealNVPFlow(tfb.ConditionalBijector):
             flow_parts.append(real_nvp_bijector)
 
             if i < self._num_coupling_layers - 1:
-                permute_bijector = tfb.Permute(
+                permute_bijector = bijectors.Permute(
                     permutation=list(reversed(range(D))),
                     name='permute_{}'.format(i))
                 flow_parts.append(permute_bijector)
 
-        # Note: tfb.Chain applies the list of bijectors in the _reverse_ order
-        # of what they are inputted.
-        self.flow = ConditionalChain(list(reversed(flow_parts)))
+        # Note: bijectors.Chain applies the list of bijectors in the
+        # _reverse_ order of what they are inputted.
 
     def _get_flow_conditions(self, **condition_kwargs):
         conditions = {
             bijector.name: condition_kwargs
             for bijector in self.flow.bijectors
-            if isinstance(bijector, RealNVP)
+            if isinstance(bijector, bijectors.RealNVP)
         }
 
         return conditions
