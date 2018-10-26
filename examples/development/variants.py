@@ -17,72 +17,109 @@ LSP_POLICY_PARAMS_BASE = {
 NUM_COUPLING_LAYERS = 2
 
 LSP_POLICY_PARAMS_FOR_DOMAIN = {
-    'kwargs': {
-        'swimmer': {  # 2 DoF
+    'swimmer': {  # 2 DoF
+        'kwargs': {
             'bijector_config': {
-                'hidden_layer_sizes': (2,) * NUM_COUPLING_LAYERS,
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'hidden_layer_sizes': (2, 2) ,
             },
-        },
-        'hopper': {  # 3 DoF
+        }
+    },
+    'hopper': {  # 3 DoF
+        'kwargs': {
             'bijector_config': {
-                'hidden_layer_sizes': (3,) * NUM_COUPLING_LAYERS,
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'hidden_layer_sizes': (3, 3) ,
             },
-        },
-        'half-cheetah': {  # 6 DoF
+        }
+    },
+    'half-cheetah': {  # 6 DoF
+        'kwargs': {
             'bijector_config': {
-                'hidden_layer_sizes': (6,) * NUM_COUPLING_LAYERS,
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'hidden_layer_sizes': (6, 6) ,
             },
-        },
-        'walker': {  # 6 DoF
+        }
+    },
+    'walker': {  # 6 DoF
+        'kwargs': {
             'bijector_config': {
-                'hidden_layer_sizes': (6,) * NUM_COUPLING_LAYERS,
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'hidden_layer_sizes': (6, 6) ,
             },
-        },
-        'ant': {  # 8 DoF
+        }
+    },
+    'ant': {  # 8 DoF
+        'kwargs': {
             'bijector_config': {
-                'hidden_layer_sizes': (8,) * NUM_COUPLING_LAYERS,
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'hidden_layer_sizes': (8, 8) ,
             },
-        },
-        'humanoid': {
+        }
+    },
+    'humanoid': {
+        'kwargs': {
             'bijector_config': {
-                'hidden_layer_sizes': (21,) * NUM_COUPLING_LAYERS,
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'hidden_layer_sizes': (21, 21) ,
             },
-        },
-        'pusher-2d': {  # 3 DoF
+        }
+    },
+    'pusher-2d': {  # 3 DoF
+        'kwargs': {
             'bijector_config': {
-                'hidden_layer_sizes': (3,) * NUM_COUPLING_LAYERS,
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'hidden_layer_sizes': (3, 3) ,
             },
-        },
-        'HandManipulatePen': {  # 20 DoF
+        }
+    },
+    'HandManipulatePen': {  # 20 DoF
+        'kwargs': {
             'bijector_config': {
-                'hidden_layer_sizes': (128,) * NUM_COUPLING_LAYERS,
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'hidden_layer_sizes': (128, 128) ,
             },
-        },
-        'HandManipulateEgg': {  # 20 DoF
+        }
+    },
+    'HandManipulateEgg': {  # 20 DoF
+        'kwargs': {
             'bijector_config': {
-                'hidden_layer_sizes': (128,) * NUM_COUPLING_LAYERS,
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'hidden_layer_sizes': (128, 128) ,
             },
-        },
-        'HandManipulateBlock': {  # 20 DoF
+        }
+    },
+    'HandManipulateBlock': {  # 20 DoF
+        'kwargs': {
             'bijector_config': {
-                'hidden_layer_sizes': (128,) * NUM_COUPLING_LAYERS,
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'hidden_layer_sizes': (128, 128) ,
             },
-        },
-        'HandReach': {  # 20 DoF
+        }
+    },
+    'HandReach': {  # 20 DoF
+        'kwargs': {
             'bijector_config': {
-                'hidden_layer_sizes': (128,) * NUM_COUPLING_LAYERS,
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'hidden_layer_sizes': (128, 128) ,
             },
-        },
-        'DClaw3': {  # 9 DoF
+        }
+    },
+    'DClaw3': {  # 9 DoF
+        'kwargs': {
             'bijector_config': {
-                'hidden_layer_sizes': (128,) * NUM_COUPLING_LAYERS,
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'hidden_layer_sizes': (128, 128) ,
             },
-        },
-        'ImageDClaw3': {  # 9 DoF
+        }
+    },
+    'ImageDClaw3': {  # 9 DoF
+        'kwargs': {
             'bijector_config': {
-                'hidden_layer_sizes': (128,) * NUM_COUPLING_LAYERS,
+                'num_coupling_layers': NUM_COUPLING_LAYERS,
+                'hidden_layer_sizes': (128, 128) ,
             },
-        },
+        }
     },
 }
 
