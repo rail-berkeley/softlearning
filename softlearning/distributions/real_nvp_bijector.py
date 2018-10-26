@@ -14,6 +14,8 @@ __all__ = [
 ]
 
 
+def _use_static_shape(input_tensor, ndims):
+  return input_tensor.shape.is_fully_defined() and isinstance(ndims, int)
 
 
 class ConditionalChain(bijectors.ConditionalBijector, bijectors.Chain):
@@ -68,7 +70,7 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
     def build(self):
         D = np.prod(self._event_dims)
 
-        flow_parts = []
+        flow = []
         for i in range(self._num_coupling_layers):
             real_nvp_bijector = bijectors.RealNVP(
                 num_masked=D // 2,
@@ -78,21 +80,22 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
                     activation=tf.nn.tanh),
                 name='real_nvp_{}'.format(i))
 
-            flow_parts.append(real_nvp_bijector)
+            flow.append(real_nvp_bijector)
 
             if i < self._num_coupling_layers - 1:
                 permute_bijector = bijectors.Permute(
                     permutation=list(reversed(range(D))),
                     name='permute_{}'.format(i))
-                flow_parts.append(permute_bijector)
+                flow.append(permute_bijector)
 
         # Note: bijectors.Chain applies the list of bijectors in the
         # _reverse_ order of what they are inputted.
+        self.flow = flow
 
     def _get_flow_conditions(self, **condition_kwargs):
         conditions = {
             bijector.name: condition_kwargs
-            for bijector in self.flow.bijectors
+            for bijector in self.flow
             if isinstance(bijector, bijectors.RealNVP)
         }
 
@@ -102,24 +105,61 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
         self._maybe_assert_valid_x(x)
 
         conditions = self._get_flow_conditions(**condition_kwargs)
-        out = self.flow.forward(x, **conditions)
+        for bijector in self.flow:
+            x = bijector.forward(x, **conditions.get(bijector.name, {}))
 
-        return out
+        # TODO(hartikainen): Once tfp.bijectors.Chain supports conditioning,
+        # replace the above for-loops with self.flow.forward.
+        # x = self.flow.forward(x, **conditions)
+
+        return x
 
     def _inverse(self, y, **condition_kwargs):
         self._maybe_assert_valid_y(y)
 
         conditions = self._get_flow_conditions(**condition_kwargs)
-        out = self.flow.inverse(y, **conditions)
+        for bijector in reversed(self.flow):
+            y = bijector.inverse(y, **conditions.get(bijector.name, {}))
 
-        return out
+        # TODO(hartikainen): Once tfp.bijectors.Chain supports conditioning,
+        # replace the above for-loops with self.flow.inverse.
+        # y = self.flow.inverse(y, **conditions)
+
+        return y
 
     def _forward_log_det_jacobian(self, x, **condition_kwargs):
         self._maybe_assert_valid_x(x)
 
         conditions = self._get_flow_conditions(**condition_kwargs)
-        log_det_jacobian = self.flow.forward_log_det_jacobian(
-            x, event_ndims=1, **conditions)
+
+        # TODO(hartikainen): Once tfp.bijectors.Chain supports conditioning,
+        # replace everything below with self.flow.forward_log_det_jacobian.
+        # fldj = self.flow.forward_log_det_jacobian(
+        #     x, event_ndims=1, **conditions)
+
+        fldj = tf.cast(0., dtype=x.dtype.base_dtype)
+        event_ndims = self._maybe_get_static_event_ndims(
+            self.forward_min_event_ndims)
+
+        if _use_static_shape(x, event_ndims):
+            event_shape = x.shape[x.shape.ndims - event_ndims:]
+        else:
+            event_shape = tf.shape(x)[tf.rank(x) - event_ndims:]
+        for b in self.flow:
+            fldj += b.forward_log_det_jacobian(
+                x, event_ndims=event_ndims, **conditions.get(b.name, {}))
+            if _use_static_shape(x, event_ndims):
+                event_shape = b.forward_event_shape(event_shape)
+                event_ndims = self._maybe_get_static_event_ndims(event_shape.ndims)
+            else:
+                event_shape = b.forward_event_shape_tensor(event_shape)
+                event_ndims = tf.size(event_shape)
+                event_ndims_ = self._maybe_get_static_event_ndims(event_ndims)
+                if event_ndims_ is not None:
+                    event_ndims = event_ndims_
+            x = b.forward(x, **conditions.get(b.name, {}))
+
+        return fldj
 
         return log_det_jacobian
 
@@ -127,10 +167,40 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
         self._maybe_assert_valid_y(y)
 
         conditions = self._get_flow_conditions(**condition_kwargs)
-        log_det_jacobian = self.flow.inverse_log_det_jacobian(
-            y, event_ndims=1, **conditions)
 
-        return log_det_jacobian
+        # TODO(hartikainen): Once tfp.bijectors.Chain supports conditioning,
+        # replace everything below with self.flow.inverse_log_det_jacobian.
+        # ildj = self.flow.inverse_log_det_jacobian(
+        #     y, event_ndims=1, **conditions)
+
+        ildj = tf.cast(0., dtype=y.dtype.base_dtype)
+
+        event_ndims = self._maybe_get_static_event_ndims(
+            self.inverse_min_event_ndims)
+
+        if _use_static_shape(y, event_ndims):
+            event_shape = y.shape[y.shape.ndims - event_ndims:]
+        else:
+            event_shape = tf.shape(y)[tf.rank(y) - event_ndims:]
+
+        for b in reversed(self.flow):
+            ildj += b.inverse_log_det_jacobian(
+                y, event_ndims=event_ndims, **conditions.get(b.name, {}))
+
+            if _use_static_shape(y, event_ndims):
+                event_shape = b.inverse_event_shape(event_shape)
+                event_ndims = self._maybe_get_static_event_ndims(
+                    event_shape.ndims)
+            else:
+                event_shape = b.inverse_event_shape_tensor(event_shape)
+                event_ndims = tf.size(event_shape)
+                event_ndims_ = self._maybe_get_static_event_ndims(event_ndims)
+                if event_ndims_ is not None:
+                    event_ndims = event_ndims_
+
+            y = b.inverse(y, **conditions.get(b.name, {}))
+
+        return ildj
 
     def _maybe_assert_valid_x(self, x):
         """TODO"""
