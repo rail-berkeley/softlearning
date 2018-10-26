@@ -57,6 +57,10 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
 
         self._num_coupling_layers = num_coupling_layers
         self._hidden_layer_sizes = tuple(hidden_layer_sizes)
+        if use_batch_normalization:
+            raise NotImplementedError(
+                "TODO(hartikainen): Batch normalization is not yet supported"
+                " for ConditionalRealNVPFlow.")
         self._use_batch_normalization = use_batch_normalization
 
         self._event_dims = event_dims
