@@ -83,13 +83,11 @@ class ConditionalRealNVPFlow(tfb.ConditionalBijector):
         for i in range(num_coupling_layers):
             real_nvp_bijector = tfp.bijectors.real_nvp.RealNVP(
                 num_masked=D // 2,
-                shift_and_log_scale_fn=(
-                    tfp.bijectors.real_nvp.real_nvp_default_template(
-                        hidden_layers=hidden_sizes,
-                        # TODO: test tf.nn.relu
-                        activation=tf.nn.tanh)),
-                name='real_nvp_{}'.format(i)
-            )
+                shift_and_log_scale_fn=conditioned_real_nvp_template(
+                    hidden_layers=hidden_sizes,
+                    # TODO: test tf.nn.relu
+                    activation=tf.nn.tanh),
+                name='real_nvp_{}'.format(i))
 
             flow_parts.append(real_nvp_bijector)
 
@@ -157,3 +155,41 @@ class ConditionalRealNVPFlow(tfb.ConditionalBijector):
         if not self.validate_args:
             return y
         raise NotImplementedError("_maybe_assert_valid_y")
+
+
+def conditioned_real_nvp_template(hidden_layers,
+                                  shift_only=False,
+                                  activation=tf.nn.relu,
+                                  name=None,
+                                  *args,  # pylint: disable=keyword-arg-before-vararg
+                                  **kwargs):
+
+    with tf.name_scope(name, "conditioned_real_nvp_template"):
+
+        def _fn(x, output_units, **condition_kwargs):
+            """MLP which concatenates the condition kwargs to input."""
+            x = tf.concat(
+                (x, *[condition_kwargs[k] for k in sorted(condition_kwargs)]),
+                axis=-1)
+
+            for units in hidden_layers:
+                x = tf.layers.dense(
+                    inputs=x,
+                    units=units,
+                    activation=activation,
+                    *args,  # pylint: disable=keyword-arg-before-vararg
+                    **kwargs)
+            x = tf.layers.dense(
+                inputs=x,
+                units=(1 if shift_only else 2) * output_units,
+                activation=None,
+                *args,  # pylint: disable=keyword-arg-before-vararg
+                **kwargs)
+
+            if shift_only:
+              return x, None
+
+            shift, log_scale = tf.split(x, 2, axis=-1)
+            return shift, log_scale
+
+        return tf.make_template("conditioned_real_nvp_template", _fn)
