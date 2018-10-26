@@ -15,7 +15,7 @@ __all__ = [
 
 
 def _use_static_shape(input_tensor, ndims):
-  return input_tensor.shape.is_fully_defined() and isinstance(ndims, int)
+    return input_tensor.shape.is_fully_defined() and isinstance(ndims, int)
 
 
 class ConditionalChain(bijectors.ConditionalBijector, bijectors.Chain):
@@ -29,28 +29,25 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
                  num_coupling_layers=2,
                  hidden_layer_sizes=(64,),
                  use_batch_normalization=False,
-                 event_ndims=1,
                  event_dims=None,
+                 is_constant_jacobian=False,
                  validate_args=False,
                  name="conditional_real_nvp_flow"):
         """Instantiates the `ConditionalRealNVPFlow` normalizing flow.
 
         Args:
-            TODO
-            event_ndims: Python scalar indicating the number of dimensions
-                associated with a particular draw from the distribution.
-            event_dims: Python list indicating the size of each dimension
-                associated with a particular draw from the distribution.
+            is_constant_jacobian: Python `bool`. Default: `False`. When `True` the
+                implementation assumes `log_scale` does not depend on the forward domain
+                (`x`) or inverse domain (`y`) values. (No validation is made;
+                `is_constant_jacobian=False` is always safe but possibly computationally
+                inefficient.)
             validate_args: Python `bool` indicating whether arguments should be
                 checked for correctness.
-            name: Python `str` name given to ops managed by this object.
+            name: Python `str`, name given to ops managed by this object.
 
         Raises:
             ValueError: if TODO happens
         """
-        assert event_ndims == 1, event_ndims
-        assert event_dims is not None and len(event_dims) == 1, event_dims
-
         self._graph_parents = []
         self._name = name
         self._validate_args = validate_args
@@ -63,14 +60,16 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
                 " for ConditionalRealNVPFlow.")
         self._use_batch_normalization = use_batch_normalization
 
+        assert event_dims is not None, event_dims
         self._event_dims = event_dims
 
         self.build()
 
-        super().__init__(
-            validate_args=validate_args,
+        super(ConditionalRealNVPFlow, self).__init__(
             forward_min_event_ndims=1,
             inverse_min_event_ndims=1,
+            is_constant_jacobian=is_constant_jacobian,
+            validate_args=validate_args,
             name=name)
 
     def build(self):
@@ -175,8 +174,6 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
 
         return fldj
 
-        return log_det_jacobian
-
     def _inverse_log_det_jacobian(self, y, **condition_kwargs):
         self._maybe_assert_valid_y(y)
 
@@ -259,7 +256,7 @@ def conditioned_real_nvp_template(hidden_layers,
                 **kwargs)
 
             if shift_only:
-              return x, None
+                return x, None
 
             shift, log_scale = tf.split(x, 2, axis=-1)
             return shift, log_scale

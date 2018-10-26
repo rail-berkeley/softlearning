@@ -137,7 +137,6 @@ class LatentSpacePolicy(NNPolicy, Serializable):
     def build(self):
         self.bijector = ConditionalRealNVPFlow(
             **self._bijector_config,
-            event_ndims=1,
             event_dims=(self._Da, ))
 
         self.base_distribution = tfpd.MultivariateNormalDiag(
