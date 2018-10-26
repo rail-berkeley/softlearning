@@ -52,7 +52,6 @@ COMMON_PARAMS = {
 
     # lsp configs
     'policy_use_batch_normalization': False,
-    'policy_scale_regularization': 0.0,
     'regularize_actions': True,
     'preprocessing_layer_sizes': None,
     'preprocessing_output_nonlinearity': 'relu',
@@ -234,7 +233,6 @@ def run_experiment(variant):
     observations_preprocessor = get_preprocessor_from_variant(variant, env)
 
     bijector_config = {
-        "scale_regularization": 0.0,
         "num_coupling_layers": variant['policy_coupling_layers'],
         "hidden_layer_sizes": variant['policy_hidden_layer_sizes'],
     }

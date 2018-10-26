@@ -21,7 +21,7 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         'kwargs': {
             'bijector_config': {
                 'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (2, 2) ,
+                'hidden_layer_sizes': (2, 2),
             },
         }
     },
@@ -29,7 +29,7 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         'kwargs': {
             'bijector_config': {
                 'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (3, 3) ,
+                'hidden_layer_sizes': (3, 3),
             },
         }
     },
@@ -37,7 +37,7 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         'kwargs': {
             'bijector_config': {
                 'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (6, 6) ,
+                'hidden_layer_sizes': (6, 6),
             },
         }
     },
@@ -45,7 +45,7 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         'kwargs': {
             'bijector_config': {
                 'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (6, 6) ,
+                'hidden_layer_sizes': (6, 6),
             },
         }
     },
@@ -53,7 +53,7 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         'kwargs': {
             'bijector_config': {
                 'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (8, 8) ,
+                'hidden_layer_sizes': (8, 8),
             },
         }
     },
@@ -61,7 +61,7 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         'kwargs': {
             'bijector_config': {
                 'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (21, 21) ,
+                'hidden_layer_sizes': (21, 21),
             },
         }
     },
@@ -69,7 +69,7 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         'kwargs': {
             'bijector_config': {
                 'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (3, 3) ,
+                'hidden_layer_sizes': (3, 3),
             },
         }
     },
@@ -77,7 +77,7 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         'kwargs': {
             'bijector_config': {
                 'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (128, 128) ,
+                'hidden_layer_sizes': (128, 128),
             },
         }
     },
@@ -85,7 +85,7 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         'kwargs': {
             'bijector_config': {
                 'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (128, 128) ,
+                'hidden_layer_sizes': (128, 128),
             },
         }
     },
@@ -93,7 +93,7 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         'kwargs': {
             'bijector_config': {
                 'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (128, 128) ,
+                'hidden_layer_sizes': (128, 128),
             },
         }
     },
@@ -101,7 +101,7 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         'kwargs': {
             'bijector_config': {
                 'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (128, 128) ,
+                'hidden_layer_sizes': (128, 128),
             },
         }
     },
@@ -109,7 +109,7 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         'kwargs': {
             'bijector_config': {
                 'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (128, 128) ,
+                'hidden_layer_sizes': (128, 128),
             },
         }
     },
@@ -117,7 +117,7 @@ LSP_POLICY_PARAMS_FOR_DOMAIN = {
         'kwargs': {
             'bijector_config': {
                 'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (128, 128) ,
+                'hidden_layer_sizes': (128, 128),
             },
         }
     },

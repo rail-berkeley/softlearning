@@ -135,10 +135,8 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         return self._log_pis_for_raw(conditions, actions, name=name, reuse=reuse)
 
     def build(self):
-        config = self._bijector_config
         self.bijector = ConditionalRealNVPFlow(
-            num_coupling_layers=config.get("num_coupling_layers"),
-            hidden_layer_sizes=config.get("hidden_layer_sizes"),
+            **self._bijector_config,
             event_ndims=1,
             event_dims=(self._Da, ))
 

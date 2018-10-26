@@ -60,7 +60,6 @@ def run_experiment(variant, reporter=None):
         )
     elif variant['policy'] == 'lsp':
         bijector_config = {
-            "scale_regularization": 0.0,
             "num_coupling_layers": 2,
             "hidden_layer_sizes": (M, ),
             "use_batch_normalization": False,
