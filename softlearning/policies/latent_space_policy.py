@@ -149,8 +149,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         # `event_dims` and not `N`. Because we call sample with
         # N = tf.shape(observation)[0], things break if we use two different
         # observations, e.g. one in SAC and one in LatentSpacePolicy.
-        # TODO(hartikainen): Probably should file an issue to TensorFlow
-        # probability about this.
+        # See: https://github.com/tensorflow/probability/issues/122.
         self.base_distribution.bijector._is_constant_jacobian = False
 
         self.sample_z = self.base_distribution.sample(1)

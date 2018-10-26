@@ -92,6 +92,10 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
                 permute_bijector = bijectors.Permute(
                     permutation=list(reversed(range(D))),
                     name='permute_{}'.format(i))
+                # TODO(hartikainen): We need to force _is_constant_jacobian due
+                # to the event_dim caching. See the issue filed at github:
+                # https://github.com/tensorflow/probability/issues/122
+                permute_bijector._is_constant_jacobian = False
                 flow.append(permute_bijector)
 
         # Note: bijectors.Chain applies the list of bijectors in the
