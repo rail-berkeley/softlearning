@@ -28,6 +28,7 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
     def __init__(self,
                  num_coupling_layers=2,
                  hidden_layer_sizes=(64,),
+                 use_batch_normalization=False,
                  event_ndims=1,
                  event_dims=None,
                  validate_args=False,
@@ -56,6 +57,7 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
 
         self._num_coupling_layers = num_coupling_layers
         self._hidden_layer_sizes = tuple(hidden_layer_sizes)
+        self._use_batch_normalization = use_batch_normalization
 
         self._event_dims = event_dims
 
@@ -72,6 +74,10 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
 
         flow = []
         for i in range(self._num_coupling_layers):
+            if self._use_batch_normalization:
+                batch_normalization_bijector = bijectors.BatchNormalization()
+                flow.append(batch_normalization_bijector)
+
             real_nvp_bijector = bijectors.RealNVP(
                 num_masked=D // 2,
                 shift_and_log_scale_fn=conditioned_real_nvp_template(
