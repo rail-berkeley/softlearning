@@ -134,6 +134,7 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
     'type': 'GaussianPolicyV2',
     'kwargs': {
         'hidden_layer_sizes': (M, M),
+        'squash': True,
         'regularization_coeff': 1e-3,
     }
 }

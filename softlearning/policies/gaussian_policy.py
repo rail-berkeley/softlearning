@@ -15,7 +15,12 @@ from softlearning.distributions import Normal
 from softlearning.policies import NNPolicy
 from softlearning.misc import tf_utils
 
-EPS = 1e-6
+
+class SquashBijector(tfp.bijectors.Tanh):
+    """Bijector similar to Tanh-bijector, but with stable log det jacobian."""
+
+    def _forward_log_det_jacobian(self, x):
+        return 2.0 * (tf.log(2.0) - x - tf.nn.softplus(-2.0 * x))
 
 
 class GaussianPolicy(NNPolicy, Serializable):
@@ -248,12 +253,16 @@ class GaussianPolicyV2(object):
                  input_shapes,
                  output_shape,
                  hidden_layer_sizes,
+                 squash=True,
                  regularization_coeff=1e-3,
                  activation='relu',
                  output_activation='linear',
                  name=None,
                  *args,
                  **kwargs):
+        self._squash = squash
+        self._regularization_coeff = regularization_coeff
+
         self.condition_inputs = [
             tf.keras.layers.Input(shape=input_shape)
             for input_shape in input_shapes
@@ -309,7 +318,10 @@ class GaussianPolicyV2(object):
             raw_actions_fn
         )((shift, log_scale_diag, latents))
 
-        squash_bijector = tfp.bijectors.Tanh()
+        squash_bijector = (
+            SquashBijector()
+            if self._squash
+            else tfp.bijectors.Identity())
 
         actions = tf.keras.layers.Lambda(
             lambda raw_actions: squash_bijector.forward(raw_actions)
@@ -319,14 +331,15 @@ class GaussianPolicyV2(object):
 
         def log_pis_fn(inputs):
             shift, log_scale_diag, actions = inputs
-            raw_actions = squash_bijector.inverse(actions)
-
             base_distribution = tfp.distributions.MultivariateNormalDiag(
                 loc=tf.zeros(output_shape),
                 scale_diag=tf.ones(output_shape))
-            bijector = tfp.bijectors.Affine(
-                shift=shift,
-                scale_diag=tf.exp(log_scale_diag))
+            bijector = tfp.bijectors.Chain((
+                squash_bijector,
+                tfp.bijectors.Affine(
+                    shift=shift,
+                    scale_diag=tf.exp(log_scale_diag)),
+            ))
             distribution = (
                 tfp.distributions.ConditionalTransformedDistribution(
                     distribution=base_distribution,
