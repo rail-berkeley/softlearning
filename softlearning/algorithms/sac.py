@@ -104,9 +104,7 @@ class SAC(RLAlgorithm, Serializable):
         self._target_update_interval = target_update_interval
         self._action_prior = action_prior
 
-        # Reparameterize parameter must match between the algorithm and the
-        # policy actions are sampled from.
-        self._reparameterize = self._policy._reparameterize
+        self._reparameterize = reparameterize
         self._store_extra_policy_info = store_extra_policy_info
 
         self._save_full_state = save_full_state
@@ -297,10 +295,10 @@ class SAC(RLAlgorithm, Serializable):
                 self._observations_ph)
             tf.contrib.layers.summarize_activation(self.embeddings)
 
-        actions, log_pi = self._policy.actions_for(
-            observations=self._observations_ph, with_log_pis=True, reuse=True)
+        actions = self._policy.actions([self._observations_ph])
+        log_pis = self._policy.log_pis([self._observations_ph], actions)
 
-        log_pi = tf.reshape(log_pi, (-1, 1))
+        assert log_pis.shape.as_list() == [None, 1]
 
         log_alpha = tf.get_variable(
             'log_alpha',
@@ -310,7 +308,7 @@ class SAC(RLAlgorithm, Serializable):
 
         if isinstance(self._target_entropy, Number):
             alpha_loss = -tf.reduce_mean(
-                log_alpha * tf.stop_gradient(log_pi + self._target_entropy))
+                log_alpha * tf.stop_gradient(log_pis + self._target_entropy))
 
             self._alpha_optimizer = tf.train.AdamOptimizer(
                 self._policy_lr, name='alpha_optimizer')
@@ -340,30 +338,30 @@ class SAC(RLAlgorithm, Serializable):
 
         if self._reparameterize:
             policy_kl_losses = (
-                alpha * log_pi - min_Q_log_target - policy_prior_log_probs)
+                alpha * log_pis
+                - min_Q_log_target
+                - policy_prior_log_probs)
         else:
+            raise NotImplementedError(
+                "TODO(hartikainen): Make sure to stop policy gradients"
+                " correctly. See old GaussianPolicy implementation.")
             policy_kl_losses = (
-                log_pi * tf.stop_gradient(
-                    alpha * log_pi - min_Q_log_target + V_value
+                log_pis * tf.stop_gradient(
+                    alpha * log_pis - min_Q_log_target + V_value
                     - policy_prior_log_probs))
 
         assert policy_kl_losses.shape.as_list() == [None, 1]
 
         policy_kl_loss = tf.reduce_mean(policy_kl_losses)
+        policy_regularization_loss = 0.0
 
-        policy_regularization_losses = tf.get_collection(
-            tf.GraphKeys.REGULARIZATION_LOSSES,
-            scope=self._policy.name)
-        policy_regularization_loss = tf.reduce_sum(
-            policy_regularization_losses)
-
-        policy_loss = (policy_kl_loss + policy_regularization_loss)
+        policy_loss = policy_kl_loss + policy_regularization_loss
 
         # We update the V towards the min of two Q-functions in order to
         # reduce overestimation bias from function approximation error.
         V_target = tf.stop_gradient(
             min_Q_log_target
-            - alpha * log_pi
+            - alpha * log_pis
             + policy_prior_log_probs)
 
         V_loss = self._V_loss = tf.losses.mean_squared_error(
@@ -374,7 +372,7 @@ class SAC(RLAlgorithm, Serializable):
             self.global_step,
             learning_rate=self._policy_lr,
             optimizer=tf.train.AdamOptimizer,
-            variables=self._policy.get_params_internal(),
+            variables=self._policy.trainable_variables,
             increment_global_step=False,
             name="policy_optimizer",
             summaries=(
@@ -489,7 +487,11 @@ class SAC(RLAlgorithm, Serializable):
 
         logger.record_tabular('alpha', alpha)
 
-        self._policy.log_diagnostics(iteration, batch)
+        policy_diagnostics = self._policy.get_diagnostics(iteration, batch)
+
+        for key, value in policy_diagnostics.items():
+            logger.record_tabular(key, value)
+
         if self._plotter:
             self._plotter.draw()
 

@@ -1,4 +1,4 @@
-""" Gaussian mixture policy. """
+"""GaussianPolicy."""
 
 from collections import OrderedDict
 from contextlib import contextmanager
@@ -242,10 +242,13 @@ SCALE_DIAG_MIN_MAX = (-20, 2)
 
 
 class GaussianPolicyV2(object):
+    """TODO(hartikainen): Implement regularization"""
+
     def __init__(self,
                  input_shapes,
                  output_shape,
                  hidden_layer_sizes,
+                 regularization_coeff=1e-3,
                  activation='relu',
                  output_activation='linear',
                  name=None,

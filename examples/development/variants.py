@@ -9,7 +9,6 @@ REPARAMETERIZE = True
 LSP_POLICY_PARAMS_BASE = {
     'type': 'LatentSpacePolicy',
     'kwargs': {
-        'reparameterize': REPARAMETERIZE,
         'squash': True,
     }
 }
@@ -128,16 +127,14 @@ GMM_POLICY_PARAMS_BASE = {
     'kwargs': {
         'K': 1,
         'reg': 1e-3,
-        'reparameterize': False,  # GMM can't be parameterized
     }
 }
 
 GAUSSIAN_POLICY_PARAMS_BASE = {
-    'type': 'GaussianPolicy',
+    'type': 'GaussianPolicyV2',
     'kwargs': {
-        'reg': 1e-3,
-        'reparameterize': REPARAMETERIZE,
         'hidden_layer_sizes': (M, M),
+        'regularization_coeff': 1e-3,
     }
 }
 
@@ -269,6 +266,7 @@ ALGORITHM_PARAMS_BASE = {
         'train_every_n_steps': 1,
         'n_train_repeat': 1,
         'n_initial_exploration_steps': int(1e3),
+        'reparameterize': REPARAMETERIZE,
         'eval_render': False,
         'eval_n_episodes': 1,
         'eval_deterministic': True,

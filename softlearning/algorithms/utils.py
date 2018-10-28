@@ -4,11 +4,9 @@ from .sac import SAC
 
 
 def create_SAC_algorithm(variant, *args, sampler, **kwargs):
-    policy_params = variant['policy_params']
     algorithm = SAC(
         *args,
         sampler=sampler,
-        reparameterize=policy_params['kwargs']['reparameterize'],
         **kwargs)
 
     return algorithm
