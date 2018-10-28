@@ -4,6 +4,7 @@ from .gmm import GMMPolicy
 from .latent_space_policy import LatentSpacePolicy
 from .uniform_policy import UniformPolicy, UniformPolicyV2
 from .gaussian_policy import GaussianPolicy, GaussianPolicyV2
+from .real_nvp_policy import RealNVPPolicy
 
 
 def get_gaussian_policy(env, Q, preprocessor, **kwargs):
@@ -39,6 +40,16 @@ def get_latent_space_policy(env, Q, preprocessor, **kwargs):
         action_shape=env.action_space.shape,
         Q=Q,
         observations_preprocessor=preprocessor,
+        **kwargs)
+
+    return policy
+
+
+def get_real_nvp_policy(env, Q, **kwargs):
+    policy = RealNVPPolicy(
+        observation_shape=env.active_observation_shape,
+        action_shape=env.action_space.shape,
+        Q=Q,
         **kwargs)
 
     return policy

@@ -6,8 +6,8 @@ from softlearning.misc.utils import get_git_rev, deep_update
 M = 256
 REPARAMETERIZE = True
 
-LSP_POLICY_PARAMS_BASE = {
-    'type': 'LatentSpacePolicy',
+REAL_NVP_POLICY_PARAMS_BASE = {
+    'type': 'RealNVPPolicy',
     'kwargs': {
         'squash': True,
     }
@@ -15,7 +15,7 @@ LSP_POLICY_PARAMS_BASE = {
 
 NUM_COUPLING_LAYERS = 2
 
-LSP_POLICY_PARAMS_FOR_DOMAIN = {
+REAL_NVP_POLICY_PARAMS_FOR_DOMAIN = {
     'swimmer': {  # 2 DoF
         'kwargs': {
             'bijector_config': {
@@ -142,32 +142,32 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
 GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {}
 
 POLICY_PARAMS_BASE = {
-    'LatentSpacePolicy': LSP_POLICY_PARAMS_BASE,
+    'RealNVPPolicy': REAL_NVP_POLICY_PARAMS_BASE,
     'GMMPolicy': GMM_POLICY_PARAMS_BASE,
     'GaussianPolicy': GAUSSIAN_POLICY_PARAMS_BASE,
 }
 
 POLICY_PARAMS_BASE.update({
-    'lsp': POLICY_PARAMS_BASE['LatentSpacePolicy'],
+    'real-nvp': POLICY_PARAMS_BASE['RealNVPPolicy'],
     'gmm': POLICY_PARAMS_BASE['GMMPolicy'],
     'gaussian': POLICY_PARAMS_BASE['GaussianPolicy'],
 })
 
 
 POLICY_PARAMS_FOR_DOMAIN = {
-    'LatentSpacePolicy': LSP_POLICY_PARAMS_FOR_DOMAIN,
+    'RealNVPPolicy': REAL_NVP_POLICY_PARAMS_FOR_DOMAIN,
     'GMMPolicy': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
     'GaussianPolicy': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
 }
 
 POLICY_PARAMS_FOR_DOMAIN.update({
-    'lsp': POLICY_PARAMS_FOR_DOMAIN['LatentSpacePolicy'],
+    'real-nvp': POLICY_PARAMS_FOR_DOMAIN['RealNVPPolicy'],
     'gmm': POLICY_PARAMS_FOR_DOMAIN['GMMPolicy'],
     'gaussian': POLICY_PARAMS_FOR_DOMAIN['GaussianPolicy'],
 })
 
 PREPROCESSOR_PARAMS_BASE = {
-    'LatentSpacePolicy': {
+    'RealNVPPolicy': {
         'type': 'feedforward_preprocessor',
     },
     'GMMPolicy': {
@@ -179,13 +179,13 @@ PREPROCESSOR_PARAMS_BASE = {
 }
 
 PREPROCESSOR_PARAMS_BASE.update({
-    'lsp': PREPROCESSOR_PARAMS_BASE['LatentSpacePolicy'],
+    'real-nvp': PREPROCESSOR_PARAMS_BASE['RealNVPPolicy'],
     'gmm': PREPROCESSOR_PARAMS_BASE['GMMPolicy'],
     'gaussian': PREPROCESSOR_PARAMS_BASE['GaussianPolicy'],
 })
 
 
-LSP_PREPROCESSOR_PARAMS = {
+REAL_NVP_PREPROCESSOR_PARAMS = {
     'swimmer': {  # 2 DoF
         'kwargs': {
             'hidden_layer_sizes': (M, M),
@@ -243,13 +243,13 @@ LSP_PREPROCESSOR_PARAMS = {
 }
 
 PREPROCESSOR_PARAMS = {
-    'LatentSpacePolicy': LSP_PREPROCESSOR_PARAMS,
+    'RealNVPPolicy': REAL_NVP_PREPROCESSOR_PARAMS,
     'GMMPolicy': {},
     'GaussianPolicy': {},
 }
 
 PREPROCESSOR_PARAMS.update({
-    'lsp': PREPROCESSOR_PARAMS['LatentSpacePolicy'],
+    'real-nvp': PREPROCESSOR_PARAMS['RealNVPPolicy'],
     'gmm': PREPROCESSOR_PARAMS['GMMPolicy'],
     'gaussian': PREPROCESSOR_PARAMS['GaussianPolicy'],
 })
@@ -285,7 +285,7 @@ ALGORITHM_PARAMS_BASE = {
 }
 
 NUM_EPOCHS_PER_DOMAIN = {
-    'swimmer': int(5e2 + 1),
+    'swimmer': int(3e2 + 1),
     'hopper': int(3e3 + 1),
     'half-cheetah': int(3e3 + 1),
     'walker': int(3e3 + 1),
@@ -440,7 +440,7 @@ def get_variant_spec(universe, domain, task, policy):
             }
         },
         'run_params': {
-            'seed': tune.grid_search([1, 2]),
+            'seed': tune.grid_search([1, 2, 3, 4, 5]),
             'snapshot_mode': 'gap',
             'snapshot_gap': NUM_EPOCHS_PER_DOMAIN[domain] // NUM_SNAPSHOTS,
             'sync_pkl': True,

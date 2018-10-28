@@ -11,7 +11,7 @@ from softlearning.environments.utils import get_environment
 from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.misc.utils import datetimestamp
 from softlearning.samplers import SimpleSampler
-from softlearning.policies import GaussianPolicy, GMMPolicy, LatentSpacePolicy
+from softlearning.policies import GaussianPolicy, GMMPolicy, RealNVPPolicy
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions.utils import (
     get_Q_function_from_variant,
@@ -47,7 +47,6 @@ def run_experiment(variant, reporter=None):
             observation_shape=env.active_observation_shape,
             action_shape=env.action_space.shape,
             hidden_layer_sizes=(M, M),
-            reparameterize=True,
             reg=1e-3)
     elif variant['policy'] == 'gmm':
         policy = GMMPolicy(
@@ -58,22 +57,18 @@ def run_experiment(variant, reporter=None):
             Q=Qs[0],
             reg=0.001
         )
-    elif variant['policy'] == 'lsp':
+    elif variant['policy'] == 'real-nvp':
         bijector_config = {
             "num_coupling_layers": 2,
             "hidden_layer_sizes": (M, ),
             "use_batch_normalization": False,
         }
 
-        policy = LatentSpacePolicy(
-            observation_shape=env.active_observation_shape,
-            action_shape=env.action_space.shape,
-            mode="train",
+        policy = RealNVPPolicy(
+            input_shapes=(env.active_observation_shape, ),
+            output_shape=env.action_space.shape,
             squash=True,
-            bijector_config=bijector_config,
-            observations_preprocessor=None,
-            Q=Qs[0]
-        )
+            bijector_config=bijector_config)
 
     plotter = QFPolicyPlotter(
         Q=Qs[0],
@@ -88,6 +83,7 @@ def run_experiment(variant, reporter=None):
 
     algorithm = SAC(
         sampler=sampler,
+        reparameterize=True,
         epoch_length=100,
         n_epochs=1000,
         n_train_repeat=1,
