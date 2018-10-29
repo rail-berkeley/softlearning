@@ -19,12 +19,14 @@ def mass_center(model, sim):
 
 class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self,
+                 forward_reward_weight=0.25,
                  ctrl_cost_weight=0.1,
                  contact_cost_weight=5e-7,
                  contact_cost_range=(-np.inf, 10.0),
                  survive_reward=5.0,
                  healthy_z_range=(1.0, 2.0),
                  exclude_current_positions_from_observation=True):
+        self._forward_reward_weight = forward_reward_weight
         self._ctrl_cost_weight = ctrl_cost_weight
         self._contact_cost_weight = contact_cost_weight
         self._contact_cost_range = contact_cost_range
@@ -36,6 +38,7 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         mujoco_env.MujocoEnv.__init__(self, 'humanoid.xml', 5)
         utils.EzPickle.__init__(
             self,
+            forward_reward_weight=self._forward_reward_weight,
             ctrl_cost_weight=self._ctrl_cost_weight,
             contact_cost_weight=self._contact_cost_weight,
             contact_cost_range=self._contact_cost_range,
@@ -107,7 +110,7 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         ctrl_cost = self.control_cost(action)
         contact_cost = self.contact_cost
 
-        forward_reward = x_velocity / 4.0
+        forward_reward = self._forward_reward_weight * x_velocity
         survive_reward = self.survive_reward
 
         rewards = forward_reward + survive_reward
