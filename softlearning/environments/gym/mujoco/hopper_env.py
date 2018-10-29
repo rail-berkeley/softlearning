@@ -15,14 +15,18 @@ class HopperEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self,
                  forward_reward_weight=1.0,
                  ctrl_cost_weight=1e-3,
-                 survive_reward=1.0,
+                 healthy_reward=1.0,
+                 terminate_when_unhealthy=True,
                  healthy_state_range=(-100.0, 100.0),
                  healthy_z_range=(0.7, float('inf')),
                  healthy_angle_range=(-0.2, 0.2),
                  exclude_current_positions_from_observation=True):
         self._forward_reward_weight = forward_reward_weight
+
         self._ctrl_cost_weight = ctrl_cost_weight
-        self._survive_reward = survive_reward
+
+        self._healthy_reward = healthy_reward
+        self._terminate_when_unhealthy = terminate_when_unhealthy
 
         self._healthy_state_range = healthy_state_range
         self._healthy_z_range = healthy_z_range
@@ -36,7 +40,8 @@ class HopperEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             self,
             forward_reward_weight=self._forward_reward_weight,
             ctrl_cost_weight=self._ctrl_cost_weight,
-            survive_reward=self._survive_reward,
+            healthy_reward=self._healthy_reward,
+            terminate_when_unhealthy=self._terminate_when_unhealthy,
             healthy_z_range=self._healthy_z_range,
             healthy_angle_range=self._healthy_angle_range,
             exclude_current_positions_from_observation=(
@@ -44,8 +49,11 @@ class HopperEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         )
 
     @property
-    def survive_reward(self):
-        return self._survive_reward
+    def healthy_reward(self):
+        return float(
+            self.is_healthy
+            or self._terminate_when_unhealthy
+        ) * self._healthy_reward
 
     def control_cost(self, action):
         control_cost = self._ctrl_cost_weight * np.sum(np.square(action))
@@ -71,7 +79,9 @@ class HopperEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
     @property
     def done(self):
-        done = not self.is_healthy
+        done = (not self.is_healthy
+                if self._terminate_when_unhealthy
+                else False)
         return done
 
     def _get_obs(self):
@@ -95,9 +105,9 @@ class HopperEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         ctrl_cost = self.control_cost(action)
 
         forward_reward = self._forward_reward_weight * x_velocity
-        survive_reward = self.survive_reward
+        healthy_reward = self.healthy_reward
 
-        rewards = forward_reward + survive_reward
+        rewards = forward_reward + healthy_reward
         costs = ctrl_cost
 
         observation = self._get_obs()

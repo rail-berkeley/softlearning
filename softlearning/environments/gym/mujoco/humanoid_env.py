@@ -23,14 +23,16 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
                  ctrl_cost_weight=0.1,
                  contact_cost_weight=5e-7,
                  contact_cost_range=(-np.inf, 10.0),
-                 survive_reward=5.0,
+                 healthy_reward=5.0,
+                 terminate_when_unhealthy=True,
                  healthy_z_range=(1.0, 2.0),
                  exclude_current_positions_from_observation=True):
         self._forward_reward_weight = forward_reward_weight
         self._ctrl_cost_weight = ctrl_cost_weight
         self._contact_cost_weight = contact_cost_weight
         self._contact_cost_range = contact_cost_range
-        self._survive_reward = survive_reward
+        self._healthy_reward = healthy_reward
+        self._terminate_when_unhealthy = terminate_when_unhealthy
         self._healthy_z_range = healthy_z_range
         self._exclude_current_positions_from_observation = (
             exclude_current_positions_from_observation)
@@ -40,16 +42,20 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             self,
             forward_reward_weight=self._forward_reward_weight,
             ctrl_cost_weight=self._ctrl_cost_weight,
+            healthy_reward=self._healthy_reward,
+            terminate_when_unhealthy=self._terminate_when_unhealthy,
             contact_cost_weight=self._contact_cost_weight,
             contact_cost_range=self._contact_cost_range,
-            survive_reward=self._survive_reward,
             healthy_z_range=self._healthy_z_range,
             exclude_current_positions_from_observation=(
                 self._exclude_current_positions_from_observation))
 
     @property
-    def survive_reward(self):
-        return self._survive_reward
+    def healthy_reward(self):
+        return float(
+            self.is_healthy
+            or self._terminate_when_unhealthy
+        ) * self._healthy_reward
 
     def control_cost(self, action):
         control_cost = self._ctrl_cost_weight * np.sum(
@@ -74,7 +80,9 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
     @property
     def done(self):
-        done = not self.is_healthy
+        done = ((not self.is_healthy)
+                if self._terminate_when_unhealthy
+                else False)
         return done
 
     def _get_obs(self):
@@ -111,9 +119,9 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         contact_cost = self.contact_cost
 
         forward_reward = self._forward_reward_weight * x_velocity
-        survive_reward = self.survive_reward
+        healthy_reward = self.healthy_reward
 
-        rewards = forward_reward + survive_reward
+        rewards = forward_reward + healthy_reward
         costs = ctrl_cost + contact_cost
 
         observation = self._get_obs()
@@ -122,7 +130,7 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         info = {
             'reward_linvel': forward_reward,
             'reward_quadctrl': -ctrl_cost,
-            'reward_alive': survive_reward,
+            'reward_alive': healthy_reward,
             'reward_impact': -contact_cost,
         }
 
