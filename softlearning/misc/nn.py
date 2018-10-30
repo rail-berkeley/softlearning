@@ -9,30 +9,16 @@ def feedforward_model(input_shapes,
                       name=None,
                       *args,
                       **kwargs):
-    if not isinstance(input_shapes[0], (list, tuple)):
-        raise NotImplementedError(
-            "TODO(hartikainen): feedforward_model currently expects a list of"
-            " shapes as an input. It might be possible that you passed in a"
-            " list/tuple of dimension objects. Those should be accepted"
-            " but have not yet been implemented.")
-    inputs = [
-        tf.keras.layers.Input(shape=input_shape)
-        for input_shape in input_shapes
-    ]
+    model = tf.keras.Sequential(name=name)
 
-    if len(inputs) > 1:
-        out = tf.keras.layers.Concatenate(axis=-1)(inputs)
-    else:
-        out = inputs[0]
+    model.add(tf.keras.layers.Lambda(lambda x: tf.concat(x, axis=-1)))
 
     for units in hidden_layer_sizes:
-        out = tf.keras.layers.Dense(
-            units, *args, activation=activation, **kwargs)(out)
+        model.add(tf.keras.layers.Dense(
+            units, *args, activation=activation, **kwargs))
 
-    out = tf.keras.layers.Dense(
-        output_size, *args, activation=output_activation, **kwargs)(out)
-
-    model = tf.keras.Model(inputs=inputs, outputs=out)
+    model.add(tf.keras.layers.Dense(
+        output_size, *args, activation=output_activation, **kwargs))
 
     return model
 

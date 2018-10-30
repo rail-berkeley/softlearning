@@ -265,11 +265,11 @@ class SAC(RLAlgorithm, Serializable):
                 optimizer=tf.train.AdamOptimizer,
                 variables=Q.trainable_variables,
                 increment_global_step=False,
-                name="{}_optimizer".format(Q._name),
+                name="{}_{}_optimizer".format(Q._name, i),
                 summaries=((
                     "loss", "gradients", "gradient_norm", "global_gradient_norm"
                 ) if self._tf_summaries else ()))
-            for Q, Q_loss in zip(self._Qs, Q_losses))
+            for i, (Q, Q_loss) in enumerate(zip(self._Qs, Q_losses)))
 
         self._training_ops.update({'Q': tf.group(Q_training_ops)})
 
