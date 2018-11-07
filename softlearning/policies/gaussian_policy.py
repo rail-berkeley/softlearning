@@ -7,7 +7,6 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
-from rllab.misc import logger
 from serializable import Serializable
 
 from softlearning.distributions import Normal
@@ -194,8 +193,8 @@ class GaussianPolicy(NNPolicy, Serializable):
 
         self._is_deterministic = was_deterministic
 
-    def log_diagnostics(self, iteration, batch):
-        """Record diagnostic information to the logger.
+    def get_diagnostics(self, iteration, batch):
+        """Record diagnostic information.
 
         Records the mean, min, max, and standard deviation of means and
         covariances.
@@ -214,30 +213,34 @@ class GaussianPolicy(NNPolicy, Serializable):
             feeds
         )
 
-        logger.record_tabular('policy-mus-mean', np.mean(mu))
-        logger.record_tabular('policy-mus-min', np.min(mu))
-        logger.record_tabular('policy-mus-max', np.max(mu))
-        logger.record_tabular('policy-mus-std', np.std(mu))
+        diagnostics = OrderedDict({
+            'policy-mus-mean': np.mean(mu),
+            'policy-mus-min': np.min(mu),
+            'policy-mus-max': np.max(mu),
+            'policy-mus-std': np.std(mu),
 
-        logger.record_tabular('log-sigs-mean', np.mean(log_sig))
-        logger.record_tabular('log-sigs-min', np.min(log_sig))
-        logger.record_tabular('log-sigs-max', np.max(log_sig))
-        logger.record_tabular('log-sigs-std', np.std(log_sig))
+            'log-sigs-mean': np.mean(log_sig),
+            'log-sigs-min': np.min(log_sig),
+            'log-sigs-max': np.max(log_sig),
+            'log-sigs-std': np.std(log_sig),
 
-        logger.record_tabular('-log-pi-mean', np.mean(-log_pi))
-        logger.record_tabular('-log-pi-max', np.max(-log_pi))
-        logger.record_tabular('-log-pi-min', np.min(-log_pi))
-        logger.record_tabular('-log-pi-std', np.std(-log_pi))
+            '-log-pi-mean': np.mean(-log_pi),
+            '-log-pi-max': np.max(-log_pi),
+            '-log-pi-min': np.min(-log_pi),
+            '-log-pi-std': np.std(-log_pi),
 
-        logger.record_tabular('actions-mean', np.mean(actions))
-        logger.record_tabular('actions-min', np.min(actions))
-        logger.record_tabular('actions-max', np.max(actions))
-        logger.record_tabular('actions-std', np.std(actions))
+            'actions-mean': np.mean(actions),
+            'actions-min': np.min(actions),
+            'actions-max': np.max(actions),
+            'actions-std': np.std(actions),
 
-        logger.record_tabular('raw-actions-mean', np.mean(raw_actions))
-        logger.record_tabular('raw-actions-min', np.min(raw_actions))
-        logger.record_tabular('raw-actions-max', np.max(raw_actions))
-        logger.record_tabular('raw-actions-std', np.std(raw_actions))
+            'raw-actions-mean': np.mean(raw_actions),
+            'raw-actions-min': np.min(raw_actions),
+            'raw-actions-max': np.max(raw_actions),
+            'raw-actions-std': np.std(raw_actions),
+        })
+
+        return diagnostics
 
 
 SCALE_DIAG_MIN_MAX = (-20, 2)

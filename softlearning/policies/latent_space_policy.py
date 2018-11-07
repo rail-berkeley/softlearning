@@ -1,12 +1,13 @@
 """Latent Space Policy."""
 
+from collections import OrderedDict
 from contextlib import contextmanager
+
 import numpy as np
 import tensorflow as tf
 from tensorflow_probability import distributions as tfpd
 
 from serializable import Serializable
-from rllab.misc import logger
 
 from softlearning.distributions import ConditionalRealNVPFlow
 from softlearning.policies import NNPolicy
@@ -271,24 +272,28 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         if self._fix_h_on_reset:
             self._fixed_h = self.sample_z.eval()
 
-    def log_diagnostics(self, iteration, batch):
-        """Record diagnostic information to the logger."""
+    def get_diagnostics(self, iteration, batch):
+        """Record diagnostic information."""
 
         feeds = {self._observations_ph: batch['observations']}
         raw_actions, actions, log_pis = tf.get_default_session().run(
             (self._raw_actions, self._actions, self._log_pis), feeds)
 
-        logger.record_tabular('-log-pi-mean', np.mean(-log_pis))
-        logger.record_tabular('-log-pi-min', np.min(-log_pis))
-        logger.record_tabular('-log-pi-max', np.max(-log_pis))
-        logger.record_tabular('-log-pi-std', np.std(-log_pis))
+        diagnostics = OrderedDict({
+            '-log-pi-mean': np.mean(-log_pis),
+            '-log-pi-min': np.min(-log_pis),
+            '-log-pi-max': np.max(-log_pis),
+            '-log-pi-std': np.std(-log_pis),
 
-        logger.record_tabular('actions-mean', np.mean(actions))
-        logger.record_tabular('actions-min', np.min(actions))
-        logger.record_tabular('actions-max', np.max(actions))
-        logger.record_tabular('actions-std', np.std(actions))
+            'actions-mean': np.mean(actions),
+            'actions-min': np.min(actions),
+            'actions-max': np.max(actions),
+            'actions-std': np.std(actions),
 
-        logger.record_tabular('raw-actions-mean', np.mean(raw_actions))
-        logger.record_tabular('raw-actions-min', np.min(raw_actions))
-        logger.record_tabular('raw-actions-max', np.max(raw_actions))
-        logger.record_tabular('raw-actions-std', np.std(raw_actions))
+            'raw-actions-mean': np.mean(raw_actions),
+            'raw-actions-min': np.min(raw_actions),
+            'raw-actions-max': np.max(raw_actions),
+            'raw-actions-std': np.std(raw_actions),
+        })
+
+        return diagnostics

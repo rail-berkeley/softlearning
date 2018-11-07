@@ -1,7 +1,5 @@
-from collections import deque
+from collections import deque, OrderedDict
 from itertools import islice
-
-from rllab.misc import logger
 
 
 class BaseSampler(object):
@@ -53,5 +51,6 @@ class BaseSampler(object):
     def terminate(self):
         self.env.close()
 
-    def log_diagnostics(self):
-        logger.record_tabular('pool-size', self.pool.size)
+    def get_diagnostics(self):
+        diagnostics = OrderedDict({'pool-size': self.pool.size})
+        return diagnostics

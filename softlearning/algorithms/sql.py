@@ -1,7 +1,7 @@
+from collections import OrderedDict
+
 import numpy as np
 import tensorflow as tf
-
-from rllab.misc import logger
 
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 
@@ -330,7 +330,7 @@ class SQL(RLAlgorithm):
 
         return feeds
 
-    def log_diagnostics(self, iteration, batch, paths):
+    def get_diagnostics(self, iteration, batch, paths):
         """Record diagnostic information.
 
         Records the mean and standard deviation of Q-function and the
@@ -344,13 +344,22 @@ class SQL(RLAlgorithm):
         Q_np, bellman_residual = self._sess.run(
             [self._Q_values, self._bellman_residual], feeds)
 
-        logger.record_tabular('Q-avg', np.mean(Q_np))
-        logger.record_tabular('Q-std', np.std(Q_np))
-        logger.record_tabular('mean-sq-bellman-error', bellman_residual)
+        diagnostics = OrderedDict({
+            'Q-avg': np.mean(Q_np),
+            'Q-std': np.std(Q_np),
+            'mean-sq-bellman-error': bellman_residual,
+        })
 
-        self.policy.log_diagnostics(batch)
+        policy_diagnostics = self.policy.get_diagnostics(batch)
+        diagnostics.update({
+            f'policy/{key}': value
+            for key, value in policy_diagnostics.items()
+        })
+
         if self.plotter:
             self.plotter.draw()
+
+        return diagnostics
 
     def get_snapshot(self, epoch):
         """Return loggable snapshot of the SQL algorithm.

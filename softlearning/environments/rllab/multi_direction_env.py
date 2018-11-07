@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import numpy as np
 
 from rllab.core.serializable import Serializable
@@ -5,9 +7,9 @@ from rllab.envs.mujoco.swimmer_env import SwimmerEnv
 from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.mujoco.humanoid_env import HumanoidEnv
 from rllab.envs.base import Step
-from rllab.misc import logger
 
 from .helpers import get_multi_direction_logs
+
 
 class MultiDirectionBaseEnv(Serializable):
     def __init__(self,
@@ -80,10 +82,13 @@ class MultiDirectionBaseEnv(Serializable):
         next_observation = self.get_current_obs()
         return Step(next_observation, float(reward), self.done)
 
-    def log_diagnostics(self, paths, *args, **kwargs):
+    def get_diagnostics(self, paths, *args, **kwargs):
         logs = get_multi_direction_logs(paths)
-        for row in logs:
-            logger.record_tabular(*row)
+        diagnostics = OrderedDict({
+            key: value
+            for key, value in logs
+        })
+        return diagnostics
 
 
 class MultiDirectionSwimmerEnv(MultiDirectionBaseEnv, SwimmerEnv):
@@ -107,6 +112,7 @@ class MultiDirectionSwimmerEnv(MultiDirectionBaseEnv, SwimmerEnv):
         velocity_reward = self._velocity_reward_weight * xy_velocity
         return velocity_reward
 
+
 class MultiDirectionAntEnv(MultiDirectionBaseEnv, AntEnv):
     def __init__(self,
                  ctrl_cost_coeff=1e-2,
@@ -125,6 +131,7 @@ class MultiDirectionAntEnv(MultiDirectionBaseEnv, AntEnv):
     def is_healthy(self):
         return (np.isfinite(self._state).all()
                 and 0.2 <= self._state[2] <= 1.0)
+
 
 class MultiDirectionHumanoidEnv(MultiDirectionBaseEnv, HumanoidEnv):
     def __init__(self,

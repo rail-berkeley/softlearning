@@ -1,10 +1,10 @@
 import abc
 import gtimer as gt
+from collections import OrderedDict
 
 import tensorflow as tf
 import numpy as np
 
-from rllab.misc import logger
 from rllab.algos.base import Algorithm
 
 from softlearning.samplers import rollouts, rollout
@@ -132,11 +132,9 @@ class RLAlgorithm(Algorithm):
 
             for epoch in gt.timed_for(
                     range(self._n_epochs + 1), save_itrs=True):
-                logger.push_prefix('Epoch #%d | ' % epoch)
-
                 self._epoch_before_hook(epoch)
 
-                for t in range(self._epoch_length):
+                for t in range(1, self._epoch_length + 1):
                     self._do_sampling(epoch=epoch, epoch_timestep=t)
                     gt.stamp('sample')
                     if self.ready_to_train:
@@ -144,14 +142,13 @@ class RLAlgorithm(Algorithm):
                                                   epoch_timestep=t)
                         gt.stamp('train')
 
-                mean_returns = self._evaluate(policy, evaluation_env, epoch)
+                evaluation_diagnostics = self._evaluate(policy, evaluation_env, epoch)
                 gt.stamp('eval')
 
                 training_paths = self.sampler.get_last_n_paths()
                 self._epoch_after_hook(epoch, training_paths)
 
                 params = self.get_snapshot(epoch)
-                logger.save_itr_params(epoch, params)
 
                 time_itrs = gt.get_times().stamps.itrs
                 time_eval = time_itrs.get('eval', [0])[-1]
@@ -159,18 +156,26 @@ class RLAlgorithm(Algorithm):
                 time_train = time_itrs.get('train', [0])[-1]
                 time_sample = time_itrs.get('sample', [0])[-1]
 
-                logger.record_tabular('time-train', time_train)
-                logger.record_tabular('time-eval', time_eval)
-                logger.record_tabular('time-sample', time_sample)
-                logger.record_tabular('time-total', time_total)
-                logger.record_tabular('epoch', epoch)
+                diagnostics = OrderedDict({
+                    'time-train': time_train,
+                    'time-eval': time_eval,
+                    'time-sample': time_sample,
+                    'time-total': time_total,
+                    'timesteps_total': epoch * self._epoch_length + t
+                })
 
-                self.sampler.log_diagnostics()
+                sampler_diagnostics = self.sampler.get_diagnostics()
+                diagnostics.update({
+                    f'sampler/{key}': value
+                    for key, value in sampler_diagnostics.items()
+                })
 
-                logger.dump_tabular(with_prefix=False)
-                logger.pop_prefix()
+                diagnostics.update({
+                    f'evaluation/{key}': value
+                    for key, value in evaluation_diagnostics.items()
+                })
 
-                yield epoch, mean_returns
+                yield epoch, diagnostics
 
             self.sampler.terminate()
 
@@ -198,37 +203,34 @@ class RLAlgorithm(Algorithm):
         total_returns = [path['rewards'].sum() for path in paths]
         episode_lengths = [len(p['rewards']) for p in paths]
 
-        logger.record_tabular('return-average', np.mean(total_returns))
-        logger.record_tabular('return-min', np.min(total_returns))
-        logger.record_tabular('return-max', np.max(total_returns))
-        logger.record_tabular('return-std', np.std(total_returns))
-        logger.record_tabular('episode-length-avg', np.mean(episode_lengths))
-        logger.record_tabular('episode-length-min', np.min(episode_lengths))
-        logger.record_tabular('episode-length-max', np.max(episode_lengths))
-        logger.record_tabular('episode-length-std', np.std(episode_lengths))
+        iteration = epoch * self._epoch_length
+        batch = self._evaluation_batch()
 
-        if hasattr(evaluation_env._env, 'log_diagnostics'):
-            # TODO(hartikainen): Make this consistent such that there's no need
-            # for the hasattr check.
-            evaluation_env._env.log_diagnostics(paths)
+        diagnostics = self.get_diagnostics(iteration, batch, paths)
+        diagnostics.update({
+            'return-average': np.mean(total_returns),
+            'return-min': np.min(total_returns),
+            'return-max': np.max(total_returns),
+            'return-std': np.std(total_returns),
+            'episode-length-avg': np.mean(episode_lengths),
+            'episode-length-min': np.min(episode_lengths),
+            'episode-length-max': np.max(episode_lengths),
+            'episode-length-std': np.std(episode_lengths),
+        })
 
         env_infos = evaluation_env.get_path_infos(paths)
         for key, value in env_infos.items():
-            logger.record_tabular(key, value)
+            diagnostics[f'evaluation_env/{key}'] = value
 
         if self._eval_render and hasattr(evaluation_env, 'render_rollouts'):
             # TODO(hartikainen): Make this consistent such that there's no need
             # for the hasattr check.
             evaluation_env.render_rollouts(paths)
 
-        iteration = epoch * self._epoch_length
-        batch = self._evaluation_batch()
-        self.log_diagnostics(iteration, batch, paths)
-
-        return np.mean(total_returns)
+        return diagnostics
 
     @abc.abstractmethod
-    def log_diagnostics(self, iteration, batch, paths):
+    def get_diagnostics(self, iteration, batch, paths):
         raise NotImplementedError
 
     @abc.abstractmethod

@@ -1,6 +1,5 @@
 import numpy as np
 
-from rllab.misc import logger
 from .sampler_base import BaseSampler
 
 
@@ -67,9 +66,13 @@ class SimpleSampler(BaseSampler):
         return self.pool.random_batch(
             batch_size, observation_keys=observation_keys, **kwargs)
 
-    def log_diagnostics(self):
-        super(SimpleSampler, self).log_diagnostics()
-        logger.record_tabular('max-path-return', self._max_path_return)
-        logger.record_tabular('last-path-return', self._last_path_return)
-        logger.record_tabular('episodes', self._n_episodes)
-        logger.record_tabular('total-samples', self._total_samples)
+    def get_diagnostics(self):
+        diagnostics = super(SimpleSampler, self).get_diagnostics()
+        diagnostics.update({
+            'max-path-return': self._max_path_return,
+            'last-path-return': self._last_path_return,
+            'episodes': self._n_episodes,
+            'total-samples': self._total_samples,
+        })
+
+        return diagnostics

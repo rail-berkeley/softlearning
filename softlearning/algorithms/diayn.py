@@ -1,19 +1,18 @@
 """Diversity Is All You Need (DIAYN)"""
 
-from serializable import Serializable
-from rllab.misc import logger
+from collections import deque, OrderedDict
 
-from softlearning.algorithms.sac import SAC
-from softlearning.samplers import rollouts
-from softlearning.policies.hierarchical_policy import FixedOptionPolicy
-
-from collections import deque
-from softlearning.misc import utils
 import gtimer as gt
 import json
 import numpy as np
 import scipy.stats
 import tensorflow as tf
+from serializable import Serializable
+
+from softlearning.algorithms.sac import SAC
+from softlearning.samplers import rollouts
+from softlearning.policies.hierarchical_policy import FixedOptionPolicy
+from softlearning.misc import utils
 
 
 EPS = 1E-6
@@ -324,35 +323,44 @@ class DIAYN(SAC):
         if self._eval_n_episodes < 1:
             return
 
+        batch = self._pool.random_batch(self._batch_size)
+        diagnostics = self.get_diagnostics(batch)
+
         if epoch % self._find_best_skill_interval == 0:
             self._single_option_policy = self._get_best_single_option_policy()
-        for (policy, policy_name) in [(self._single_option_policy, 'best_single_option_policy')]:
-            with logger.tabular_prefix(policy_name + '/'), logger.prefix(policy_name + '/'):
-                with self._policy.deterministic(self._eval_deterministic):
-                    if self._eval_render:
-                        paths = rollouts(self._eval_env, policy,
-                                         self._max_path_length, self._eval_n_episodes,
-                                         render=True, render_mode='rgb_array')
-                    else:
-                        paths = rollouts(self._eval_env, policy,
-                                         self._max_path_length, self._eval_n_episodes)
+        for (policy, policy_name) in [
+                (self._single_option_policy, 'best_single_option_policy')]:
+            with self._policy.deterministic(self._eval_deterministic):
+                if self._eval_render:
+                    paths = rollouts(self._eval_env, policy,
+                                     self._max_path_length, self._eval_n_episodes,
+                                     render=True, render_mode='rgb_array')
+                else:
+                    paths = rollouts(self._eval_env, policy,
+                                     self._max_path_length, self._eval_n_episodes)
 
-                total_returns = [path['rewards'].sum() for path in paths]
-                episode_lengths = [len(p['rewards']) for p in paths]
+            total_returns = [path['rewards'].sum() for path in paths]
+            episode_lengths = [len(p['rewards']) for p in paths]
 
-                logger.record_tabular('return-average', np.mean(total_returns))
-                logger.record_tabular('return-min', np.min(total_returns))
-                logger.record_tabular('return-max', np.max(total_returns))
-                logger.record_tabular('return-std', np.std(total_returns))
-                logger.record_tabular('episode-length-avg', np.mean(episode_lengths))
-                logger.record_tabular('episode-length-min', np.min(episode_lengths))
-                logger.record_tabular('episode-length-max', np.max(episode_lengths))
-                logger.record_tabular('episode-length-std', np.std(episode_lengths))
+            diagnostics.update({
+                f'{policy_name}/return-average': np.mean(total_returns),
+                f'{policy_name}/return-min': np.min(total_returns),
+                f'{policy_name}/return-max': np.max(total_returns),
+                f'{policy_name}/return-std': np.std(total_returns),
+                f'{policy_name}/episode-length-avg': np.mean(episode_lengths),
+                f'{policy_name}/episode-length-min': np.min(episode_lengths),
+                f'{policy_name}/episode-length-max': np.max(episode_lengths),
+                f'{policy_name}/episode-length-std': np.std(episode_lengths),
+            })
 
-                self._eval_env.log_diagnostics(paths)
+            env_diagnostics = self._eval_env.get_diagnostics(paths)
 
-        batch = self._pool.random_batch(self._batch_size)
-        self.log_diagnostics(batch)
+            diagnostics.update({
+                f'{policy_name}/evaluation_env/{key}': value
+                for key, value in env_diagnostics.items()
+            })
+
+        return diagnostics
 
     def _train(self, env, policy, pool, initial_exploration_policy=None):
         """When training our policy expects an augmented observation."""
@@ -378,9 +386,6 @@ class DIAYN(SAC):
 
             for epoch in gt.timed_for(range(self._n_epochs + 1),
                                       save_itrs=True):
-                logger.push_prefix('Epoch #%d | ' % epoch)
-
-
                 path_length_list = []
                 z = self._sample_z()
                 aug_obs = utils.concat_obs_z(observation, z, self._num_skills)
@@ -447,35 +452,40 @@ class DIAYN(SAC):
                     print('log_p_z: %s' % log_p_z)
                     self._p_z = utils._softmax(log_p_z)
 
+                evaluation_diagnostics = self._evaluate(epoch)
 
-                self._evaluate(epoch)
+                gt.stamp('eval')
 
                 params = self.get_snapshot(epoch)
-                logger.save_itr_params(epoch, params)
                 times_itrs = gt.get_times().stamps.itrs
 
                 eval_time = times_itrs['eval'][-1] if epoch > 1 else 0
                 total_time = gt.get_times().total
-                logger.record_tabular('time-train', times_itrs['train'][-1])
-                logger.record_tabular('time-eval', eval_time)
-                logger.record_tabular('time-sample', times_itrs['sample'][-1])
-                logger.record_tabular('time-total', total_time)
-                logger.record_tabular('epoch', epoch)
-                logger.record_tabular('episodes', n_episodes)
-                logger.record_tabular('max-path-return', max_path_return)
-                logger.record_tabular('last-path-return', last_path_return)
-                logger.record_tabular('pool-size', self._pool.size)
-                logger.record_tabular('path-length', np.mean(path_length_list))
 
-                logger.dump_tabular(with_prefix=False)
-                logger.pop_prefix()
+                diagnostics = OrderedDict({
+                    'time-train': times_itrs['train'][-1],
+                    'time-eval': eval_time,
+                    'time-sample': times_itrs['sample'][-1],
+                    'time-total': total_time,
+                    'epoch': epoch,
+                    'episodes': n_episodes,
+                    'max-path-return': max_path_return,
+                    'last-path-return': last_path_return,
+                    'pool-size': self._pool.size,
+                    'path-length': np.mean(path_length_list),
+                })
 
-                gt.stamp('eval')
+                diagnostics.update({
+                    f'evaluation/{key}': value
+                    for key, value in evaluation_diagnostics.items()
+                })
+
+                yield epoch, diagnostics
 
             env.close()
 
-    def log_diagnostics(self, batch):
-        """Record diagnostic information to the logger.
+    def get_diagnostics(self, batch):
+        """Return diagnostic information as ordered dictionary.
 
         Records mean and standard deviation of Q-function and state
         value function, the TD-loss (mean squared Bellman error), and the
@@ -499,19 +509,29 @@ class DIAYN(SAC):
         log_ops = [op for (name, op) in log_pairs]
         log_names = [name for (name, op) in log_pairs]
         log_vals = self._sess.run(log_ops, feed_dict)
+
+        diagnostics = OrderedDict({})
         for (name, val) in zip(log_names, log_vals):
             if np.isscalar(val):
-                logger.record_tabular(name, val)
+                diagnostics[name] = val
             else:
-                logger.record_tabular('%s-avg' % name, np.mean(val))
-                logger.record_tabular('%s-min' % name, np.min(val))
-                logger.record_tabular('%s-max' % name, np.max(val))
-                logger.record_tabular('%s-std' % name, np.std(val))
-        logger.record_tabular('z-entropy', scipy.stats.entropy(self._p_z))
+                diagnostics[f'{name}-avg'] = np.mean(val)
+                diagnostics[f'{name}-min'] = np.min(val)
+                diagnostics[f'{name}-max'] = np.max(val)
+                diagnostics[f'{name}-std'] = np.std(val)
 
-        self._policy.log_diagnostics(batch)
+        diagnostics['z-entropy'] = scipy.stats.entropy(self._p_z)
+
+        policy_diagnostics = self._policy.get_diagnostics(batch)
+        diagnostics.update({
+            f'policy/{key}': value
+            for key, value in policy_diagnostics.items()
+        })
+
         if self._plotter:
             self._plotter.draw()
+
+        return diagnostics
 
     def get_snapshot(self, epoch):
         """Return loggable snapshot of the SAC algorithm.

@@ -1,10 +1,11 @@
 """ Gaussian mixture policy. """
 
+from collections import OrderedDict
 from contextlib import contextmanager
+
 import numpy as np
 import tensorflow as tf
 
-from rllab.misc import logger
 from serializable import Serializable
 
 from softlearning.distributions import GMM
@@ -203,8 +204,8 @@ class GMMPolicy(NNPolicy, Serializable):
         self._is_deterministic = was_deterministic
         self._fixed_h = old_fixed_h
 
-    def log_diagnostics(self, iteration, batch):
-        """Record diagnostic information to the logger.
+    def get_diagnostics(self, iteration, batch):
+        """Record diagnostic information.
 
         Records the mean, min, max, and standard deviation of the GMM
         means, component weights, and covariances.
@@ -224,22 +225,26 @@ class GMMPolicy(NNPolicy, Serializable):
             feeds
         )
 
-        logger.record_tabular('gmm-mus-mean', np.mean(mus))
-        logger.record_tabular('gmm-mus-min', np.min(mus))
-        logger.record_tabular('gmm-mus-max', np.max(mus))
-        logger.record_tabular('gmm-mus-std', np.std(mus))
+        diagnostics = OrderedDict({
+            'gmm-mus-mean': np.mean(mus),
+            'gmm-mus-min': np.min(mus),
+            'gmm-mus-max': np.max(mus),
+            'gmm-mus-std': np.std(mus),
 
-        logger.record_tabular('gmm-log-w-mean', np.mean(log_ws))
-        logger.record_tabular('gmm-log-w-min', np.min(log_ws))
-        logger.record_tabular('gmm-log-w-max', np.max(log_ws))
-        logger.record_tabular('gmm-log-w-std', np.std(log_ws))
+            'gmm-log-w-mean': np.mean(log_ws),
+            'gmm-log-w-min': np.min(log_ws),
+            'gmm-log-w-max': np.max(log_ws),
+            'gmm-log-w-std': np.std(log_ws),
 
-        logger.record_tabular('gmm-log-sigs-mean', np.mean(log_sigs))
-        logger.record_tabular('gmm-log-sigs-min', np.min(log_sigs))
-        logger.record_tabular('gmm-log-sigs-max', np.max(log_sigs))
-        logger.record_tabular('gmm-log-sigs-std', np.std(log_sigs))
+            'gmm-log-sigs-mean': np.mean(log_sigs),
+            'gmm-log-sigs-min': np.min(log_sigs),
+            'gmm-log-sigs-max': np.max(log_sigs),
+            'gmm-log-sigs-std': np.std(log_sigs),
 
-        logger.record_tabular('-log-pi-mean', np.mean(-log_pis))
-        logger.record_tabular('-log-pi-min', np.min(-log_pis))
-        logger.record_tabular('-log-pi-max', np.max(-log_pis))
-        logger.record_tabular('-log-pi-std', np.std(-log_pis))
+            '-log-pi-mean': np.mean(-log_pis),
+            '-log-pi-min': np.min(-log_pis),
+            '-log-pi-max': np.max(-log_pis),
+            '-log-pi-std': np.std(-log_pis),
+        })
+
+        return diagnostics

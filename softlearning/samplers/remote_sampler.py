@@ -1,9 +1,10 @@
 import pickle
+from collections import OrderedDict
+
 import ray
 import tensorflow as tf
 import numpy as np
 
-from rllab.misc import logger
 
 from .sampler_base import BaseSampler
 from .utils import rollout
@@ -48,12 +49,16 @@ class RemoteSampler(BaseSampler):
                                         self._last_path_return)
             self._n_episodes += 1
 
-    def log_diagnostics(self):
-        logger.record_tabular('max-path-return', self._max_path_return)
-        logger.record_tabular('last-path-return', self._last_path_return)
-        logger.record_tabular('pool-size', self.pool.size)
-        logger.record_tabular('episodes', self._n_episodes)
-        logger.record_tabular('total-samples', self._total_samples)
+    def get_diagnostics(self):
+        diagnostics = OrderedDict({
+            'max-path-return': self._max_path_return,
+            'last-path-return': self._last_path_return,
+            'pool-size': self.pool.size,
+            'episodes': self._n_episodes,
+            'total-samples': self._total_samples,
+        })
+
+        return diagnostics
 
 
 @ray.remote

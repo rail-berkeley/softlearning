@@ -1,10 +1,10 @@
+from collections import OrderedDict
 from numbers import Number
 
 import numpy as np
 import tensorflow as tf
 
 from serializable import Serializable
-from rllab.misc import logger
 
 from .rl_algorithm import RLAlgorithm
 
@@ -43,7 +43,6 @@ class SAC(RLAlgorithm, Serializable):
             action_prior='uniform',
             reparameterize=False,
             store_extra_policy_info=False,
-            summary_dir=None,
 
             save_full_state=False,
             **kwargs,
@@ -124,13 +123,11 @@ class SAC(RLAlgorithm, Serializable):
 
     def _build(self):
         self._training_ops = {}
-        self._summary_ops = {}
 
         self._init_global_step()
         self._init_placeholders()
         self._init_actor_update()
         self._init_critic_update()
-        self._init_summary_ops()
 
     def _initialize_tf_variables(self):
         # Initialize all uninitialized variables. This prevents initializing
@@ -396,17 +393,6 @@ class SAC(RLAlgorithm, Serializable):
             'V': V_train_op,
         })
 
-    def _init_summary_ops(self):
-        summary_dir = logger._snapshot_dir
-        if self._tf_summaries and summary_dir is not None:
-            # TODO(hartikainen): This should get the logdir some other way than
-            # from the rllab logger.
-            self.summary_writer = tf.summary.FileWriter(
-                summary_dir, self._sess.graph)
-            self._summary_ops.update({'all': tf.summary.merge_all()})
-        else:
-            self.summary_writer = None
-
     def _init_training(self):
         self._update_target()
 
@@ -450,8 +436,8 @@ class SAC(RLAlgorithm, Serializable):
 
         return feed_dict
 
-    def log_diagnostics(self, iteration, batch, paths):
-        """Record diagnostic information to the logger.
+    def get_diagnostics(self, iteration, batch, paths):
+        """Return diagnostic information as ordered dictionary.
 
         Records mean and standard deviation of Q-function and state
         value function, and TD-loss (mean squared Bellman error)
@@ -462,38 +448,33 @@ class SAC(RLAlgorithm, Serializable):
 
         feed_dict = self._get_feed_dict(iteration, batch)
 
-        (Q_values, V_value, Q_losses,
-         summary_results, alpha, global_step) = self._sess.run(
+        (Q_values, V_value, Q_losses, alpha, global_step) = self._sess.run(
             (self._Q_values,
              self._V_value,
              self._Q_losses,
-             self._summary_ops,
              self._alpha,
              self.global_step),
             feed_dict)
 
-        if summary_results and self.summary_writer is not None:
-            self.summary_writer.add_summary(
-                summary_results['all'], global_step)
-            self.summary_writer.flush()  # Not sure if this is needed
-
-        logger.record_tabular('Q-avg', np.mean(Q_values))
-        logger.record_tabular('Q-std', np.std(Q_values))
-
-        logger.record_tabular('V-avg', np.mean(V_value))
-        logger.record_tabular('V-std', np.std(V_value))
-
-        logger.record_tabular('Q_loss', np.mean(Q_losses))
-
-        logger.record_tabular('alpha', alpha)
+        diagnostics = OrderedDict({
+            'Q-avg': np.mean(Q_values),
+            'Q-std': np.std(Q_values),
+            'V-avg': np.mean(V_value),
+            'V-std': np.std(V_value),
+            'Q_loss': np.mean(Q_losses),
+            'alpha': alpha,
+        })
 
         policy_diagnostics = self._policy.get_diagnostics(iteration, batch)
-
-        for key, value in policy_diagnostics.items():
-            logger.record_tabular(key, value)
+        diagnostics.update({
+            f'policy/{key}': value
+            for key, value in policy_diagnostics.items()
+        })
 
         if self._plotter:
             self._plotter.draw()
+
+        return diagnostics
 
     def get_snapshot(self, epoch):
         """TODO(hartikainen): This is temporarily empty due to refactor."""

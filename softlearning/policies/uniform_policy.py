@@ -47,8 +47,8 @@ class UniformPolicy(Policy, Serializable):
         agent_info = {}
         return (actions, log_pis, raw_actions), agent_info
 
-    def log_diagnostics(self, paths):
-        pass
+    def get_diagnostics(self, paths):
+        return OrderedDict({})
 
     def get_params_internal(self, **tags):
         pass

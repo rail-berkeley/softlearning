@@ -33,8 +33,8 @@ class MetaEnv(Serializable):
     def reset(self):
         return self._env.reset()
 
-    def log_diagnostics(self, paths):
-        self._env.log_diagnostics(paths)
+    def get_diagnostics(self, paths):
+        return self._env.get_diagnostics(paths)
 
     def terminate(self):
         self._env.terminate()
@@ -63,8 +63,8 @@ class FixedOptionEnv(Serializable):
         aug_obs = concat_obs_z(obs, self._z, self._num_skills)
         return aug_obs
 
-    def log_diagnostics(self, paths):
-        self._env.log_diagnostics(paths)
+    def get_diagnostics(self, paths):
+        return self._env.get_diagnostics(paths)
 
     def terminate(self):
         self._env.terminate()

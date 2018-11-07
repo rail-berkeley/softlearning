@@ -1,12 +1,13 @@
 """Implements a ant which is sparsely rewarded for reaching a goal"""
 
+from collections import OrderedDict
+
 import numpy as np
 
 from rllab.core.serializable import Serializable
 from rllab.envs.mujoco.ant_env import AntEnv
 from rllab.envs.base import Step
 from rllab.envs.mujoco.mujoco_env import MujocoEnv
-from rllab.misc import logger, autoargs
 
 from softlearning.environments.helpers import random_point_in_circle
 from .helpers import get_random_goal_logs
@@ -18,12 +19,6 @@ REWARD_TYPES = ('dense', 'sparse')
 class RandomGoalAntEnv(AntEnv):
     """Implements a ant env which is sparsely rewarded for reaching a goal"""
 
-    @autoargs.arg('ctrl_cost_coeff', type=float,
-                  help='cost coefficient for controls')
-    @autoargs.arg('survive_reward', type=float,
-                  help='bonus reward for being alive')
-    @autoargs.arg('contact_cost_coeff', type=float,
-                  help='cost coefficient for contact')
     def __init__(self,
                  reward_type='dense',
                  terminate_at_goal=True,
@@ -142,10 +137,14 @@ class RandomGoalAntEnv(AntEnv):
         info = {'goal_position': self.goal_position}
         return Step(next_observation, reward, done, **info)
 
-    def log_diagnostics(self, paths, *args, **kwargs):
+    def get_diagnostics(self, paths, *args, **kwargs):
         logs = get_random_goal_logs(
             paths,
             self.goal_radius,
             fixed_goal_position=getattr(self, 'fixed_goal_position', False))
-        for row in logs:
-            logger.record_tabular(*row)
+
+        diagnostics = OrderedDict({
+            key: value for key, value in logs
+        })
+
+        return diagnostics

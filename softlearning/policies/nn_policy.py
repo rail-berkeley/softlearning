@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import tensorflow as tf
 
 from serializable import Serializable
@@ -67,8 +69,8 @@ class NNPolicy(Policy, Serializable):
         outputs = tf.get_default_session().run(fetches, feed_dict)
         return outputs
 
-    def log_diagnostics(self, paths):
-        pass
+    def get_diagnostics(self, paths):
+        return OrderedDict({})
 
     def get_params_internal(self, scope='', **tags):
         """TODO: rewrite this using tensorflow collections."""

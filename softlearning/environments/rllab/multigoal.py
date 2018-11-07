@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -180,7 +182,7 @@ class MultiGoalEnv(Env, Serializable):
     def set_param_values(self, params):
         pass
 
-    def log_diagnostics(self, paths):
+    def get_diagnostics(self, paths):
         n_goal = len(self.goal_positions)
         goal_reached = [False] * n_goal
 
@@ -190,7 +192,11 @@ class MultiGoalEnv(Env, Serializable):
                 if np.linalg.norm(last_obs - goal) < self.goal_threshold:
                     goal_reached[i] = True
 
-        logger.record_tabular('env:goals_reached', goal_reached.count(True))
+        diagnostics = OrderedDict({
+            'goals-reached': goal_reached.count(True),
+        })
+
+        return diagnostics
 
     def horizon(self):
         return None
