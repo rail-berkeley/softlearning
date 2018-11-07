@@ -126,6 +126,10 @@ def get_parser(allow_policy_list=False):
                         help=("Resources to allocate for each trial. Passed"
                               " to `tune.run_experiments`."))
 
+    parser.add_argument('--upload-dir', type=str, default='',
+                        help=("Optional URI to sync training results to (e.g."
+                              " s3://<bucket> or gs://<bucket>)."))
+
     if allow_policy_list:
         parser.add_argument('--policy',
                             type=str,
@@ -243,12 +247,28 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
 
     tune.register_trainable('mujoco-runner', experiment_fn)
 
-    if 'local' in args.mode:
+    trial_resources = _normalize_trial_resources(
+        args.trial_resources, args.trial_cpus, args.trial_gpus)
+
+    if 'local' in args.mode or 'debug' in args.mode:
+        resources = args.resources or {}
+
+        if 'debug' in args.mode:
+            # Require a debug resource for each trial, so that we never run
+            # more than one trial at a time. This makes debugging easier, since
+            # the debugger stdout behaves more reasonably with single process.
+            # TODO(hartikainen): Change this from 'extra_gpu' to
+            # 'debug-resource' once tune supports custom resources.
+            # See: https://github.com/ray-project/ray/pull/2979.
+            resources['extra_gpu'] = 1
+            trial_resources['extra_gpu'] = 1
+
         ray.init(
-            resources=args.resources,
+            resources=resources,
             num_cpus=args.cpus,
             num_gpus=args.gpus,
         )
+
     else:
         ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
         using_new_gcs = os.environ.get('RAY_USE_NEW_GCS', False) == 'on'
@@ -256,9 +276,6 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
         if using_new_gcs and using_xray:
             policy = ray.experimental.SimpleGcsFlushPolicy()
             ray.experimental.set_flushing_policy(policy)
-
-    trial_resources = _normalize_trial_resources(
-        args.trial_resources, args.trial_cpus, args.trial_gpus)
 
     datetime_prefix = datetimestamp()
     experiment_id = '-'.join((datetime_prefix, args.exp_name))
@@ -270,7 +287,7 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
             'config': variant_spec,
             'local_dir': local_dir,
             'num_samples': args.num_samples,
-            'upload_dir': 'gs://sac-ray-test/ray/results'
+            'upload_dir': args.upload_dir
         }
         for i, variant_spec in enumerate(variant_specs)
     })
