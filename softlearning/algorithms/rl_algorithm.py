@@ -161,7 +161,8 @@ class RLAlgorithm(Algorithm):
                     'time-eval': time_eval,
                     'time-sample': time_sample,
                     'time-total': time_total,
-                    'timesteps_total': epoch * self._epoch_length + t
+                    'timesteps_total': epoch * self._epoch_length + t,
+                    'epoch': epoch,
                 })
 
                 sampler_diagnostics = self.sampler.get_diagnostics()
@@ -175,7 +176,7 @@ class RLAlgorithm(Algorithm):
                     for key, value in evaluation_diagnostics.items()
                 })
 
-                yield epoch, diagnostics
+                yield diagnostics
 
             self.sampler.terminate()
 

@@ -1,28 +1,20 @@
 import os
 
-import argparse
-
 import numpy as np
-import ray
-from ray import tune
 
 from softlearning.algorithms import SAC
 from softlearning.environments.utils import get_environment
 from softlearning.misc.plotter import QFPolicyPlotter
-from softlearning.misc.utils import datetimestamp
 from softlearning.samplers import SimpleSampler
 from softlearning.policies import GaussianPolicy, GMMPolicy, RealNVPPolicy
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions.utils import (
     get_Q_function_from_variant,
     get_V_function_from_variant)
-from examples.utils import (
-    get_parser,
-    launch_experiments_rllab,
-    launch_experiments_ray)
+from examples.utils import get_parser, launch_experiments_ray
 
 
-def run_experiment(variant, reporter=None):
+def run_experiment(variant, reporter):
     env = get_environment('rllab', 'multigoal', 'default', {
         'actuation_cost_coeff': 1,
         'distance_cost_coeff': 0.1,
@@ -108,8 +100,7 @@ def run_experiment(variant, reporter=None):
     )
 
     for epoch, mean_return in algorithm.train():
-        if reporter is not None:
-            reporter(timesteps_total=epoch, mean_accuracy=mean_return)
+        reporter(timesteps_total=epoch, mean_accuracy=mean_return)
 
 
 def main():
@@ -144,13 +135,7 @@ def main():
         },
     }
 
-    if args.mode == 'local':
-        launch_experiments_rllab(variant_spec, args, run_experiment)
-    elif 'rllab' in args.mode:
-        args.mode = args.mode.replace('rllab', '').strip('-')
-        launch_experiments_rllab(variant_spec, args, run_experiment)
-    else:
-        launch_experiments_ray([variant_spec], args, local_dir, run_experiment)
+    launch_experiments_ray([variant_spec], args, local_dir, run_experiment)
 
 
 if __name__ == "__main__":
