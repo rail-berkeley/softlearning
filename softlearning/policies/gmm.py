@@ -4,7 +4,6 @@ from contextlib import contextmanager
 import numpy as np
 import tensorflow as tf
 
-from rllab.misc.overrides import overrides
 from rllab.misc import logger
 from serializable import Serializable
 
@@ -138,7 +137,6 @@ class GMMPolicy(NNPolicy, Serializable):
         # self._determistic_actions = self.actions_for(self._observations_ph,
         #                                              self._latents_ph)
 
-    @overrides
     def get_actions(self, observations, with_log_pis=False, with_raw_actions=False):
         """Sample actions based on the observations.
 

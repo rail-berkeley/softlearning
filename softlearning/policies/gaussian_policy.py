@@ -7,7 +7,6 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
-from rllab.misc.overrides import overrides
 from rllab.misc import logger
 from serializable import Serializable
 
@@ -148,7 +147,6 @@ class GaussianPolicy(NNPolicy, Serializable):
         self._actions, self._log_pis, self._raw_actions = self.actions_for(
             self._observations_ph, with_log_pis=True, with_raw_actions=True)
 
-    @overrides
     def get_actions(self, observations, with_log_pis=False, with_raw_actions=False):
         """Sample actions based on the observations.
 

@@ -2,7 +2,6 @@ import numpy as np
 import tensorflow as tf
 
 from rllab.misc import logger
-from rllab.misc.overrides import overrides
 
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 
@@ -309,7 +308,6 @@ class SQL(RLAlgorithm):
             for target, source in zip(target_params, source_params)
         ])
 
-    @overrides
     def _do_training(self, iteration, batch):
         """Run the operations for updating training and target ops."""
 
@@ -332,7 +330,6 @@ class SQL(RLAlgorithm):
 
         return feeds
 
-    @overrides
     def log_diagnostics(self, iteration, batch, paths):
         """Record diagnostic information.
 
@@ -355,7 +352,6 @@ class SQL(RLAlgorithm):
         if self.plotter:
             self.plotter.draw()
 
-    @overrides
     def get_snapshot(self, epoch):
         """Return loggable snapshot of the SQL algorithm.
 

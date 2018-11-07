@@ -2,7 +2,6 @@
 
 from serializable import Serializable
 from rllab.misc import logger
-from rllab.misc.overrides import overrides
 
 from softlearning.algorithms.sac import SAC
 from softlearning.samplers import rollouts
@@ -475,7 +474,6 @@ class DIAYN(SAC):
 
             env.close()
 
-    @overrides
     def log_diagnostics(self, batch):
         """Record diagnostic information to the logger.
 
@@ -515,7 +513,6 @@ class DIAYN(SAC):
         if self._plotter:
             self._plotter.draw()
 
-    @overrides
     def get_snapshot(self, epoch):
         """Return loggable snapshot of the SAC algorithm.
 

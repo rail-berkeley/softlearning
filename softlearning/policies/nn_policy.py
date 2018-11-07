@@ -2,7 +2,6 @@ import tensorflow as tf
 
 from serializable import Serializable
 
-from rllab.misc.overrides import overrides
 from sandbox.rocky.tf.policies.base import Policy
 
 
@@ -42,7 +41,6 @@ class NNPolicy(Policy, Serializable):
                 - tf.nn.softplus(-2. * actions)
             ), axis=1)
 
-    @overrides
     def get_action(self,
                    observation,
                    with_log_pis=False,
@@ -57,7 +55,6 @@ class NNPolicy(Policy, Serializable):
 
         return outputs, {}
 
-    @overrides
     def get_actions(self,
                     observations,
                     with_log_pis=False,
@@ -70,11 +67,9 @@ class NNPolicy(Policy, Serializable):
         outputs = tf.get_default_session().run(fetches, feed_dict)
         return outputs
 
-    @overrides
     def log_diagnostics(self, paths):
         pass
 
-    @overrides
     def get_params_internal(self, scope='', **tags):
         """TODO: rewrite this using tensorflow collections."""
         if tags:

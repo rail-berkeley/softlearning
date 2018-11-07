@@ -4,7 +4,6 @@ import numpy as np
 
 from rllab.core.serializable import Serializable
 from rllab.envs.mujoco.ant_env import AntEnv
-from rllab.misc.overrides import overrides
 from rllab.envs.base import Step
 from rllab.envs.mujoco.mujoco_env import MujocoEnv
 from rllab.misc import logger, autoargs
@@ -93,7 +92,6 @@ class RandomGoalAntEnv(AntEnv):
 
         return observation
 
-    @overrides
     def step(self, action):
         self.forward_dynamics(action)
 
@@ -144,7 +142,6 @@ class RandomGoalAntEnv(AntEnv):
         info = {'goal_position': self.goal_position}
         return Step(next_observation, reward, done, **info)
 
-    @overrides
     def log_diagnostics(self, paths, *args, **kwargs):
         logs = get_random_goal_logs(
             paths,

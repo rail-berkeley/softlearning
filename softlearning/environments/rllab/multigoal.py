@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from rllab.misc.overrides import overrides
 from rllab.core.serializable import Serializable
 from rllab.spaces.box import Box
 from rllab.envs.base import Env
@@ -48,7 +47,6 @@ class MultiGoalEnv(Env, Serializable):
         self.fixed_plots = None
         self.dynamic_plots = []
 
-    @overrides
     def reset(self):
         unclipped_observation = self.init_mu + self.init_sigma * \
             np.random.normal(size=self.dynamics.s_dim)
@@ -56,7 +54,6 @@ class MultiGoalEnv(Env, Serializable):
         self.observation = np.clip(unclipped_observation, o_lb, o_ub)
         return self.observation
 
-    @overrides
     @property
     def observation_space(self):
         return Box(
@@ -65,7 +62,6 @@ class MultiGoalEnv(Env, Serializable):
             shape=None
         )
 
-    @overrides
     @property
     def action_space(self):
         return Box(
@@ -77,7 +73,6 @@ class MultiGoalEnv(Env, Serializable):
     def get_current_obs(self):
         return np.copy(self.observation)
 
-    @overrides
     def step(self, action):
         action = action.ravel()
 
@@ -117,7 +112,6 @@ class MultiGoalEnv(Env, Serializable):
 
         self._plot_position_cost(self._ax)
 
-    @overrides
     def render_rollouts(self, paths=()):
         """Render for rendering the past rollouts of the environment."""
         if self._ax is None:
@@ -186,7 +180,6 @@ class MultiGoalEnv(Env, Serializable):
     def set_param_values(self, params):
         pass
 
-    @overrides
     def log_diagnostics(self, paths):
         n_goal = len(self.goal_positions)
         goal_reached = [False] * n_goal
@@ -199,7 +192,6 @@ class MultiGoalEnv(Env, Serializable):
 
         logger.record_tabular('env:goals_reached', goal_reached.count(True))
 
-    @overrides
     def horizon(self):
         return None
 

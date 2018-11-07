@@ -4,7 +4,6 @@ import tensorflow as tf
 
 from serializable import Serializable
 
-from rllab.misc.overrides import overrides
 from sandbox.rocky.tf.policies.base import Policy
 
 import numpy as np
@@ -25,7 +24,6 @@ class UniformPolicy(Policy, Serializable):
 
         super(UniformPolicy, self).__init__(env_spec=None)
 
-    @overrides
     def get_action(self,
                    observation,
                    with_log_pis=False,
@@ -44,17 +42,14 @@ class UniformPolicy(Policy, Serializable):
 
         return outputs, {}
 
-    @overrides
     def get_actions(self, observations, *args, **kwargs):
         actions, log_pis, raw_actions = None, None, None
         agent_info = {}
         return (actions, log_pis, raw_actions), agent_info
 
-    @overrides
     def log_diagnostics(self, paths):
         pass
 
-    @overrides
     def get_params_internal(self, **tags):
         pass
 
