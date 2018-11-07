@@ -5,8 +5,6 @@ Soft Reinforcement Learning is a deep reinforcement learning framework for train
 
 This implementation uses Tensorflow. For a PyTorch implementation of soft actor-critic, take a look at [rlkit](https://github.com/vitchyr/rlkit) by [Vitchyr Pong](https://github.com/vitchyr).
 
-See the [DIAYN documentation](./DIAYN.md) for using SAC for learning diverse skills.
-
 # Getting Started
 
 Soft Reinforcement Learning can be run either locally or through Docker.
