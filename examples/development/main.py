@@ -10,7 +10,7 @@ from softlearning.value_functions.utils import (
     get_Q_function_from_variant,
     get_V_function_from_variant)
 
-from softlearning.misc.utils import set_seed, setup_rllab_logger
+from softlearning.misc.utils import set_seed
 
 from examples.utils import (
     parse_universe_domain_task,
@@ -22,9 +22,8 @@ from examples.development.variants import (
     get_variant_spec_image)
 
 
-def run_experiment(variant, reporter=None):
+def run_experiment(variant, reporter):
     if 'ray' in variant['mode']:
-        setup_rllab_logger(variant)
         set_seed(variant['run_params']['seed'])
 
     env = get_environment_from_variant(variant)
@@ -48,9 +47,8 @@ def run_experiment(variant, reporter=None):
     )
 
     # Do the training
-    for epoch, mean_return in algorithm.train():
-        if reporter is not None:
-            reporter(timesteps_total=epoch, mean_accuracy=mean_return)
+    for epoch, diagnostics in algorithm.train():
+        reporter(**diagnostics)
 
 
 def main():
