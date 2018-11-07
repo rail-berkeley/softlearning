@@ -17,7 +17,6 @@ from softlearning.value_functions.utils import (
     get_Q_function_from_variant,
     get_V_function_from_variant)
 from softlearning.preprocessors.utils import get_preprocessor_from_variant
-from softlearning.misc import tf_utils
 from softlearning.misc.utils import get_git_rev
 from examples.utils import (
     parse_universe_domain_task,
@@ -185,7 +184,7 @@ ENV_PARAMS = {
 
 
 def load_low_level_policy(policy_path):
-    with tf_utils.get_default_session().as_default():
+    with tf.keras.backend.get_session().as_default():
         with tf.variable_scope("low_level_policy", reuse=False):
             snapshot = joblib.load(policy_path)
 

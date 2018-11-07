@@ -3,8 +3,6 @@ import numpy as np
 
 from serializable import Serializable
 
-from softlearning.misc import tf_utils
-
 
 class SumQFunction(Serializable):
     def __init__(self,
@@ -42,7 +40,7 @@ class SumQFunction(Serializable):
             self._actions_ph: actions
         }
 
-        return tf_utils.get_default_session().run(self._output, feeds)
+        return tf.keras.backend.get_session().run(self._output, feeds)
 
     def get_param_values(self):
         all_values_list = [qf.get_param_values() for qf in self.q_functions]

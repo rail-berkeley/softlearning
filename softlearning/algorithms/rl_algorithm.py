@@ -1,12 +1,12 @@
 import abc
 import gtimer as gt
 
+import tensorflow as tf
 import numpy as np
 
 from rllab.misc import logger
 from rllab.algos.base import Algorithm
 
-from softlearning.misc import tf_utils
 from softlearning.samplers import rollouts, rollout
 
 
@@ -65,7 +65,7 @@ class RLAlgorithm(Algorithm):
         self._eval_deterministic = eval_deterministic
         self._eval_render = eval_render
 
-        self._sess = tf_utils.get_default_session()
+        self._sess = tf.keras.backend.get_session()
 
         self._env = None
         self._policy = None

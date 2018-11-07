@@ -1,11 +1,11 @@
 import joblib
 import os
 
+import tensorflow as tf
 from ray import tune
 
 from rllab.envs.normalized_env import normalize
 
-from softlearning.misc import tf_utils
 from softlearning.algorithms import SQL
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 from softlearning.replay_pools import UnionPool
@@ -39,7 +39,7 @@ ENV_PARAMS = {
 
 
 def load_pool_and_Q(filename):
-    with tf_utils.get_default_session().as_default():
+    with tf.keras.backend.get_session().as_default():
         data = joblib.load(os.path.join(PROJECT_PATH, filename))
 
     return data['replay_pool'], data['Q']

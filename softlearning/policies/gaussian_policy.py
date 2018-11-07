@@ -13,7 +13,6 @@ from serializable import Serializable
 
 from softlearning.distributions import Normal
 from softlearning.policies import NNPolicy
-from softlearning.misc import tf_utils
 
 
 class SquashBijector(tfp.bijectors.Tanh):
@@ -205,7 +204,7 @@ class GaussianPolicy(NNPolicy, Serializable):
         """
 
         feeds = {self._observations_ph: batch['observations']}
-        sess = tf_utils.get_default_session()
+        sess = tf.keras.backend.get_session()
         actions, raw_actions, log_pi, mu, log_sig, = sess.run(
             (
                 self._actions,

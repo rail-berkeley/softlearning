@@ -5,7 +5,6 @@ from rllab.misc import logger
 from rllab.misc.overrides import overrides
 
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softlearning.misc import tf_utils
 
 from .rl_algorithm import RLAlgorithm
 

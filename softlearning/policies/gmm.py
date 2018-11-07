@@ -10,7 +10,6 @@ from serializable import Serializable
 
 from softlearning.distributions import GMM
 from softlearning.policies import NNPolicy
-from softlearning.misc import tf_utils
 
 
 EPS = 1e-6
@@ -214,7 +213,7 @@ class GMMPolicy(NNPolicy, Serializable):
         """
 
         feeds = {self._observations_ph: batch['observations']}
-        sess = tf_utils.get_default_session()
+        sess = tf.keras.backend.get_session()
         mus, log_sigs, log_ws, log_pis = sess.run(
             (
                 self.distribution.mus_t,

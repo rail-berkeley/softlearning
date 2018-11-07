@@ -6,7 +6,6 @@ import numpy as np
 from rllab.misc.overrides import overrides
 from rllab.misc import logger
 
-from softlearning.misc import tf_utils
 from .sampler_base import BaseSampler
 from .utils import rollout
 
@@ -62,7 +61,7 @@ class RemoteSampler(BaseSampler):
 @ray.remote
 class _RemoteEnv(object):
     def __init__(self, env_pkl, policy_pkl):
-        self._sess = tf_utils.create_session()
+        self._sess = tf.keras.backend.get_session()
         self._sess.run(tf.global_variables_initializer())
 
         self._env = pickle.loads(env_pkl)

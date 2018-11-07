@@ -5,11 +5,11 @@ from rllab.misc import logger
 from rllab.misc.overrides import overrides
 
 from softlearning.algorithms.sac import SAC
-from softlearning.misc import tf_utils, utils
 from softlearning.samplers import rollouts
 from softlearning.policies.hierarchical_policy import FixedOptionPolicy
 
 from collections import deque
+from softlearning.misc import utils
 import gtimer as gt
 import json
 import numpy as np
@@ -395,7 +395,7 @@ class DIAYN(SAC):
                         (obs, _) = utils.split_aug_obs(aug_obs, self._num_skills)
                         feed_dict = {self._discriminator._obs_pl: obs[None],
                                      self._discriminator._action_pl: action[None]}
-                        logits = tf_utils.get_default_session().run(
+                        logits = tf.keras.backend.get_session().run(
                             self._discriminator._output_t, feed_dict)[0]
                         log_p_z = np.log(utils._softmax(logits)[z])
                         if self._learn_p_z:
