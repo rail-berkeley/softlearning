@@ -89,6 +89,14 @@ class RLAlgorithm(object):
         """Method called after the actual training loops."""
         pass
 
+    def _timestep_before_hook(self, *args, **kwargs):
+        """Hook called at the beginning of each timestep."""
+        pass
+
+    def _timestep_after_hook(self, *args, **kwargs):
+        """Hook called at the end of each timestep."""
+        pass
+
     def _epoch_before_hook(self, epoch):
         """Hook called at the beginning of each epoch."""
         pass
@@ -128,50 +136,53 @@ class RLAlgorithm(object):
             gt.reset()
             gt.set_def_unique(False)
 
-            for epoch in gt.timed_for(
-                    range(self._n_epochs + 1), save_itrs=True):
+            total_timesteps = 0
+            for epoch in gt.timed_for(range(self._n_epochs + 1),
+                                      save_itrs=True):
                 self._epoch_before_hook(epoch)
+                gt.stamp('epoch_before_hook')
 
-                for t in range(1, self._epoch_length + 1):
-                    self._do_sampling(epoch=epoch, epoch_timestep=t)
+                for timestep in range(1, self._epoch_length + 1):
+                    total_timesteps += 1
+
+                    self._timestep_before_hook(timestep)
+                    gt.stamp('timestep_before_hook')
+
+                    self._do_sampling(timestep=total_timesteps)
                     gt.stamp('sample')
-                    if self.ready_to_train:
-                        self._do_training_repeats(epoch=epoch,
-                                                  epoch_timestep=t)
-                        gt.stamp('train')
 
-                evaluation_diagnostics = self._evaluate(policy, evaluation_env, epoch)
-                gt.stamp('eval')
+                    if self.ready_to_train:
+                        self._do_training_repeats(timestep=total_timesteps)
+                    gt.stamp('train')
+
+                    self._timestep_after_hook(timestep)
+                    gt.stamp('timestep_after_hook')
 
                 training_paths = self.sampler.get_last_n_paths()
                 self._epoch_after_hook(epoch, training_paths)
+                gt.stamp('epoch_after_hook')
 
-                params = self.get_snapshot(epoch)
-
-                time_itrs = gt.get_times().stamps.itrs
-                time_eval = time_itrs.get('eval', [0])[-1]
-                time_total = gt.get_times().total
-                time_train = time_itrs.get('train', [0])[-1]
-                time_sample = time_itrs.get('sample', [0])[-1]
-
-                diagnostics = OrderedDict({
-                    'time-train': time_train,
-                    'time-eval': time_eval,
-                    'time-sample': time_sample,
-                    'time-total': time_total,
-                    'timesteps_total': epoch * self._epoch_length + t,
-                    'epoch': epoch,
-                })
+                evaluation_diagnostics = self._evaluate(policy, evaluation_env, epoch)
+                gt.stamp('evaluate')
 
                 sampler_diagnostics = self.sampler.get_diagnostics()
-                diagnostics.update({
-                    f'sampler/{key}': value
-                    for key, value in sampler_diagnostics.items()
-                })
-
-                diagnostics.update({
-                    f'evaluation/{key}': value
-                    for key, value in evaluation_diagnostics.items()
+                diagnostics = OrderedDict({
+                    **{
+                        f'times/{key}': value[-1]
+                        for key, value in gt.get_times().stamps.itrs.items()
+                    },
+                    **{
+                        'timesteps_total': total_timesteps,
+                        'epoch': epoch,
+                    },
+                    **{
+                        f'sampler/{key}': value
+                        for key, value in sampler_diagnostics.items()
+                    },
+                    **{
+                        f'evaluation/{key}': value
+                        for key, value in evaluation_diagnostics.items()
+                    },
                 })
 
                 yield diagnostics
@@ -240,17 +251,16 @@ class RLAlgorithm(object):
     def ready_to_train(self):
         return self.sampler.batch_ready()
 
-    def _do_sampling(self, epoch, epoch_timestep):
+    def _do_sampling(self, timestep):
         self.sampler.sample()
 
-    def _do_training_repeats(self, epoch, epoch_timestep):
+    def _do_training_repeats(self, timestep):
         """Repeat training _n_train_repeat times every _train_every_n_steps"""
-        total_timestep = epoch * self._epoch_length + epoch_timestep
-        if total_timestep % self._train_every_n_steps > 0: return
+        if timestep % self._train_every_n_steps > 0: return
 
         for i in range(self._n_train_repeat):
             self._do_training(
-                iteration=total_timestep,
+                iteration=timestep,
                 batch=self._training_batch())
 
     @abc.abstractmethod
