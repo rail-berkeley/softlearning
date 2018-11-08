@@ -14,7 +14,6 @@ except ImportError:
 
 import softlearning.environments.utils as env_utils
 from softlearning.misc.utils import datetimestamp, datestamp
-from softlearning.misc.instrument import launch_experiment
 
 
 DEFAULT_UNIVERSE = 'gym'
@@ -177,57 +176,6 @@ def variant_equals(*keys):
     return get_from_spec
 
 
-def launch_experiments_rllab(variant_spec, args, run_fn):
-    variants = [x[1] for x in generate_variants(variant_spec)]
-    num_experiments = len(variants)
-
-    print('Launching {} experiments.'.format(num_experiments))
-
-    for i, variant in enumerate(variants):
-        print("Experiment: {}/{}".format(i, num_experiments))
-
-        run_params = variant.get('run_params', {})
-        snapshot_mode = run_params.get(
-            'snapshot_mode', variant.get('snapshot_mode', 'none'))
-        snapshot_gap = run_params.get(
-            'snapshot_gap', variant.get('snapshot_gap', 0))
-        sync_pkl = run_params.get('sync_pkl', variant.get('sync_pkl'))
-        sync_png = run_params.get('sync_png', variant.get('sync_png', True))
-        sync_log = run_params.get('sync_log', variant.get('sync_log', True))
-        seed = run_params.get('seed', variant.get('seed'))
-
-        date_prefix = datestamp()
-        experiment_prefix = os.path.join(
-            variant.get('prefix', (
-                '{}/{}/{}'.format(variant['universe'],
-                                  variant['domain'],
-                                  variant['task']))),
-            '{}-{}'.format(date_prefix, args.exp_name))
-        experiment_name = '{exp_name}-{i:0{max_i_len}}'.format(
-            exp_name=args.exp_name,
-            i=i,
-            max_i_len=int(math.ceil(math.log10(num_experiments))))
-
-        mode = args.mode.replace('rllab', '').strip('-')
-
-        launch_experiment(
-            run_fn,
-            mode=mode,
-            variant=variant,
-            exp_prefix=experiment_prefix,
-            exp_name=experiment_name,
-            n_parallel=1,
-            seed=seed,
-            terminate_machine=True,
-            log_dir=args.log_dir,
-            snapshot_mode=snapshot_mode,
-            snapshot_gap=snapshot_gap,
-            confirm_remote=args.confirm_remote,
-            sync_s3_pkl=sync_pkl,
-            sync_s3_png=sync_png,
-            sync_s3_log=sync_log)
-
-
 def _normalize_trial_resources(resources, cpu, gpu):
     if resources is None:
         resources = {}
@@ -298,4 +246,4 @@ def launch_experiments_local(*args, **kwargs):
 
     TODO(hartikainen): Reimplement this once we get rid of rllab.
     """
-    return launch_experiments_rllab(*args, **kwargs)
+    raise NotImplementedError()

@@ -4,10 +4,8 @@ import tensorflow as tf
 
 from serializable import Serializable
 
-from sandbox.rocky.tf.policies.base import Policy
 
-
-class NNPolicy(Policy, Serializable):
+class NNPolicy(Serializable):
     def __init__(self,
                  name,
                  observation_shape,

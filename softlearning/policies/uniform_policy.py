@@ -4,12 +4,10 @@ import tensorflow as tf
 
 from serializable import Serializable
 
-from sandbox.rocky.tf.policies.base import Policy
-
 import numpy as np
 
 
-class UniformPolicy(Policy, Serializable):
+class UniformPolicy(Serializable):
     """Fixed policy that samples actions uniformly randomly.
 
     Used for an initial exploration period instead of an undertrained policy.

@@ -216,22 +216,10 @@ REAL_NVP_PREPROCESSOR_PARAMS = {
             'output_size': 16,  # 2*DoF
         }
     },
-    'ant-rllab': {  # 8 DoF
-        'kwargs': {
-            'hidden_layer_sizes': (M, M),
-            'output_size': 16,  # 2*DoF
-        }
-    },
-    'humanoid-gym': {  # 17 DoF
+    'humanoid': {  # 17 DoF
         'kwargs': {
             'hidden_layer_sizes': (M, M),
             'output_size': 34,  # 2*DoF
-        }
-    },
-    'humanoid-rllab': {  # 21 DoF
-        'kwargs': {
-            'hidden_layer_sizes': (M, M),
-            'output_size': 42,  # 2*DoF
         }
     },
     'pusher-2d': {
@@ -332,7 +320,7 @@ ENV_PARAMS = {
             'exclude_current_positions_from_observation': False,
         }
     },
-    'humanoid': {  # 17/21 DoF (gym/rllab)
+    'humanoid': {  # 17 DoF
         'custom-default': {
             'survive_reward': 0.0,
             'healthy_z_range': (-np.inf, np.inf),

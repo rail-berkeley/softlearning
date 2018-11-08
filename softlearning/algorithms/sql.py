@@ -53,10 +53,10 @@ class SQL(RLAlgorithm):
     ):
         """
         Args:
-            env (`rllab.Env`): rllab environment object.
+            env (`SoftlearningEnv`): Environment object used for training.
             pool (`PoolBase`): Replay pool to add gathered samples to.
             Q: Q-function approximator.
-            policy: (`rllab.NNPolicy`): A policy function approximator.
+            policy: A policy function approximator.
             plotter (`QFPolicyPlotter`): Plotter instance to be used for
                 visualizing Q-function during training.
             Q_lr (`float`): Learning rate used for the Q-function approximator.

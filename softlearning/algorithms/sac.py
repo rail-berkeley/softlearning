@@ -49,8 +49,8 @@ class SAC(RLAlgorithm, Serializable):
     ):
         """
         Args:
-            env (`rllab.Env`): rllab environment object.
-            policy: (`rllab.NNPolicy`): A policy function approximator.
+            env (`SoftlearningEnv`): Environment used for training.
+            policy: A policy function approximator.
             initial_exploration_policy: ('Policy'): A policy that we use
                 for initial exploration which is not trained by the algorithm.
             Qs: Q-function approximators. The min of these

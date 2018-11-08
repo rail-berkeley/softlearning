@@ -5,12 +5,10 @@ from collections import OrderedDict
 import tensorflow as tf
 import numpy as np
 
-from rllab.algos.base import Algorithm
-
-from softlearning.samplers import rollouts, rollout
+from softlearning.samplers import rollouts
 
 
-class RLAlgorithm(Algorithm):
+class RLAlgorithm(object):
     """Abstract RLAlgorithm.
 
     Implements the _train and _evaluate methods to be used
@@ -109,7 +107,7 @@ class RLAlgorithm(Algorithm):
         """Return a generator that performs RL training.
 
         Args:
-            env (`rllab.Env`): Environment used for training
+            env (`SoftlearningEnv`): Environment used for training.
             policy (`Policy`): Policy used for training
             initial_exploration_policy ('Policy'): Policy used for exploration
                 If None, then all exploration is done using policy
