@@ -46,46 +46,39 @@ docker-compose down
 
 ## Local Installation
 
-To get the environment installed correctly, you will first need to clone [rllab](https://github.com/rll/rllab), and have its path added to your PYTHONPATH environment variable.
+1. [Download](https://www.roboti.us/index.html)the MuJoCo version 1.50 binaries for Linux or osx. Unzip the downloaded mjpro150 directory into ~/.mujoco/mjpro150.
 
-1. Clone rllab
+OR, you can just run the following command:
 ```
-cd <installation_path_of_your_choice>
-git clone https://github.com/rll/rllab.git
-cd rllab
-git checkout b3a28992eca103cab3cb58363dd7a4bb07f250a0
-export PYTHONPATH=$(pwd):${PYTHONPATH}
-```
+# Mujoco for gym and mujoco_py
+export MUJOCO_VERSION=150
+export MUJOCO_PATH=~/.mujoco
+if [ "$(uname)" == "Darwin" ]; then
+    export MUJOCO_TYPE="osx"
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+    export MUJOCO_TYPE="linux"
+fi
 
-2. [Download](https://www.roboti.us/index.html) and copy MuJoCo files to rllab path:
-  If you're running on OSX, download https://www.roboti.us/download/mjpro131_osx.zip instead, and copy the `.dylib` files instead of `.so` files.
-```
-mkdir -p /tmp/mujoco_tmp && cd /tmp/mujoco_tmp
-wget -P . https://www.roboti.us/download/mjpro131_linux.zip
-unzip mjpro131_linux.zip
-mkdir <installation_path_of_your_choice>/rllab/vendor/mujoco
-cp ./mjpro131/bin/libmujoco131.so <installation_path_of_your_choice>/rllab/vendor/mujoco
-cp ./mjpro131/bin/libglfw.so.3 <installation_path_of_your_choice>/rllab/vendor/mujoco
-cd ..
-rm -rf /tmp/mujoco_tmp
+MUJOCO_ZIP="mjpro${MUJOCO_VERSION}_${MUJOCO_TYPE}.zip" \
+    && mkdir -p ${MUJOCO_PATH} \
+    && wget -P ${MUJOCO_PATH} https://www.roboti.us/download/${MUJOCO_ZIP} \
+    && unzip ${MUJOCO_PATH}/${MUJOCO_ZIP} -d ${MUJOCO_PATH} \
+    && rm ${MUJOCO_PATH}/${MUJOCO_ZIP}
 ```
 
-3. Copy your MuJoCo license key (mjkey.txt) to rllab path:
-```
-cp <mujoco_key_folder>/mjkey.txt <installation_path_of_your_choice>/rllab/vendor/mujoco
-```
+2. Copy your MuJoCo license key (mjkey.txt) to ~/.mujoco/mjkey.txt:
 
-4. Clone `softlearning`
+3. Clone `softlearning`
 ```
 cd <installation_path_of_your_choice>
 git clone https://github.com/haarnoja/softlearning.git
 ```
 
-5. Create and activate conda environment
+4. Create and activate conda environment
 ```
 cd softlearning
 conda env create -f environment.yml
-source activate sql
+source activate softlearning
 ```
 
 The environment should be ready to run. See examples section for examples of how to train and simulate the agents.
@@ -93,39 +86,36 @@ The environment should be ready to run. See examples section for examples of how
 Finally, to deactivate and remove the conda environment:
 ```
 source deactivate
-conda remove --name sql --all
+conda remove --name softlearning --all
 ```
 
 ## Examples
 ### Training and simulating an agent
 1. To train the agent
 ```
-python ./examples/mujoco_all_sql.py --env=swimmer --log_dir="/root/sql/data/swimmer-experiment"
+python ./examples/TODO.py --env=swimmer --log_dir="TODO"
 ```
 
 2. To simulate the agent (*NOTE*: This step currently fails with the Docker installation, due to missing display.)
 ```
-python ./scripts/sim_policy.py /root/sql/data/swimmer-experiment/itr_<iteration>.pkl
+python ./scripts/sim_policy.py TODO/itr_<iteration>.pkl
 ```
 
-`mujoco_all_sql.py` contains several different environments and there are more example scripts available in the  `/examples` folder. For more information about the agents and configurations, run the scripts with `--help` flag. For example:
+`TODO.py` contains several different environments and there are more example scripts available in the  `/examples` folder. For more information about the agents and configurations, run the scripts with `--help` flag. For example:
 ```
-python ./examples/mujoco_all_sql.py --help
-usage: mujoco_all_sql.py [-h]
-                         [--env {ant,walker,swimmer,half-cheetah,humanoid,hopper}]
-                         [--exp_name EXP_NAME] [--mode MODE]
-                         [--log_dir LOG_DIR]
+python ./examples/TODO.py --help
+usage: TODO
 ```
 ### Training and combining policies
 It is also possible to merge two existing maximum entropy policies to form a new composed skill that approximately optimizes both constituent tasks simultaneously as discussed in [ Composable Deep Reinforcement Learning for Robotic Manipulation](https://arxiv.org/abs/1803.06773). To run the pusher experiment described in the paper, you can first train two policies for the constituent tasks ("push the object to the given x-coordinate" and "push the object to the given y-coordinate") by running
 ```
-python ./examples/pusher_pretrain.py --log_dir=/root/sql/data/pusher
+python ./examples/pusher_pretrain.py --log_dir=TODO
 ```
 You can then combine the two policies to form a combined skill ("push the object to the given x and y coordinates"), without collecting more experience form the environment, with
 ```
-python ./examples/pusher_combine.py --log_dir=/root/sql/data/pusher/combined \
---snapshot1=/root/sql/data/pusher/00/params.pkl \
---snapshot2=/root/sql/data/pusher/01/params.pkl
+python ./examples/pusher_combine.py --log_dir=TODO \
+--snapshot1=TODO \
+--snapshot2=TODO
 ```
 
 

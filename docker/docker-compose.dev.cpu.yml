@@ -27,7 +27,6 @@ services:
        - ~/.aws:/root/.aws  # If using aws, e.g. for s3
        - ~/.config/gcloud:/root/.config/gcloud  # If using gcp, e.g. for gs
        - ~/.mujoco:/root/.mujoco  # mjkey.txt
-       - ${RLLAB_PATH}/vendor/mujoco/mjkey.txt:/root/rllab/vendor/mujoco/mjkey.txt
        - ..:/root/softqlearning-private
     command:
       - bash

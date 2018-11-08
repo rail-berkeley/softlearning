@@ -54,16 +54,6 @@ ENV BASH_ENV /root/.bashrc
 # ========= MuJoCo ===============
 ARG MJKEY
 
-# Rllab requires mujoco 1.31
-ENV MUJOCO_VERSION=131 \
-    MUJOCO_PATH=/root/.mujoco
-
-RUN MUJOCO_ZIP="mjpro${MUJOCO_VERSION}_linux.zip" \
-    && mkdir -p ${MUJOCO_PATH} \
-    && wget -P ${MUJOCO_PATH} https://www.roboti.us/download/${MUJOCO_ZIP} \
-    && unzip ${MUJOCO_PATH}/${MUJOCO_ZIP} -d ${MUJOCO_PATH} \
-    && rm ${MUJOCO_PATH}/${MUJOCO_ZIP}
-
 # Mujoco for gym and mujoco_py
 ENV MUJOCO_VERSION=150 \
     MUJOCO_PATH=/root/.mujoco
@@ -81,26 +71,6 @@ RUN echo "${MJKEY}" > /root/.mujoco/mjkey.txt \
     && bash -c "python -c 'import mujoco_py'" \
     && rm /root/.mujoco/mjkey.txt
 
-# ========= rllab ===============
-# We need to clone rllab repo in order to use the
-# `rllab.sandbox.rocky.tf` functions.
-
-ENV RLLAB_PATH=/root/rllab \
-    RLLAB_VERSION=b3a28992eca103cab3cb58363dd7a4bb07f250a0
-
-RUN git clone https://github.com/rll/rllab.git ${RLLAB_PATH} \
-    && cd ${RLLAB_PATH} \
-    && git checkout ${RLLAB_VERSION} \
-    && bash -c "pip install -U -e ${RLLAB_PATH}" \
-    && python -m rllab.config \
-    && mkdir ${RLLAB_PATH}/vendor/mujoco \
-    && cp ${MUJOCO_PATH}/mjpro131/bin/libmujoco131.so \
-          ${RLLAB_PATH}/vendor/mujoco/ \
-    && cp ${MUJOCO_PATH}/mjpro131/bin/libglfw.so.3 \
-          ${RLLAB_PATH}/vendor/mujoco/
-
-# We need to add /root/code/rllab to PYTHONPATH in order for rllab to find its stuff
-ENV PYTHONPATH /root/code/rllab:${PYTHONPATH}
 
 COPY ./docker/entrypoint.sh /entrypoint.sh
 
