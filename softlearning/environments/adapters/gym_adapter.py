@@ -13,6 +13,8 @@ from softlearning.environments.gym.mujoco.walker2d_env import (
     Walker2dEnv as CustomWalker2dEnv)
 from softlearning.environments.gym.mujoco.hopper_env import (
     HopperEnv as CustomHopperEnv)
+from softlearning.environments.gym.mujoco.swimmer_env import (
+    SwimmerEnv as CustomSwimmerEnv)
 from softlearning.environments.gym.mujoco.pusher_2d_env import (
     Pusher2dEnv,
     ForkReacherEnv)
@@ -48,7 +50,8 @@ except ModuleNotFoundError as e:
 
 GYM_ENVIRONMENTS = {
     'swimmer': {
-        'default': lambda: gym.envs.make('Swimmer-v2')
+        'default': lambda: gym.envs.make('Swimmer-v2'),
+        'custom-default': CustomSwimmerEnv,
     },
     'ant': {
         'default': lambda: gym.envs.make('Ant-v2'),
