@@ -1,12 +1,10 @@
 import numpy as np
 
-from serializable import Serializable
 from .replay_pool import ReplayPool
 
 
-class FlexibleReplayPool(ReplayPool, Serializable):
+class FlexibleReplayPool(ReplayPool):
     def __init__(self, max_size, fields):
-        self._Serializable__initialize(locals())
         super(FlexibleReplayPool, self).__init__()
 
         max_size = int(max_size)
@@ -53,35 +51,6 @@ class FlexibleReplayPool(ReplayPool, Serializable):
         assert not kwargs, ("Got unexpected fields in the sample: ", kwargs)
 
         self._advance(num_samples)
-
-    def __getstate__(self):
-        pool_state = super(FlexibleReplayPool, self).__getstate__()
-        pool_state.update({
-            **{
-                field_name: getattr(self, field_name).tobytes()
-                for field_name in self.field_names
-            },
-            **{
-                '_pointer': self._pointer,
-                '_size': self._size
-            }
-        })
-
-        return pool_state
-
-    def __setstate__(self, pool_state):
-        super(FlexibleReplayPool, self).__setstate__(pool_state)
-
-        for field_name in self.field_names:
-            field = self.fields[field_name]
-            flat_values = np.frombuffer(
-                pool_state[field_name], dtype=field['dtype'])
-            values = flat_values.reshape(
-                (self._max_size, *field['shape']))
-            setattr(self, field_name, values)
-
-        self._pointer = pool_state['_pointer']
-        self._size = pool_state['_size']
 
     def random_indices(self, batch_size):
         if self._size == 0: return ()

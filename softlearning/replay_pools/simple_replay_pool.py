@@ -1,6 +1,5 @@
 import numpy as np
 from gym.spaces import Box, Dict, Discrete, Tuple
-from serializable import Serializable
 
 from .flexible_replay_pool import FlexibleReplayPool
 
@@ -32,10 +31,8 @@ def normalize_observation_fields(observation_space, name='observations'):
     return fields
 
 
-class SimpleReplayPool(FlexibleReplayPool, Serializable):
+class SimpleReplayPool(FlexibleReplayPool):
     def __init__(self, observation_space, action_space, *args, **kwargs):
-        self._Serializable__initialize(locals())
-
         self._observation_space = observation_space
         self._action_space = action_space
 
