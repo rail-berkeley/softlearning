@@ -53,7 +53,7 @@ class FlexibleReplayPool(ReplayPool):
         self._advance(num_samples)
 
     def random_indices(self, batch_size):
-        if self._size == 0: return ()
+        if self._size == 0: return np.arange(0, 0)
         return np.random.randint(0, self._size, batch_size)
 
     def random_batch(self, batch_size, field_name_filter=None, **kwargs):
@@ -63,11 +63,17 @@ class FlexibleReplayPool(ReplayPool):
 
     def last_n_batch(self, last_n, field_name_filter=None, **kwargs):
         last_n_indices = np.arange(
-            self._pointer - last_n, self._pointer) % self._max_size
+            self._pointer - min(self.size, last_n), self._pointer
+        ) % self._max_size
         return self.batch_by_indices(
             last_n_indices, field_name_filter, **kwargs)
 
     def batch_by_indices(self, indices, field_name_filter=None):
+        if any(indices % self._max_size) > self.size:
+            raise ValueError(
+                "Tried to retrieve batch with indices greater than current"
+                " size")
+
         field_names = self.field_names
         if field_name_filter is not None:
             field_names = [
