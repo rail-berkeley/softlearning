@@ -133,12 +133,12 @@ def get_parser(allow_policy_list=False):
         parser.add_argument('--policy',
                             type=str,
                             nargs='+',
-                            choices=('gaussian', 'real-nvp'),
+                            choices=('gaussian', ),
                             default='gaussian')
     else:
         parser.add_argument('--policy',
                             type=str,
-                            choices=('gaussian', 'real-nvp'),
+                            choices=('gaussian', ),
                             default='gaussian')
     parser.add_argument('--env', type=str, default='gym-swimmer-default')
     parser.add_argument('--exp_name',

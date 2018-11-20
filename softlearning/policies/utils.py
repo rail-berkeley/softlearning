@@ -2,7 +2,6 @@ from copy import deepcopy
 
 from .uniform_policy import UniformPolicy, UniformPolicyV2
 from .gaussian_policy import GaussianPolicy, GaussianPolicyV2
-from .real_nvp_policy import RealNVPPolicy
 
 
 def get_gaussian_policy(env, Q, preprocessor, **kwargs):
@@ -18,16 +17,6 @@ def get_gaussian_policy_v2(env, Q, preprocessor, **kwargs):
     policy = GaussianPolicyV2(
         input_shapes=(env.active_observation_shape, ),
         output_shape=env.action_space.shape,
-        **kwargs)
-
-    return policy
-
-
-def get_real_nvp_policy(env, Q, **kwargs):
-    policy = RealNVPPolicy(
-        observation_shape=env.active_observation_shape,
-        action_shape=env.action_space.shape,
-        Q=Q,
         **kwargs)
 
     return policy

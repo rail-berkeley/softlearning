@@ -6,121 +6,8 @@ from softlearning.misc.utils import get_git_rev, deep_update
 M = 256
 REPARAMETERIZE = True
 
-REAL_NVP_POLICY_PARAMS_BASE = {
-    'type': 'RealNVPPolicy',
-    'kwargs': {
-        'squash': True,
-    }
-}
-
 NUM_COUPLING_LAYERS = 2
 
-REAL_NVP_POLICY_PARAMS_FOR_DOMAIN = {
-    'swimmer': {  # 2 DoF
-        'kwargs': {
-            'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (2, 2),
-            },
-        }
-    },
-    'hopper': {  # 3 DoF
-        'kwargs': {
-            'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (3, 3),
-            },
-        }
-    },
-    'half-cheetah': {  # 6 DoF
-        'kwargs': {
-            'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (6, 6),
-            },
-        }
-    },
-    'walker': {  # 6 DoF
-        'kwargs': {
-            'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (6, 6),
-            },
-        }
-    },
-    'ant': {  # 8 DoF
-        'kwargs': {
-            'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (8, 8),
-            },
-        }
-    },
-    'humanoid': {
-        'kwargs': {
-            'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (21, 21),
-            },
-        }
-    },
-    'pusher-2d': {  # 3 DoF
-        'kwargs': {
-            'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (3, 3),
-            },
-        }
-    },
-    'HandManipulatePen': {  # 20 DoF
-        'kwargs': {
-            'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (128, 128),
-            },
-        }
-    },
-    'HandManipulateEgg': {  # 20 DoF
-        'kwargs': {
-            'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (128, 128),
-            },
-        }
-    },
-    'HandManipulateBlock': {  # 20 DoF
-        'kwargs': {
-            'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (128, 128),
-            },
-        }
-    },
-    'HandReach': {  # 20 DoF
-        'kwargs': {
-            'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (128, 128),
-            },
-        }
-    },
-    'DClaw3': {  # 9 DoF
-        'kwargs': {
-            'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (128, 128),
-            },
-        }
-    },
-    'ImageDClaw3': {  # 9 DoF
-        'kwargs': {
-            'bijector_config': {
-                'num_coupling_layers': NUM_COUPLING_LAYERS,
-                'hidden_layer_sizes': (128, 128),
-            },
-        }
-    },
-}
 
 GAUSSIAN_POLICY_PARAMS_BASE = {
     'type': 'GaussianPolicyV2',
@@ -134,93 +21,38 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
 GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {}
 
 POLICY_PARAMS_BASE = {
-    'RealNVPPolicy': REAL_NVP_POLICY_PARAMS_BASE,
     'GaussianPolicy': GAUSSIAN_POLICY_PARAMS_BASE,
 }
 
 POLICY_PARAMS_BASE.update({
-    'real-nvp': POLICY_PARAMS_BASE['RealNVPPolicy'],
     'gaussian': POLICY_PARAMS_BASE['GaussianPolicy'],
 })
 
 
 POLICY_PARAMS_FOR_DOMAIN = {
-    'RealNVPPolicy': REAL_NVP_POLICY_PARAMS_FOR_DOMAIN,
     'GaussianPolicy': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
 }
 
 POLICY_PARAMS_FOR_DOMAIN.update({
-    'real-nvp': POLICY_PARAMS_FOR_DOMAIN['RealNVPPolicy'],
     'gaussian': POLICY_PARAMS_FOR_DOMAIN['GaussianPolicy'],
 })
 
 PREPROCESSOR_PARAMS_BASE = {
-    'RealNVPPolicy': {
-        'type': 'feedforward_preprocessor',
-    },
     'GaussianPolicy': {
         'type': None
     },
 }
 
 PREPROCESSOR_PARAMS_BASE.update({
-    'real-nvp': PREPROCESSOR_PARAMS_BASE['RealNVPPolicy'],
     'gaussian': PREPROCESSOR_PARAMS_BASE['GaussianPolicy'],
 })
 
 
-REAL_NVP_PREPROCESSOR_PARAMS = {
-    'swimmer': {  # 2 DoF
-        'kwargs': {
-            'hidden_layer_sizes': (M, M),
-            'output_size': 4,  # 2*DoF
-        }
-    },
-    'hopper': {  # 3 DoF
-        'kwargs': {
-            'hidden_layer_sizes': (M, M),
-            'output_size': 6,  # 2*DoF
-        }
-    },
-    'half-cheetah': {  # 6 DoF
-        'kwargs': {
-            'hidden_layer_sizes': (M, M),
-            'output_size': 12,  # 2*DoF
-        }
-    },
-    'walker': {  # 6 DoF
-        'kwargs': {
-            'hidden_layer_sizes': (M, M),
-            'output_size': 12,  # 2*DoF
-        }
-    },
-    'ant-gym': {  # 8 DoF
-        'kwargs': {
-            'hidden_layer_sizes': (M, M),
-            'output_size': 16,  # 2*DoF
-        }
-    },
-    'humanoid': {  # 17 DoF
-        'kwargs': {
-            'hidden_layer_sizes': (M, M),
-            'output_size': 34,  # 2*DoF
-        }
-    },
-    'pusher-2d': {
-        'kwargs': {
-            'hidden_layer_sizes': (M, M),
-            'output_size': 6,
-        }
-    },
-}
-
 PREPROCESSOR_PARAMS = {
-    'RealNVPPolicy': REAL_NVP_PREPROCESSOR_PARAMS,
     'GaussianPolicy': {},
 }
 
 PREPROCESSOR_PARAMS.update({
-    'real-nvp': PREPROCESSOR_PARAMS['RealNVPPolicy'],
     'gaussian': PREPROCESSOR_PARAMS['GaussianPolicy'],
 })
 
