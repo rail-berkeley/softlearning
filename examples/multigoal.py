@@ -6,7 +6,7 @@ from softlearning.algorithms import SAC
 from softlearning.environments.utils import get_environment
 from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.samplers import SimpleSampler
-from softlearning.policies import GaussianPolicy, GMMPolicy, RealNVPPolicy
+from softlearning.policies import GaussianPolicy, RealNVPPolicy
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions.utils import (
     get_Q_function_from_variant,
@@ -40,15 +40,6 @@ def run_experiment(variant, reporter):
             action_shape=env.action_space.shape,
             hidden_layer_sizes=(M, M),
             reg=1e-3)
-    elif variant['policy'] == 'gmm':
-        policy = GMMPolicy(
-            observation_shape=env.active_observation_shape,
-            action_shape=env.action_space.shape,
-            K=4,
-            hidden_layer_sizes=[M, M],
-            Q=Qs[0],
-            reg=0.001
-        )
     elif variant['policy'] == 'real-nvp':
         bijector_config = {
             "num_coupling_layers": 2,

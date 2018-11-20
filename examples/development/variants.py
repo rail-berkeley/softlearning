@@ -122,14 +122,6 @@ REAL_NVP_POLICY_PARAMS_FOR_DOMAIN = {
     },
 }
 
-GMM_POLICY_PARAMS_BASE = {
-    'type': 'GMMPolicy',
-    'kwargs': {
-        'K': 1,
-        'reg': 1e-3,
-    }
-}
-
 GAUSSIAN_POLICY_PARAMS_BASE = {
     'type': 'GaussianPolicyV2',
     'kwargs': {
@@ -143,35 +135,28 @@ GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {}
 
 POLICY_PARAMS_BASE = {
     'RealNVPPolicy': REAL_NVP_POLICY_PARAMS_BASE,
-    'GMMPolicy': GMM_POLICY_PARAMS_BASE,
     'GaussianPolicy': GAUSSIAN_POLICY_PARAMS_BASE,
 }
 
 POLICY_PARAMS_BASE.update({
     'real-nvp': POLICY_PARAMS_BASE['RealNVPPolicy'],
-    'gmm': POLICY_PARAMS_BASE['GMMPolicy'],
     'gaussian': POLICY_PARAMS_BASE['GaussianPolicy'],
 })
 
 
 POLICY_PARAMS_FOR_DOMAIN = {
     'RealNVPPolicy': REAL_NVP_POLICY_PARAMS_FOR_DOMAIN,
-    'GMMPolicy': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
     'GaussianPolicy': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
 }
 
 POLICY_PARAMS_FOR_DOMAIN.update({
     'real-nvp': POLICY_PARAMS_FOR_DOMAIN['RealNVPPolicy'],
-    'gmm': POLICY_PARAMS_FOR_DOMAIN['GMMPolicy'],
     'gaussian': POLICY_PARAMS_FOR_DOMAIN['GaussianPolicy'],
 })
 
 PREPROCESSOR_PARAMS_BASE = {
     'RealNVPPolicy': {
         'type': 'feedforward_preprocessor',
-    },
-    'GMMPolicy': {
-        'type': None
     },
     'GaussianPolicy': {
         'type': None
@@ -180,7 +165,6 @@ PREPROCESSOR_PARAMS_BASE = {
 
 PREPROCESSOR_PARAMS_BASE.update({
     'real-nvp': PREPROCESSOR_PARAMS_BASE['RealNVPPolicy'],
-    'gmm': PREPROCESSOR_PARAMS_BASE['GMMPolicy'],
     'gaussian': PREPROCESSOR_PARAMS_BASE['GaussianPolicy'],
 })
 
@@ -232,13 +216,11 @@ REAL_NVP_PREPROCESSOR_PARAMS = {
 
 PREPROCESSOR_PARAMS = {
     'RealNVPPolicy': REAL_NVP_PREPROCESSOR_PARAMS,
-    'GMMPolicy': {},
     'GaussianPolicy': {},
 }
 
 PREPROCESSOR_PARAMS.update({
     'real-nvp': PREPROCESSOR_PARAMS['RealNVPPolicy'],
-    'gmm': PREPROCESSOR_PARAMS['GMMPolicy'],
     'gaussian': PREPROCESSOR_PARAMS['GaussianPolicy'],
 })
 

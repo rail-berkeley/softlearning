@@ -37,7 +37,7 @@ class GaussianPolicy(NNPolicy, Serializable):
                 perceptron hidden layers.
             reg (`float`): Regularization coeffiecient for the Gaussian
                 parameters.
-            squash (`bool`): If True, squash the Gaussian the gmm action samples
+            squash (`bool`): If True, squash the Gaussian action samples
                 between -1 and 1 with tanh.
             reparameterize ('bool'): If True, gradients will flow directly
                 through the action samples.
