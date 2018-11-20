@@ -1,6 +1,5 @@
 from copy import deepcopy
 
-from .latent_space_policy import LatentSpacePolicy
 from .uniform_policy import UniformPolicy, UniformPolicyV2
 from .gaussian_policy import GaussianPolicy, GaussianPolicyV2
 from .real_nvp_policy import RealNVPPolicy
@@ -19,17 +18,6 @@ def get_gaussian_policy_v2(env, Q, preprocessor, **kwargs):
     policy = GaussianPolicyV2(
         input_shapes=(env.active_observation_shape, ),
         output_shape=env.action_space.shape,
-        **kwargs)
-
-    return policy
-
-
-def get_latent_space_policy(env, Q, preprocessor, **kwargs):
-    policy = LatentSpacePolicy(
-        observation_shape=env.active_observation_shape,
-        action_shape=env.action_space.shape,
-        Q=Q,
-        observations_preprocessor=preprocessor,
         **kwargs)
 
     return policy
@@ -64,7 +52,6 @@ def get_uniform_policy_v2(env, *args, **kwargs):
 POLICY_FUNCTIONS = {
     'GaussianPolicy': get_gaussian_policy,
     'GaussianPolicyV2': get_gaussian_policy_v2,
-    'LatentSpacePolicy': get_latent_space_policy,
     'UniformPolicyV2': get_uniform_policy_v2,
 }
 
