@@ -285,15 +285,9 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
         ray.init(
             resources=args.resources,
             num_cpus=args.cpus,
-            num_gpus=args.gpus,
-        )
+            num_gpus=args.gpus)
     else:
         ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
-        using_new_gcs = os.environ.get('RAY_USE_NEW_GCS', False) == 'on'
-        using_xray = os.environ.get('RAY_USE_XRAY', False) == '1'
-        if using_new_gcs and using_xray:
-            policy = ray.experimental.SimpleGcsFlushPolicy()
-            ray.experimental.set_flushing_policy(policy)
 
     trial_resources = _normalize_trial_resources(
         args.trial_resources, args.trial_cpus, args.trial_gpus)
