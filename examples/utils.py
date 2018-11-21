@@ -143,6 +143,11 @@ def get_parser(allow_policy_list=False):
                         default=datetimestamp())
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--log_dir', type=str, default=None)
+    parser.add_argument('--upload-dir',
+                        type=str,
+                        default=None,
+                        help=("Remote location to upload results to. E.g."
+                              " gs://... or s3://..."))
     parser.add_argument("--confirm_remote",
                         type=strtobool,
                         nargs='?',
@@ -303,7 +308,7 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
             'config': variant_spec,
             'local_dir': local_dir,
             'num_samples': args.num_samples,
-            'upload_dir': 'gs://sac-ray-test/ray/results'
+            'upload_dir': args.upload_dir,
         }
         for i, variant_spec in enumerate(variant_specs)
     })

@@ -67,7 +67,7 @@ def main():
                 'num_gpus': 4,
             },
             'local_dir': local_dir,
-            'upload_dir': 'gs://sac-ray-test/ray/results'
+            'upload_dir': args.upload_dir,
         },
     })
 
