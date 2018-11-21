@@ -1,15 +1,12 @@
 import os
-import ray
-from ray import tune
 
 from softlearning.environments.utils import get_environment
 from softlearning.algorithms import SAC
 
-from softlearning.misc.utils import set_seed, datestamp, datetimestamp
+from softlearning.misc.utils import set_seed
 from softlearning.policies import (
     GaussianPolicy,
     LatentSpacePolicy,
-    GMMPolicy,
     UniformPolicy)
 from softlearning.samplers import get_sampler_from_params
 from softlearning.replay_pools import (
@@ -17,7 +14,7 @@ from softlearning.replay_pools import (
     ExtraPolicyInfoReplayPool)
 from softlearning.value_functions import NNQFunction, NNVFunction
 from softlearning.preprocessors import PREPROCESSOR_FUNCTIONS
-from examples.variants import get_variant_spec_image, get_variant_spec
+from examples.variants import get_variant_spec
 from examples.utils import (
     parse_universe_domain_task,
     get_parser,
@@ -45,9 +42,6 @@ def run_experiment(variant, reporter):
     domain = variant['domain']
 
     preprocessor_kwargs = preprocessor_params.get('kwargs', {})
-    if 'hidden_layer_sizes' in preprocessor_kwargs:
-        preprocessor_kwargs['hidden_layer_sizes'] = tuple(
-            int(dim) for dim in preprocessor_kwargs['hidden_layer_sizes'].split('x'))
     if 'num_conv_layers' in preprocessor_kwargs:
         num_conv_layers = preprocessor_kwargs.pop('num_conv_layers')
         filters_per_layer = preprocessor_kwargs.pop('filters_per_layer')
@@ -74,13 +68,13 @@ def run_experiment(variant, reporter):
 
     if algorithm_params['store_extra_policy_info']:
         pool = ExtraPolicyInfoReplayPool(
-            observation_shape=env.active_observation_shape,
-            action_shape=env.action_space.shape,
+            observation_space=env.observation_space,
+            action_space=env.action_space,
             **replay_pool_params)
     else:
         pool = SimpleReplayPool(
-            observation_shape=env.active_observation_shape,
-            action_shape=env.action_space.shape,
+            observation_space=env.observation_space,
+            action_space=env.action_space,
             **replay_pool_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
@@ -92,8 +86,7 @@ def run_experiment(variant, reporter):
             action_shape=env.action_space.shape,
             hidden_layer_sizes=(M, M),
             name='qf{}'.format(i))
-        for i in range(2)
-    )
+        for i in range(2))
     vf = NNVFunction(
         observation_shape=env.active_observation_shape,
         hidden_layer_sizes=(M, M))
@@ -105,12 +98,11 @@ def run_experiment(variant, reporter):
         policy = GaussianPolicy(
             observation_shape=env.active_observation_shape,
             action_shape=env.action_space.shape,
-            hidden_layer_sizes=(M, M),
+            hidden_layer_sizes=[policy_params['hidden_layer_width']]*2,
             reparameterize=policy_params['reparameterize'],
-            reg=1e-3,
-        )
+            reg=1e-3)
     elif policy_params['type'] == 'lsp':
-        if preprocessor_params:
+        if preprocessor_params and preprocessor_params.get('function_name'):
             preprocessor_fn = PREPROCESSOR_FUNCTIONS[
                 preprocessor_params.get('function_name')]
             preprocessor = preprocessor_fn(
@@ -137,18 +129,6 @@ def run_experiment(variant, reporter):
             reparameterize=policy_params['reparameterize'],
             q_function=q_functions[0],
             observations_preprocessor=preprocessor)
-    elif policy_params['type'] == 'gmm':
-        assert not policy_params['reparameterize'], (
-            "reparameterize should be False when using a GMMPolicy")
-        policy = GMMPolicy(
-            observation_shape=env.active_observation_shape,
-            action_shape=env.action_space.shape,
-            K=policy_params['K'],
-            hidden_layer_sizes=(M, M),
-            reparameterize=policy_params['reparameterize'],
-            qf=q_functions[0],
-            reg=1e-3,
-        )
     else:
         raise NotImplementedError(policy_params['type'])
 
@@ -168,8 +148,8 @@ def run_experiment(variant, reporter):
         reparameterize=policy_params['reparameterize'],
         target_update_interval=algorithm_params['target_update_interval'],
         action_prior=policy_params['action_prior'],
-        save_full_state=False,
-        store_extra_policy_info=algorithm_params['store_extra_policy_info'])
+        store_extra_policy_info=algorithm_params['store_extra_policy_info'],
+        save_full_state=False)
 
     for epoch, mean_return in algorithm.train():
         reporter(timesteps_total=epoch, mean_accuracy=mean_return)
@@ -184,10 +164,7 @@ def main():
 
     local_dir = os.path.join('~/ray_results', universe, domain, task)
 
-    if args.mode == 'local':
-        launch_experiments_local(variant_spec, args, run_experiment)
-    else:
-        launch_experiments_ray([variant_spec], args, local_dir, run_experiment)
+    launch_experiments_ray([variant_spec], args, local_dir, run_experiment)
 
 
 if __name__ == '__main__':
