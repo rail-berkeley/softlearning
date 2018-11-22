@@ -9,10 +9,11 @@ from softlearning.policies.gaussian_policy import GaussianPolicy
 class GaussianPolicyTest(tf.test.TestCase):
     def setUp(self):
         self.env = gym.envs.make('Swimmer-v2')
+        self.hidden_layer_sizes = (128, 128)
         self.policy = GaussianPolicy(
             input_shapes=(self.env.observation_space.shape, ),
             output_shape=self.env.action_space.shape,
-            hidden_layer_sizes=(128, 128))
+            hidden_layer_sizes=self.hidden_layer_sizes)
 
     def test_actions_and_log_pis_symbolic(self):
         observation1_np = self.env.reset()
@@ -50,6 +51,11 @@ class GaussianPolicyTest(tf.test.TestCase):
         observation1_np = self.env.reset()
         action = self.policy.actions_np(observation1_np[None])[0, ...]
         self.env.step(action)
+
+    def test_trainable_variables(self):
+        self.assertEqual(
+            len(self.policy.trainable_variables),
+            2 * (len(self.hidden_layer_sizes) + 1))
 
 
 if __name__ == '__main__':
