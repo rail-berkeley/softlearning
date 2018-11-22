@@ -94,7 +94,7 @@ def main():
         'local_dir': local_dir,
         'layer_size': layer_size,
         'policy_params': {
-            'type': 'GaussianPolicyV2',
+            'type': 'GaussianPolicy',
             'kwargs': {
                 'hidden_layer_sizes': (layer_size, layer_size),
                 'regularization_coeff': 1e-3,

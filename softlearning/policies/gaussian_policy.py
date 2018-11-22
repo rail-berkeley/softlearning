@@ -17,7 +17,7 @@ class SquashBijector(tfp.bijectors.Tanh):
 SCALE_DIAG_MIN_MAX = (-20, 2)
 
 
-class GaussianPolicyV2(object):
+class GaussianPolicy(object):
     """TODO(hartikainen): Implement regularization"""
 
     def __init__(self,

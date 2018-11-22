@@ -3,13 +3,13 @@ import tensorflow as tf
 
 import gym
 
-from softlearning.policies.gaussian_policy import GaussianPolicyV2
+from softlearning.policies.gaussian_policy import GaussianPolicy
 
 
-class GaussianPolicV2Test(tf.test.TestCase):
+class GaussianPolicyTest(tf.test.TestCase):
     def setUp(self):
         self.env = gym.envs.make('Swimmer-v2')
-        self.policy = GaussianPolicyV2(
+        self.policy = GaussianPolicy(
             input_shapes=(self.env.observation_space.shape, ),
             output_shape=self.env.action_space.shape,
             hidden_layer_sizes=(128, 128))
