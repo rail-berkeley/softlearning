@@ -3,8 +3,10 @@ from collections import OrderedDict
 import tensorflow as tf
 
 
-class UniformPolicy(object):
+class UniformPolicy(tf.keras.Model):
     def __init__(self, input_shapes, output_shape, action_range=(-1.0, 1.0)):
+        super(UniformPolicy, self).__init__()
+
         self.inputs = [
             tf.keras.layers.Input(shape=input_shape)
             for input_shape in input_shapes
@@ -33,10 +35,6 @@ class UniformPolicy(object):
 
         self.log_pis_model = tf.keras.Model(
             (*self.inputs, self.actions_input), log_pis)
-
-    @property
-    def trainable_variables(self):
-        return None
 
     def reset(self):
         pass

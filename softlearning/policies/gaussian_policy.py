@@ -17,7 +17,7 @@ class SquashBijector(tfp.bijectors.Tanh):
 SCALE_DIAG_MIN_MAX = (-20, 2)
 
 
-class GaussianPolicy(object):
+class GaussianPolicy(tf.keras.Model):
     """TODO(hartikainen): Implement regularization"""
 
     def __init__(self,
@@ -31,6 +31,8 @@ class GaussianPolicy(object):
                  name=None,
                  *args,
                  **kwargs):
+        super(GaussianPolicy, self).__init__(*args, **kwargs)
+
         self._squash = squash
         self._regularization_coeff = regularization_coeff
 
@@ -127,8 +129,14 @@ class GaussianPolicy(object):
             (*self.condition_inputs, self.actions_input), log_pis)
 
     @property
-    def trainable_variables(self):
-        return self.actions_model.trainable_variables
+    def trainable_weights(self):
+        """Due to our nested model structure, we need to filter duplicates."""
+        return list(set(super(GaussianPolicy, self).trainable_weights))
+
+    @property
+    def non_trainable_weights(self):
+        """Due to our nested model structure, we need to filter duplicates."""
+        return list(set(super(GaussianPolicy, self).non_trainable_weights))
 
     def reset(self):
         pass
