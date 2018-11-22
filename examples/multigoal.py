@@ -6,7 +6,7 @@ from softlearning.algorithms import SAC
 from softlearning.environments.utils import get_environment
 from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.samplers import SimpleSampler
-from softlearning.policies import GaussianPolicy
+from softlearning.policies.utils import get_policy_from_variant
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions.utils import (
     get_Q_function_from_variant,
@@ -30,19 +30,10 @@ def run_experiment(variant, reporter):
     sampler = SimpleSampler(
         max_path_length=30, min_pool_size=100, batch_size=64)
 
-    M = variant['layer_size']
     Qs = get_Q_function_from_variant(variant, env)
     V = get_V_function_from_variant(variant, env)
 
-    if variant['policy'] == 'gaussian':
-        policy = GaussianPolicy(
-            observation_shape=env.active_observation_shape,
-            action_shape=env.action_space.shape,
-            hidden_layer_sizes=(M, M),
-            reg=1e-3)
-    else:
-        raise NotImplementedError(variant['policy'])
-
+    policy = get_policy_from_variant(variant, env, Qs, preprocessor=None)
     plotter = QFPolicyPlotter(
         Q=Qs[0],
         policy=policy,
@@ -102,6 +93,13 @@ def main():
         'policy': args.policy,
         'local_dir': local_dir,
         'layer_size': layer_size,
+        'policy_params': {
+            'type': 'GaussianPolicyV2',
+            'kwargs': {
+                'hidden_layer_sizes': (layer_size, layer_size),
+                'regularization_coeff': 1e-3,
+            },
+        },
         'V_params': {
             'type': 'feedforward_V_function',
             'kwargs': {

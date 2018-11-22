@@ -1,22 +1,13 @@
 from copy import deepcopy
 
 from .uniform_policy import UniformPolicy, UniformPolicyV2
-from .gaussian_policy import GaussianPolicy, GaussianPolicyV2
+from .gaussian_policy import GaussianPolicyV2
 
 
 def get_gaussian_policy(env, Q, preprocessor, **kwargs):
-    policy = GaussianPolicy(
+    policy = GaussianPolicyV2(
         observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
-        **kwargs)
-
-    return policy
-
-
-def get_gaussian_policy_v2(env, Q, preprocessor, **kwargs):
-    policy = GaussianPolicyV2(
-        input_shapes=(env.active_observation_shape, ),
-        output_shape=env.action_space.shape,
         **kwargs)
 
     return policy
@@ -40,7 +31,7 @@ def get_uniform_policy_v2(env, *args, **kwargs):
 
 POLICY_FUNCTIONS = {
     'GaussianPolicy': get_gaussian_policy,
-    'GaussianPolicyV2': get_gaussian_policy_v2,
+    'GaussianPolicyV2': get_gaussian_policy,
     'UniformPolicyV2': get_uniform_policy_v2,
 }
 
