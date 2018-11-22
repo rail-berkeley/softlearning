@@ -8,9 +8,7 @@ from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.samplers import SimpleSampler
 from softlearning.policies.utils import get_policy_from_variant
 from softlearning.replay_pools import SimpleReplayPool
-from softlearning.value_functions.utils import (
-    get_Q_function_from_variant,
-    get_V_function_from_variant)
+from softlearning.value_functions.utils import get_Q_function_from_variant
 from examples.utils import get_parser, launch_experiments_ray
 
 
@@ -31,7 +29,6 @@ def run_experiment(variant, reporter):
         max_path_length=30, min_pool_size=100, batch_size=64)
 
     Qs = get_Q_function_from_variant(variant, env)
-    V = get_V_function_from_variant(variant, env)
 
     policy = get_policy_from_variant(variant, env, Qs, preprocessor=None)
     plotter = QFPolicyPlotter(
@@ -60,7 +57,6 @@ def run_experiment(variant, reporter):
         initial_exploration_policy=None,
         pool=pool,
         Qs=Qs,
-        V=V,
         plotter=plotter,
 
         lr=3e-4,
@@ -99,12 +95,6 @@ def main():
                 'hidden_layer_sizes': (layer_size, layer_size),
                 'regularization_coeff': 1e-3,
             },
-        },
-        'V_params': {
-            'type': 'feedforward_V_function',
-            'kwargs': {
-                'hidden_layer_sizes': (layer_size, layer_size),
-            }
         },
         'Q_params': {
             'type': 'double_feedforward_Q_function',

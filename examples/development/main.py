@@ -8,9 +8,7 @@ from softlearning.policies.utils import get_policy_from_variant, get_policy
 from softlearning.preprocessors.utils import get_preprocessor_from_variant
 from softlearning.replay_pools.utils import get_replay_pool_from_variant
 from softlearning.samplers.utils import get_sampler_from_variant
-from softlearning.value_functions.utils import (
-    get_Q_function_from_variant,
-    get_V_function_from_variant)
+from softlearning.value_functions.utils import get_Q_function_from_variant
 
 from softlearning.misc.utils import set_seed
 
@@ -33,7 +31,6 @@ class ExperimentRunner(tune.Trainable):
         sampler = get_sampler_from_variant(variant)
         preprocessor = get_preprocessor_from_variant(variant, env)
         Qs = get_Q_function_from_variant(variant, env)
-        V = get_V_function_from_variant(variant, env)
         policy = get_policy_from_variant(variant, env, Qs, preprocessor)
         initial_exploration_policy = get_policy('UniformPolicy', env)
 
@@ -43,7 +40,6 @@ class ExperimentRunner(tune.Trainable):
             policy=policy,
             initial_exploration_policy=initial_exploration_policy,
             Qs=Qs,
-            V=V,
             pool=replay_pool,
             sampler=sampler,
         )
