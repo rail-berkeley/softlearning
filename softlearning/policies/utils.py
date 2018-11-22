@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from .uniform_policy import UniformPolicy, UniformPolicyV2
+from .uniform_policy import UniformPolicyV2
 from .gaussian_policy import GaussianPolicy
 
 
@@ -9,14 +9,6 @@ def get_gaussian_policy(env, Q, preprocessor, **kwargs):
         observation_shape=env.active_observation_shape,
         action_shape=env.action_space.shape,
         **kwargs)
-
-    return policy
-
-
-def get_uniform_policy(env, *args, **kwargs):
-    policy = UniformPolicy(
-        observation_shape=env.active_observation_shape,
-        action_shape=env.action_space.shape)
 
     return policy
 
