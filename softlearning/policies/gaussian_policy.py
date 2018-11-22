@@ -39,10 +39,9 @@ class GaussianPolicy(object):
             for input_shape in input_shapes
         ]
 
-        conditions = (
-            tf.keras.layers.Concatenate(axis=-1)(self.condition_inputs)
-            if len(self.condition_inputs) > 1
-            else self.condition_inputs[0])
+        conditions = tf.keras.layers.Lambda(
+            lambda x: tf.concat(x, axis=-1)
+        )(self.condition_inputs)
 
         out = conditions
         for units in hidden_layer_sizes:

@@ -11,9 +11,9 @@ class UniformPolicy(object):
         ]
         self._action_range = action_range
 
-        x = (tf.keras.layers.Concatenate(axis=-1)(self.inputs)
-             if len(self.inputs) > 1
-             else self.inputs[0])
+        x = tf.keras.layers.Lambda(
+            lambda x: tf.concat(x, axis=-1)
+        )(self.inputs)
 
         actions = tf.keras.layers.Lambda(
             lambda x: tf.random.uniform(
