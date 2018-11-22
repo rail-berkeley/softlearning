@@ -56,7 +56,7 @@ pytest==3.5.0
 python-dateutil==2.6.1
 pytz==2018.4
 pyyaml==3.12
-ray[rllib]==0.5.3
+git+https://github.com/ray-project/ray.git@686cf209510a6826b0e5be68f26e1037493435e3#[rllib]&subdirectory=python
 redis==2.10.6
 requests==2.18.4
 rsa==3.4.2
@@ -67,9 +67,9 @@ scikit-learn==0.19.2
 git+https://github.com/hartikainen/serializable.git
 setuptools==39.1.0
 six==1.11.0
-tensorboard==1.10.0
-tensorflow==1.10.0
-tensorflow-probability==0.3.0
+tensorboard==1.12.0
+tensorflow==1.12.0
+tensorflow-probability==0.5.0
 termcolor==1.1.0
 theano==1.0.1
 urllib3==1.22
