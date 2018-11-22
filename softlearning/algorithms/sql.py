@@ -350,7 +350,7 @@ class SQL(RLAlgorithm):
             'mean-sq-bellman-error': bellman_residual,
         })
 
-        policy_diagnostics = self.policy.get_diagnostics(batch)
+        policy_diagnostics = self.policy.get_diagnostics(batch['observations'])
         diagnostics.update({
             f'policy/{key}': value
             for key, value in policy_diagnostics.items()

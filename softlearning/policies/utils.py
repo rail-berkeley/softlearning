@@ -6,8 +6,8 @@ from .gaussian_policy import GaussianPolicy
 
 def get_gaussian_policy(env, Q, preprocessor, **kwargs):
     policy = GaussianPolicy(
-        observation_shape=env.active_observation_shape,
-        action_shape=env.action_space.shape,
+        input_shapes=(env.active_observation_shape, ),
+        output_shape=env.action_space.shape,
         **kwargs)
 
     return policy

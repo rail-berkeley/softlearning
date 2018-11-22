@@ -465,7 +465,8 @@ class SAC(RLAlgorithm, Serializable):
             'alpha': alpha,
         })
 
-        policy_diagnostics = self._policy.get_diagnostics(iteration, batch)
+        policy_diagnostics = self._policy.get_diagnostics(
+            batch['observations'])
         diagnostics.update({
             f'policy/{key}': value
             for key, value in policy_diagnostics.items()
