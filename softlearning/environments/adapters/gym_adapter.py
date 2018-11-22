@@ -9,6 +9,12 @@ from softlearning.environments.gym.wrappers import NormalizeActionWrapper
 from softlearning.environments.gym.mujoco.ant_env import AntEnv as CustomAntEnv
 from softlearning.environments.gym.mujoco.humanoid_env import (
     HumanoidEnv as CustomHumanoidEnv)
+from softlearning.environments.gym.mujoco.walker2d_env import (
+    Walker2dEnv as CustomWalker2dEnv)
+from softlearning.environments.gym.mujoco.hopper_env import (
+    HopperEnv as CustomHopperEnv)
+from softlearning.environments.gym.mujoco.swimmer_env import (
+    SwimmerEnv as CustomSwimmerEnv)
 from softlearning.environments.gym.mujoco.pusher_2d_env import (
     Pusher2dEnv,
     ForkReacherEnv)
@@ -44,7 +50,8 @@ except ModuleNotFoundError as e:
 
 GYM_ENVIRONMENTS = {
     'swimmer': {
-        'default': lambda: gym.envs.make('Swimmer-v2')
+        'default': lambda: gym.envs.make('Swimmer-v2'),
+        'custom-default': CustomSwimmerEnv,
     },
     'ant': {
         'default': lambda: gym.envs.make('Ant-v2'),
@@ -56,13 +63,15 @@ GYM_ENVIRONMENTS = {
         'custom-default': CustomHumanoidEnv,
     },
     'hopper': {
-        'default': lambda: gym.envs.make('Hopper-v2')
+        'default': lambda: gym.envs.make('Hopper-v2'),
+        'custom-default': CustomHopperEnv,
     },
     'half-cheetah': {
         'default': lambda: gym.envs.make('HalfCheetah-v2')
     },
     'walker': {
-        'default': lambda: gym.envs.make('Walker2d-v2')
+        'default': lambda: gym.envs.make('Walker2d-v2'),
+        'custom-default': CustomWalker2dEnv,
     },
     'pusher-2d': {
         'default': Pusher2dEnv,

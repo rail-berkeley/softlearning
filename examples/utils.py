@@ -149,6 +149,11 @@ def get_parser(allow_policy_list=False):
                         default=datetimestamp())
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--log_dir', type=str, default=None)
+    parser.add_argument('--upload-dir',
+                        type=str,
+                        default=None,
+                        help=("Remote location to upload results to. E.g."
+                              " gs://... or s3://..."))
     parser.add_argument("--confirm_remote",
                         type=strtobool,
                         nargs='?',
@@ -217,16 +222,9 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
         ray.init(
             resources=resources,
             num_cpus=args.cpus,
-            num_gpus=args.gpus,
-        )
-
+            num_gpus=args.gpus)
     else:
         ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
-        using_new_gcs = os.environ.get('RAY_USE_NEW_GCS', False) == 'on'
-        using_xray = os.environ.get('RAY_USE_XRAY', False) == '1'
-        if using_new_gcs and using_xray:
-            policy = ray.experimental.SimpleGcsFlushPolicy()
-            ray.experimental.set_flushing_policy(policy)
 
     datetime_prefix = datetimestamp()
     experiment_id = '-'.join((datetime_prefix, args.exp_name))
@@ -238,7 +236,7 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
             'config': variant_spec,
             'local_dir': local_dir,
             'num_samples': args.num_samples,
-            'upload_dir': args.upload_dir
+            'upload_dir': args.upload_dir,
         }
         for i, variant_spec in enumerate(variant_specs)
     })

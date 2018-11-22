@@ -27,7 +27,8 @@ services:
     volumes:
        - ~/.aws:/root/.aws  # If using aws, e.g. for s3
        - ~/.config/gcloud:/root/.config/gcloud  # If using gcp, e.g. for gs
-       - ~/.mujoco:/root/.mujoco  # mjkey.txt
+       - ~/.mujoco/mjkey.txt:/root/.mujoco/mjkey.txt  # mjkey.txt
+       - ~/.mujoco/mjkey.txt:/root/rllab/vendor/mujoco/mjkey.txt
        - ${SAC_ENVS_PATH:-~/github/vikashplus/sac_envs}:/root/sac_envs
        - ..:/root/softqlearning-private
     command:

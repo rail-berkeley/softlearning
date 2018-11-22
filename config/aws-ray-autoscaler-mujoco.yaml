@@ -85,8 +85,8 @@ worker_nodes:
 # Files or directories to copy to the head and worker nodes. The format is a
 # dictionary from REMOTE_PATH: LOCAL_PATH, e.g.
 file_mounts: {
-    "/tmp/current_branch_sha": "<path>/<to>/softqlearning-private/.git/refs/heads/master",
-    "~/.mujoco/mjkey.txt": "~/.mujoco/mjkey.txt",
+    "/tmp/current_branch_sha": "<TODO>/softqlearning-private/.git/refs/heads/<TODO>",
+    "/home/ubuntu/rllab/vendor/mujoco/mjkey.txt": "~/.mujoco/mjkey.txt",
 }
 
 # List of shell commands to run to set up nodes.
