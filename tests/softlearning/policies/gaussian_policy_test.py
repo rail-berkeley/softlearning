@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import numpy as np
 import tensorflow as tf
 
@@ -56,6 +58,30 @@ class GaussianPolicyTest(tf.test.TestCase):
         self.assertEqual(
             len(self.policy.trainable_variables),
             2 * (len(self.hidden_layer_sizes) + 1))
+
+    def test_get_diagnostics(self):
+        observation1_np = self.env.reset()
+        observation2_np = self.env.step(self.env.action_space.sample())[0]
+        observations_np = np.stack((observation1_np, observation2_np))
+
+        diagnostics = self.policy.get_diagnostics([observations_np])
+
+        self.assertTrue(isinstance(diagnostics, OrderedDict))
+        self.assertEqual(
+            tuple(diagnostics.keys()),
+            ('shifts-mean',
+             'shifts-std',
+             'log_scale_diags-mean',
+             'log_scale_diags-std',
+             '-log-pis-mean',
+             '-log-pis-std',
+             'raw-actions-mean',
+             'raw-actions-std',
+             'actions-mean',
+             'actions-std'))
+
+        for value in diagnostics.values():
+            self.assertTrue(np.isscalar(value))
 
 
 if __name__ == '__main__':

@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import numpy as np
 import tensorflow as tf
 
@@ -49,6 +51,18 @@ class UniformPolicyTest(tf.test.TestCase):
         observation1_np = self.env.reset()
         action = self.policy.actions_np(observation1_np[None])[0, ...]
         self.env.step(action)
+
+    def test_trainable_variables(self):
+        self.assertEqual(len(self.policy.trainable_variables), 0)
+
+    def test_get_diagnostics(self):
+        observation1_np = self.env.reset()
+        observation2_np = self.env.step(self.env.action_space.sample())[0]
+        observations_np = np.stack((observation1_np, observation2_np))
+
+        diagnostics = self.policy.get_diagnostics([observations_np])
+        self.assertTrue(isinstance(diagnostics, OrderedDict))
+        self.assertFalse(diagnostics)
 
 
 if __name__ == '__main__':
