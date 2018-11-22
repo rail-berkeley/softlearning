@@ -1,9 +1,9 @@
 from copy import deepcopy
 
-from .sac import SAC
-
 
 def create_SAC_algorithm(variant, *args, sampler, **kwargs):
+    from .sac import SAC
+
     algorithm = SAC(
         *args,
         sampler=sampler,

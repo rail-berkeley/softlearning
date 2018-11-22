@@ -1,7 +1,5 @@
 from copy import deepcopy
 
-from softlearning.misc.nn import feedforward_model
-
 
 def get_convnet_preprocessor(observation_space,
                              name='convnet_preprocessor',
@@ -13,6 +11,7 @@ def get_convnet_preprocessor(observation_space,
 def get_feedforward_preprocessor(observation_shape,
                                  name='feedforward_preprocessor',
                                  **kwargs):
+    from softlearning.misc.nn import feedforward_model
     preprocessor = feedforward_model(
         input_shapes=(observation_shape, ), name=name, **kwargs)
 
