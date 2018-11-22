@@ -128,10 +128,6 @@ def get_parser(allow_policy_list=False):
                         help=("Resources to allocate for each trial. Passed"
                               " to `tune.run_experiments`."))
 
-    parser.add_argument('--upload-dir', type=str, default='',
-                        help=("Optional URI to sync training results to (e.g."
-                              " s3://<bucket> or gs://<bucket>)."))
-
     if allow_policy_list:
         parser.add_argument('--policy',
                             type=str,
@@ -149,11 +145,10 @@ def get_parser(allow_policy_list=False):
                         default=datetimestamp())
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--log_dir', type=str, default=None)
-    parser.add_argument('--upload-dir',
-                        type=str,
-                        default=None,
-                        help=("Remote location to upload results to. E.g."
-                              " gs://... or s3://..."))
+    parser.add_argument('--upload-dir', type=str, default='',
+                        help=("Optional URI to sync training results to (e.g."
+                              " s3://<bucket> or gs://<bucket>)."))
+
     parser.add_argument("--confirm_remote",
                         type=strtobool,
                         nargs='?',
