@@ -3,7 +3,7 @@ from collections import OrderedDict
 import tensorflow as tf
 
 
-class UniformPolicyV2(object):
+class UniformPolicy(object):
     def __init__(self, input_shapes, output_shape, action_range=(-1.0, 1.0)):
         self.inputs = [
             tf.keras.layers.Input(shape=input_shape)

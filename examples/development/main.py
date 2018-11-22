@@ -35,7 +35,7 @@ class ExperimentRunner(tune.Trainable):
         Qs = get_Q_function_from_variant(variant, env)
         V = get_V_function_from_variant(variant, env)
         policy = get_policy_from_variant(variant, env, Qs, preprocessor)
-        initial_exploration_policy = get_policy('UniformPolicyV2', env)
+        initial_exploration_policy = get_policy('UniformPolicy', env)
 
         self.algorithm = get_algorithm_from_variant(
             variant=variant,
