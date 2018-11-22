@@ -51,5 +51,5 @@ class UniformPolicy(tf.keras.Model):
     def log_pis_np(self, conditions, actions):
         return self.log_pis_model.predict([*conditions, actions])
 
-    def get_diagnostics(self, iteration, batch):
+    def get_diagnostics(self, conditions):
         return OrderedDict({})
