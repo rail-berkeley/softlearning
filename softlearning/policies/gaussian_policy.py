@@ -123,10 +123,18 @@ class GaussianPolicy(tf.keras.Model):
         self.actions_input = tf.keras.layers.Input(shape=output_shape)
 
         log_pis = tf.keras.layers.Lambda(
+            log_pis_fn)([shift, log_scale_diag, actions])
+
+        log_pis_for_action_input = tf.keras.layers.Lambda(
             log_pis_fn)([shift, log_scale_diag, self.actions_input])
 
         self.log_pis_model = tf.keras.Model(
-            (*self.condition_inputs, self.actions_input), log_pis)
+            (*self.condition_inputs, self.actions_input),
+            log_pis_for_action_input)
+
+        self.diagnostics_model = tf.keras.Model(
+            self.condition_inputs,
+            (shift, log_scale_diag, log_pis, raw_actions, actions))
 
     @property
     def trainable_weights(self):
@@ -153,10 +161,31 @@ class GaussianPolicy(tf.keras.Model):
     def log_pis_np(self, conditions, actions):
         return self.log_pis_model.predict([*conditions, actions])
 
-    def get_diagnostics(self, iteration, batch):
+    def get_diagnostics(self, conditions):
         """Return diagnostic information of the policy.
 
         Returns the mean, min, max, and standard deviation of means and
         covariances.
         """
-        return OrderedDict({})
+        (shifts_np,
+         log_scale_diags_np,
+         log_pis_np,
+         raw_actions_np,
+         actions_np) = self.diagnostics_model.predict(conditions)
+
+        return OrderedDict({
+            'shifts-mean': np.mean(shifts_np),
+            'shifts-std': np.std(shifts_np),
+
+            'log_scale_diags-mean': np.mean(log_scale_diags_np),
+            'log_scale_diags-std': np.std(log_scale_diags_np),
+
+            '-log-pis-mean': np.mean(-log_pis_np),
+            '-log-pis-std': np.std(-log_pis_np),
+
+            'raw-actions-mean': np.mean(raw_actions_np),
+            'raw-actions-std': np.std(raw_actions_np),
+
+            'actions-mean': np.mean(actions_np),
+            'actions-std': np.std(actions_np),
+        })
