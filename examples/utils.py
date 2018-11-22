@@ -1,3 +1,4 @@
+import multiprocessing
 import argparse
 from distutils.util import strtobool
 import json
@@ -118,7 +119,9 @@ def get_parser(allow_policy_list=False):
     parser.add_argument('--trial-resources', type=json.loads, default={},
                         help=("Resources to allocate for each trial. Passed"
                               " to `tune.run_experiments`."))
-    parser.add_argument('--trial-cpus', type=int, default=None,
+    parser.add_argument('--trial-cpus',
+                        type=int,
+                        default=multiprocessing.cpu_count(),
                         help=("Resources to allocate for each trial. Passed"
                               " to `tune.run_experiments`."))
     parser.add_argument('--trial-gpus', type=float, default=None,
