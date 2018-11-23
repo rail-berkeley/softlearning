@@ -5,13 +5,7 @@ from collections import OrderedDict
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
-
-
-class SquashBijector(tfp.bijectors.Tanh):
-    """Bijector similar to Tanh-bijector, but with stable log det jacobian."""
-
-    def _forward_log_det_jacobian(self, x):
-        return 2.0 * (tf.log(2.0) - x - tf.nn.softplus(-2.0 * x))
+from softlearning.distributions.squash_bijector import SquashBijector
 
 
 SCALE_DIAG_MIN_MAX = (-20, 2)
