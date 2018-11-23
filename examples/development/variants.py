@@ -86,6 +86,8 @@ ALGORITHM_PARAMS_BASE = {
     }
 }
 
+DEFAULT_NUM_EPOCHS = 200
+
 NUM_EPOCHS_PER_DOMAIN = {
     'swimmer': int(3e2 + 1),
     'hopper': int(3e3 + 1),
@@ -101,14 +103,16 @@ NUM_EPOCHS_PER_DOMAIN = {
     'HandReach': int(1e4 + 1),
     'DClaw3': int(5e2 + 1),
     'ImageDClaw3': int(5e3 + 1),
-    'Point2DEnv': int(200 + 1)
+    'Point2DEnv': int(200 + 1),
+    'Reacher': int(200 + 1),
 }
 
 ALGORITHM_PARAMS_PER_DOMAIN = {
     **{
         domain: {
             'kwargs': {
-                'n_epochs': NUM_EPOCHS_PER_DOMAIN[domain],
+                'n_epochs': NUM_EPOCHS_PER_DOMAIN.get(
+                    domain, DEFAULT_NUM_EPOCHS),
                 'n_initial_exploration_steps': (
                     MAX_PATH_LENGTH_PER_DOMAIN.get(
                         domain, DEFAULT_MAX_PATH_LENGTH
@@ -217,7 +221,7 @@ def get_variant_spec(universe, domain, task, policy):
         ),
         'algorithm_params': deep_update(
             ALGORITHM_PARAMS_BASE,
-            ALGORITHM_PARAMS_PER_DOMAIN[domain]
+            ALGORITHM_PARAMS_PER_DOMAIN.get(domain, {})
         ),
         'replay_pool_params': {
             'type': 'SimpleReplayPool',
@@ -238,7 +242,8 @@ def get_variant_spec(universe, domain, task, policy):
         'run_params': {
             'seed': tune.grid_search([1, 2, 3, 4, 5]),
             'snapshot_mode': 'gap',
-            'snapshot_gap': NUM_EPOCHS_PER_DOMAIN[domain] // NUM_SNAPSHOTS,
+            'snapshot_gap': NUM_EPOCHS_PER_DOMAIN.get(
+                domain, DEFAULT_NUM_EPOCHS) // NUM_SNAPSHOTS,
             'sync_pkl': True,
         },
     }
