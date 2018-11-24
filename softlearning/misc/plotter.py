@@ -1,3 +1,4 @@
+import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -7,7 +8,7 @@ class QFPolicyPlotter:
         self._Q = Q
         self._policy = policy
         self._obs_lst = obs_lst
-        self._default_action = default_action
+        self._default_action = np.array(default_action)
         self._n_samples = n_samples
 
         self._var_inds = np.where(np.isnan(default_action))[0]
@@ -26,6 +27,8 @@ class QFPolicyPlotter:
             ax.set_ylim((-1, 1))
             ax.grid(True)
             self._ax_lst.append(ax)
+
+        self.Q_op = None
 
         self._line_objects = list()
 
@@ -49,13 +52,27 @@ class QFPolicyPlotter:
 
         # Copy default values along the first axis and replace nans with
         # the mesh grid points.
-        actions = np.tile(self._default_action, (N, 1))
+        actions = np.tile(self._default_action.astype(np.float32), (N, 1))
         actions[:, self._var_inds[0]] = xgrid.ravel()
         actions[:, self._var_inds[1]] = ygrid.ravel()
 
         for ax, obs in zip(self._ax_lst, self._obs_lst):
-            observations = np.tile(obs[None], (actions.shape[0], 1))
-            Q_np = self._Q.predict((observations, actions))
+            observations = np.tile(
+                obs[None].astype(np.float32), (actions.shape[0], 1))
+
+            if self.Q_op is None:
+                # TODO(hartikainen)
+                # We need to manually run the Q_op (instead of Q.predict)
+                # since tf.keras.Sequential.predict does not support multiple
+                # inputs.
+                self.Q_op = self._Q(self._Q.inputs)
+
+            Q_np = tf.keras.backend.get_session().run(
+                self.Q_op, feed_dict={
+                    self._Q.inputs[0]: observations,
+                    self._Q.inputs[1]: actions,
+                })
+            # Q_np = self._Q.predict((observations, actions))
             Q_np = np.reshape(Q_np, xgrid.shape)
 
             cs = ax.contour(xgrid, ygrid, Q_np, 20)
@@ -65,8 +82,8 @@ class QFPolicyPlotter:
 
     def _plot_action_samples(self):
         for ax, obs in zip(self._ax_lst, self._obs_lst):
-            (actions, _, _) = self._policy.get_actions(
-                np.ones((self._n_samples, 1)) * obs[None, :])
+            observations = np.ones((self._n_samples, 1)) * obs[None, :]
+            actions = self._policy.actions_np([observations])
 
             x, y = actions[:, 0], actions[:, 1]
             self._line_objects += ax.plot(x, y, 'b*')
