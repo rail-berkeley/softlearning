@@ -22,6 +22,7 @@ from softlearning.environments.gym.mujoco.image_pusher import (
     ImagePusherEnv,
     ImageForkReacherEnv,
     BlindForkReacherEnv)
+from softlearning.environments.gym.multi_goal import MultiGoalEnv
 
 
 def raise_on_use_wrapper(e):
@@ -144,7 +145,10 @@ GYM_ENVIRONMENTS = {
                 *args,
                 is_hardware=True,
                 **kwargs)),
-    }
+    },
+    'MultiGoal': {
+        'default': MultiGoalEnv
+    },
 }
 
 
