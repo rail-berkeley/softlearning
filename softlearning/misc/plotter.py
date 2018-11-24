@@ -28,8 +28,6 @@ class QFPolicyPlotter:
             ax.grid(True)
             self._ax_lst.append(ax)
 
-        self.Q_op = None
-
         self._line_objects = list()
 
     def draw(self):
@@ -60,19 +58,7 @@ class QFPolicyPlotter:
             observations = np.tile(
                 obs[None].astype(np.float32), (actions.shape[0], 1))
 
-            if self.Q_op is None:
-                # TODO(hartikainen)
-                # We need to manually run the Q_op (instead of Q.predict)
-                # since tf.keras.Sequential.predict does not support multiple
-                # inputs.
-                self.Q_op = self._Q(self._Q.inputs)
-
-            Q_np = tf.keras.backend.get_session().run(
-                self.Q_op, feed_dict={
-                    self._Q.inputs[0]: observations,
-                    self._Q.inputs[1]: actions,
-                })
-            # Q_np = self._Q.predict((observations, actions))
+            Q_np = self._Q.predict((observations, actions))
             Q_np = np.reshape(Q_np, xgrid.shape)
 
             cs = ax.contour(xgrid, ygrid, Q_np, 20)
