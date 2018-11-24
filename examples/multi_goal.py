@@ -13,7 +13,7 @@ from examples.utils import get_parser, launch_experiments_ray
 
 
 def run_experiment(variant, reporter):
-    env = get_environment('gym', 'multigoal', 'default', {
+    env = get_environment('gym', 'MultiGoal', 'default', {
         'actuation_cost_coeff': 1,
         'distance_cost_coeff': 0.1,
         'goal_reward': 1,
@@ -29,18 +29,16 @@ def run_experiment(variant, reporter):
         max_path_length=30, min_pool_size=100, batch_size=64)
 
     Qs = get_Q_function_from_variant(variant, env)
-
     policy = get_policy_from_variant(variant, env, Qs, preprocessor=None)
     plotter = QFPolicyPlotter(
         Q=Qs[0],
         policy=policy,
-        obs_lst=np.array([[-2.5, 0.0],
-                          [0.0, 0.0],
-                          [2.5, 2.5],
-                          [-2.5, -2.5]]),
-        default_action=[np.nan, np.nan],
-        n_samples=100
-    )
+        obs_lst=np.array(((-2.5, 0.0),
+                          (0.0, 0.0),
+                          (2.5, 2.5),
+                          (-2.5, -2.5))),
+        default_action=(np.nan, np.nan),
+        n_samples=100)
 
     algorithm = SAC(
         sampler=sampler,
@@ -60,15 +58,15 @@ def run_experiment(variant, reporter):
         plotter=plotter,
 
         lr=3e-4,
-        target_entropy=-6.0,
+        target_entropy=-2.0,
         discount=0.99,
         tau=1e-4,
 
         save_full_state=True,
     )
 
-    for epoch, mean_return in algorithm.train():
-        reporter(timesteps_total=epoch, mean_accuracy=mean_return)
+    for train_result in algorithm.train():
+        reporter(**train_result)
 
 
 def main():
