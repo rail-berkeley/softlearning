@@ -1,4 +1,4 @@
-from softlearning.misc.nn import feedforward_model
+from softlearning.models.feedforward import feedforward_model
 
 
 def create_feedforward_Q_function(observation_shape,

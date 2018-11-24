@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-from softlearning.misc.nn import feedforward_model
+from softlearning.models.feedforward import feedforward_model
 
 
 class FeedforwardFunctionTest(tf.test.TestCase):
