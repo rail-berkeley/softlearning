@@ -223,7 +223,7 @@ class SAC(RLAlgorithm, Serializable):
 
         next_Qs_values = tuple(
             Q([self._next_observations_ph, next_actions])
-            for Q in self._Qs)
+            for Q in self._Q_targets)
 
         min_next_Q = tf.reduce_min(next_Qs_values, axis=0)
         next_value = min_next_Q - self._alpha * next_log_pis
