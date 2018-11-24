@@ -32,13 +32,11 @@ def raise_on_use_wrapper(e):
 
 
 try:
-    from sac_envs.envs.dclaw.dclaw3_screw_v11 import DClaw3ScrewV11
     from sac_envs.envs.dclaw.dclaw3_screw_v2 import DClaw3ScrewV2
     from sac_envs.envs.dclaw.dclaw3_screw_v2 import ImageDClaw3Screw
     from sac_envs.envs.dclaw.dclaw3_flip_v1 import DClaw3FlipV1
 except ModuleNotFoundError as e:
     DClaw3FlipV1 = raise_on_use_wrapper(e)
-    DClaw3ScrewV11 = raise_on_use_wrapper(e)
     DClaw3ScrewV2 = raise_on_use_wrapper(e)
     ImageDClaw3Screw = raise_on_use_wrapper(e)
 
@@ -116,7 +114,6 @@ GYM_ENVIRONMENTS = {
         'v2': lambda: gym.envs.make('InvertedPendulum-v2'),
     },
     'DClaw3': {
-        'ScrewV11': DClaw3ScrewV11,
         'ScrewV2': DClaw3ScrewV2,
         'FlipV1': DClaw3FlipV1,
     },
