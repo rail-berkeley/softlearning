@@ -6,19 +6,29 @@ def feedforward_model(input_shapes,
                       output_size,
                       activation='relu',
                       output_activation='linear',
-                      name=None,
+                      name='feedforward_model',
                       *args,
                       **kwargs):
-    model = tf.keras.Sequential(name=name)
+    inputs = [
+        tf.keras.layers.Input(shape=input_shape)
+        for input_shape in input_shapes
+    ]
 
-    model.add(tf.keras.layers.Lambda(lambda x: tf.concat(x, axis=-1)))
+    concatenated = tf.keras.layers.Lambda(
+        lambda x: tf.concat(x, axis=-1)
+    )(inputs)
 
+    out = concatenated
     for units in hidden_layer_sizes:
-        model.add(tf.keras.layers.Dense(
-            units, *args, activation=activation, **kwargs))
+        out = tf.keras.layers.Dense(
+            units, *args, activation=activation, **kwargs
+        )(out)
 
-    model.add(tf.keras.layers.Dense(
-        output_size, *args, activation=output_activation, **kwargs))
+    out = tf.keras.layers.Dense(
+        output_size, *args, activation=output_activation, **kwargs
+    )(out)
+
+    model = tf.keras.Model(inputs, out, name=name)
 
     return model
 
