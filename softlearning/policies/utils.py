@@ -1,7 +1,6 @@
 from copy import deepcopy
 
 
-
 def get_gaussian_policy(env, Q, preprocessor, **kwargs):
     from .gaussian_policy import GaussianPolicy
     policy = GaussianPolicy(
