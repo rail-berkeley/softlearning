@@ -50,12 +50,15 @@ class ExperimentRunner(tune.Trainable):
 
         initialize_tf_variables(self._session, only_uninitialized=True)
 
-        self.train_generator = self.algorithm.train()
+        self.train_generator = None
 
     def _stop(self):
         pass
 
     def _train(self):
+        if self.train_generator is None:
+            self.train_generator = self.algorithm.train()
+
         diagnostics = next(self.train_generator)
         return diagnostics
 
