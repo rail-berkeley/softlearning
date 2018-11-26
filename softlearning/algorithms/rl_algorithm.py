@@ -70,6 +70,9 @@ class RLAlgorithm(object):
         self._policy = None
         self._pool = None
 
+        self._epoch = 0
+        self._timestep = 0
+
     def _initial_exploration_hook(self, env, initial_exploration_policy, pool):
         if self._n_initial_exploration_steps < 1: return
 
@@ -98,7 +101,7 @@ class RLAlgorithm(object):
         """Hook called at the end of each timestep."""
         pass
 
-    def _epoch_before_hook(self, epoch):
+    def _epoch_before_hook(self):
         """Hook called at the beginning of each epoch."""
         pass
 
@@ -112,6 +115,15 @@ class RLAlgorithm(object):
     def _evaluation_batch(self, *args, **kwargs):
         return self._training_batch(*args, **kwargs)
 
+    @property
+    def _training_started(self):
+        return self._total_timestep > 0
+
+    @property
+    def _total_timestep(self):
+        total_timestep = self._epoch * self._epoch_length + self._timestep
+        return total_timestep
+
     def _train(self, env, policy, pool, initial_exploration_policy=None):
         """Return a generator that performs RL training.
 
@@ -123,46 +135,44 @@ class RLAlgorithm(object):
             pool (`PoolBase`): Sample pool to add samples to
         """
 
-        self._init_training()
+        if not self._training_started:
+            self._init_training()
 
-        self._initial_exploration_hook(env, initial_exploration_policy, pool)
+            self._initial_exploration_hook(
+                env, initial_exploration_policy, pool)
+
         self.sampler.initialize(env, policy, pool)
-
-        self._training_before_hook()
-
         evaluation_env = env.copy() if self._eval_n_episodes else None
 
         gt.rename_root('RLAlgorithm')
         gt.reset()
         gt.set_def_unique(False)
 
-        total_timesteps = 0
-        for epoch in gt.timed_for(range(self._n_epochs + 1),
-                                  save_itrs=True):
-            self._epoch_before_hook(epoch)
+        self._training_before_hook()
+
+        for self._epoch in gt.timed_for(range(self._epoch, self._n_epochs)):
+            self._epoch_before_hook()
             gt.stamp('epoch_before_hook')
 
-            for timestep in range(1, self._epoch_length + 1):
-                total_timesteps += 1
-
-                self._timestep_before_hook(timestep)
+            for self._timestep in range(1, self._epoch_length + 1):
+                self._timestep_before_hook()
                 gt.stamp('timestep_before_hook')
 
-                self._do_sampling(timestep=total_timesteps)
+                self._do_sampling(timestep=self._total_timestep)
                 gt.stamp('sample')
 
                 if self.ready_to_train:
-                    self._do_training_repeats(timestep=total_timesteps)
+                    self._do_training_repeats(timestep=self._total_timestep)
                 gt.stamp('train')
 
-                self._timestep_after_hook(timestep)
+                self._timestep_after_hook()
                 gt.stamp('timestep_after_hook')
 
             training_paths = self.sampler.get_last_n_paths()
-            self._epoch_after_hook(epoch, training_paths)
+            self._epoch_after_hook(training_paths)
             gt.stamp('epoch_after_hook')
 
-            evaluation_diagnostics = self._evaluate(policy, evaluation_env, epoch)
+            evaluation_diagnostics = self._evaluate(policy, evaluation_env)
             gt.stamp('evaluate')
 
             sampler_diagnostics = self.sampler.get_diagnostics()
@@ -172,8 +182,8 @@ class RLAlgorithm(object):
                     for key, value in gt.get_times().stamps.itrs.items()
                 },
                 **{
-                    'timesteps_total': total_timesteps,
-                    'epoch': epoch,
+                    'timesteps_total': self._total_timestep,
+                    'epoch': self._epoch,
                 },
                 **{
                     f'sampler/{key}': value
@@ -191,7 +201,7 @@ class RLAlgorithm(object):
 
         self._training_after_hook()
 
-    def _evaluate(self, policy, evaluation_env, epoch):
+    def _evaluate(self, policy, evaluation_env):
         """Perform evaluation for the current policy."""
 
         if self._eval_n_episodes < 1:
@@ -213,7 +223,7 @@ class RLAlgorithm(object):
         total_returns = [path['rewards'].sum() for path in paths]
         episode_lengths = [len(p['rewards']) for p in paths]
 
-        iteration = epoch * self._epoch_length
+        iteration = self._total_timestep
         batch = self._evaluation_batch()
 
         diagnostics = self.get_diagnostics(iteration, batch, paths)
