@@ -11,7 +11,7 @@ from softlearning.replay_pools.utils import get_replay_pool_from_variant
 from softlearning.samplers.utils import get_sampler_from_variant
 from softlearning.value_functions.utils import get_Q_function_from_variant
 
-from softlearning.misc.utils import set_seed
+from softlearning.misc.utils import set_seed, initialize_tf_variables
 
 from examples.utils import (
     parse_universe_domain_task,
@@ -47,6 +47,8 @@ class ExperimentRunner(tune.Trainable):
             sampler=sampler,
             session=self._session,
         )
+
+        initialize_tf_variables(self._session, only_uninitialized=True)
 
         self.train_generator = self.algorithm.train()
 
