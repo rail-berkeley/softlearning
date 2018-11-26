@@ -407,7 +407,11 @@ class SAC(RLAlgorithm, Serializable):
 
         return feed_dict
 
-    def get_diagnostics(self, iteration, batch, paths):
+    def get_diagnostics(self,
+                        iteration,
+                        batch,
+                        training_paths,
+                        evaluation_paths):
         """Return diagnostic information as ordered dictionary.
 
         Records mean and standard deviation of Q-function and state

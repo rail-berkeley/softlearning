@@ -330,7 +330,11 @@ class SQL(RLAlgorithm):
 
         return feeds
 
-    def get_diagnostics(self, iteration, batch, paths):
+    def get_diagnostics(self,
+                        iteration,
+                        batch,
+                        evaluation_paths,
+                        training_paths):
         """Record diagnostic information.
 
         Records the mean and standard deviation of Q-function and the

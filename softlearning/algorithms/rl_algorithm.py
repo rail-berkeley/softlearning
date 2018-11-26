@@ -1,4 +1,5 @@
 import abc
+from collections import OrderedDict
 import gtimer as gt
 from collections import OrderedDict
 
@@ -169,31 +170,59 @@ class RLAlgorithm(object):
                 gt.stamp('timestep_after_hook')
 
             training_paths = self.sampler.get_last_n_paths()
+            gt.stamp('training_paths')
+            evaluation_paths = self._evaluation_paths(policy, evaluation_env)
+            gt.stamp('evaluation_paths')
+
+            training_metrics = self._evaluate_rollouts(training_paths, env)
+            gt.stamp('training_metrics')
+            if evaluation_paths:
+                evaluation_metrics = self._evaluate_rollouts(
+                    evaluation_paths, evaluation_env)
+                gt.stamp('evaluation_metrics')
+            else:
+                evaluation_metrics = {}
+
             self._epoch_after_hook(training_paths)
             gt.stamp('epoch_after_hook')
 
-            evaluation_diagnostics = self._evaluate(policy, evaluation_env)
-            gt.stamp('evaluate')
-
             sampler_diagnostics = self.sampler.get_diagnostics()
-            diagnostics = OrderedDict({
-                **{
-                    f'times/{key}': value[-1]
-                    for key, value in gt.get_times().stamps.itrs.items()
-                },
-                **{
-                    'timesteps_total': self._total_timestep,
-                    'epoch': self._epoch,
-                },
-                **{
-                    f'sampler/{key}': value
-                    for key, value in sampler_diagnostics.items()
-                },
-                **{
-                    f'evaluation/{key}': value
-                    for key, value in evaluation_diagnostics.items()
-                },
-            })
+
+            diagnostics = self.get_diagnostics(
+                iteration=self._total_timestep,
+                batch=self._evaluation_batch(),
+                training_paths=training_paths,
+                evaluation_paths=evaluation_paths)
+
+            time_diagnostics = gt.get_times().stamps.itrs
+
+            diagnostics.update(OrderedDict((
+                *(
+                    (f'evaluation/{key}', evaluation_metrics[key])
+                    for key in sorted(evaluation_metrics.keys())
+                ),
+                *(
+                    (f'training/{key}', training_metrics[key])
+                    for key in sorted(training_metrics.keys())
+                ),
+                *(
+                    (f'times/{key}', time_diagnostics[key][-1])
+                    for key in sorted(time_diagnostics.keys())
+                ),
+                *(
+                    (f'sampler/{key}', sampler_diagnostics[key])
+                    for key in sorted(sampler_diagnostics.keys())
+                ),
+                ('epoch', self._epoch),
+                ('timestep', self._timestep),
+                ('timesteps_total', self._total_timestep),
+            )))
+
+            if self._eval_render and hasattr(
+                    evaluation_env, 'render_rollouts'):
+                # TODO(hartikainen): Make this consistent such that there's no
+                # need for the hasattr check.
+                env.render_rollouts(evaluation_paths)
 
             yield diagnostics
 
@@ -201,11 +230,8 @@ class RLAlgorithm(object):
 
         self._training_after_hook()
 
-    def _evaluate(self, policy, evaluation_env):
-        """Perform evaluation for the current policy."""
-
-        if self._eval_n_episodes < 1:
-            return
+    def _evaluation_paths(self, policy, evaluation_env):
+        if self._eval_n_episodes < 1: return ()
 
         if hasattr(policy, 'deterministic'):
             with policy.deterministic(self._eval_deterministic):
@@ -220,37 +246,37 @@ class RLAlgorithm(object):
                              self.sampler._max_path_length,
                              self._eval_n_episodes)
 
+        return paths
+
+    def _evaluate_rollouts(self, paths, env):
+        """Compute evaluation metrics for the given rollouts."""
+
         total_returns = [path['rewards'].sum() for path in paths]
         episode_lengths = [len(p['rewards']) for p in paths]
 
-        iteration = self._total_timestep
-        batch = self._evaluation_batch()
+        diagnostics = OrderedDict((
+            ('return-average', np.mean(total_returns)),
+            ('return-min', np.min(total_returns)),
+            ('return-max', np.max(total_returns)),
+            ('return-std', np.std(total_returns)),
+            ('episode-length-avg', np.mean(episode_lengths)),
+            ('episode-length-min', np.min(episode_lengths)),
+            ('episode-length-max', np.max(episode_lengths)),
+            ('episode-length-std', np.std(episode_lengths)),
+        ))
 
-        diagnostics = self.get_diagnostics(iteration, batch, paths)
-        diagnostics.update({
-            'return-average': np.mean(total_returns),
-            'return-min': np.min(total_returns),
-            'return-max': np.max(total_returns),
-            'return-std': np.std(total_returns),
-            'episode-length-avg': np.mean(episode_lengths),
-            'episode-length-min': np.min(episode_lengths),
-            'episode-length-max': np.max(episode_lengths),
-            'episode-length-std': np.std(episode_lengths),
-        })
-
-        env_infos = evaluation_env.get_path_infos(paths)
+        env_infos = env.get_path_infos(paths)
         for key, value in env_infos.items():
-            diagnostics[f'evaluation_env/{key}'] = value
-
-        if self._eval_render and hasattr(evaluation_env, 'render_rollouts'):
-            # TODO(hartikainen): Make this consistent such that there's no need
-            # for the hasattr check.
-            evaluation_env.render_rollouts(paths)
+            diagnostics[f'env_infos/{key}'] = value
 
         return diagnostics
 
     @abc.abstractmethod
-    def get_diagnostics(self, iteration, batch, paths):
+    def get_diagnostics(self,
+                        iteration,
+                        batch,
+                        training_paths,
+                        evaluation_paths):
         raise NotImplementedError
 
     @abc.abstractmethod

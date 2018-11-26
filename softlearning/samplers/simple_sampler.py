@@ -9,6 +9,7 @@ class SimpleSampler(BaseSampler):
 
         self._path_length = 0
         self._path_return = 0
+        self._infos = []
         self._last_path_return = 0
         self._max_path_return = -np.inf
         self._n_episodes = 0
@@ -27,6 +28,7 @@ class SimpleSampler(BaseSampler):
         next_observation, reward, terminal, info = self.env.step(action)
         self._path_length += 1
         self._path_return += reward
+        self._infos.append(info)
         self._total_samples += 1
 
         self.pool.add_sample(
@@ -40,6 +42,7 @@ class SimpleSampler(BaseSampler):
             last_path = self.pool.last_n_batch(
                 self._path_length,
                 observation_keys=getattr(self.env, 'observation_keys', None))
+            last_path.update({'infos': self._infos})
             self._last_n_paths.appendleft(last_path)
 
             self.policy.reset()
@@ -51,6 +54,7 @@ class SimpleSampler(BaseSampler):
 
             self._path_length = 0
             self._path_return = 0
+            self._infos = []
 
             self._n_episodes += 1
 
