@@ -132,63 +132,62 @@ class RLAlgorithm(object):
 
         evaluation_env = env.copy() if self._eval_n_episodes else None
 
-        with self._session.as_default():
-            gt.rename_root('RLAlgorithm')
-            gt.reset()
-            gt.set_def_unique(False)
+        gt.rename_root('RLAlgorithm')
+        gt.reset()
+        gt.set_def_unique(False)
 
-            total_timesteps = 0
-            for epoch in gt.timed_for(range(self._n_epochs + 1),
-                                      save_itrs=True):
-                self._epoch_before_hook(epoch)
-                gt.stamp('epoch_before_hook')
+        total_timesteps = 0
+        for epoch in gt.timed_for(range(self._n_epochs + 1),
+                                  save_itrs=True):
+            self._epoch_before_hook(epoch)
+            gt.stamp('epoch_before_hook')
 
-                for timestep in range(1, self._epoch_length + 1):
-                    total_timesteps += 1
+            for timestep in range(1, self._epoch_length + 1):
+                total_timesteps += 1
 
-                    self._timestep_before_hook(timestep)
-                    gt.stamp('timestep_before_hook')
+                self._timestep_before_hook(timestep)
+                gt.stamp('timestep_before_hook')
 
-                    self._do_sampling(timestep=total_timesteps)
-                    gt.stamp('sample')
+                self._do_sampling(timestep=total_timesteps)
+                gt.stamp('sample')
 
-                    if self.ready_to_train:
-                        self._do_training_repeats(timestep=total_timesteps)
-                    gt.stamp('train')
+                if self.ready_to_train:
+                    self._do_training_repeats(timestep=total_timesteps)
+                gt.stamp('train')
 
-                    self._timestep_after_hook(timestep)
-                    gt.stamp('timestep_after_hook')
+                self._timestep_after_hook(timestep)
+                gt.stamp('timestep_after_hook')
 
-                training_paths = self.sampler.get_last_n_paths()
-                self._epoch_after_hook(epoch, training_paths)
-                gt.stamp('epoch_after_hook')
+            training_paths = self.sampler.get_last_n_paths()
+            self._epoch_after_hook(epoch, training_paths)
+            gt.stamp('epoch_after_hook')
 
-                evaluation_diagnostics = self._evaluate(policy, evaluation_env, epoch)
-                gt.stamp('evaluate')
+            evaluation_diagnostics = self._evaluate(policy, evaluation_env, epoch)
+            gt.stamp('evaluate')
 
-                sampler_diagnostics = self.sampler.get_diagnostics()
-                diagnostics = OrderedDict({
-                    **{
-                        f'times/{key}': value[-1]
-                        for key, value in gt.get_times().stamps.itrs.items()
-                    },
-                    **{
-                        'timesteps_total': total_timesteps,
-                        'epoch': epoch,
-                    },
-                    **{
-                        f'sampler/{key}': value
-                        for key, value in sampler_diagnostics.items()
-                    },
-                    **{
-                        f'evaluation/{key}': value
-                        for key, value in evaluation_diagnostics.items()
-                    },
-                })
+            sampler_diagnostics = self.sampler.get_diagnostics()
+            diagnostics = OrderedDict({
+                **{
+                    f'times/{key}': value[-1]
+                    for key, value in gt.get_times().stamps.itrs.items()
+                },
+                **{
+                    'timesteps_total': total_timesteps,
+                    'epoch': epoch,
+                },
+                **{
+                    f'sampler/{key}': value
+                    for key, value in sampler_diagnostics.items()
+                },
+                **{
+                    f'evaluation/{key}': value
+                    for key, value in evaluation_diagnostics.items()
+                },
+            })
 
-                yield diagnostics
+            yield diagnostics
 
-            self.sampler.terminate()
+        self.sampler.terminate()
 
         self._training_after_hook()
 
