@@ -115,9 +115,6 @@ class SAC(RLAlgorithm, Serializable):
         self._action_shape = action_shape
 
         self._build()
-        # TODO(hartikainen): Should the _initialize_tf_variables call happen
-        # outside of this class/method?
-        self._initialize_tf_variables()
 
     def _build(self):
         self._training_ops = {}
