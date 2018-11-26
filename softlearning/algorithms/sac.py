@@ -132,11 +132,11 @@ class SAC(RLAlgorithm, Serializable):
         uninit_vars = []
         for var in tf.global_variables() + tf.local_variables():
             try:
-                self._sess.run(var)
+                self._session.run(var)
             except tf.errors.FailedPreconditionError:
                 uninit_vars.append(var)
 
-        self._sess.run(tf.variables_initializer(uninit_vars))
+        self._session.run(tf.variables_initializer(uninit_vars))
 
     def train(self, *args, **kwargs):
         """Initiate training of the SAC instance."""
@@ -381,7 +381,7 @@ class SAC(RLAlgorithm, Serializable):
 
         feed_dict = self._get_feed_dict(iteration, batch)
 
-        self._sess.run(self._training_ops, feed_dict)
+        self._session.run(self._training_ops, feed_dict)
 
         if iteration % self._target_update_interval == 0:
             # Run target ops here.
@@ -419,7 +419,7 @@ class SAC(RLAlgorithm, Serializable):
 
         feed_dict = self._get_feed_dict(iteration, batch)
 
-        (Q_values, Q_losses, alpha, global_step) = self._sess.run(
+        (Q_values, Q_losses, alpha, global_step) = self._session.run(
             (self._Q_values,
              self._Q_losses,
              self._alpha,

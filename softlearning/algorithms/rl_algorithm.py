@@ -63,7 +63,7 @@ class RLAlgorithm(object):
         self._eval_deterministic = eval_deterministic
         self._eval_render = eval_render
 
-        self._sess = tf.keras.backend.get_session()
+        self._session = tf.keras.backend.get_session()
 
         self._env = None
         self._policy = None
@@ -131,7 +131,7 @@ class RLAlgorithm(object):
 
         evaluation_env = env.copy() if self._eval_n_episodes else None
 
-        with self._sess.as_default():
+        with self._session.as_default():
             gt.rename_root('RLAlgorithm')
             gt.reset()
             gt.set_def_unique(False)

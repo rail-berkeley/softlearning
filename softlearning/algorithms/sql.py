@@ -121,7 +121,7 @@ class SQL(RLAlgorithm):
         if use_saved_policy:
             saved_policy_params = policy.get_param_values()
 
-        self._sess.run(tf.global_variables_initializer())
+        self._session.run(tf.global_variables_initializer())
 
         if use_saved_Q:
             self._Q.set_param_values(saved_Q_params)
@@ -312,7 +312,7 @@ class SQL(RLAlgorithm):
         """Run the operations for updating training and target ops."""
 
         feed_dict = self._get_feed_dict(batch)
-        self._sess.run(self._training_ops, feed_dict)
+        self._session.run(self._training_ops, feed_dict)
 
         if iteration % self._Q_target_update_interval == 0 and self._train_Q:
             self._update_target()
@@ -341,7 +341,7 @@ class SQL(RLAlgorithm):
         """
 
         feeds = self._get_feed_dict(batch)
-        Q_np, bellman_residual = self._sess.run(
+        Q_np, bellman_residual = self._session.run(
             [self._Q_values, self._bellman_residual], feeds)
 
         diagnostics = OrderedDict({
