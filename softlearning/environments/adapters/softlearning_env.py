@@ -1,7 +1,9 @@
 """Implements the SoftlearningEnv that is usable in softlearning algorithms."""
 
 from abc import ABCMeta, abstractmethod
+from collections import defaultdict
 
+import numpy as np
 from serializable import Serializable
 
 
@@ -208,23 +210,35 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
         raise NotImplementedError
 
     def get_path_infos(self, paths, *args, **kwargs):
-        if len(paths) > 1:
-            print("Warning: This implementation expects only one path at a"
-                  " time.")
-            return {}
+        """Log some general diagnostics from the env infos.
 
-        keys = list(paths[0]['env_infos'][0].keys())
-        path_results = {
-            k: [
-                env_info[k]
-                for path in paths
-                for env_info in path['env_infos']
-            ] for k in keys
-        }
+        TODO(hartikainen): These logs don't make much sense right now. Need to
+        figure out better format for logging general env infos.
+        """
+        keys = list(paths[0]['infos'][0].keys())
 
-        results = {}
-        for info_key, info_values in path_results.items():
-            results[info_key + '-first'] = info_values[0]
-            results[info_key + '-last'] = info_values[-1]
+        results = defaultdict(list)
 
-        return results
+        for path in paths:
+            path_results = {
+                k: [
+                    env_info[k]
+                    for path in paths
+                    for env_info in path['infos']
+                ] for k in keys
+            }
+            for info_key, info_values in path_results.items():
+                results[info_key + '-first'].append(info_values[0])
+                results[info_key + '-last'].append(info_values[-1])
+                results[info_key + '-mean'].append(np.mean(info_values))
+                results[info_key + '-median'].append(np.median(info_values))
+                results[info_key + '-range'].append(np.ptp(info_values))
+
+        aggregated_results = {}
+        for key, value in results.items():
+            aggregated_results[key + '-mean'] = np.mean(value)
+            aggregated_results[key + '-median'] = np.median(value)
+            aggregated_results[key + '-min'] = np.min(value)
+            aggregated_results[key + '-max'] = np.max(value)
+
+        return aggregated_results

@@ -53,12 +53,12 @@ def rollout(env,
     sampler.initialize(env, policy, pool)
 
     images = []
-    env_infos = []
+    infos = []
 
     t = 0
     for t in range(path_length):
         observation, reward, terminal, info = sampler.sample()
-        env_infos.append(info)
+        infos.append(info)
 
         if callback is not None:
             callback(observation)
@@ -77,7 +77,7 @@ def rollout(env,
     assert pool._size == t + 1
 
     path = pool.batch_by_indices(np.arange(pool._size))
-    path['env_infos'] = env_infos
+    path['infos'] = infos
 
     if render_mode == 'rgb_array':
         path['images'] = np.stack(images, axis=0)

@@ -134,7 +134,7 @@ class MultiGoalEnv(MujocoEnv, EzPickle):
         self._env_lines = []
 
         for path in paths:
-            positions = np.stack([info['pos'] for info in path['env_infos']])
+            positions = np.stack([info['pos'] for info in path['infos']])
             xx = positions[:, 0]
             yy = positions[:, 1]
             self._env_lines += self._ax.plot(xx, yy, 'b')
