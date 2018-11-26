@@ -3,6 +3,8 @@ from numbers import Number
 
 import numpy as np
 import tensorflow as tf
+from tensorflow.python.training import training_util
+
 
 from serializable import Serializable
 
@@ -150,15 +152,9 @@ class SAC(RLAlgorithm, Serializable):
             **kwargs)
 
     def _init_global_step(self):
-        self.global_step = tf.get_variable(
-            "global_step",
-            (),
-            trainable=False,
-            dtype=tf.int64,
-            initializer=tf.constant_initializer(0, dtype=tf.int64))
-
+        self.global_step = training_util.get_or_create_global_step()
         self._training_ops.update({
-            'global_step': tf.assign_add(self.global_step, 1)
+            'increment_global_step': training_util._increment_global_step(1)
         })
 
     def _init_placeholders(self):
