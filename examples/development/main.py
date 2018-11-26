@@ -1,5 +1,6 @@
 import os
 
+import tensorflow as tf
 from ray import tune
 
 from softlearning.environments.utils import get_environment_from_variant
@@ -26,6 +27,8 @@ class ExperimentRunner(tune.Trainable):
         if 'ray' in variant['mode']:
             set_seed(variant['run_params']['seed'])
 
+        self._session = tf.keras.backend.get_session()
+
         env = get_environment_from_variant(variant)
         replay_pool = get_replay_pool_from_variant(variant, env)
         sampler = get_sampler_from_variant(variant)
@@ -42,6 +45,7 @@ class ExperimentRunner(tune.Trainable):
             Qs=Qs,
             pool=replay_pool,
             sampler=sampler,
+            session=self._session,
         )
 
         self.train_generator = self.algorithm.train()

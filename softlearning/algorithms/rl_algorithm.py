@@ -26,7 +26,8 @@ class RLAlgorithm(object):
             eval_n_episodes=10,
             eval_deterministic=True,
             eval_render=False,
-            control_interval=1
+            control_interval=1,
+            session=None,
     ):
         """
         Args:
@@ -63,7 +64,7 @@ class RLAlgorithm(object):
         self._eval_deterministic = eval_deterministic
         self._eval_render = eval_render
 
-        self._session = tf.keras.backend.get_session()
+        self._session = session or tf.keras.backend.get_session()
 
         self._env = None
         self._policy = None
