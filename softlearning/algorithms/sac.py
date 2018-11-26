@@ -5,9 +5,6 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.training import training_util
 
-
-from serializable import Serializable
-
 from .rl_algorithm import RLAlgorithm
 
 
@@ -15,7 +12,7 @@ def td_target(reward, discount, next_value):
     return reward + discount * next_value
 
 
-class SAC(RLAlgorithm, Serializable):
+class SAC(RLAlgorithm):
     """Soft Actor-Critic (SAC)
 
     References
@@ -24,6 +21,30 @@ class SAC(RLAlgorithm, Serializable):
         Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning
         with a Stochastic Actor," Deep Learning Symposium, NIPS 2017.
     """
+
+    # Key presenting values that need to be saved using tf.train.Checkpoint
+    # rather than pickle.
+    TF_KEYS = (
+        '_policy',
+        '_initial_exploration_policy',
+        '_Qs',
+        '_Q_targets',
+        '_training_ops',
+        'global_step',
+        '_iteration_ph',
+        '_observations_ph',
+        '_next_observations_ph',
+        '_actions_ph',
+        '_rewards_ph',
+        '_terminals_ph',
+        '_alpha_optimizer',
+        '_alpha_train_op',
+        '_alpha',
+        '_Q_values',
+        '_Q_losses',
+        '_session',
+        '_unconditional_checkpoint_dependencies',
+        '_unconditional_dependency_names')
 
     def __init__(
             self,
@@ -71,8 +92,6 @@ class SAC(RLAlgorithm, Serializable):
             save_full_state (`bool`): If True, save the full class in the
                 snapshot. See `self.get_snapshot` for more information.
         """
-
-        self._Serializable__initialize(locals())
 
         super(SAC, self).__init__(**kwargs)
 
@@ -445,28 +464,3 @@ class SAC(RLAlgorithm, Serializable):
     def get_snapshot(self, epoch):
         """TODO(hartikainen): This is temporarily empty due to refactor."""
         return None
-
-    def __getstate__(self):
-        """Get Serializable state of the RLALgorithm instance."""
-
-        d = Serializable.__getstate__(self)
-        d.update({
-            'Qs-params': tuple(Q.get_weights() for Q in self._Qs),
-            'V-params': self._V.get_weights(),
-            'policy-params': self._policy.get_param_values(),
-            'pool': self._pool.__getstate__(),
-            'env': self._env.__getstate__(),
-        })
-        return d
-
-    def __setstate__(self, d):
-        """Set Serializable state fo the RLAlgorithm instance."""
-
-        Serializable.__setstate__(self, d)
-
-        for i, Qs_params in enumerate(d['Qs-params']):
-            self._Qs[i].set_weights(Qs_params)
-        self._V.set_weights(d['V-params'])
-        self._policy.set_param_values(d['policy-params'])
-        self._pool.__setstate__(d['pool'])
-        self._env.__setstate__(d['env'])
