@@ -1,7 +1,6 @@
 import abc
 from collections import OrderedDict
 import gtimer as gt
-from collections import OrderedDict
 
 import tensorflow as tf
 import numpy as np
@@ -9,12 +8,14 @@ import numpy as np
 from softlearning.samplers import rollouts
 
 
-class RLAlgorithm(object):
+class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
     """Abstract RLAlgorithm.
 
     Implements the _train and _evaluate methods to be used
     by classes inheriting from RLAlgorithm.
     """
+
+    TF_KEYS = ()
 
     def __init__(
             self,
@@ -306,3 +307,18 @@ class RLAlgorithm(object):
     @abc.abstractmethod
     def _init_training(self):
         raise NotImplementedError
+
+    def __getstate__(self):
+        """Get serializable state NOT including tf objects/variables."""
+
+        state = self.__dict__
+        state = {
+            key: value for key, value in state.items()
+            if key not in self.TF_KEYS
+        }
+
+        return state
+
+    def __setstate__(self, state):
+        """Set Serializable state fo the RLAlgorithm instance."""
+        self.__dict__.update(state)
