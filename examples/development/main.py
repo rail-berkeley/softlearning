@@ -1,5 +1,7 @@
 import os
+import pickle
 
+import numpy as np
 import tensorflow as tf
 from ray import tune
 
@@ -27,15 +29,21 @@ class ExperimentRunner(tune.Trainable):
         if 'ray' in variant['mode']:
             set_seed(variant['run_params']['seed'])
 
+        self._variant = variant
+
         self._session = tf.keras.backend.get_session()
 
-        env = get_environment_from_variant(variant)
-        replay_pool = get_replay_pool_from_variant(variant, env)
-        sampler = get_sampler_from_variant(variant)
-        preprocessor = get_preprocessor_from_variant(variant, env)
-        Qs = get_Q_function_from_variant(variant, env)
-        policy = get_policy_from_variant(variant, env, Qs, preprocessor)
-        initial_exploration_policy = get_policy('UniformPolicy', env)
+        env = self.env = get_environment_from_variant(variant)
+        replay_pool = self.replay_pool = (
+            get_replay_pool_from_variant(variant, env))
+        sampler = self.sampler = get_sampler_from_variant(variant)
+        preprocessor = self.preprocessor = (
+            get_preprocessor_from_variant(variant, env))
+        Qs = self.Qs = get_Q_function_from_variant(variant, env)
+        policy = self.policy = (
+            get_policy_from_variant(variant, env, Qs, preprocessor))
+        initial_exploration_policy = self.initial_exploration_policy = (
+            get_policy('UniformPolicy', env))
 
         self.algorithm = get_algorithm_from_variant(
             variant=variant,
@@ -48,6 +56,7 @@ class ExperimentRunner(tune.Trainable):
             session=self._session,
         )
 
+        self._session = tf.keras.backend.get_session()
         initialize_tf_variables(self._session, only_uninitialized=True)
 
         self.train_generator = None
@@ -62,11 +71,79 @@ class ExperimentRunner(tune.Trainable):
         diagnostics = next(self.train_generator)
         return diagnostics
 
-    def _save(self, checkpoint_dir):
-        pass
+    def _pickle_path(self, checkpoint_dir):
+        return os.path.join(checkpoint_dir, 'checkpoint.pkl')
 
-    def _restore(self, checkpoint):
-        pass
+    def _tf_checkpoint_prefix(self, checkpoint_dir):
+        return os.path.join(checkpoint_dir, 'checkpoint')
+
+    def _get_tf_checkpoint(self):
+        tf_checkpoint_items = {
+            'Q_0': self.Qs[0],
+            'Q_1': self.Qs[1],
+            'initial_exploration_policy': self.initial_exploration_policy,
+        }
+
+        if self.preprocessor is not None:
+            tf_checkpoint_items['preprocessor'] = self.preprocessor
+
+        tf_checkpoint = tf.train.Checkpoint(**tf_checkpoint_items)
+
+        return tf_checkpoint
+
+    def _save(self, checkpoint_dir):
+        """Implements the checkpoint logic.
+
+        TODO(hartikainen): This implementation is currently very hacky. Things
+        that need to be fixed:
+          - Figure out how serialize/save tf.keras.Model subclassing. The
+            current implementation just dumps the weights in a pickle, which
+            is not optimal.
+          - Try to unify all the saving and loading into easily
+            extendable/maintainable interfaces. Currently we use
+            `tf.train.Checkpoint` and `pickle.dump` in very unorganized way
+            which makes things not so usable.
+        """
+        pickleable = {
+            'variant': self._variant,
+            'env': self.env,
+            'replay_pool': self.replay_pool,
+            'sampler': self.sampler,
+            'algorithm': self.algorithm,
+            'policy_weights': self.policy.get_weights()
+        }
+
+        pickle_path = self._pickle_path(checkpoint_dir)
+        with open(pickle_path, 'wb') as f:
+            pickle.dump(pickleable, f)
+
+        tf_checkpoint = self._get_tf_checkpoint()
+        tf_checkpoint.save(
+            file_prefix=self._tf_checkpoint_prefix(checkpoint_dir),
+            session=self._session)
+
+        return os.path.join(checkpoint_dir, '')
+
+    def _restore(self, checkpoint_dir):
+        assert isinstance(checkpoint_dir, str), checkpoint_dir
+
+        pickle_path = self._pickle_path(checkpoint_dir)
+        with open(pickle_path, 'rb') as f:
+            pickleable = pickle.load(f)
+
+        np.testing.assert_equal(self._variant, pickleable['variant'])
+
+        self.env = pickleable['env']
+        self.replay_pool = pickleable['replay_pool']
+        self.sampler = pickleable['sampler']
+
+        tf_checkpoint = self._get_tf_checkpoint()
+        status = tf_checkpoint.restore(tf.train.latest_checkpoint(
+            self._tf_checkpoint_prefix(checkpoint_dir)))
+        status.initialize_or_restore(self._session)
+
+        self.algorithm.__setstate__(pickleable['algorithm'].__getstate__())
+        self.policy.set_weights(pickleable['policy_weights'])
 
 
 def main():
