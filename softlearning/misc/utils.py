@@ -15,6 +15,27 @@ DEFAULT_SNAPSHOT_MODE = 'none'
 DEFAULT_SNAPSHOT_GAP = 1000
 
 
+def initialize_tf_variables(session, only_uninitialized=True):
+    variables = tf.global_variables() + tf.local_variables()
+
+    def is_initialized(variable):
+        try:
+            session.run(variable)
+            return True
+        except tf.errors.FailedPreconditionError:
+            return False
+
+        return False
+
+    if only_uninitialized:
+        variables = [
+            variable for variable in variables
+            if not is_initialized(variable)
+        ]
+
+    session.run(tf.variables_initializer(variables))
+
+
 def set_seed(seed):
     seed %= 4294967294
     random.seed(seed)
