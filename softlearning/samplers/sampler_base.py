@@ -54,3 +54,18 @@ class BaseSampler(object):
     def get_diagnostics(self):
         diagnostics = OrderedDict({'pool-size': self.pool.size})
         return diagnostics
+
+    def __getstate__(self):
+        state = {
+            key: value for key, value in self.__dict__.items()
+            if key not in ('env', 'policy', 'pool')
+        }
+
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+        self.env = None
+        self.policy = None
+        self.pool = None
