@@ -194,7 +194,7 @@ ENV_PARAMS = {
     }
 }
 
-NUM_SNAPSHOTS = 5
+NUM_CHECKPOINTS = 5
 
 
 def get_variant_spec(universe, domain, task, policy):
@@ -241,10 +241,9 @@ def get_variant_spec(universe, domain, task, policy):
         },
         'run_params': {
             'seed': tune.grid_search([1, 2, 3, 4, 5]),
-            'snapshot_mode': 'gap',
-            'snapshot_gap': NUM_EPOCHS_PER_DOMAIN.get(
-                domain, DEFAULT_NUM_EPOCHS) // NUM_SNAPSHOTS,
-            'sync_pkl': True,
+            'checkpoint_at_end': True,
+            'checkpoint_frequency': NUM_EPOCHS_PER_DOMAIN.get(
+                domain, DEFAULT_NUM_EPOCHS) // NUM_CHECKPOINTS
         },
     }
 

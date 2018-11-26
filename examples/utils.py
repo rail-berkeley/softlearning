@@ -128,6 +128,27 @@ def get_parser(allow_policy_list=False):
                         help=("Resources to allocate for each trial. Passed"
                               " to `tune.run_experiments`."))
 
+    parser.add_argument('--checkpoint-frequency',
+                        type=int,
+                        default=None,
+                        help=(
+                            "Save the training checkpoint every this many"
+                            " epochs. If set, takes precedence over"
+                            " variant['run_params']['checkpoint_frequency']."))
+    parser.add_argument('--checkpoint-at-end',
+                        type=bool,
+                        default=None,
+                        help=(
+                            "Whether a checkpoint should be saved at the end"
+                            " of training. If set, takes precedence over"
+                            " variant['run_params']['checkpoint_at_end']."))
+    parser.add_argument('--restore',
+                        type=str,
+                        default=None,
+                        help=(
+                            "Path to checkpoint. Only makes sense to set if"
+                            " running 1 trial. Defaults to None."))
+
     if allow_policy_list:
         parser.add_argument('--policy',
                             type=str,
@@ -232,6 +253,17 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
             'local_dir': local_dir,
             'num_samples': args.num_samples,
             'upload_dir': args.upload_dir,
+            'checkpoint_freq': (
+                args.checkpoint_frequency
+                if args.checkpoint_frequency is not None
+                else variant_spec['run_params'].get('checkpoint_frequency', 0)
+            ),
+            'checkpoint_at_end': (
+                args.checkpoint_at_end
+                if args.checkpoint_at_end is not None
+                else variant_spec['run_params'].get('checkpoint_at_end', True)
+            ),
+            'restore': args.restore,  # Defaults to None
         }
         for i, variant_spec in enumerate(variant_specs)
     })
