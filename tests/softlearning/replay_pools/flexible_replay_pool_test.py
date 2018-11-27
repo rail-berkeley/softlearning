@@ -21,6 +21,44 @@ class FlexibleReplayPoolTest(unittest.TestCase):
             }
         )
 
+    def test_multi_dimensional_field(self):
+        # Fill fields with random data
+        pool = FlexibleReplayPool(
+            max_size=10,
+            fields={
+                'field1': {
+                    'shape': (1, 3),
+                    'dtype': 'float32'
+                },
+                'field2': {
+                    'shape': (1, ),
+                    'dtype': 'float32'
+                },
+            }
+        )
+        num_samples = pool._max_size // 2
+        pool.add_samples(num_samples, **{
+            field_name: np.random.uniform(
+                0, 1, (num_samples, *field_attrs['shape']))
+            for field_name, field_attrs in pool.fields.items()
+        })
+
+        self.assertEqual(pool._size, num_samples)
+
+        serialized = pickle.dumps(pool)
+        deserialized = pickle.loads(serialized)
+        for key in deserialized.__dict__:
+            np.testing.assert_array_equal(
+                pool.__dict__[key], deserialized.__dict__[key])
+
+        self.assertNotEqual(id(pool), id(deserialized))
+
+        self.assertEqual(deserialized._size, num_samples)
+        for field_name, field_attrs in pool.fields.items():
+            np.testing.assert_array_equal(
+                getattr(pool, field_name),
+                getattr(deserialized, field_name))
+
     def test_field_initialization(self):
         # Fill fields with random data
         for field_name, field_attrs in self.pool.fields.items():
@@ -31,13 +69,15 @@ class FlexibleReplayPoolTest(unittest.TestCase):
 
             np.testing.assert_array_equal(field_values, 0.0)
 
-    def test_serialize_deserialize(self):
+    def test_serialize_deserialize_full(self):
         # Fill fields with random data
-        for field_name, field_attrs in self.pool.fields.items():
-            setattr(self.pool,
-                    field_name,
-                    np.random.uniform(0, 1, (
-                        self.pool._max_size, *field_attrs['shape'])))
+        self.pool.add_samples(self.pool._max_size, **{
+            field_name: np.random.uniform(
+                0, 1, (self.pool._max_size, *field_attrs['shape']))
+            for field_name, field_attrs in self.pool.fields.items()
+        })
+
+        self.assertEqual(self.pool._size, self.pool._max_size)
 
         serialized = pickle.dumps(self.pool)
         deserialized = pickle.loads(serialized)
@@ -47,6 +87,53 @@ class FlexibleReplayPoolTest(unittest.TestCase):
 
         self.assertNotEqual(id(self.pool), id(deserialized))
 
+        self.assertEqual(deserialized._size, deserialized._max_size)
+        for field_name, field_attrs in self.pool.fields.items():
+            np.testing.assert_array_equal(
+                getattr(self.pool, field_name),
+                getattr(deserialized, field_name))
+
+    def test_serialize_deserialize_not_full(self):
+        # Fill fields with random data
+        num_samples = self.pool._max_size // 2
+        self.pool.add_samples(num_samples, **{
+            field_name: np.random.uniform(
+                0, 1, (num_samples, *field_attrs['shape']))
+            for field_name, field_attrs in self.pool.fields.items()
+        })
+
+        self.assertEqual(self.pool._size, num_samples)
+
+        serialized = pickle.dumps(self.pool)
+        deserialized = pickle.loads(serialized)
+        for key in deserialized.__dict__:
+            np.testing.assert_array_equal(
+                self.pool.__dict__[key], deserialized.__dict__[key])
+
+        self.assertNotEqual(id(self.pool), id(deserialized))
+
+        self.assertEqual(deserialized._size, num_samples)
+        for field_name, field_attrs in self.pool.fields.items():
+            np.testing.assert_array_equal(
+                getattr(self.pool, field_name),
+                getattr(deserialized, field_name))
+
+    def test_serialize_deserialize_empty(self):
+        # Fill fields with random data
+
+        self.assertEqual(self.pool._size, 0)
+        for field_name in self.pool.field_names:
+            np.testing.assert_array_equal(getattr(self.pool, field_name), 0.0)
+
+        serialized = pickle.dumps(self.pool)
+        deserialized = pickle.loads(serialized)
+        for key in deserialized.__dict__:
+            np.testing.assert_array_equal(
+                self.pool.__dict__[key], deserialized.__dict__[key])
+
+        self.assertNotEqual(id(self.pool), id(deserialized))
+
+        self.assertEqual(deserialized._size, 0)
         for field_name, field_attrs in self.pool.fields.items():
             np.testing.assert_array_equal(
                 getattr(self.pool, field_name),
@@ -145,7 +232,6 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         for key, values in batch.items():
             np.testing.assert_array_equal(np.flip(samples[key]), values)
             self.assertEqual(values.shape, (self.pool._max_size, 1))
-        pass
 
 
 if __name__ == '__main__':

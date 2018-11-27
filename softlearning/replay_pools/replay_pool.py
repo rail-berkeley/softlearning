@@ -2,38 +2,26 @@ import abc
 
 
 class ReplayPool(object):
-    """
-    A class used to save and replay data.
-    """
+    """A class used to save and replay data."""
 
     @abc.abstractmethod
     def add_sample(self, observation, action, reward, next_observation,
                    terminal, **kwargs):
-        """
-        Add a transition tuple.
-        """
+        """Add a transition tuple."""
         pass
 
     @abc.abstractmethod
     def terminate_episode(self):
-        """
-        Let the replay pool know that the episode has terminated in case some
-        special book-keeping has to happen.
-        :return:
-        """
+        """Clean up pool after episode termination."""
         pass
 
     @property
     @abc.abstractmethod
     def size(self, **kwargs):
-        """
-        :return: # of unique items that can be sampled.
-        """
         pass
 
     def add_path(self, path):
-        """
-        Add a path to the replay pool.
+        """Add a rollout to the replay pool.
 
         This default implementation naively goes through every step, but you
         may want to optimize this.
@@ -53,9 +41,5 @@ class ReplayPool(object):
 
     @abc.abstractmethod
     def random_batch(self, batch_size):
-        """
-        Return a batch of size `batch_size`.
-        :param batch_size:
-        :return:
-        """
+        """Return a random batch of size `batch_size`."""
         pass
