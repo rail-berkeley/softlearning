@@ -47,7 +47,7 @@ class RemoteSampler(BaseSampler):
 
     def sample(self, timeout=0):
         if self._remote_path is None:
-            policy_params = self.policy.get_param_values()
+            policy_params = self.policy.get_weights()
             self._remote_path = self._remote_environment.rollout.remote(
                 policy_params, self._max_path_length)
 
@@ -104,8 +104,8 @@ class _RemoteEnv(object):
     def initialized(self):
         return self._initialized
 
-    def rollout(self, policy_params, path_length):
-        self._policy.set_param_values(policy_params)
+    def rollout(self, policy_weights, path_length):
+        self._policy.set_weights(policy_weights)
         path = rollout(self._env, self._policy, path_length)
 
         return path
