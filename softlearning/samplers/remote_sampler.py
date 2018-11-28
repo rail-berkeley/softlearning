@@ -21,27 +21,44 @@ class RemoteSampler(BaseSampler):
         self._last_path_return = 0
         self._max_path_return = -np.inf
 
-    def initialize(self, env, policy, pool):
-        super(RemoteSampler, self).initialize(env, policy, pool)
-
-        ray.init()
-
+    def _create_remote_environment(self, env, policy):
         env_pkl = pickle.dumps(env)
         policy_pkl = pickle.dumps(policy)
 
+        if not ray.is_initialized():
+            ray.init()
+
         self._remote_environment = _RemoteEnv.remote(env_pkl, policy_pkl)
 
-    def sample(self):
+        # Block until the env and policy is ready
+        initialized = ray.get(self._remote_environment.initialized.remote())
+        assert initialized, initialized
+
+    def initialize(self, env, policy, pool):
+        super(RemoteSampler, self).initialize(env, policy, pool)
+        self._create_remote_environment(env, policy)
+
+    def wait_for_path(self, timeout=1):
+        if self._remote_path is None:
+            return [True]
+
+        path_ready, _ = ray.wait([self._remote_path], timeout=timeout)
+        return path_ready
+
+    def sample(self, timeout=0):
         if self._remote_path is None:
             policy_params = self.policy.get_param_values()
             self._remote_path = self._remote_environment.rollout.remote(
                 policy_params, self._max_path_length)
 
-        path_ready, _ = ray.wait([self._remote_path], timeout=0)
+        path_ready = self.wait_for_path(timeout=timeout)
 
         if len(path_ready) or not self.batch_ready():
             path = ray.get(self._remote_path)
+            self._last_n_paths.appendleft(path)
+
             self.pool.add_path(path)
+
             self._remote_path = None
             self._total_samples += len(path['observations'])
             self._last_path_return = np.sum(path['rewards'])
@@ -60,18 +77,32 @@ class RemoteSampler(BaseSampler):
 
         return diagnostics
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state['_remote_environment']
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._create_remote_environment(self.env, self.policy)
+
 
 @ray.remote
 class _RemoteEnv(object):
     def __init__(self, env_pkl, policy_pkl):
-        self._sess = tf.keras.backend.get_session()
-        self._sess.run(tf.global_variables_initializer())
+        self._session = tf.keras.backend.get_session()
+        self._session.run(tf.global_variables_initializer())
 
         self._env = pickle.loads(env_pkl)
         self._policy = pickle.loads(policy_pkl)
 
         if hasattr(self._env, 'initialize'):
             self._env.initialize()
+
+        self._initialized = True
+
+    def initialized(self):
+        return self._initialized
 
     def rollout(self, policy_params, path_length):
         self._policy.set_param_values(policy_params)
