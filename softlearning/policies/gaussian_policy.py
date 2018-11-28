@@ -7,11 +7,13 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from softlearning.distributions.squash_bijector import SquashBijector
 
+from .base_policy import BasePolicy
+
 
 SCALE_DIAG_MIN_MAX = (-20, 2)
 
 
-class GaussianPolicy(tf.keras.Model):
+class GaussianPolicy(BasePolicy):
     """TODO(hartikainen): Implement regularization"""
 
     def __init__(self,
@@ -26,6 +28,7 @@ class GaussianPolicy(tf.keras.Model):
                  *args,
                  **kwargs):
         super(GaussianPolicy, self).__init__(*args, **kwargs)
+        self._Serializable__initialize(locals())
 
         self._squash = squash
         self._regularization_coeff = regularization_coeff
@@ -130,10 +133,15 @@ class GaussianPolicy(tf.keras.Model):
             self.condition_inputs,
             (shift, log_scale_diag, log_pis, raw_actions, actions))
 
+    def get_weights(self):
+        return self.actions_model.get_weights()
+
+    def set_weights(self, *args, **kwargs):
+        return self.actions_model.set_weights(*args, **kwargs)
+
     @property
-    def trainable_weights(self):
-        """Due to our nested model structure, we need to filter duplicates."""
-        return list(set(super(GaussianPolicy, self).trainable_weights))
+    def trainable_variables(self):
+        return self.actions_model.trainable_variables
 
     @property
     def non_trainable_weights(self):

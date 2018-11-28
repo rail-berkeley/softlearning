@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import pickle
 
 import numpy as np
 import tensorflow as tf
@@ -63,6 +64,16 @@ class UniformPolicyTest(tf.test.TestCase):
         diagnostics = self.policy.get_diagnostics([observations_np])
         self.assertTrue(isinstance(diagnostics, OrderedDict))
         self.assertFalse(diagnostics)
+
+    def test_serialize_deserialize(self):
+        observation1_np = self.env.reset()
+        observation2_np = self.env.step(self.env.action_space.sample())[0]
+        observations_np = np.stack((observation1_np, observation2_np))
+
+        deserialized = pickle.loads(pickle.dumps(self.policy))
+        np.testing.assert_equal(
+            self.policy.actions_np([observations_np]).shape,
+            deserialized.actions_np([observations_np]).shape)
 
 
 if __name__ == '__main__':

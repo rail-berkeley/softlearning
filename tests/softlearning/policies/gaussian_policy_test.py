@@ -1,3 +1,5 @@
+import os
+import pickle
 from collections import OrderedDict
 
 import numpy as np
@@ -82,6 +84,30 @@ class GaussianPolicyTest(tf.test.TestCase):
 
         for value in diagnostics.values():
             self.assertTrue(np.isscalar(value))
+
+    def test_serialize_deserialize(self):
+        observation1_np = self.env.reset()
+        observation2_np = self.env.step(self.env.action_space.sample())[0]
+        observations_np = np.stack(
+            (observation1_np, observation2_np)
+        ).astype(np.float32)
+
+        weights = self.policy.get_weights()
+        actions_np = self.policy.actions_np([observations_np])
+        log_pis_np = self.policy.log_pis_np([observations_np], actions_np)
+
+        serialized = pickle.dumps(self.policy)
+        deserialized = pickle.loads(serialized)
+
+        weights_2 = deserialized.get_weights()
+        log_pis_np_2 = deserialized.log_pis_np([observations_np], actions_np)
+
+        for weight, weight_2 in zip(weights, weights_2):
+            np.testing.assert_array_equal(weight, weight_2)
+
+        np.testing.assert_array_equal(log_pis_np, log_pis_np_2)
+        np.testing.assert_equal(
+            actions_np.shape, deserialized.actions_np([observations_np]).shape)
 
 
 if __name__ == '__main__':
