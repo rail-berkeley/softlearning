@@ -1,11 +1,14 @@
 from copy import deepcopy
 
 
-def get_convnet_preprocessor(observation_space,
+def get_convnet_preprocessor(observation_shape,
                              name='convnet_preprocessor',
                              **kwargs):
-    preprocessor = None
-    raise NotImplementedError
+    from .convnet import convnet_preprocessor
+    preprocessor = convnet_preprocessor(
+        input_shapes=(observation_shape, ), name=name, **kwargs)
+
+    return preprocessor
 
 
 def get_feedforward_preprocessor(observation_shape,
