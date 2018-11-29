@@ -17,11 +17,22 @@ class BaseSampler(object):
         self.env = None
         self.policy = None
         self.pool = None
+        self.observation_preprocessor = None
 
-    def initialize(self, env, policy, pool):
+    def preprocess_observations(self, observations):
+        if self.observation_preprocessor is None:
+            return observations
+
+        preprocessed_observations = (
+            self.observation_preprocessor.predict([observations]))
+
+        return preprocessed_observations
+
+    def initialize(self, env, policy, pool, observation_preprocessor=None):
         self.env = env
         self.policy = policy
         self.pool = pool
+        self.observation_preprocessor = observation_preprocessor
 
     def set_policy(self, policy):
         self.policy = policy
@@ -58,7 +69,8 @@ class BaseSampler(object):
     def __getstate__(self):
         state = {
             key: value for key, value in self.__dict__.items()
-            if key not in ('env', 'policy', 'pool')
+            if key not in
+            ('env', 'policy', 'pool', 'observation_preprocessor')
         }
 
         return state
@@ -69,3 +81,4 @@ class BaseSampler(object):
         self.env = None
         self.policy = None
         self.pool = None
+        self.observation_preprocessor = None

@@ -75,7 +75,11 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         self._epoch = 0
         self._timestep = 0
 
-    def _initial_exploration_hook(self, env, initial_exploration_policy, pool):
+    def _initial_exploration_hook(self,
+                                  env,
+                                  initial_exploration_policy,
+                                  pool,
+                                  observation_preprocessor=None):
         if self._n_initial_exploration_steps < 1: return
 
         if not initial_exploration_policy:
@@ -83,8 +87,10 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 "Initial exploration policy must be provided when"
                 " n_initial_exploration_steps > 0.")
 
-        self.sampler.initialize(env, initial_exploration_policy, pool)
-        for i in range(self._n_initial_exploration_steps):
+        self.sampler.initialize(
+            env, initial_exploration_policy, pool,
+            observation_preprocessor=observation_preprocessor)
+        while self._pool.size < self._n_initial_exploration_steps:
             self.sampler.sample()
 
     def _training_before_hook(self):
@@ -126,7 +132,12 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         total_timestep = self._epoch * self._epoch_length + self._timestep
         return total_timestep
 
-    def _train(self, env, policy, pool, initial_exploration_policy=None):
+    def _train(self,
+               env,
+               policy,
+               pool,
+               initial_exploration_policy=None,
+               observation_preprocessor=None):
         """Return a generator that performs RL training.
 
         Args:
@@ -141,9 +152,12 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             self._init_training()
 
             self._initial_exploration_hook(
-                env, initial_exploration_policy, pool)
+                env, initial_exploration_policy, pool,
+                observation_preprocessor=observation_preprocessor)
 
-        self.sampler.initialize(env, policy, pool)
+        self.sampler.initialize(
+            env, policy, pool,
+            observation_preprocessor=observation_preprocessor)
         evaluation_env = env.copy() if self._eval_n_episodes else None
 
         gt.reset_root()
@@ -172,7 +186,9 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
             training_paths = self.sampler.get_last_n_paths()
             gt.stamp('training_paths')
-            evaluation_paths = self._evaluation_paths(policy, evaluation_env)
+            evaluation_paths = self._evaluation_paths(
+                policy, evaluation_env,
+                observation_preprocessor=observation_preprocessor)
             gt.stamp('evaluation_paths')
 
             training_metrics = self._evaluate_rollouts(training_paths, env)
@@ -231,21 +247,31 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
         self._training_after_hook()
 
-    def _evaluation_paths(self, policy, evaluation_env):
+    def _evaluation_paths(self,
+                          policy,
+                          evaluation_env,
+                          observation_preprocessor=None):
         if self._eval_n_episodes < 1: return ()
 
         if hasattr(policy, 'deterministic'):
             with policy.deterministic(self._eval_deterministic):
                 # TODO: max_path_length should be a property of environment.
-                paths = rollouts(evaluation_env,
-                                 policy,
-                                 self.sampler._max_path_length,
-                                 self._eval_n_episodes,
-                                 render=self._eval_render)
+                paths = rollouts(
+                    evaluation_env,
+                    policy,
+                    self.sampler._max_path_length,
+                    self._eval_n_episodes,
+                    observation_preprocessor=observation_preprocessor,
+                    render=self._eval_render,
+                )
         else:
-            paths = rollouts(evaluation_env, policy,
-                             self.sampler._max_path_length,
-                             self._eval_n_episodes)
+            paths = rollouts(
+                evaluation_env,
+                policy,
+                self.sampler._max_path_length,
+                self._eval_n_episodes,
+                observation_preprocessor=observation_preprocessor,
+                render=self._eval_render,)
 
         return paths
 

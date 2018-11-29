@@ -27,6 +27,7 @@ class SAC(RLAlgorithm):
     TF_KEYS = (
         '_policy',
         '_initial_exploration_policy',
+        '_observation_preprocessor',
         '_Qs',
         '_Q_targets',
         '_training_ops',
@@ -50,6 +51,7 @@ class SAC(RLAlgorithm):
             self,
             env,
             policy,
+            observation_preprocessor,
             initial_exploration_policy,
             Qs,
             pool,
@@ -97,6 +99,7 @@ class SAC(RLAlgorithm):
 
         self._env = env
         self._policy = policy
+        self._observation_preprocessor = observation_preprocessor
         self._initial_exploration_policy = initial_exploration_policy
 
         self._Qs = Qs
@@ -164,6 +167,7 @@ class SAC(RLAlgorithm):
             self._policy,
             self._pool,
             initial_exploration_policy=self._initial_exploration_policy,
+            observation_preprocessor=self._observation_preprocessor,
             *args,
             **kwargs)
 
@@ -228,13 +232,26 @@ class SAC(RLAlgorithm):
                 name='raw_actions',
             )
 
+    def preprocess_observations(self, observations):
+        if self._observation_preprocessor is None:
+            return observations
+
+        preprocessed_observations = (
+            self._observation_preprocessor(observations)
+            if all(isinstance(o, tf.Tensor) for o in observations)
+            else self._observation_preprocessor.predict(observations))
+
+        return preprocessed_observations
+
     def _get_Q_target(self):
-        next_actions = self._policy.actions([self._next_observations_ph])
+        preprocessed_next_observations = self.preprocess_observations([
+            self._next_observations_ph])
+        next_actions = self._policy.actions([preprocessed_next_observations])
         next_log_pis = self._policy.log_pis(
-            [self._next_observations_ph], next_actions)
+            [preprocessed_next_observations], next_actions)
 
         next_Qs_values = tuple(
-            Q([self._next_observations_ph, next_actions])
+            Q([preprocessed_next_observations, next_actions])
             for Q in self._Q_targets)
 
         min_next_Q = tf.reduce_min(next_Qs_values, axis=0)
@@ -261,8 +278,11 @@ class SAC(RLAlgorithm):
 
         assert Q_target.shape.as_list() == [None, 1]
 
+        preprocessed_observations = self.preprocess_observations([
+            self._observations_ph])
+
         Q_values = self._Q_values = tuple(
-            Q([self._observations_ph, self._actions_ph])
+            Q([preprocessed_observations, self._actions_ph])
             for Q in self._Qs)
 
         Q_losses = self._Q_losses = tuple(
@@ -302,14 +322,11 @@ class SAC(RLAlgorithm):
         of the value function and policy function update rules.
         """
 
-        if (getattr(self._policy, '_observations_preprocessor', False)
-            and self._tf_summaries):
-            self.embeddings = self._policy._observations_preprocessor(
-                self._observations_ph)
-            tf.contrib.layers.summarize_activation(self.embeddings)
+        preprocessed_observations = self.preprocess_observations([
+            self._observations_ph])
 
-        actions = self._policy.actions([self._observations_ph])
-        log_pis = self._policy.log_pis([self._observations_ph], actions)
+        actions = self._policy.actions([preprocessed_observations])
+        log_pis = self._policy.log_pis([preprocessed_observations], actions)
 
         assert log_pis.shape.as_list() == [None, 1]
 
@@ -343,7 +360,7 @@ class SAC(RLAlgorithm):
             policy_prior_log_probs = 0.0
 
         Q_log_targets = tuple(
-            Q([self._observations_ph, actions])
+            Q([preprocessed_observations, actions])
             for Q in self._Qs)
         min_Q_log_target = tf.reduce_min(Q_log_targets, axis=0)
 
@@ -367,7 +384,12 @@ class SAC(RLAlgorithm):
             self.global_step,
             learning_rate=self._policy_lr,
             optimizer=tf.train.AdamOptimizer,
-            variables=self._policy.trainable_variables,
+            variables=(
+                self._policy.trainable_variables
+                + (self._observation_preprocessor.trainable_variables
+                   if self._observation_preprocessor is not None
+                   else [])
+            ),
             increment_global_step=False,
             name="policy_optimizer",
             summaries=(
@@ -449,8 +471,10 @@ class SAC(RLAlgorithm):
             'alpha': alpha,
         })
 
+        preprocessed_observations = self.preprocess_observations([
+            batch['observations']])
         policy_diagnostics = self._policy.get_diagnostics(
-            batch['observations'])
+            preprocessed_observations)
         diagnostics.update({
             f'policy/{key}': value
             for key, value in policy_diagnostics.items()

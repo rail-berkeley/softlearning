@@ -20,25 +20,41 @@ VALUE_FUNCTIONS = {
 }
 
 
-def get_Q_function_from_variant(variant, env, *args, **kwargs):
+def get_Q_function_from_variant(variant,
+                                env,
+                                *args,
+                                observation_preprocessor=None,
+                                **kwargs):
     Q_params = variant['Q_params']
     Q_type = Q_params['type']
     Q_kwargs = deepcopy(Q_params['kwargs'])
 
+    observation_shape = (
+        env.active_observation_shape
+        if observation_preprocessor is None
+        else observation_preprocessor.output_shape[1:])
     return VALUE_FUNCTIONS[Q_type](
-        observation_shape=env.active_observation_shape,
+        observation_shape=observation_shape,
         action_shape=env.action_space.shape,
         **Q_kwargs,
         **kwargs)
 
 
-def get_V_function_from_variant(variant, env, *args, **kwargs):
+def get_V_function_from_variant(variant,
+                                env,
+                                *args,
+                                observation_preprocessor=None,
+                                **kwargs):
     V_params = variant['V_params']
     V_type = V_params['type']
     V_kwargs = deepcopy(V_params['kwargs'])
 
+    observation_shape = (
+        env.active_observation_shape
+        if observation_preprocessor is None
+        else observation_preprocessor.output_shape[1:])
     return VALUE_FUNCTIONS[V_type](
-        observation_shape=env.active_observation_shape,
+        observation_shape=observation_shape,
         *args,
         **V_kwargs,
         **kwargs)

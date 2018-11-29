@@ -1,20 +1,28 @@
 from copy import deepcopy
 
 
-def get_gaussian_policy(env, Q, preprocessor, **kwargs):
+def get_gaussian_policy(env, Q, observation_preprocessor=None, **kwargs):
     from .gaussian_policy import GaussianPolicy
+    observation_shape = (
+        env.active_observation_shape
+        if observation_preprocessor is None
+        else observation_preprocessor.output_shape[1:])
     policy = GaussianPolicy(
-        input_shapes=(env.active_observation_shape, ),
+        input_shapes=(observation_shape, ),
         output_shape=env.action_space.shape,
         **kwargs)
 
     return policy
 
 
-def get_uniform_policy(env, *args, **kwargs):
+def get_uniform_policy(env, observation_preprocessor=None, **kwargs):
     from .uniform_policy import UniformPolicy
+    observation_shape = (
+        env.active_observation_shape
+        if observation_preprocessor is None
+        else observation_preprocessor.output_shape[1:])
     policy = UniformPolicy(
-        input_shapes=(env.active_observation_shape, ),
+        input_shapes=(observation_shape, ),
         output_shape=env.action_space.shape)
 
     return policy
@@ -33,7 +41,6 @@ def get_policy(policy_type, *args, **kwargs):
 def get_policy_from_variant(variant,
                             env,
                             Qs,
-                            preprocessor,
                             *args,
                             **kwargs):
     policy_params = variant['policy_params']
@@ -44,7 +51,6 @@ def get_policy_from_variant(variant,
         env,
         *args,
         Q=Qs[0],
-        preprocessor=preprocessor,
         **policy_kwargs,
         **kwargs)
 

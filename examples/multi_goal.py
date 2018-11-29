@@ -100,6 +100,7 @@ def main():
                 'hidden_layer_sizes': (layer_size, layer_size),
             }
         },
+        'run_params': {}
     }
 
     launch_experiments_ray([variant_spec], args, local_dir, run_experiment)

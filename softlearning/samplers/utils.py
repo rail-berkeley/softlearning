@@ -39,7 +39,8 @@ def rollout(env,
             render=False,
             callback=None,
             render_mode='human',
-            break_on_terminal=True):
+            break_on_terminal=True,
+            observation_preprocessor=None):
     observation_space = env.observation_space
     action_space = env.action_space
 
@@ -50,7 +51,8 @@ def rollout(env,
         min_pool_size=None,
         batch_size=None)
 
-    sampler.initialize(env, policy, pool)
+    sampler.initialize(env, policy, pool,
+                       observation_preprocessor=observation_preprocessor)
 
     images = []
     infos = []
@@ -86,9 +88,10 @@ def rollout(env,
 
 
 def rollouts(env, policy, path_length, n_paths, render=False,
-             render_mode='human'):
+             render_mode='human', observation_preprocessor=None):
     paths = [
-        rollout(env, policy, path_length, render, render_mode=render_mode)
+        rollout(env, policy, path_length, render, render_mode=render_mode,
+                observation_preprocessor=observation_preprocessor)
         for i in range(n_paths)
     ]
 
