@@ -90,7 +90,7 @@ DEFAULT_NUM_EPOCHS = 200
 
 NUM_EPOCHS_PER_DOMAIN = {
     'swimmer': int(3e2 + 1),
-    'hopper': int(3e3 + 1),
+    'hopper': int(1e3 + 1),
     'half-cheetah': int(3e3 + 1),
     'walker': int(3e3 + 1),
     'ant': int(3e3 + 1),
