@@ -18,17 +18,15 @@ class GaussianPolicy(BasePolicy):
     def __init__(self,
                  input_shapes,
                  output_shape,
-                 hidden_layer_sizes,
                  squash=True,
-                 activation='relu',
-                 output_activation='linear',
-                 name=None,
-                 *args,
-                 **kwargs):
-        super(GaussianPolicy, self).__init__(*args, **kwargs)
+                 name=None):
         self._Serializable__initialize(locals())
-
+        super(GaussianPolicy, self).__init__()
+        self._input_shapes = input_shapes
+        self._output_shape = output_shape
         self._squash = squash
+        self._squash = squash
+        self._name = name
 
         self.condition_inputs = [
             tf.keras.layers.Input(shape=input_shape)
@@ -39,14 +37,9 @@ class GaussianPolicy(BasePolicy):
             lambda x: tf.concat(x, axis=-1)
         )(self.condition_inputs)
 
-        shift_and_log_scale_diag = feedforward_model(
+        shift_and_log_scale_diag = self._shift_and_log_scale_diag_net(
             input_shapes=(conditions.shape[1:], ),
-            hidden_layer_sizes=hidden_layer_sizes,
             output_size=output_shape[0] * 2,
-            activation=activation,
-            output_activation=output_activation,
-            *args,
-            **kwargs
         )(conditions)
 
         shift, log_scale_diag = tf.keras.layers.Lambda(
@@ -137,6 +130,9 @@ class GaussianPolicy(BasePolicy):
             self.condition_inputs,
             (shift, log_scale_diag, log_pis, raw_actions, actions))
 
+    def _shift_and_log_scale_diag_net(self, input_shapes, output_size):
+        raise NotImplementedError
+
     def get_weights(self):
         return self.actions_model.get_weights()
 
@@ -203,3 +199,26 @@ class GaussianPolicy(BasePolicy):
             'actions-mean': np.mean(actions_np),
             'actions-std': np.std(actions_np),
         })
+
+
+class FeedforwardGaussianPolicy(GaussianPolicy):
+    def __init__(self,
+                 hidden_layer_sizes,
+                 activation='relu',
+                 output_activation='linear',
+                 *args, **kwargs):
+        self._Serializable__initialize(locals())
+        super(FeedforwardGaussianPolicy, self).__init__(*args, **kwargs)
+        self._hidden_layer_sizes = hidden_layer_sizes
+        self._activation = activation
+        self._output_activation = output_activation
+
+    def _shift_and_log_scale_diag_net(self, input_shapes, output_size):
+        shift_and_log_scale_diag_net = feedforward_model(
+            input_shapes=input_shapes,
+            hidden_layer_sizes=self._hidden_layer_sizes,
+            output_size=output_size,
+            activation=self._activation,
+            output_activation=self._output_activation)
+
+        return shift_and_log_scale_diag_net
