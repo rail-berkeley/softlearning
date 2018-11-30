@@ -58,7 +58,10 @@ PREPROCESSOR_PARAMS.update({
 
 DEFAULT_MAX_PATH_LENGTH = 1000
 MAX_PATH_LENGTH_PER_DOMAIN = {
-    'Point2DEnv': 50
+    'Point2DEnv': 50,
+    'DClaw3': 200,
+    'ImageDClaw3': 200,
+    'HardwareDClaw3': 200,
 }
 
 ALGORITHM_PARAMS_BASE = {
@@ -240,7 +243,7 @@ def get_variant_spec(universe, domain, task, policy):
             }
         },
         'run_params': {
-            'seed': tune.grid_search([1, 2, 3, 4, 5]),
+            'seed': lambda spec: np.random.randint(0, 10000),
             'checkpoint_at_end': True,
             'checkpoint_frequency': NUM_EPOCHS_PER_DOMAIN.get(
                 domain, DEFAULT_NUM_EPOCHS) // NUM_CHECKPOINTS
@@ -260,9 +263,10 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
             'kwargs': {
                 'image_shape': variant_spec['env_params']['image_shape'],
                 'output_size': 18,
-                'num_conv_layers': tune.grid_search([2, 3, 4]), # 4 later
-                'filters_per_layer': tune.grid_search([16, 32]),
-                'kernel_size_per_layer': (5, 5),
+                'conv_filters': (4, 4),
+                'conv_kernel_sizes': ((3, 3), (3, 3)),
+                'pool_sizes': ((2, 2), (2, 2)),
+                'pool_strides': (2, 2),
             }
         })
 
