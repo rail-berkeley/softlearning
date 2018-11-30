@@ -1,6 +1,7 @@
 import tensorflow as tf
 
 from softlearning.models.feedforward import feedforward_model
+from softlearning.utils.keras import PicklableKerasModel
 
 
 def convnet_preprocessor(
@@ -14,6 +15,7 @@ def convnet_preprocessor(
         dense_hidden_layer_sizes=(64, 64),
         data_format='channels_last',
         name="convnet_preprocessor",
+        make_pickleable=True,
         *args,
         **kwargs):
     if data_format == 'channels_last':
@@ -66,6 +68,6 @@ def convnet_preprocessor(
         **kwargs
     )([concatenated_output])
 
-    model = tf.keras.Model(inputs, output, name=name)
+    model = PicklableKerasModel(inputs, output, name=name)
 
     return model

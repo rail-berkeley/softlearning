@@ -1,4 +1,3 @@
-import os
 import pickle
 from collections import OrderedDict
 
