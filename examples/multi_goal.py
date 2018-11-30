@@ -9,6 +9,7 @@ from softlearning.samplers import SimpleSampler
 from softlearning.policies.utils import get_policy_from_variant
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions.utils import get_Q_function_from_variant
+from softlearning.misc.utils import initialize_tf_variables
 from examples.utils import get_parser, launch_experiments_ray
 
 
@@ -29,7 +30,8 @@ def run_experiment(variant, reporter):
         max_path_length=30, min_pool_size=100, batch_size=64)
 
     Qs = get_Q_function_from_variant(variant, env)
-    policy = get_policy_from_variant(variant, env, Qs, preprocessor=None)
+    policy = get_policy_from_variant(
+        variant, env, Qs, observation_preprocessor=None)
     plotter = QFPolicyPlotter(
         Q=Qs[0],
         policy=policy,
@@ -52,6 +54,7 @@ def run_experiment(variant, reporter):
 
         env=env,
         policy=policy,
+        observation_preprocessor=None,
         initial_exploration_policy=None,
         pool=pool,
         Qs=Qs,
@@ -64,6 +67,8 @@ def run_experiment(variant, reporter):
 
         save_full_state=True,
     )
+
+    initialize_tf_variables(algorithm._session, only_uninitialized=True)
 
     for train_result in algorithm.train():
         reporter(**train_result)
