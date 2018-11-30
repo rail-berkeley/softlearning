@@ -96,7 +96,6 @@ def main():
             'type': 'GaussianPolicy',
             'kwargs': {
                 'hidden_layer_sizes': (layer_size, layer_size),
-                'regularization_coeff': 1e-3,
             },
         },
         'Q_params': {

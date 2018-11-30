@@ -366,10 +366,7 @@ class SAC(RLAlgorithm):
 
         assert policy_kl_losses.shape.as_list() == [None, 1]
 
-        policy_kl_loss = tf.reduce_mean(policy_kl_losses)
-        policy_regularization_loss = 0.0
-
-        policy_loss = policy_kl_loss + policy_regularization_loss
+        policy_loss = tf.reduce_mean(policy_kl_losses)
 
         policy_train_op = tf.contrib.layers.optimize_loss(
             policy_loss,

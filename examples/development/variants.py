@@ -14,7 +14,6 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
     'kwargs': {
         'hidden_layer_sizes': (M, M),
         'squash': True,
-        'regularization_coeff': 1e-3,
     }
 }
 
@@ -233,7 +232,8 @@ def get_variant_spec(universe, domain, task, policy):
             }
         },
         'sampler_params': {
-            'type': 'SimpleSampler',
+            # 'type': 'SimpleSampler',
+            'type': 'RemoteSampler',
             'kwargs': {
                 'max_path_length': MAX_PATH_LENGTH_PER_DOMAIN.get(
                     domain, DEFAULT_MAX_PATH_LENGTH),

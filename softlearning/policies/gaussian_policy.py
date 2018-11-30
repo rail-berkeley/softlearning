@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 from softlearning.distributions.squash_bijector import SquashBijector
+from softlearning.models.feedforward import feedforward_model
 
 from .base_policy import BasePolicy
 
@@ -14,14 +15,11 @@ SCALE_DIAG_MIN_MAX = (-20, 2)
 
 
 class GaussianPolicy(BasePolicy):
-    """TODO(hartikainen): Implement regularization"""
-
     def __init__(self,
                  input_shapes,
                  output_shape,
                  hidden_layer_sizes,
                  squash=True,
-                 regularization_coeff=1e-3,
                  activation='relu',
                  output_activation='linear',
                  name=None,
@@ -31,7 +29,6 @@ class GaussianPolicy(BasePolicy):
         self._Serializable__initialize(locals())
 
         self._squash = squash
-        self._regularization_coeff = regularization_coeff
 
         self.condition_inputs = [
             tf.keras.layers.Input(shape=input_shape)
@@ -42,22 +39,22 @@ class GaussianPolicy(BasePolicy):
             lambda x: tf.concat(x, axis=-1)
         )(self.condition_inputs)
 
-        out = conditions
-        for units in hidden_layer_sizes:
-            out = tf.keras.layers.Dense(
-                units, *args, activation=activation, **kwargs)(out)
-
-        out = tf.keras.layers.Dense(
-            output_shape[0] * 2, *args,
-            activation=output_activation, **kwargs
-        )(out)
+        shift_and_log_scale_diag = feedforward_model(
+            input_shapes=(conditions.shape[1:], ),
+            hidden_layer_sizes=hidden_layer_sizes,
+            output_size=output_shape[0] * 2,
+            activation=activation,
+            output_activation=output_activation,
+            *args,
+            **kwargs
+        )(conditions)
 
         shift, log_scale_diag = tf.keras.layers.Lambda(
             lambda shift_and_log_scale_diag: tf.split(
                 shift_and_log_scale_diag,
                 num_or_size_splits=2,
                 axis=-1)
-        )(out)
+        )(shift_and_log_scale_diag)
 
         log_scale_diag = tf.keras.layers.Lambda(
             lambda log_scale_diag: tf.clip_by_value(
