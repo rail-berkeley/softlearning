@@ -1,10 +1,13 @@
+from contextlib import contextmanager
 from collections import OrderedDict
 
-import tensorflow as tf
 from serializable import Serializable
 
 
 class BasePolicy(Serializable):
+    def __init__(self):
+        self._deterministic = False
+
     def reset(self):
         """Reset and clean the policy."""
         raise NotImplementedError
@@ -24,6 +27,19 @@ class BasePolicy(Serializable):
     def log_pis_np(self, conditions, actions):
         """Compute (numeric) log probs for given observations and actions."""
         raise NotImplementedError
+
+    @contextmanager
+    def set_deterministic(self, deterministic=True):
+        """Context manager for changing the determinism of the policy.
+        Args:
+            set_deterministic (`bool`): Value to set the self._is_deterministic
+                to during the context. The value will be reset back to the
+                previous value when the context exits.
+        """
+        was_deterministic = self._deterministic
+        self._deterministic = deterministic
+        yield
+        self._deterministic = was_deterministic
 
     def get_diagnostics(self, conditions):
         """Return diagnostic information of the policy.

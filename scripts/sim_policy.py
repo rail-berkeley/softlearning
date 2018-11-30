@@ -32,7 +32,7 @@ def simulate_policy(args):
             policy = data['policy']
             env = data['env']
 
-        with policy.deterministic(args.deterministic):
+        with policy.set_deterministic(args.deterministic):
             while True:
                 path = rollout(
                     env,

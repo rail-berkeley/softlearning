@@ -253,25 +253,15 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                           observation_preprocessor=None):
         if self._eval_n_episodes < 1: return ()
 
-        if hasattr(policy, 'deterministic'):
-            with policy.deterministic(self._eval_deterministic):
-                # TODO: max_path_length should be a property of environment.
+        with policy.set_deterministic(self._eval_deterministic):
+            with policy.set_deterministic(self._eval_deterministic):
                 paths = rollouts(
                     evaluation_env,
                     policy,
                     self.sampler._max_path_length,
                     self._eval_n_episodes,
                     observation_preprocessor=observation_preprocessor,
-                    render=self._eval_render,
-                )
-        else:
-            paths = rollouts(
-                evaluation_env,
-                policy,
-                self.sampler._max_path_length,
-                self._eval_n_episodes,
-                observation_preprocessor=observation_preprocessor,
-                render=self._eval_render,)
+                    render=self._eval_render)
 
         return paths
 

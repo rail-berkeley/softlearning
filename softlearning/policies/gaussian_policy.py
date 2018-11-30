@@ -98,6 +98,13 @@ class GaussianPolicy(BasePolicy):
 
         self.actions_model = tf.keras.Model(self.condition_inputs, actions)
 
+        deterministic_actions = tf.keras.layers.Lambda(
+            lambda shift: squash_bijector.forward(shift)
+        )(shift)
+
+        self.deterministic_actions_model = tf.keras.Model(
+            self.condition_inputs, deterministic_actions)
+
         def log_pis_fn(inputs):
             shift, log_scale_diag, actions = inputs
             base_distribution = tfp.distributions.MultivariateNormalDiag(
@@ -152,15 +159,23 @@ class GaussianPolicy(BasePolicy):
         pass
 
     def actions(self, conditions):
+        if self._deterministic:
+            raise NotImplementedError
+
         return self.actions_model(conditions)
 
     def log_pis(self, conditions, actions):
+        assert not self._deterministic, self._deterministic
         return self.log_pis_model([*conditions, actions])
 
     def actions_np(self, conditions):
-        return self.actions_model.predict(conditions)
+        if self._deterministic:
+            return self.deterministic_actions_model.predict(conditions)
+        else:
+            return self.actions_model.predict(conditions)
 
     def log_pis_np(self, conditions, actions):
+        assert not self._deterministic, self._deterministic
         return self.log_pis_model.predict([*conditions, actions])
 
     def get_diagnostics(self, conditions):
