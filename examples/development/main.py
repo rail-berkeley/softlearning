@@ -34,25 +34,21 @@ class ExperimentRunner(tune.Trainable):
         self._session = tf.keras.backend.get_session()
 
         env = self.env = get_environment_from_variant(variant)
-        preprocessor = self.preprocessor = (
-            get_preprocessor_from_variant(variant, env))
         replay_pool = self.replay_pool = (
             get_replay_pool_from_variant(variant, env))
         sampler = self.sampler = get_sampler_from_variant(variant)
-        Qs = self.Qs = get_Q_function_from_variant(
-            variant, env, observation_preprocessor=preprocessor)
+        preprocessor = self.preprocessor = (
+            get_preprocessor_from_variant(variant, env))
+        Qs = self.Qs = get_Q_function_from_variant(variant, env)
         policy = self.policy = (
-            get_policy_from_variant(
-                variant, env, Qs, observation_preprocessor=preprocessor))
+            get_policy_from_variant(variant, env, Qs, preprocessor))
         initial_exploration_policy = self.initial_exploration_policy = (
-            get_policy(
-                'UniformPolicy', env, observation_preprocessor=preprocessor))
+            get_policy('UniformPolicy', env))
 
         self.algorithm = get_algorithm_from_variant(
             variant=variant,
             env=env,
             policy=policy,
-            observation_preprocessor=preprocessor,
             initial_exploration_policy=initial_exploration_policy,
             Qs=Qs,
             pool=replay_pool,
