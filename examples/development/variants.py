@@ -151,12 +151,27 @@ ENV_PARAMS = {
         'default': {
             'arm_object_distance_cost_coeff': 0.0,
             'goal_object_distance_cost_coeff': 1.0,
-            'goal': tune.grid_search([(0, -1)]),
+            'goal': (0, -1),
         },
         'default-reach': {
-            'arm_goal_distance_cost_coeff': tune.grid_search([1.0]),
+            'arm_goal_distance_cost_coeff': 1.0,
             'arm_object_distance_cost_coeff': 0.0,
         },
+        'image-default': {
+            'image_shape': (32, 32, 3),
+            'arm_object_distance_cost_coeff': 0.0,
+            'goal_object_distance_cost_coeff': 3.0,
+        },
+        'image-reach': {
+            'image_shape': (32, 32, 3),
+            'arm_goal_distance_cost_coeff': 1.0,
+            'arm_object_distance_cost_coeff': 0.0,
+        },
+        'blind-reach': {
+            'image_shape': (32, 32, 3),
+            'arm_goal_distance_cost_coeff': 1.0,
+            'arm_object_distance_cost_coeff': 0.0,
+        }
     },
     'sawyer-torque': {
 
@@ -270,26 +285,5 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
             }
         })
 
-    if task == 'image-default':
-        variant_spec['env_params'].update({
-            # Can't use tuples because they break ray.tune log_syncer
-            'image_shape': tune.grid_search([(32, 32, 3)]),
-            'arm_object_distance_cost_coeff': 0.0,
-            'goal_distance_cost_coeff': 3.0,
-        })
-    elif task == 'image-reach':
-        variant_spec['env_params'].update({
-            # Can't use tuples because they break ray.tune log_syncer
-            'image_shape': tune.grid_search([(32, 32, 3)]),
-            'arm_goal_distance_cost_coeff': tune.grid_search([1.0]),
-            'arm_object_distance_cost_coeff': 0.0,
-        })
-    elif task == 'blind-reach':
-        variant_spec['env_params'].update({
-            # Can't use tuples because they break ray.tune log_syncer
-            'image_shape': tune.grid_search([(32, 32, 3)]),
-            'arm_goal_distance_cost_coeff': tune.grid_search([1.0]),
-            'arm_object_distance_cost_coeff': 0.0,
-        })
 
     return variant_spec
