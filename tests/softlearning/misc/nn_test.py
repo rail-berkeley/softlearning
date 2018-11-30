@@ -15,8 +15,8 @@ class FeedforwardFunctionTest(tf.test.TestCase):
 
         fn = feedforward_model(
             input_shapes=(x1.shape[1:], x2.shape[1:]),
-            hidden_layer_sizes=(6, 4, 2),
             output_size=output_size,
+            hidden_layer_sizes=(6, 4, 2),
             name='feedforward_function')
 
         self.assertTrue(len(tf.trainable_variables()) > 0)
@@ -39,16 +39,16 @@ class FeedforwardFunctionTest(tf.test.TestCase):
 
         fn1 = feedforward_model(
             input_shapes=(x.shape[1:], ),
-            hidden_layer_sizes=(6, 4, 2),
             output_size=output_size,
+            hidden_layer_sizes=(6, 4, 2),
             name='feedforward_function_1')
 
         num_trainable_variables_1 = len(tf.trainable_variables())
 
         fn2 = feedforward_model(
             input_shapes=(x.shape[1:], ),
-            hidden_layer_sizes=(6, 4, 2),
             output_size=output_size,
+            hidden_layer_sizes=(6, 4, 2),
             name='feedforward_function_2')
 
         num_trainable_variables_2 = len(tf.trainable_variables())
@@ -78,8 +78,8 @@ class FeedforwardFunctionTest(tf.test.TestCase):
 
         fn1 = feedforward_model(
             input_shapes=(x.shape[1:], x.shape[1:]),
-            hidden_layer_sizes=(6, 4, 2),
             output_size=output_size,
+            hidden_layer_sizes=(6, 4, 2),
             name='feedforward_function')
 
         tf.keras.backend.get_session().run(tf.global_variables_initializer())
@@ -117,8 +117,8 @@ class FeedforwardFunctionTest(tf.test.TestCase):
     def test_without_name(self):
         fn = feedforward_model(
             input_shapes=((5, ), ),
-            hidden_layer_sizes=(6, 4, 2),
-            output_size=1)
+            output_size=1,
+            hidden_layer_sizes=(6, 4, 2))
 
         self.assertEqual(fn.name, 'feedforward_model')
 

@@ -60,8 +60,8 @@ def convnet_preprocessor(
 
     output = feedforward_model(
         input_shapes=(concatenated_output.shape[1:].as_list(), ),
-        hidden_layer_sizes=dense_hidden_layer_sizes,
         output_size=output_size,
+        hidden_layer_sizes=dense_hidden_layer_sizes,
         activation='relu',
         output_activation='linear',
         *args,
