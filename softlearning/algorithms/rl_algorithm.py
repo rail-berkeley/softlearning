@@ -28,7 +28,6 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             eval_n_episodes=10,
             eval_deterministic=True,
             eval_render=False,
-            control_interval=1,
             session=None,
     ):
         """
@@ -52,15 +51,6 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         self._train_every_n_steps = train_every_n_steps
         self._epoch_length = epoch_length
         self._n_initial_exploration_steps = n_initial_exploration_steps
-        if control_interval != 1:
-            # TODO(hartikainen): we used to support control_interval in our old
-            # SAC code, but it was removed because of the hacky implementation.
-            # This functionality should be implemented as a part of the
-            # sampler. See `sac/algos/base.py@fe7dc7c` for the old
-            # implementation.
-            raise NotImplementedError(
-                "Control interval has been temporarily removed. See the"
-                " comments in RlAlgorithm.__init__ for more information.")
 
         self._eval_n_episodes = eval_n_episodes
         self._eval_deterministic = eval_deterministic
