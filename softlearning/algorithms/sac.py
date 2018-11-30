@@ -238,7 +238,7 @@ class SAC(RLAlgorithm):
 
         preprocessed_observations = (
             self._observation_preprocessor(observations)
-            if all(isinstance(o, tf.Tensor) for o in observations)
+            if isinstance(observations, tf.Tensor)
             else self._observation_preprocessor.predict([observations]))
 
         return preprocessed_observations
