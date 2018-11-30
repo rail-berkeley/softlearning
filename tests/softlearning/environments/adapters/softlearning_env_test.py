@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-import gym
+from gym import spaces
 
 
 class AdapterTestClass(object):
@@ -31,13 +31,13 @@ class AdapterTestClass(object):
         env = self.create_adapter()
         observation_space = env.observation_space
         self.assertTrue(
-            isinstance(observation_space, gym.spaces.box.Box))
+            isinstance(observation_space, spaces.box.Box))
 
     def test_action_space(self):
         env = self.create_adapter()
         action_space = env.action_space
         self.assertTrue(
-            isinstance(action_space, gym.spaces.box.Box))
+            isinstance(action_space, spaces.box.Box))
 
     def test_step(self):
         env = self.create_adapter()

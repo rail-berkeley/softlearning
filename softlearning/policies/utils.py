@@ -7,6 +7,7 @@ def get_gaussian_policy(env, Q, observation_preprocessor=None, **kwargs):
         env.active_observation_shape
         if observation_preprocessor is None
         else observation_preprocessor.output_shape[1:])
+
     policy = GaussianPolicy(
         input_shapes=(observation_shape, ),
         output_shape=env.action_space.shape,

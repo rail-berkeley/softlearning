@@ -2,6 +2,7 @@
 
 import numpy as np
 import gym
+from gym import spaces
 from gym.wrappers.dict import FlattenDictWrapper
 
 from .softlearning_env import SoftlearningEnv
@@ -176,7 +177,7 @@ class GymAdapter(SoftlearningEnv):
             # depends on time rather than state).
             env = env.env
 
-        if isinstance(env.observation_space, gym.spaces.Dict):
+        if isinstance(env.observation_space, spaces.Dict):
             observation_keys = (
                 observation_keys or list(env.observation_space.spaces.keys()))
         if normalize:
@@ -192,7 +193,7 @@ class GymAdapter(SoftlearningEnv):
     @property
     def active_observation_shape(self):
         """Shape for the active observation based on observation_keys."""
-        if not isinstance(self._env.observation_space, gym.spaces.Dict):
+        if not isinstance(self._env.observation_space, spaces.Dict):
             return super(GymAdapter, self).active_observation_shape
 
         observation_keys = (
@@ -208,7 +209,7 @@ class GymAdapter(SoftlearningEnv):
         return active_observation_shape
 
     def convert_to_active_observation(self, observation):
-        if not isinstance(self._env.observation_space, gym.spaces.Dict):
+        if not isinstance(self._env.observation_space, spaces.Dict):
             return observation
 
         observation_keys = (
