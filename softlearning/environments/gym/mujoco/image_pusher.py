@@ -5,13 +5,13 @@ from .pusher_2d_env import Pusher2dEnv
 
 
 class ImagePusherEnv(Pusher2dEnv):
-    def __init__(self, image_size, *args, **kwargs):
+    def __init__(self, image_shape, *args, **kwargs):
         self._Serializable__initialize(locals())
-        self.image_size = image_size
+        self.image_shape = image_shape
         Pusher2dEnv.__init__(self, *args, **kwargs)
 
     def _get_obs(self):
-        width, height = self.image_size[:2]
+        width, height = self.image_shape[:2]
         image = self.render(mode='rgb_array', width=width, height=height)
         image = ((2.0 / 255.0) * image - 1.0)
 

@@ -173,7 +173,7 @@ ENV_PARAMS = {
     },
     'ImageDClaw3': {
         'Screw': {
-            'image_size': (32, 32, 3),
+            'image_shape': (32, 32, 3),
             'object_target_distance_cost_coeff': 2.0,
             'pose_difference_cost_coeff': 0.0,
             'joint_velocity_cost_coeff': 0.0,
@@ -258,7 +258,7 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
         variant_spec['preprocessor_params'].update({
             'type': 'convnet_preprocessor',
             'kwargs': {
-                'image_size': variant_spec['env_params']['image_size'],
+                'image_shape': variant_spec['env_params']['image_shape'],
                 'output_size': 18,
                 'num_conv_layers': tune.grid_search([2, 3, 4]), # 4 later
                 'filters_per_layer': tune.grid_search([16, 32]),
@@ -269,21 +269,21 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
     if task == 'image-default':
         variant_spec['env_params'].update({
             # Can't use tuples because they break ray.tune log_syncer
-            'image_size': tune.grid_search([(32, 32, 3)]),
+            'image_shape': tune.grid_search([(32, 32, 3)]),
             'arm_object_distance_cost_coeff': 0.0,
             'goal_distance_cost_coeff': 3.0,
         })
     elif task == 'image-reach':
         variant_spec['env_params'].update({
             # Can't use tuples because they break ray.tune log_syncer
-            'image_size': tune.grid_search([(32, 32, 3)]),
+            'image_shape': tune.grid_search([(32, 32, 3)]),
             'arm_goal_distance_cost_coeff': tune.grid_search([1.0]),
             'arm_object_distance_cost_coeff': 0.0,
         })
     elif task == 'blind-reach':
         variant_spec['env_params'].update({
             # Can't use tuples because they break ray.tune log_syncer
-            'image_size': tune.grid_search([(32, 32, 3)]),
+            'image_shape': tune.grid_search([(32, 32, 3)]),
             'arm_goal_distance_cost_coeff': tune.grid_search([1.0]),
             'arm_object_distance_cost_coeff': 0.0,
         })
