@@ -239,13 +239,13 @@ class SAC(RLAlgorithm):
         preprocessed_observations = (
             self._observation_preprocessor(observations)
             if all(isinstance(o, tf.Tensor) for o in observations)
-            else self._observation_preprocessor.predict(observations))
+            else self._observation_preprocessor.predict([observations]))
 
         return preprocessed_observations
 
     def _get_Q_target(self):
-        preprocessed_next_observations = self.preprocess_observations([
-            self._next_observations_ph])
+        preprocessed_next_observations = self.preprocess_observations(
+            self._next_observations_ph)
         next_actions = self._policy.actions([preprocessed_next_observations])
         next_log_pis = self._policy.log_pis(
             [preprocessed_next_observations], next_actions)
@@ -278,8 +278,8 @@ class SAC(RLAlgorithm):
 
         assert Q_target.shape.as_list() == [None, 1]
 
-        preprocessed_observations = self.preprocess_observations([
-            self._observations_ph])
+        preprocessed_observations = self.preprocess_observations(
+            self._observations_ph)
 
         Q_values = self._Q_values = tuple(
             Q([preprocessed_observations, self._actions_ph])
@@ -327,8 +327,8 @@ class SAC(RLAlgorithm):
         of the value function and policy function update rules.
         """
 
-        preprocessed_observations = self.preprocess_observations([
-            self._observations_ph])
+        preprocessed_observations = self.preprocess_observations(
+            self._observations_ph)
 
         actions = self._policy.actions([preprocessed_observations])
         log_pis = self._policy.log_pis([preprocessed_observations], actions)
@@ -476,8 +476,8 @@ class SAC(RLAlgorithm):
             'alpha': alpha,
         })
 
-        preprocessed_observations = self.preprocess_observations([
-            batch['observations']])
+        preprocessed_observations = self.preprocess_observations(
+            batch['observations'])
         policy_diagnostics = self._policy.get_diagnostics(
             preprocessed_observations)
         diagnostics.update({
