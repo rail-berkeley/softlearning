@@ -296,7 +296,12 @@ class SAC(RLAlgorithm):
                 self.global_step,
                 learning_rate=self._Q_lr,
                 optimizer=tf.train.AdamOptimizer,
-                variables=Q.trainable_variables,
+                variables=(
+                    Q.trainable_variables
+                    + (self._observation_preprocessor.trainable_variables
+                       if self._observation_preprocessor is not None
+                       else [])
+                ),
                 increment_global_step=False,
                 name="{}_{}_optimizer".format(Q._name, i),
                 summaries=((
