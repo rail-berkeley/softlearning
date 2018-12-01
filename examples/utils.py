@@ -127,6 +127,14 @@ def get_parser(allow_policy_list=False):
     parser.add_argument('--trial-gpus', type=float, default=None,
                         help=("Resources to allocate for each trial. Passed"
                               " to `tune.run_experiments`."))
+    parser.add_argument('--trial-extra-cpus', type=int, default=None,
+                        help=(
+                            "Extra CPUs to reserve in case the trials need to"
+                            " launch additional Ray actors that use CPUs."))
+    parser.add_argument('--trial-extra-gpus', type=float, default=None,
+                        help=(
+                            "Extra GPUs to reserve in case the trials need to"
+                            " launch additional Ray actors that use GPUs."))
 
     parser.add_argument('--checkpoint-frequency',
                         type=int,
@@ -200,7 +208,7 @@ def variant_equals(*keys):
     return get_from_spec
 
 
-def _normalize_trial_resources(resources, cpu, gpu):
+def _normalize_trial_resources(resources, cpu, gpu, extra_cpu, extra_gpu):
     if resources is None:
         resources = {}
 
@@ -209,6 +217,12 @@ def _normalize_trial_resources(resources, cpu, gpu):
 
     if gpu is not None:
         resources['gpu'] = gpu
+
+    if extra_cpu is not None:
+        resources['extra_cpu'] = extra_cpu
+
+    if extra_gpu is not None:
+        resources['extra_gpu'] = extra_gpu
 
     return resources
 
@@ -220,7 +234,11 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
     tune.register_trainable('mujoco-runner', experiment_fn)
 
     trial_resources = _normalize_trial_resources(
-        args.trial_resources, args.trial_cpus, args.trial_gpus)
+        args.trial_resources,
+        args.trial_cpus,
+        args.trial_gpus,
+        args.trial_extra_cpus,
+        args.trial_extra_gpus)
 
     if 'local' in args.mode or 'debug' in args.mode:
         resources = args.resources or {}
