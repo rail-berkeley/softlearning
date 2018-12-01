@@ -22,3 +22,10 @@ class PicklableKerasModel(tf.keras.Model):
                     self.__class__.__name__: self.__class__})
 
         self.__dict__.update(loaded_model.__dict__.copy())
+
+    @classmethod
+    def from_config(cls, *args, custom_objects=None, **kwargs):
+        custom_objects = custom_objects or {}
+        custom_objects[cls.__name__] = cls
+        return super(PicklableKerasModel, cls).from_config(
+            *args, custom_objects=custom_objects, **kwargs)
