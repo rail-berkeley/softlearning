@@ -212,11 +212,12 @@ class FeedforwardGaussianPolicy(GaussianPolicy):
                  activation='relu',
                  output_activation='linear',
                  *args, **kwargs):
-        self._Serializable__initialize(locals())
-        super(FeedforwardGaussianPolicy, self).__init__(*args, **kwargs)
         self._hidden_layer_sizes = hidden_layer_sizes
         self._activation = activation
         self._output_activation = output_activation
+
+        self._Serializable__initialize(locals())
+        super(FeedforwardGaussianPolicy, self).__init__(*args, **kwargs)
 
     def _shift_and_log_scale_diag_net(self, input_shapes, output_size):
         shift_and_log_scale_diag_net = feedforward_model(
