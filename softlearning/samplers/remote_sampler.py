@@ -80,11 +80,14 @@ class RemoteSampler(BaseSampler):
     def __getstate__(self):
         state = self.__dict__.copy()
         del state['_remote_environment']
+        del state['_remote_path']
+
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
         self._create_remote_environment(self.env, self.policy)
+        self._remote_path = None
 
 
 @ray.remote
