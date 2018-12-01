@@ -1,6 +1,7 @@
 import abc
 from collections import OrderedDict
 import gtimer as gt
+import math
 
 import tensorflow as tf
 import numpy as np
@@ -154,7 +155,8 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 self._timestep_after_hook()
                 gt.stamp('timestep_after_hook')
 
-            training_paths = self.sampler.get_last_n_paths()
+            training_paths = self.sampler.get_last_n_paths(
+                math.ceil(self._epoch_length / self.sampler._max_path_length))
             gt.stamp('training_paths')
             evaluation_paths = self._evaluation_paths(policy, evaluation_env)
             gt.stamp('evaluation_paths')
@@ -279,6 +281,8 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             self._do_training(
                 iteration=timestep,
                 batch=self._training_batch())
+
+        self.num_train_steps += self._n_train_repeat
 
     @abc.abstractmethod
     def _do_training(self, iteration, batch):
