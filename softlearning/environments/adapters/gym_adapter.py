@@ -126,17 +126,33 @@ GYM_ENVIRONMENTS = {
             DClaw3ScrewV2(
                 *args,
                 is_hardware=True,
-                pose_difference_cost_coeff=kwargs.get(
+                pose_difference_cost_coeff=kwargs.pop(
                     'pose_difference_cost_coeff', 0),
-                joint_velocity_cost_coeff=kwargs.get(
+                joint_velocity_cost_coeff=kwargs.pop(
                     'joint_velocity_cost_coeff', 0),
-                joint_acceleration_cost_coeff=kwargs.get(
+                joint_acceleration_cost_coeff=kwargs.pop(
                     'joint_acceleration_cost_coeff', 0),
-                target_initial_position_range=kwargs.get(
+                target_initial_position_range=kwargs.pop(
                     'target_initial_position_range', (np.pi, np.pi)),
-                object_initial_position_range=kwargs.get(
+                object_initial_position_range=kwargs.pop(
                     'object_initial_position_range', (0, 0)),
-                frame_skip=kwargs.get('frame_skip', 30),
+                frame_skip=kwargs.pop('frame_skip', 30),
+                **kwargs)),
+        'ImageScrewV2': lambda *args, **kwargs: (
+            ImageDClaw3Screw(
+                *args,
+                is_hardware=True,
+                pose_difference_cost_coeff=kwargs.pop(
+                    'pose_difference_cost_coeff', 0),
+                joint_velocity_cost_coeff=kwargs.pop(
+                    'joint_velocity_cost_coeff', 0),
+                joint_acceleration_cost_coeff=kwargs.pop(
+                    'joint_acceleration_cost_coeff', 0),
+                target_initial_position_range=kwargs.pop(
+                    'target_initial_position_range', (np.pi, np.pi)),
+                object_initial_position_range=kwargs.pop(
+                    'object_initial_position_range', (-np.pi, np.pi)),
+                frame_skip=kwargs.pop('frame_skip', 30),
                 **kwargs)),
         'FlipV1': lambda *args, **kwargs: (
             DClaw3FlipV1(
