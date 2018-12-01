@@ -28,12 +28,14 @@ PREPROCESSOR_FUNCTIONS = {
 }
 
 
-def get_preprocessor_from_variant(variant, env, *args, **kwargs):
-    preprocessor_params = variant['preprocessor_params']
-    preprocessor_type = preprocessor_params.get('type')
+def get_preprocessor_from_params(env, preprocessor_params, *args, **kwargs):
+    if preprocessor_params is None:
+        return None
+
+    preprocessor_type = preprocessor_params.get('type', None)
     preprocessor_kwargs = deepcopy(preprocessor_params.get('kwargs', {}))
 
-    if not preprocessor_params or preprocessor_type is None:
+    if preprocessor_type is None:
         return None
 
     preprocessor = PREPROCESSOR_FUNCTIONS[
@@ -44,3 +46,9 @@ def get_preprocessor_from_variant(variant, env, *args, **kwargs):
             **kwargs)
 
     return preprocessor
+
+
+def get_preprocessor_from_variant(variant, env, *args, **kwargs):
+    preprocessor_params = variant['preprocessor_params']
+    return get_preprocessor_from_params(
+        env, preprocessor_params, *args, **kwargs)

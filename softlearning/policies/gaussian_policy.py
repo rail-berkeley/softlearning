@@ -19,6 +19,7 @@ class GaussianPolicy(BasePolicy):
                  input_shapes,
                  output_shape,
                  squash=True,
+                 preprocessor=None,
                  name=None):
         self._Serializable__initialize(locals())
         super(GaussianPolicy, self).__init__()
@@ -27,6 +28,7 @@ class GaussianPolicy(BasePolicy):
         self._squash = squash
         self._squash = squash
         self._name = name
+        self._preprocessor = preprocessor
 
         self.condition_inputs = [
             tf.keras.layers.Input(shape=input_shape)
@@ -36,6 +38,9 @@ class GaussianPolicy(BasePolicy):
         conditions = tf.keras.layers.Lambda(
             lambda x: tf.concat(x, axis=-1)
         )(self.condition_inputs)
+
+        if preprocessor is not None:
+            conditions = preprocessor(conditions)
 
         shift_and_log_scale_diag = self._shift_and_log_scale_diag_net(
             input_shapes=(conditions.shape[1:], ),

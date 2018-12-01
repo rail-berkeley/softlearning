@@ -8,7 +8,6 @@ from ray import tune
 from softlearning.environments.utils import get_environment_from_variant
 from softlearning.algorithms.utils import get_algorithm_from_variant
 from softlearning.policies.utils import get_policy_from_variant, get_policy
-from softlearning.preprocessors.utils import get_preprocessor_from_variant
 from softlearning.replay_pools.utils import get_replay_pool_from_variant
 from softlearning.samplers.utils import get_sampler_from_variant
 from softlearning.value_functions.utils import get_Q_function_from_variant
@@ -37,11 +36,8 @@ class ExperimentRunner(tune.Trainable):
         replay_pool = self.replay_pool = (
             get_replay_pool_from_variant(variant, env))
         sampler = self.sampler = get_sampler_from_variant(variant)
-        preprocessor = self.preprocessor = (
-            get_preprocessor_from_variant(variant, env))
         Qs = self.Qs = get_Q_function_from_variant(variant, env)
-        policy = self.policy = (
-            get_policy_from_variant(variant, env, Qs, preprocessor))
+        policy = self.policy = get_policy_from_variant(variant, env, Qs)
         initial_exploration_policy = self.initial_exploration_policy = (
             get_policy('UniformPolicy', env))
 
@@ -82,9 +78,6 @@ class ExperimentRunner(tune.Trainable):
             'Q_0': self.Qs[0],
             'Q_1': self.Qs[1],
         }
-
-        if self.preprocessor is not None:
-            tf_checkpoint_items['preprocessor'] = self.preprocessor
 
         tf_checkpoint = tf.train.Checkpoint(**tf_checkpoint_items)
 

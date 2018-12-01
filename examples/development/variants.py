@@ -36,25 +36,6 @@ POLICY_PARAMS_FOR_DOMAIN.update({
     'gaussian': POLICY_PARAMS_FOR_DOMAIN['GaussianPolicy'],
 })
 
-PREPROCESSOR_PARAMS_BASE = {
-    'GaussianPolicy': {
-        'type': None
-    },
-}
-
-PREPROCESSOR_PARAMS_BASE.update({
-    'gaussian': PREPROCESSOR_PARAMS_BASE['GaussianPolicy'],
-})
-
-
-PREPROCESSOR_PARAMS = {
-    'GaussianPolicy': {},
-}
-
-PREPROCESSOR_PARAMS.update({
-    'gaussian': PREPROCESSOR_PARAMS['GaussianPolicy'],
-})
-
 DEFAULT_MAX_PATH_LENGTH = 1000
 MAX_PATH_LENGTH_PER_DOMAIN = {
     'Point2DEnv': 50,
@@ -232,10 +213,6 @@ def get_variant_spec(universe, domain, task, policy):
                 'hidden_layer_sizes': (M, M),
             }
         },
-        'preprocessor_params': deep_update(
-            PREPROCESSOR_PARAMS_BASE[policy],
-            PREPROCESSOR_PARAMS[policy].get(domain, {}),
-        ),
         'algorithm_params': deep_update(
             ALGORITHM_PARAMS_BASE,
             ALGORITHM_PARAMS_PER_DOMAIN.get(domain, {})
@@ -273,7 +250,7 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
         universe, domain, task, policy, *args, **kwargs)
 
     if 'image' in task or 'image' in domain.lower():
-        variant_spec['preprocessor_params'].update({
+        preprocessor_params = {
             'type': 'convnet_preprocessor',
             'kwargs': {
                 'image_shape': variant_spec['env_params']['image_shape'],
@@ -282,8 +259,11 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
                 'conv_kernel_sizes': ((3, 3), (3, 3)),
                 'pool_sizes': ((2, 2), (2, 2)),
                 'pool_strides': (2, 2),
-            }
-        })
-
+            },
+        }
+        variant_spec['policy_params']['kwargs']['preprocessor_params'] = (
+            preprocessor_params.copy())
+        variant_spec['Q_params']['kwargs']['preprocessor_params'] = (
+            preprocessor_params.copy())
 
     return variant_spec
