@@ -58,10 +58,6 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
         self._session = session or tf.keras.backend.get_session()
 
-        self._env = None
-        self._policy = None
-        self._pool = None
-
         self._epoch = 0
         self._timestep = 0
 
@@ -299,16 +295,12 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         return {}
 
     def __getstate__(self):
-        """Get serializable state NOT including tf objects/variables."""
-
-        state = self.__dict__
         state = {
-            key: value for key, value in state.items()
-            if key not in self.TF_KEYS
+            '_epoch': self._epoch,
+            '_timestep': self._timestep,
         }
 
         return state
 
     def __setstate__(self, state):
-        """Set Serializable state fo the RLAlgorithm instance."""
         self.__dict__.update(state)
