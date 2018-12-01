@@ -254,11 +254,12 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
             'type': 'convnet_preprocessor',
             'kwargs': {
                 'image_shape': variant_spec['env_params']['image_shape'],
-                'output_size': 18,
+                'output_size': M,
                 'conv_filters': (4, 4),
                 'conv_kernel_sizes': ((3, 3), (3, 3)),
                 'pool_sizes': ((2, 2), (2, 2)),
                 'pool_strides': (2, 2),
+                'dense_hidden_layer_sizes': (),
             },
         }
         variant_spec['policy_params']['kwargs']['preprocessor_params'] = (
