@@ -29,6 +29,8 @@ class SAC(RLAlgorithm):
         '_initial_exploration_policy',
         '_Qs',
         '_Q_targets',
+        '_Q_optimizer_1',
+        '_Q_optimizer_2',
         '_training_ops',
         'global_step',
         '_iteration_ph',
@@ -37,9 +39,12 @@ class SAC(RLAlgorithm):
         '_actions_ph',
         '_rewards_ph',
         '_terminals_ph',
+        '_log_alpha',
+        '_policy_optimizer',
         '_alpha_optimizer',
         '_alpha_train_op',
         '_alpha',
+        '_Q_optimizers',
         '_Q_values',
         '_Q_losses',
         '_session',
@@ -257,19 +262,30 @@ class SAC(RLAlgorithm):
                 labels=Q_target, predictions=Q_value, weights=0.5)
             for Q_value in Q_values)
 
+        self._Q_optimizers = tuple(
+            tf.train.AdamOptimizer(
+                learning_rate=self._Q_lr,
+                name='{}_{}_optimizer'.format(Q._name, i)
+            ) for i, Q in enumerate(self._Qs))
         Q_training_ops = tuple(
             tf.contrib.layers.optimize_loss(
                 Q_loss,
                 self.global_step,
                 learning_rate=self._Q_lr,
-                optimizer=tf.train.AdamOptimizer,
+                optimizer=Q_optimizer,
                 variables=Q.trainable_variables,
                 increment_global_step=False,
-                name="{}_{}_optimizer".format(Q._name, i),
                 summaries=((
                     "loss", "gradients", "gradient_norm", "global_gradient_norm"
                 ) if self._tf_summaries else ()))
-            for i, (Q, Q_loss) in enumerate(zip(self._Qs, Q_losses)))
+            for i, (Q, Q_loss, Q_optimizer)
+            in enumerate(zip(self._Qs, Q_losses, self._Q_optimizers)))
+
+        # TODO(hartikainen): Need to assign these in order to register
+        # the variables into checkpointable. Should figure out a better way for
+        # saving these.
+        self._Q_optimizer_1 = self._Q_optimizers[0]
+        self._Q_optimizer_2 = self._Q_optimizers[1]
 
         self._training_ops.update({'Q': tf.group(Q_training_ops)})
 
@@ -294,7 +310,7 @@ class SAC(RLAlgorithm):
 
         assert log_pis.shape.as_list() == [None, 1]
 
-        log_alpha = tf.get_variable(
+        log_alpha = self._log_alpha = tf.get_variable(
             'log_alpha',
             dtype=tf.float32,
             initializer=0.0)
@@ -340,14 +356,16 @@ class SAC(RLAlgorithm):
 
         policy_loss = tf.reduce_mean(policy_kl_losses)
 
+        self._policy_optimizer = tf.train.AdamOptimizer(
+            learning_rate=self._policy_lr,
+            name="policy_optimizer")
         policy_train_op = tf.contrib.layers.optimize_loss(
             policy_loss,
             self.global_step,
             learning_rate=self._policy_lr,
-            optimizer=tf.train.AdamOptimizer,
+            optimizer=self._policy_optimizer,
             variables=self._policy.trainable_variables,
             increment_global_step=False,
-            name="policy_optimizer",
             summaries=(
                 "loss", "gradients", "gradient_norm", "global_gradient_norm"
             ) if self._tf_summaries else ())
@@ -438,7 +456,3 @@ class SAC(RLAlgorithm):
             self._plotter.draw()
 
         return diagnostics
-
-    def get_snapshot(self, epoch):
-        """TODO(hartikainen): This is temporarily empty due to refactor."""
-        return None
