@@ -22,35 +22,6 @@ class SAC(RLAlgorithm):
         with a Stochastic Actor," Deep Learning Symposium, NIPS 2017.
     """
 
-    # Key presenting values that need to be saved using tf.train.Checkpoint
-    # rather than pickle.
-    TF_KEYS = (
-        '_policy',
-        '_initial_exploration_policy',
-        '_Qs',
-        '_Q_targets',
-        '_Q_optimizer_1',
-        '_Q_optimizer_2',
-        '_training_ops',
-        'global_step',
-        '_iteration_ph',
-        '_observations_ph',
-        '_next_observations_ph',
-        '_actions_ph',
-        '_rewards_ph',
-        '_terminals_ph',
-        '_log_alpha',
-        '_policy_optimizer',
-        '_alpha_optimizer',
-        '_alpha_train_op',
-        '_alpha',
-        '_Q_optimizers',
-        '_Q_values',
-        '_Q_losses',
-        '_session',
-        '_unconditional_checkpoint_dependencies',
-        '_unconditional_dependency_names')
-
     def __init__(
             self,
             env,
@@ -280,12 +251,6 @@ class SAC(RLAlgorithm):
                 ) if self._tf_summaries else ()))
             for i, (Q, Q_loss, Q_optimizer)
             in enumerate(zip(self._Qs, Q_losses, self._Q_optimizers)))
-
-        # TODO(hartikainen): Need to assign these in order to register
-        # the variables into checkpointable. Should figure out a better way for
-        # saving these.
-        self._Q_optimizer_1 = self._Q_optimizers[0]
-        self._Q_optimizer_2 = self._Q_optimizers[1]
 
         self._training_ops.update({'Q': tf.group(Q_training_ops)})
 

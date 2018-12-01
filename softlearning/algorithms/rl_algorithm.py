@@ -15,8 +15,6 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
     by classes inheriting from RLAlgorithm.
     """
 
-    TF_KEYS = ()
-
     def __init__(
             self,
             sampler,
