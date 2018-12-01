@@ -456,3 +456,15 @@ class SAC(RLAlgorithm):
             self._plotter.draw()
 
         return diagnostics
+
+    @property
+    def tf_saveables(self):
+        return {
+            '_policy_optimizer': self._policy_optimizer,
+            **{
+                f'Q_optimizer_{i}': optimizer
+                for i, optimizer in enumerate(self._Q_optimizers)
+            },
+            '_log_alpha': self._log_alpha,
+            '_alpha_optimizer': self._alpha_optimizer,
+        }

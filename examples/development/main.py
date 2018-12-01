@@ -82,11 +82,7 @@ class ExperimentRunner(tune.Trainable):
         return os.path.join(checkpoint_dir, 'checkpoint')
 
     def _get_tf_checkpoint(self):
-        tf_checkpoint_items = {
-            'algorithm': self.algorithm,
-            'policy_optimizer': self.algorithm._policy_optimizer,
-        }
-        tf_checkpoint = tf.train.Checkpoint(**tf_checkpoint_items)
+        tf_checkpoint = tf.train.Checkpoint(**self.algorithm.tf_saveables)
 
         return tf_checkpoint
 

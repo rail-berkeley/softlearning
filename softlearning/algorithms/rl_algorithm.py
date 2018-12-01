@@ -294,6 +294,10 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
     def _init_training(self):
         raise NotImplementedError
 
+    @property
+    def tf_saveables(self):
+        return {}
+
     def __getstate__(self):
         """Get serializable state NOT including tf objects/variables."""
 
