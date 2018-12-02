@@ -59,6 +59,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
         self._epoch = 0
         self._timestep = 0
+        self._num_train_steps = 0
 
     def _initial_exploration_hook(self, env, initial_exploration_policy, pool):
         if self._n_initial_exploration_steps < 1: return
@@ -282,7 +283,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 iteration=timestep,
                 batch=self._training_batch())
 
-        self.num_train_steps += self._n_train_repeat
+        self._num_train_steps += self._n_train_repeat
 
     @abc.abstractmethod
     def _do_training(self, iteration, batch):
@@ -300,6 +301,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         state = {
             '_epoch': self._epoch,
             '_timestep': self._timestep,
+            '_num_train_steps': self._num_train_steps,
         }
 
         return state
