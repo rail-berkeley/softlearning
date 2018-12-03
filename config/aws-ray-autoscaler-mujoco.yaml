@@ -86,7 +86,7 @@ worker_nodes:
 # dictionary from REMOTE_PATH: LOCAL_PATH, e.g.
 file_mounts: {
     "/tmp/current_branch_sha": "<TODO>/softqlearning-private/.git/refs/heads/<TODO>",
-    "/home/ubuntu/rllab/vendor/mujoco/mjkey.txt": "~/.mujoco/mjkey.txt",
+    "~/.mujoco/mjkey.txt": "~/.mujoco/mjkey.txt",
 }
 
 # List of shell commands to run to set up nodes.
