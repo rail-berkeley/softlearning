@@ -110,9 +110,7 @@ data/
 vis/
 tmp/
 vendor/*
-rllab/config_personal.py
-rllab/ec2_info.py
-*.pkl
+.pkl
 
 
 .mujoco/

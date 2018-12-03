@@ -1,7 +1,7 @@
-from .sampler import Sampler
+from .sampler_base import BaseSampler
 
 
-class DummySampler(Sampler):
+class DummySampler(BaseSampler):
     def __init__(self, batch_size, max_path_length):
         super(DummySampler, self).__init__(
             max_path_length=max_path_length,

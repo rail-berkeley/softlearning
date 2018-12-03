@@ -1,3 +1,4 @@
+import multiprocessing
 import argparse
 from distutils.util import strtobool
 import json
@@ -14,7 +15,6 @@ except ImportError:
 
 import softlearning.environments.utils as env_utils
 from softlearning.misc.utils import datetimestamp, datestamp
-from softlearning.misc.instrument import launch_experiment
 
 
 DEFAULT_UNIVERSE = 'gym'
@@ -119,23 +119,54 @@ def get_parser(allow_policy_list=False):
     parser.add_argument('--trial-resources', type=json.loads, default={},
                         help=("Resources to allocate for each trial. Passed"
                               " to `tune.run_experiments`."))
-    parser.add_argument('--trial-cpus', type=int, default=None,
+    parser.add_argument('--trial-cpus',
+                        type=int,
+                        default=multiprocessing.cpu_count(),
                         help=("Resources to allocate for each trial. Passed"
                               " to `tune.run_experiments`."))
     parser.add_argument('--trial-gpus', type=float, default=None,
                         help=("Resources to allocate for each trial. Passed"
                               " to `tune.run_experiments`."))
+    parser.add_argument('--trial-extra-cpus', type=int, default=None,
+                        help=(
+                            "Extra CPUs to reserve in case the trials need to"
+                            " launch additional Ray actors that use CPUs."))
+    parser.add_argument('--trial-extra-gpus', type=float, default=None,
+                        help=(
+                            "Extra GPUs to reserve in case the trials need to"
+                            " launch additional Ray actors that use GPUs."))
+
+    parser.add_argument('--checkpoint-frequency',
+                        type=int,
+                        default=None,
+                        help=(
+                            "Save the training checkpoint every this many"
+                            " epochs. If set, takes precedence over"
+                            " variant['run_params']['checkpoint_frequency']."))
+    parser.add_argument('--checkpoint-at-end',
+                        type=bool,
+                        default=None,
+                        help=(
+                            "Whether a checkpoint should be saved at the end"
+                            " of training. If set, takes precedence over"
+                            " variant['run_params']['checkpoint_at_end']."))
+    parser.add_argument('--restore',
+                        type=str,
+                        default=None,
+                        help=(
+                            "Path to checkpoint. Only makes sense to set if"
+                            " running 1 trial. Defaults to None."))
 
     if allow_policy_list:
         parser.add_argument('--policy',
                             type=str,
                             nargs='+',
-                            choices=('gaussian', 'gmm', 'lsp'),
+                            choices=('gaussian', ),
                             default='gaussian')
     else:
         parser.add_argument('--policy',
                             type=str,
-                            choices=('gaussian', 'gmm', 'lsp'),
+                            choices=('gaussian', ),
                             default='gaussian')
     parser.add_argument('--env', type=str, default='gym-swimmer-default')
     parser.add_argument('--exp_name',
@@ -143,11 +174,10 @@ def get_parser(allow_policy_list=False):
                         default=datetimestamp())
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--log_dir', type=str, default=None)
-    parser.add_argument('--upload-dir',
-                        type=str,
-                        default=None,
-                        help=("Remote location to upload results to. E.g."
-                              " gs://... or s3://..."))
+    parser.add_argument('--upload-dir', type=str, default='',
+                        help=("Optional URI to sync training results to (e.g."
+                              " s3://<bucket> or gs://<bucket>)."))
+
     parser.add_argument("--confirm_remote",
                         type=strtobool,
                         nargs='?',
@@ -178,91 +208,7 @@ def variant_equals(*keys):
     return get_from_spec
 
 
-DEFAULT_SNAPSHOT_MODE = 'none'
-DEFAULT_SNAPSHOT_GAP = 1000
-
-
-def setup_rllab_logger(variant):
-    """Temporary setup for rllab logger previously handled by run_experiment.
-
-    TODO.hartikainen: Remove this once we have gotten rid of rllab logger.
-    """
-
-    from rllab.misc import logger
-
-    run_params = variant['run_params']
-
-    ray_log_dir = os.getcwd()
-    log_dir = os.path.join(ray_log_dir, 'rllab-logger')
-
-    tabular_log_file = os.path.join(log_dir, 'progress.csv')
-    text_log_file = os.path.join(log_dir, 'debug.log')
-    variant_log_file = os.path.join(log_dir, 'variant.json')
-
-    logger.log_variant(variant_log_file, variant)
-    logger.add_text_output(text_log_file)
-    logger.add_tabular_output(tabular_log_file)
-
-    logger.set_snapshot_dir(log_dir)
-    logger.set_snapshot_mode(
-        run_params.get('snapshot_mode', DEFAULT_SNAPSHOT_MODE))
-    logger.set_snapshot_gap(
-        run_params.get('snapshot_gap', DEFAULT_SNAPSHOT_GAP))
-    logger.set_log_tabular_only(False)
-
-    # TODO.hartikainen: need to remove something, or push_prefix, pop_prefix?
-    # logger.push_prefix("[%s] " % args.exp_name)
-
-
-def launch_experiments_rllab(variant_spec, args, run_fn):
-    variants = [x[1] for x in generate_variants(variant_spec)]
-    num_experiments = len(variants)
-
-    print('Launching {} experiments.'.format(num_experiments))
-
-    for i, variant in enumerate(variants):
-        print("Experiment: {}/{}".format(i, num_experiments))
-
-        run_params = variant.get('run_params', {})
-        snapshot_mode = run_params.get(
-            'snapshot_mode', variant.get('snapshot_mode'))
-        snapshot_gap = run_params.get(
-            'snapshot_gap', variant.get('snapshot_gap'))
-        sync_pkl = run_params.get('sync_pkl', variant.get('sync_pkl'))
-        sync_png = run_params.get('sync_png', variant.get('sync_png', True))
-        sync_log = run_params.get('sync_log', variant.get('sync_log', True))
-        seed = run_params.get('seed', variant.get('seed'))
-
-        date_prefix = datestamp()
-        experiment_prefix = os.path.join(
-            variant['prefix'],
-            '{}-{}'.format(date_prefix, args.exp_name))
-        experiment_name = '{exp_name}-{i:0{max_i_len}}'.format(
-            exp_name=args.exp_name,
-            i=i,
-            max_i_len=int(math.ceil(math.log10(num_experiments))))
-
-        mode = args.mode.replace('rllab', '').strip('-')
-
-        launch_experiment(
-            run_fn,
-            mode=mode,
-            variant=variant,
-            exp_prefix=experiment_prefix,
-            exp_name=experiment_name,
-            n_parallel=1,
-            seed=seed,
-            terminate_machine=True,
-            log_dir=args.log_dir,
-            snapshot_mode=snapshot_mode,
-            snapshot_gap=snapshot_gap,
-            confirm_remote=args.confirm_remote,
-            sync_s3_pkl=sync_pkl,
-            sync_s3_png=sync_png,
-            sync_s3_log=sync_log)
-
-
-def _normalize_trial_resources(resources, cpu, gpu):
+def _normalize_trial_resources(resources, cpu, gpu, extra_cpu, extra_gpu):
     if resources is None:
         resources = {}
 
@@ -271,6 +217,12 @@ def _normalize_trial_resources(resources, cpu, gpu):
 
     if gpu is not None:
         resources['gpu'] = gpu
+
+    if extra_cpu is not None:
+        resources['extra_cpu'] = extra_cpu
+
+    if extra_gpu is not None:
+        resources['extra_gpu'] = extra_gpu
 
     return resources
 
@@ -281,16 +233,32 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
 
     tune.register_trainable('mujoco-runner', experiment_fn)
 
-    if 'local' in args.mode:
+    trial_resources = _normalize_trial_resources(
+        args.trial_resources,
+        args.trial_cpus,
+        args.trial_gpus,
+        args.trial_extra_cpus,
+        args.trial_extra_gpus)
+
+    if 'local' in args.mode or 'debug' in args.mode:
+        resources = args.resources or {}
+
+        if 'debug' in args.mode:
+            # Require a debug resource for each trial, so that we never run
+            # more than one trial at a time. This makes debugging easier, since
+            # the debugger stdout behaves more reasonably with single process.
+            # TODO(hartikainen): Change this from 'extra_gpu' to
+            # 'debug-resource' once tune supports custom resources.
+            # See: https://github.com/ray-project/ray/pull/2979.
+            resources['extra_gpu'] = 1
+            trial_resources['extra_gpu'] = 1
+
         ray.init(
-            resources=args.resources,
+            resources=resources,
             num_cpus=args.cpus,
             num_gpus=args.gpus)
     else:
         ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
-
-    trial_resources = _normalize_trial_resources(
-        args.trial_resources, args.trial_cpus, args.trial_gpus)
 
     datetime_prefix = datetimestamp()
     experiment_id = '-'.join((datetime_prefix, args.exp_name))
@@ -303,6 +271,17 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
             'local_dir': local_dir,
             'num_samples': args.num_samples,
             'upload_dir': args.upload_dir,
+            'checkpoint_freq': (
+                args.checkpoint_frequency
+                if args.checkpoint_frequency is not None
+                else variant_spec['run_params'].get('checkpoint_frequency', 0)
+            ),
+            'checkpoint_at_end': (
+                args.checkpoint_at_end
+                if args.checkpoint_at_end is not None
+                else variant_spec['run_params'].get('checkpoint_at_end', True)
+            ),
+            'restore': args.restore,  # Defaults to None
         }
         for i, variant_spec in enumerate(variant_specs)
     })
@@ -313,4 +292,4 @@ def launch_experiments_local(*args, **kwargs):
 
     TODO(hartikainen): Reimplement this once we get rid of rllab.
     """
-    return launch_experiments_rllab(*args, **kwargs)
+    raise NotImplementedError()

@@ -1,11 +1,9 @@
+from collections import OrderedDict
+
 import numpy as np
 import tensorflow as tf
 
-from rllab.misc import logger
-from rllab.misc.overrides import overrides
-
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
-from softlearning.misc import tf_utils
 
 from .rl_algorithm import RLAlgorithm
 
@@ -32,14 +30,13 @@ class SQL(RLAlgorithm):
 
     def __init__(
             self,
-            base_kwargs,
             env,
             pool,
-            qf,
+            Q,
             policy,
             plotter=None,
             policy_lr=1E-3,
-            qf_lr=1E-3,
+            Q_lr=1E-3,
             value_n_particles=16,
             td_target_update_interval=1,
             kernel_fn=adaptive_isotropic_gaussian_kernel,
@@ -47,23 +44,22 @@ class SQL(RLAlgorithm):
             kernel_update_ratio=0.5,
             discount=0.99,
             reward_scale=1,
-            use_saved_qf=False,
+            use_saved_Q=False,
             use_saved_policy=False,
             save_full_state=False,
-            train_qf=True,
+            train_Q=True,
             train_policy=True,
+            **kwargs,
     ):
         """
         Args:
-            base_kwargs (dict): Dictionary of base arguments that are directly
-                passed to the base `RLAlgorithm` constructor.
-            env (`rllab.Env`): rllab environment object.
+            env (`SoftlearningEnv`): Environment object used for training.
             pool (`PoolBase`): Replay pool to add gathered samples to.
-            qf (`NNQFunction`): Q-function approximator.
-            policy: (`rllab.NNPolicy`): A policy function approximator.
+            Q: Q-function approximator.
+            policy: A policy function approximator.
             plotter (`QFPolicyPlotter`): Plotter instance to be used for
                 visualizing Q-function during training.
-            qf_lr (`float`): Learning rate used for the Q-function approximator.
+            Q_lr (`float`): Learning rate used for the Q-function approximator.
             value_n_particles (`int`): The number of action samples used for
                 estimating the value of next state.
             td_target_update_interval (`int`): How often the target network is
@@ -78,35 +74,36 @@ class SQL(RLAlgorithm):
             reward_scale ('float'): A factor that scales the raw rewards.
                 Useful for adjusting the temperature of the optimal Boltzmann
                 distribution.
-            use_saved_qf ('boolean'): If true, use the initial parameters provided
+            use_saved_Q ('boolean'): If true, use the initial parameters provided
                 in the Q-function instead of reinitializing.
             use_saved_policy ('boolean'): If true, use the initial parameters provided
                 in the policy instead of reinitializing.
             save_full_state ('boolean'): If true, saves the full algorithm
                 state, including the replay pool.
         """
-        super(SQL, self).__init__(**base_kwargs)
+        super(SQL, self).__init__(**kwargs)
 
         self.env = env
         self.pool = pool
-        self.qf = qf
+        self._Q = Q
+        self._Q_target = tf.keras.models.clone_model(self._Q)
         self.policy = policy
         self.plotter = plotter
 
-        self._qf_lr = qf_lr
+        self._Q_lr = Q_lr
         self._policy_lr = policy_lr
         self._discount = discount
         self._reward_scale = reward_scale
 
         self._value_n_particles = value_n_particles
-        self._qf_target_update_interval = td_target_update_interval
+        self._Q_target_update_interval = td_target_update_interval
 
         self._kernel_fn = kernel_fn
         self._kernel_n_particles = kernel_n_particles
         self._kernel_update_ratio = kernel_update_ratio
 
         self._save_full_state = save_full_state
-        self._train_qf = train_qf
+        self._train_Q = train_Q
         self._train_policy = train_policy
 
         self._observation_shape = list(self.env.observation_space.shape)
@@ -115,21 +112,19 @@ class SQL(RLAlgorithm):
         self._create_placeholders()
 
         self._training_ops = []
-        self._target_ops = []
 
         self._create_td_update()
         self._create_svgd_update()
-        self._create_target_ops()
 
-        if use_saved_qf:
-            saved_qf_params = qf.get_param_values()
+        if use_saved_Q:
+            saved_Q_params = Q.get_param_values()
         if use_saved_policy:
             saved_policy_params = policy.get_param_values()
 
-        self._sess.run(tf.global_variables_initializer())
+        self._session.run(tf.global_variables_initializer())
 
-        if use_saved_qf:
-            self.qf.set_param_values(saved_qf_params)
+        if use_saved_Q:
+            self._Q.set_param_values(saved_Q_params)
         if use_saved_policy:
             self.policy.set_param_values(saved_policy_params)
 
@@ -138,60 +133,82 @@ class SQL(RLAlgorithm):
 
         self._observations_ph = tf.placeholder(
             tf.float32,
-            shape=[None] + self._observation_shape,
+            shape=(None, *self._observation_shape),
             name='observations')
 
         self._next_observations_ph = tf.placeholder(
             tf.float32,
-            shape=[None] + self._observation_shape,
+            shape=(None, *self._observation_shape),
             name='next_observations')
 
-        self._actions_pl = tf.placeholder(
-            tf.float32, shape=[None] + self._action_shape, name='actions')
+        self._actions_ph = tf.placeholder(
+            tf.float32,
+            shape=(None, *self._action_shape),
+            name='actions')
 
         self._next_actions_ph = tf.placeholder(
-            tf.float32, shape=[None] + self._action_shape, name='next_actions')
+            tf.float32,
+            shape=(None, *self._action_shape),
+            name='next_actions')
 
-        self._rewards_pl = tf.placeholder(
-            tf.float32, shape=[None], name='rewards')
+        self._rewards_ph = tf.placeholder(
+            tf.float32,
+            shape=(None, 1),
+            name='rewards')
 
-        self._terminals_pl = tf.placeholder(
-            tf.float32, shape=[None], name='terminals')
+        self._terminals_ph = tf.placeholder(
+            tf.float32,
+            shape=(None, 1),
+            name='terminals')
 
     def _create_td_update(self):
         """Create a minimization operation for Q-function update."""
 
-        with tf.variable_scope('target'):
-            # The value of the next state is approximated with uniform samples.
-            target_actions = tf.random_uniform(
-                [1, self._value_n_particles] + self._action_shape, -1, 1)
-            q_value_targets = self.qf.output_for(
-                self._next_observations_ph[:, None, :], target_actions)
-            assert_shape(q_value_targets, [None, self._value_n_particles])
+        next_observations = tf.tile(
+            self._next_observations_ph[:, tf.newaxis, :],
+            (1, self._value_n_particles, 1))
+        next_observations = tf.reshape(
+            next_observations, (-1, *self._observation_shape))
 
-        self._q_values = self.qf.output_for(
-            self._observations_ph, self._actions_pl, reuse=True)
-        assert_shape(self._q_values, [None])
+        target_actions = tf.random_uniform(
+            (1, self._value_n_particles, *self._action_shape), -1, 1)
+        target_actions = tf.tile(
+            target_actions, (tf.shape(self._next_observations_ph)[0], 1, 1))
+        target_actions = tf.reshape(target_actions, (-1, *self._action_shape))
+
+        Q_next_target = self._Q_target([next_observations, target_actions])
+        Q_next_target = tf.reshape(
+            Q_next_target, (-1, self._value_n_particles))
+
+        assert_shape(Q_next_target, (None, self._value_n_particles))
+
+        self._Q_values = self._Q([self._observations_ph, self._actions_ph])
+        assert_shape(self._Q_values, [None, 1])
 
         # Equation 10:
-        next_value = tf.reduce_logsumexp(q_value_targets, axis=1)
-        assert_shape(next_value, [None])
+        next_value = tf.reduce_logsumexp(Q_next_target, keepdims=True, axis=1)
+        assert_shape(next_value, [None, 1])
 
         # Importance weights add just a constant to the value.
         next_value -= tf.log(tf.cast(self._value_n_particles, tf.float32))
         next_value += np.prod(self._action_shape) * np.log(2)
 
         # \hat Q in Equation 11:
-        ys = tf.stop_gradient(self._reward_scale * self._rewards_pl + (
-            1 - self._terminals_pl) * self._discount * next_value)
-        assert_shape(ys, [None])
+        ys = tf.stop_gradient(
+            self._reward_scale
+            * self._rewards_ph[:, None]
+            + (1 - self._terminals_ph[:, None])
+            * self._discount
+            * next_value)
+        assert_shape(ys, [None, 1])
 
         # Equation 11:
-        bellman_residual = 0.5 * tf.reduce_mean((ys - self._q_values)**2)
+        bellman_residual = tf.losses.mean_squared_error(
+            labels=ys, predictions=self._Q_values, weights=0.5)
 
-        if self._train_qf:
-            td_train_op = tf.train.AdamOptimizer(self._qf_lr).minimize(
-                loss=bellman_residual, var_list=self.qf.get_params_internal())
+        if self._train_Q:
+            td_train_op = tf.train.AdamOptimizer(self._Q_lr).minimize(
+                loss=bellman_residual, var_list=self._Q.trainable_variables)
             self._training_ops.append(td_train_op)
 
         self._bellman_residual = bellman_residual
@@ -203,8 +220,8 @@ class SQL(RLAlgorithm):
             observations=self._observations_ph,
             n_action_samples=self._kernel_n_particles,
             reuse=True)
-        assert_shape(actions,
-                     [None, self._kernel_n_particles] + self._action_shape)
+        assert_shape(
+            actions, (None, self._kernel_n_particles, *self._action_shape))
 
         # SVGD requires computing two empirical expectations over actions
         # (see Appendix C1.1.). To that end, we first sample a single set of
@@ -223,8 +240,14 @@ class SQL(RLAlgorithm):
         assert_shape(updated_actions,
                      [None, n_updated_actions] + self._action_shape)
 
-        svgd_target_values = self.qf.output_for(
-            self._observations_ph[:, None, :], fixed_actions, reuse=True)
+        next_observations = tf.tile(
+            self._next_observations_ph[:, tf.newaxis, :],
+            (1, n_fixed_actions, 1))
+        next_observations = tf.reshape(
+            next_observations, (-1, *self._observation_shape))
+
+        svgd_target_values = self._Q([
+            self._observations_ph[:, None, :], fixed_actions])
 
         # Target log-density. Q_soft in Equation 13:
         squash_correction = tf.reduce_sum(
@@ -267,19 +290,6 @@ class SQL(RLAlgorithm):
                 var_list=self.policy.get_params_internal())
             self._training_ops.append(svgd_training_op)
 
-    def _create_target_ops(self):
-        """Create tensorflow operation for updating the target Q-function."""
-        if not self._train_qf:
-            return
-
-        source_params = self.qf.get_params_internal()
-        target_params = self.qf.get_params_internal(scope='target')
-
-        self._target_ops = [
-            tf.assign(tgt, src)
-            for tgt, src in zip(target_params, source_params)
-        ]
-
     # TODO: do not pass, policy, and pool to `__init__` directly.
     def train(self):
         initial_exploration_policy = None
@@ -289,35 +299,42 @@ class SQL(RLAlgorithm):
             self.pool,
             initial_exploration_policy=initial_exploration_policy)
 
-    @overrides
-    def _init_training(self):
-        self._sess.run(self._target_ops)
+    def _update_target(self):
+        source_params = self._Q.get_weights()
+        target_params = self._Q_target.get_weights()
 
-    @overrides
+        self._Q_target.set_weights([
+            (1 - self._tau) * target + self._tau * source
+            for target, source in zip(target_params, source_params)
+        ])
+
     def _do_training(self, iteration, batch):
         """Run the operations for updating training and target ops."""
 
         feed_dict = self._get_feed_dict(batch)
-        self._sess.run(self._training_ops, feed_dict)
+        self._session.run(self._training_ops, feed_dict)
 
-        if iteration % self._qf_target_update_interval == 0 and self._train_qf:
-            self._sess.run(self._target_ops)
+        if iteration % self._Q_target_update_interval == 0 and self._train_Q:
+            self._update_target()
 
     def _get_feed_dict(self, batch):
         """Construct a TensorFlow feed dictionary from a sample batch."""
 
         feeds = {
             self._observations_ph: batch['observations'],
-            self._actions_pl: batch['actions'],
+            self._actions_ph: batch['actions'],
             self._next_observations_ph: batch['next_observations'],
-            self._rewards_pl: batch['rewards'],
-            self._terminals_pl: batch['terminals'],
+            self._rewards_ph: batch['rewards'],
+            self._terminals_ph: batch['terminals'],
         }
 
         return feeds
 
-    @overrides
-    def log_diagnostics(self, iteration, batch):
+    def get_diagnostics(self,
+                        iteration,
+                        batch,
+                        evaluation_paths,
+                        training_paths):
         """Record diagnostic information.
 
         Records the mean and standard deviation of Q-function and the
@@ -328,18 +345,26 @@ class SQL(RLAlgorithm):
         """
 
         feeds = self._get_feed_dict(batch)
-        qf, bellman_residual = self._sess.run(
-            [self._q_values, self._bellman_residual], feeds)
+        Q_np, bellman_residual = self._session.run(
+            [self._Q_values, self._bellman_residual], feeds)
 
-        logger.record_tabular('qf-avg', np.mean(qf))
-        logger.record_tabular('qf-std', np.std(qf))
-        logger.record_tabular('mean-sq-bellman-error', bellman_residual)
+        diagnostics = OrderedDict({
+            'Q-avg': np.mean(Q_np),
+            'Q-std': np.std(Q_np),
+            'mean-sq-bellman-error': bellman_residual,
+        })
 
-        self.policy.log_diagnostics(batch)
+        policy_diagnostics = self.policy.get_diagnostics(batch['observations'])
+        diagnostics.update({
+            f'policy/{key}': value
+            for key, value in policy_diagnostics.items()
+        })
+
         if self.plotter:
             self.plotter.draw()
 
-    @overrides
+        return diagnostics
+
     def get_snapshot(self, epoch):
         """Return loggable snapshot of the SQL algorithm.
 
@@ -351,7 +376,7 @@ class SQL(RLAlgorithm):
         state = {
             'epoch': epoch,
             'policy': self.policy,
-            'qf': self.qf,
+            'Q': self._Q,
             'env': self.env,
         }
 

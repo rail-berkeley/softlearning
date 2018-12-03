@@ -1,10 +1,8 @@
-from serializable import Serializable
 from .simple_replay_pool import SimpleReplayPool
 
 
-class ExtraPolicyInfoReplayPool(SimpleReplayPool, Serializable):
+class ExtraPolicyInfoReplayPool(SimpleReplayPool):
     def __init__(self, *args, **kwargs):
-        self._Serializable__initialize(locals())
         super(ExtraPolicyInfoReplayPool, self).__init__(*args, **kwargs)
 
         fields = {
@@ -13,7 +11,7 @@ class ExtraPolicyInfoReplayPool(SimpleReplayPool, Serializable):
                 'dtype': 'float32'
             },
             'log_pis': {
-                'shape': (),
+                'shape': (1, ),
                 'dtype': 'float32'
             }
         }

@@ -40,7 +40,8 @@ push_image_to_aws_ecr() {
     echo "${SOURCE_IMAGE}"
     echo "${TARGET_IMAGE}"
 
-    aws ecr get-login --no-include-email
+    $(aws ecr get-login --no-include-email)
+
     docker tag "${SOURCE_IMAGE}" "${TARGET_IMAGE}"
     docker push "${TARGET_IMAGE}"
 

@@ -1,16 +1,15 @@
 import abc
+from collections import OrderedDict
 import gtimer as gt
+import math
 
+import tensorflow as tf
 import numpy as np
 
-from rllab.misc import logger
-from rllab.algos.base import Algorithm
-
-from softlearning.misc import tf_utils
-from softlearning.samplers import rollouts, rollout
+from softlearning.samplers import rollouts
 
 
-class RLAlgorithm(Algorithm):
+class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
     """Abstract RLAlgorithm.
 
     Implements the _train and _evaluate methods to be used
@@ -28,7 +27,7 @@ class RLAlgorithm(Algorithm):
             eval_n_episodes=10,
             eval_deterministic=True,
             eval_render=False,
-            control_interval=1
+            session=None,
     ):
         """
         Args:
@@ -51,25 +50,16 @@ class RLAlgorithm(Algorithm):
         self._train_every_n_steps = train_every_n_steps
         self._epoch_length = epoch_length
         self._n_initial_exploration_steps = n_initial_exploration_steps
-        if control_interval != 1:
-            # TODO(hartikainen): we used to support control_interval in our old
-            # SAC code, but it was removed because of the hacky implementation.
-            # This functionality should be implemented as a part of the
-            # sampler. See `sac/algos/base.py@fe7dc7c` for the old
-            # implementation.
-            raise NotImplementedError(
-                "Control interval has been temporarily removed. See the"
-                " comments in RlAlgorithm.__init__ for more information.")
 
         self._eval_n_episodes = eval_n_episodes
         self._eval_deterministic = eval_deterministic
         self._eval_render = eval_render
 
-        self._sess = tf_utils.get_default_session()
+        self._session = session or tf.keras.backend.get_session()
 
-        self._env = None
-        self._policy = None
-        self._pool = None
+        self._epoch = 0
+        self._timestep = 0
+        self._num_train_steps = 0
 
     def _initial_exploration_hook(self, env, initial_exploration_policy, pool):
         if self._n_initial_exploration_steps < 1: return
@@ -80,7 +70,7 @@ class RLAlgorithm(Algorithm):
                 " n_initial_exploration_steps > 0.")
 
         self.sampler.initialize(env, initial_exploration_policy, pool)
-        for i in range(self._n_initial_exploration_steps):
+        while self._pool.size < self._n_initial_exploration_steps:
             self.sampler.sample()
 
     def _training_before_hook(self):
@@ -91,7 +81,15 @@ class RLAlgorithm(Algorithm):
         """Method called after the actual training loops."""
         pass
 
-    def _epoch_before_hook(self, epoch):
+    def _timestep_before_hook(self, *args, **kwargs):
+        """Hook called at the beginning of each timestep."""
+        pass
+
+    def _timestep_after_hook(self, *args, **kwargs):
+        """Hook called at the end of each timestep."""
+        pass
+
+    def _epoch_before_hook(self):
         """Hook called at the beginning of each epoch."""
         pass
 
@@ -105,130 +103,165 @@ class RLAlgorithm(Algorithm):
     def _evaluation_batch(self, *args, **kwargs):
         return self._training_batch(*args, **kwargs)
 
+    @property
+    def _training_started(self):
+        return self._total_timestep > 0
+
+    @property
+    def _total_timestep(self):
+        total_timestep = self._epoch * self._epoch_length + self._timestep
+        return total_timestep
+
     def _train(self, env, policy, pool, initial_exploration_policy=None):
         """Return a generator that performs RL training.
 
         Args:
-            env (`rllab.Env`): Environment used for training
+            env (`SoftlearningEnv`): Environment used for training.
             policy (`Policy`): Policy used for training
             initial_exploration_policy ('Policy'): Policy used for exploration
                 If None, then all exploration is done using policy
             pool (`PoolBase`): Sample pool to add samples to
         """
 
-        self._init_training()
+        if not self._training_started:
+            self._init_training()
 
-        self._initial_exploration_hook(env, initial_exploration_policy, pool)
+            self._initial_exploration_hook(
+                env, initial_exploration_policy, pool)
+
         self.sampler.initialize(env, policy, pool)
+        evaluation_env = env.copy() if self._eval_n_episodes else None
+
+        gt.reset_root()
+        gt.rename_root('RLAlgorithm')
+        gt.set_def_unique(False)
 
         self._training_before_hook()
 
-        evaluation_env = env.copy() if self._eval_n_episodes else None
+        for self._epoch in gt.timed_for(range(self._epoch, self._n_epochs)):
+            self._epoch_before_hook()
+            gt.stamp('epoch_before_hook')
 
-        with self._sess.as_default():
-            gt.rename_root('RLAlgorithm')
-            gt.reset()
-            gt.set_def_unique(False)
+            for self._timestep in range(1, self._epoch_length + 1):
+                self._timestep_before_hook()
+                gt.stamp('timestep_before_hook')
 
-            for epoch in gt.timed_for(
-                    range(self._n_epochs + 1), save_itrs=True):
-                logger.push_prefix('Epoch #%d | ' % epoch)
+                self._do_sampling(timestep=self._total_timestep)
+                gt.stamp('sample')
 
-                self._epoch_before_hook(epoch)
+                if self.ready_to_train:
+                    self._do_training_repeats(timestep=self._total_timestep)
+                gt.stamp('train')
 
-                for t in range(self._epoch_length):
-                    self._do_sampling(epoch=epoch, epoch_timestep=t)
-                    gt.stamp('sample')
-                    if self.ready_to_train:
-                        self._do_training_repeats(epoch=epoch,
-                                                  epoch_timestep=t)
-                        gt.stamp('train')
+                self._timestep_after_hook()
+                gt.stamp('timestep_after_hook')
 
-                mean_returns = self._evaluate(policy, evaluation_env, epoch)
-                gt.stamp('eval')
+            training_paths = self.sampler.get_last_n_paths(
+                math.ceil(self._epoch_length / self.sampler._max_path_length))
+            gt.stamp('training_paths')
+            evaluation_paths = self._evaluation_paths(policy, evaluation_env)
+            gt.stamp('evaluation_paths')
 
-                training_paths = self.sampler.get_last_n_paths()
-                self._epoch_after_hook(epoch, training_paths)
+            training_metrics = self._evaluate_rollouts(training_paths, env)
+            gt.stamp('training_metrics')
+            if evaluation_paths:
+                evaluation_metrics = self._evaluate_rollouts(
+                    evaluation_paths, evaluation_env)
+                gt.stamp('evaluation_metrics')
+            else:
+                evaluation_metrics = {}
 
-                params = self.get_snapshot(epoch)
-                logger.save_itr_params(epoch, params)
+            self._epoch_after_hook(training_paths)
+            gt.stamp('epoch_after_hook')
 
-                time_itrs = gt.get_times().stamps.itrs
-                time_eval = time_itrs.get('eval', [0])[-1]
-                time_total = gt.get_times().total
-                time_train = time_itrs.get('train', [0])[-1]
-                time_sample = time_itrs.get('sample', [0])[-1]
+            sampler_diagnostics = self.sampler.get_diagnostics()
 
-                logger.record_tabular('time-train', time_train)
-                logger.record_tabular('time-eval', time_eval)
-                logger.record_tabular('time-sample', time_sample)
-                logger.record_tabular('time-total', time_total)
-                logger.record_tabular('epoch', epoch)
+            diagnostics = self.get_diagnostics(
+                iteration=self._total_timestep,
+                batch=self._evaluation_batch(),
+                training_paths=training_paths,
+                evaluation_paths=evaluation_paths)
 
-                self.sampler.log_diagnostics()
+            time_diagnostics = gt.get_times().stamps.itrs
 
-                logger.dump_tabular(with_prefix=False)
-                logger.pop_prefix()
+            diagnostics.update(OrderedDict((
+                *(
+                    (f'evaluation/{key}', evaluation_metrics[key])
+                    for key in sorted(evaluation_metrics.keys())
+                ),
+                *(
+                    (f'training/{key}', training_metrics[key])
+                    for key in sorted(training_metrics.keys())
+                ),
+                *(
+                    (f'times/{key}', time_diagnostics[key][-1])
+                    for key in sorted(time_diagnostics.keys())
+                ),
+                *(
+                    (f'sampler/{key}', sampler_diagnostics[key])
+                    for key in sorted(sampler_diagnostics.keys())
+                ),
+                ('epoch', self._epoch),
+                ('timestep', self._timestep),
+                ('timesteps_total', self._total_timestep),
+                ('train-steps', self._num_train_steps),
+            )))
 
-                yield epoch, mean_returns
+            if self._eval_render and hasattr(
+                    evaluation_env, 'render_rollouts'):
+                # TODO(hartikainen): Make this consistent such that there's no
+                # need for the hasattr check.
+                env.render_rollouts(evaluation_paths)
 
-            self.sampler.terminate()
+            yield diagnostics
+
+        self.sampler.terminate()
 
         self._training_after_hook()
 
-    def _evaluate(self, policy, evaluation_env, epoch):
-        """Perform evaluation for the current policy."""
+    def _evaluation_paths(self, policy, evaluation_env):
+        if self._eval_n_episodes < 1: return ()
 
-        if self._eval_n_episodes < 1:
-            return
+        with policy.set_deterministic(self._eval_deterministic):
+            with policy.set_deterministic(self._eval_deterministic):
+                paths = rollouts(
+                    evaluation_env,
+                    policy,
+                    self.sampler._max_path_length,
+                    self._eval_n_episodes,
+                    render=self._eval_render)
 
-        if hasattr(policy, 'deterministic'):
-            with policy.deterministic(self._eval_deterministic):
-                # TODO: max_path_length should be a property of environment.
-                paths = rollouts(evaluation_env,
-                                 policy,
-                                 self.sampler._max_path_length,
-                                 self._eval_n_episodes,
-                                 render=self._eval_render)
-        else:
-            paths = rollouts(evaluation_env, policy,
-                             self.sampler._max_path_length,
-                             self._eval_n_episodes)
+        return paths
+
+    def _evaluate_rollouts(self, paths, env):
+        """Compute evaluation metrics for the given rollouts."""
 
         total_returns = [path['rewards'].sum() for path in paths]
         episode_lengths = [len(p['rewards']) for p in paths]
 
-        logger.record_tabular('return-average', np.mean(total_returns))
-        logger.record_tabular('return-min', np.min(total_returns))
-        logger.record_tabular('return-max', np.max(total_returns))
-        logger.record_tabular('return-std', np.std(total_returns))
-        logger.record_tabular('episode-length-avg', np.mean(episode_lengths))
-        logger.record_tabular('episode-length-min', np.min(episode_lengths))
-        logger.record_tabular('episode-length-max', np.max(episode_lengths))
-        logger.record_tabular('episode-length-std', np.std(episode_lengths))
+        diagnostics = OrderedDict((
+            ('return-average', np.mean(total_returns)),
+            ('return-min', np.min(total_returns)),
+            ('return-max', np.max(total_returns)),
+            ('return-std', np.std(total_returns)),
+            ('episode-length-avg', np.mean(episode_lengths)),
+            ('episode-length-min', np.min(episode_lengths)),
+            ('episode-length-max', np.max(episode_lengths)),
+            ('episode-length-std', np.std(episode_lengths)),
+        ))
 
-        if hasattr(evaluation_env._env, 'log_diagnostics'):
-            # TODO(hartikainen): Make this consistent such that there's no need
-            # for the hasattr check.
-            evaluation_env._env.log_diagnostics(paths)
-
-        env_infos = evaluation_env.get_path_infos(paths)
+        env_infos = env.get_path_infos(paths)
         for key, value in env_infos.items():
-            logger.record_tabular(key, value)
+            diagnostics[f'env_infos/{key}'] = value
 
-        if self._eval_render and hasattr(evaluation_env, 'render_rollouts'):
-            # TODO(hartikainen): Make this consistent such that there's no need
-            # for the hasattr check.
-            evaluation_env.render_rollouts(paths)
-
-        iteration = epoch * self._epoch_length
-        batch = self._evaluation_batch()
-        self.log_diagnostics(iteration, batch, paths)
-
-        return np.mean(total_returns)
+        return diagnostics
 
     @abc.abstractmethod
-    def log_diagnostics(self, iteration, batch, paths):
+    def get_diagnostics(self,
+                        iteration,
+                        batch,
+                        training_paths,
+                        evaluation_paths):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -239,18 +272,19 @@ class RLAlgorithm(Algorithm):
     def ready_to_train(self):
         return self.sampler.batch_ready()
 
-    def _do_sampling(self, epoch, epoch_timestep):
+    def _do_sampling(self, timestep):
         self.sampler.sample()
 
-    def _do_training_repeats(self, epoch, epoch_timestep):
+    def _do_training_repeats(self, timestep):
         """Repeat training _n_train_repeat times every _train_every_n_steps"""
-        total_timestep = epoch * self._epoch_length + epoch_timestep
-        if total_timestep % self._train_every_n_steps > 0: return
+        if timestep % self._train_every_n_steps > 0: return
 
         for i in range(self._n_train_repeat):
             self._do_training(
-                iteration=total_timestep,
+                iteration=timestep,
                 batch=self._training_batch())
+
+        self._num_train_steps += self._n_train_repeat
 
     @abc.abstractmethod
     def _do_training(self, iteration, batch):
@@ -259,3 +293,19 @@ class RLAlgorithm(Algorithm):
     @abc.abstractmethod
     def _init_training(self):
         raise NotImplementedError
+
+    @property
+    def tf_saveables(self):
+        return {}
+
+    def __getstate__(self):
+        state = {
+            '_epoch': self._epoch,
+            '_timestep': self._timestep,
+            '_num_train_steps': self._num_train_steps,
+        }
+
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)

@@ -1,7 +1,36 @@
+from copy import deepcopy
+
 import numpy as np
 
-from softlearning.replay_pools import SimpleReplayPool
-from .simple_sampler import SimpleSampler
+from softlearning import replay_pools
+from . import (
+    dummy_sampler,
+    extra_policy_info_sampler,
+    remote_sampler,
+    sampler_base,
+    simple_sampler)
+
+
+def get_sampler_from_variant(variant, *args, **kwargs):
+    SAMPLERS = {
+        'DummySampler': dummy_sampler.DummySampler,
+        'ExtraPolicyInfoSampler': (
+            extra_policy_info_sampler.ExtraPolicyInfoSampler),
+        'RemoteSampler': remote_sampler.RemoteSampler,
+        'Sampler': sampler_base.BaseSampler,
+        'SimpleSampler': simple_sampler.SimpleSampler,
+    }
+
+    sampler_params = variant['sampler_params']
+    sampler_type = sampler_params['type']
+
+    sampler_args = deepcopy(sampler_params.get('args', ()))
+    sampler_kwargs = deepcopy(sampler_params.get('kwargs', {}))
+
+    sampler = SAMPLERS[sampler_type](
+        *sampler_args, *args, **sampler_kwargs, **kwargs)
+
+    return sampler
 
 
 def rollout(env,
@@ -14,9 +43,9 @@ def rollout(env,
     observation_space = env.observation_space
     action_space = env.action_space
 
-    pool = SimpleReplayPool(
+    pool = replay_pools.SimpleReplayPool(
         observation_space, action_space, max_size=path_length)
-    sampler = SimpleSampler(
+    sampler = simple_sampler.SimpleSampler(
         max_path_length=path_length,
         min_pool_size=None,
         batch_size=None)
@@ -24,12 +53,12 @@ def rollout(env,
     sampler.initialize(env, policy, pool)
 
     images = []
-    env_infos = []
+    infos = []
 
     t = 0
     for t in range(path_length):
         observation, reward, terminal, info = sampler.sample()
-        env_infos.append(info)
+        infos.append(info)
 
         if callback is not None:
             callback(observation)
@@ -48,7 +77,7 @@ def rollout(env,
     assert pool._size == t + 1
 
     path = pool.batch_by_indices(np.arange(pool._size))
-    path['env_infos'] = env_infos
+    path['infos'] = infos
 
     if render_mode == 'rgb_array':
         path['images'] = np.stack(images, axis=0)

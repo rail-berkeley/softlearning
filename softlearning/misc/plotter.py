@@ -1,13 +1,14 @@
+import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 class QFPolicyPlotter:
-    def __init__(self, qf, policy, obs_lst, default_action, n_samples):
-        self._qf = qf
+    def __init__(self, Q, policy, obs_lst, default_action, n_samples):
+        self._Q = Q
         self._policy = policy
         self._obs_lst = obs_lst
-        self._default_action = default_action
+        self._default_action = np.array(default_action)
         self._n_samples = n_samples
 
         self._var_inds = np.where(np.isnan(default_action))[0]
@@ -49,23 +50,26 @@ class QFPolicyPlotter:
 
         # Copy default values along the first axis and replace nans with
         # the mesh grid points.
-        actions = np.tile(self._default_action, (N, 1))
+        actions = np.tile(self._default_action.astype(np.float32), (N, 1))
         actions[:, self._var_inds[0]] = xgrid.ravel()
         actions[:, self._var_inds[1]] = ygrid.ravel()
 
         for ax, obs in zip(self._ax_lst, self._obs_lst):
-            qs = self._qf.eval(obs[None], actions)
-            qs = qs.reshape(xgrid.shape)
+            observations = np.tile(
+                obs[None].astype(np.float32), (actions.shape[0], 1))
 
-            cs = ax.contour(xgrid, ygrid, qs, 20)
+            Q_np = self._Q.predict((observations, actions))
+            Q_np = np.reshape(Q_np, xgrid.shape)
+
+            cs = ax.contour(xgrid, ygrid, Q_np, 20)
             self._line_objects += cs.collections
             self._line_objects += ax.clabel(
                 cs, inline=1, fontsize=10, fmt='%.2f')
 
     def _plot_action_samples(self):
         for ax, obs in zip(self._ax_lst, self._obs_lst):
-            (actions, _, _) = self._policy.get_actions(
-                np.ones((self._n_samples, 1)) * obs[None, :])
+            observations = np.ones((self._n_samples, 1)) * obs[None, :]
+            actions = self._policy.actions_np([observations])
 
             x, y = actions[:, 0], actions[:, 1]
             self._line_objects += ax.plot(x, y, 'b*')

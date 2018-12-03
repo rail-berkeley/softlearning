@@ -1,34 +1,43 @@
 import unittest
 import numpy as np
 
-import gym
+from gym import spaces
 
 
-class TestAdapterClass(object):
+class AdapterTestClass(object):
     ENVIRONMENTS = []
 
     def test_environments(self):
         # Make sure that all the environments are creatable
+        SKIP_ENVIRONMENTS = (
+            ('pusher-2d', 'image-default'),
+            ('pusher-2d', 'image-reach'),
+            ('pusher-2d', 'blind-reach'),
+            ('ImageDClaw3', 'Screw'),
+            ('HardwareDClaw3', 'ScrewV2'),
+            ('HardwareDClaw3', 'FlipV1'),
+        )
         environments = [
             str(self.create_adapter(domain=domain, task=task))
             for domain, tasks in self.ENVIRONMENTS.items()
             for task in tasks
+            if (domain, task) not in SKIP_ENVIRONMENTS
         ]
 
         self.assertEqual(
-            len(environments), len(self.EXPECTED_ENVIRONMENTS))
+            environments, self.EXPECTED_ENVIRONMENTS)
 
     def test_observation_space(self):
         env = self.create_adapter()
         observation_space = env.observation_space
         self.assertTrue(
-            isinstance(observation_space, gym.spaces.box.Box))
+            isinstance(observation_space, spaces.box.Box))
 
     def test_action_space(self):
         env = self.create_adapter()
         action_space = env.action_space
         self.assertTrue(
-            isinstance(action_space, gym.spaces.box.Box))
+            isinstance(action_space, spaces.box.Box))
 
     def test_step(self):
         env = self.create_adapter()

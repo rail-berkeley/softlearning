@@ -1,55 +1,68 @@
-from serializable import Serializable
+from collections import OrderedDict
 
-from rllab.misc.overrides import overrides
-from sandbox.rocky.tf.policies.base import Policy
+import tensorflow as tf
 
-import numpy as np
+from .base_policy import BasePolicy
 
 
-class UniformPolicy(Policy, Serializable):
-    """Fixed policy that samples actions uniformly randomly.
-
-    Used for an initial exploration period instead of an undertrained policy.
-    """
-    def __init__(self, observation_shape, action_shape):
+class UniformPolicy(BasePolicy):
+    def __init__(self, input_shapes, output_shape, action_range=(-1.0, 1.0)):
+        super(UniformPolicy, self).__init__()
         self._Serializable__initialize(locals())
 
-        assert len(observation_shape) == 1, observation_shape
-        self._Ds = observation_shape[0]
-        assert len(action_shape) == 1, action_shape
-        self._Da = action_shape[0]
+        self.inputs = [
+            tf.keras.layers.Input(shape=input_shape)
+            for input_shape in input_shapes
+        ]
+        self._action_range = action_range
 
-        super(UniformPolicy, self).__init__(env_spec=None)
+        x = tf.keras.layers.Lambda(
+            lambda x: tf.concat(x, axis=-1)
+        )(self.inputs)
 
-    @overrides
-    def get_action(self,
-                   observation,
-                   with_log_pis=False,
-                   with_raw_actions=False):
-        """Get single actions for the observation.
+        actions = tf.keras.layers.Lambda(
+            lambda x: tf.random.uniform(
+                (tf.shape(x)[0], output_shape[0]),
+                *action_range)
+        )(x)
 
-        Assumes action spaces are normalized to be the interval [-1, 1]."""
-        action = np.random.uniform(-1., 1., self._Da)
-        outputs = (
-            action,
-            0.0 if with_log_pis else None,
-            # atanh is unstable when actions are too close to +/- 1, but seems
-            # stable at least between -1 + 1e-10 and 1 - 1e-10, so we shouldn't
-            # need to worry.
-            np.arctanh(action) if with_raw_actions else None)
+        self.actions_model = tf.keras.Model(self.inputs, actions)
 
-        return outputs, {}
+        self.actions_input = tf.keras.Input(shape=output_shape)
 
-    @overrides
-    def get_actions(self, observations, *args, **kwargs):
-        actions, log_pis, raw_actions = None, None, None
-        agent_info = {}
-        return (actions, log_pis, raw_actions), agent_info
+        log_pis = tf.keras.layers.Lambda(
+            lambda x: tf.tile(tf.log([
+                (action_range[1] - action_range[0]) / 2.0
+            ])[None], (tf.shape(x)[0], 1))
+        )(self.actions_input)
 
-    @overrides
-    def log_diagnostics(self, paths):
+        self.log_pis_model = tf.keras.Model(
+            (*self.inputs, self.actions_input), log_pis)
+
+    def get_weights(self):
+        return []
+
+    def set_weights(self, *args, **kwargs):
+        return
+
+    @property
+    def trainable_variables(self):
+        return []
+
+    def reset(self):
         pass
 
-    @overrides
-    def get_params_internal(self, **tags):
-        pass
+    def actions(self, conditions):
+        return self.actions_model(conditions)
+
+    def log_pis(self, conditions, actions):
+        return self.log_pis_model([*conditions, actions])
+
+    def actions_np(self, conditions):
+        return self.actions_model.predict(conditions)
+
+    def log_pis_np(self, conditions, actions):
+        return self.log_pis_model.predict([*conditions, actions])
+
+    def get_diagnostics(self, conditions):
+        return OrderedDict({})

@@ -149,8 +149,8 @@ class Pusher2dEnv(Serializable, MujocoEnv):
 
 class ForkReacherEnv(Pusher2dEnv):
     def __init__(self,
-                 arm_goal_distance_cost_coeff,
-                 arm_object_distance_cost_coeff,
+                 arm_goal_distance_cost_coeff=1.0,
+                 arm_object_distance_cost_coeff=0.0,
                  *args,
                  **kwargs):
         self._Serializable__initialize(locals())

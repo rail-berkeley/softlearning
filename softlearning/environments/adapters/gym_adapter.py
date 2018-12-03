@@ -2,6 +2,7 @@
 
 import numpy as np
 import gym
+from gym import spaces
 from gym.wrappers.dict import FlattenDictWrapper
 
 from .softlearning_env import SoftlearningEnv
@@ -22,6 +23,7 @@ from softlearning.environments.gym.mujoco.image_pusher import (
     ImagePusherEnv,
     ImageForkReacherEnv,
     BlindForkReacherEnv)
+from softlearning.environments.gym.multi_goal import MultiGoalEnv
 
 
 def raise_on_use_wrapper(e):
@@ -31,13 +33,11 @@ def raise_on_use_wrapper(e):
 
 
 try:
-    from sac_envs.envs.dclaw.dclaw3_screw_v11 import DClaw3ScrewV11
     from sac_envs.envs.dclaw.dclaw3_screw_v2 import DClaw3ScrewV2
     from sac_envs.envs.dclaw.dclaw3_screw_v2 import ImageDClaw3Screw
     from sac_envs.envs.dclaw.dclaw3_flip_v1 import DClaw3FlipV1
 except ModuleNotFoundError as e:
     DClaw3FlipV1 = raise_on_use_wrapper(e)
-    DClaw3ScrewV11 = raise_on_use_wrapper(e)
     DClaw3ScrewV2 = raise_on_use_wrapper(e)
     ImageDClaw3Screw = raise_on_use_wrapper(e)
 
@@ -115,7 +115,6 @@ GYM_ENVIRONMENTS = {
         'v2': lambda: gym.envs.make('InvertedPendulum-v2'),
     },
     'DClaw3': {
-        'ScrewV11': DClaw3ScrewV11,
         'ScrewV2': DClaw3ScrewV2,
         'FlipV1': DClaw3FlipV1,
     },
@@ -127,24 +126,43 @@ GYM_ENVIRONMENTS = {
             DClaw3ScrewV2(
                 *args,
                 is_hardware=True,
-                pose_difference_cost_coeff=kwargs.get(
+                pose_difference_cost_coeff=kwargs.pop(
                     'pose_difference_cost_coeff', 0),
-                joint_velocity_cost_coeff=kwargs.get(
+                joint_velocity_cost_coeff=kwargs.pop(
                     'joint_velocity_cost_coeff', 0),
-                joint_acceleration_cost_coeff=kwargs.get(
+                joint_acceleration_cost_coeff=kwargs.pop(
                     'joint_acceleration_cost_coeff', 0),
-                target_initial_position_range=kwargs.get(
+                target_initial_position_range=kwargs.pop(
                     'target_initial_position_range', (np.pi, np.pi)),
-                object_initial_position_range=kwargs.get(
+                object_initial_position_range=kwargs.pop(
                     'object_initial_position_range', (0, 0)),
-                frame_skip=kwargs.get('frame_skip', 30),
+                frame_skip=kwargs.pop('frame_skip', 30),
+                **kwargs)),
+        'ImageScrewV2': lambda *args, **kwargs: (
+            ImageDClaw3Screw(
+                *args,
+                is_hardware=True,
+                pose_difference_cost_coeff=kwargs.pop(
+                    'pose_difference_cost_coeff', 0),
+                joint_velocity_cost_coeff=kwargs.pop(
+                    'joint_velocity_cost_coeff', 0),
+                joint_acceleration_cost_coeff=kwargs.pop(
+                    'joint_acceleration_cost_coeff', 0),
+                target_initial_position_range=kwargs.pop(
+                    'target_initial_position_range', (np.pi, np.pi)),
+                object_initial_position_range=kwargs.pop(
+                    'object_initial_position_range', (-np.pi, np.pi)),
+                frame_skip=kwargs.pop('frame_skip', 30),
                 **kwargs)),
         'FlipV1': lambda *args, **kwargs: (
             DClaw3FlipV1(
                 *args,
                 is_hardware=True,
                 **kwargs)),
-    }
+    },
+    'MultiGoal': {
+        'default': MultiGoalEnv
+    },
 }
 
 
@@ -175,7 +193,7 @@ class GymAdapter(SoftlearningEnv):
             # depends on time rather than state).
             env = env.env
 
-        if isinstance(env.observation_space, gym.spaces.Dict):
+        if isinstance(env.observation_space, spaces.Dict):
             observation_keys = (
                 observation_keys or list(env.observation_space.spaces.keys()))
         if normalize:
@@ -191,7 +209,7 @@ class GymAdapter(SoftlearningEnv):
     @property
     def active_observation_shape(self):
         """Shape for the active observation based on observation_keys."""
-        if not isinstance(self._env.observation_space, gym.spaces.Dict):
+        if not isinstance(self._env.observation_space, spaces.Dict):
             return super(GymAdapter, self).active_observation_shape
 
         observation_keys = (
@@ -207,7 +225,7 @@ class GymAdapter(SoftlearningEnv):
         return active_observation_shape
 
     def convert_to_active_observation(self, observation):
-        if not isinstance(self._env.observation_space, gym.spaces.Dict):
+        if not isinstance(self._env.observation_space, spaces.Dict):
             return observation
 
         observation_keys = (

@@ -1,237 +1,230 @@
-""" Gaussian mixture policy. """
+"""GaussianPolicy."""
 
-from contextlib import contextmanager
+from collections import OrderedDict
+
 import numpy as np
 import tensorflow as tf
+import tensorflow_probability as tfp
+from softlearning.distributions.squash_bijector import SquashBijector
+from softlearning.models.feedforward import feedforward_model
 
-from rllab.misc.overrides import overrides
-from rllab.misc import logger
-from serializable import Serializable
-
-from softlearning.distributions import Normal
-from softlearning.policies import NNPolicy
-from softlearning.misc import tf_utils
-
-EPS = 1e-6
+from .base_policy import BasePolicy
 
 
-class GaussianPolicy(NNPolicy, Serializable):
+SCALE_DIAG_MIN_MAX = (-20, 2)
+
+
+class GaussianPolicy(BasePolicy):
     def __init__(self,
-                 observation_shape,
-                 action_shape,
-                 hidden_layer_sizes=(100, 100),
-                 reg=1e-3,
+                 input_shapes,
+                 output_shape,
                  squash=True,
-                 reparameterize=True,
-                 name='gaussian_policy'):
-        """
-        Args:
-            observation_shape (`list`, `tuple`): Dimension of the observations.
-            action_shape (`list`, `tuple`): Dimension of the actions.
-            hidden_layer_sizes (`list` of `int`): Sizes for the Multilayer
-                perceptron hidden layers.
-            reg (`float`): Regularization coeffiecient for the Gaussian
-                parameters.
-            squash (`bool`): If True, squash the Gaussian the gmm action samples
-                between -1 and 1 with tanh.
-            reparameterize ('bool'): If True, gradients will flow directly
-                through the action samples.
-        """
+                 preprocessor=None,
+                 name=None):
         self._Serializable__initialize(locals())
-
-        self._hidden_layers = hidden_layer_sizes
-        assert len(observation_shape) == 1, observation_shape
-        self._Ds = observation_shape[0]
-        assert len(action_shape) == 1, action_shape
-        self._Da = action_shape[0]
-        self._is_deterministic = False
+        super(GaussianPolicy, self).__init__()
+        self._input_shapes = input_shapes
+        self._output_shape = output_shape
         self._squash = squash
-        self._reparameterize = reparameterize
-        self._reg = reg
+        self._squash = squash
+        self._name = name
+        self._preprocessor = preprocessor
 
-        self.no_op = tf.no_op()
+        self.condition_inputs = [
+            tf.keras.layers.Input(shape=input_shape)
+            for input_shape in input_shapes
+        ]
 
-        self.name = name
-        self.NO_OP = tf.no_op()
+        conditions = tf.keras.layers.Lambda(
+            lambda x: tf.concat(x, axis=-1)
+        )(self.condition_inputs)
 
-        self.build()
+        if preprocessor is not None:
+            conditions = preprocessor(conditions)
 
-        super(NNPolicy, self).__init__(env_spec=None)
+        shift_and_log_scale_diag = self._shift_and_log_scale_diag_net(
+            input_shapes=(conditions.shape[1:], ),
+            output_size=output_shape[0] * 2,
+        )(conditions)
 
-    def actions_for(self, observations, name=None, reuse=tf.AUTO_REUSE,
-                    with_log_pis=False, with_raw_actions=False):
-        name = name or self.name
+        shift, log_scale_diag = tf.keras.layers.Lambda(
+            lambda shift_and_log_scale_diag: tf.split(
+                shift_and_log_scale_diag,
+                num_or_size_splits=2,
+                axis=-1)
+        )(shift_and_log_scale_diag)
 
-        with tf.variable_scope(name, reuse=reuse):
-            distribution = Normal(
-                hidden_layers_sizes=self._hidden_layers,
-                Dx=self._Da,
-                reparameterize=self._reparameterize,
-                cond_t_lst=(observations,),
-                reg=self._reg
-            )
-        raw_actions = distribution.x_t
-        actions = tf.tanh(raw_actions) if self._squash else raw_actions
-        return_list = [actions]
+        log_scale_diag = tf.keras.layers.Lambda(
+            lambda log_scale_diag: tf.clip_by_value(
+                log_scale_diag, *SCALE_DIAG_MIN_MAX)
+        )(log_scale_diag)
 
-        # TODO: should always return same shape out
-        # Figure out how to make the interface for `log_pis` cleaner
-        if with_log_pis:
-            log_pis = self._log_pis_for_raw(observations, raw_actions,
-                                            name)
-            return_list.append(log_pis)
+        batch_size = tf.keras.layers.Lambda(
+            lambda x: tf.shape(x)[0])(conditions)
 
-        if with_raw_actions:
-            return_list.append(raw_actions)
+        base_distribution = tfp.distributions.MultivariateNormalDiag(
+            loc=tf.zeros(output_shape),
+            scale_diag=tf.ones(output_shape))
 
-        # not sure the best way of returning variable outputs
-        if len(return_list) > 1:
-            return return_list
+        latents = tf.keras.layers.Lambda(
+            lambda batch_size: base_distribution.sample(batch_size)
+        )(batch_size)
 
-        return actions
+        def raw_actions_fn(inputs):
+            shift, log_scale_diag, latents = inputs
+            bijector = tfp.bijectors.Affine(
+                shift=shift,
+                scale_diag=tf.exp(log_scale_diag))
+            actions = bijector.forward(latents)
+            return actions
 
-    def _log_pis_for_raw(self, observations, actions, name=None,
-                         reuse=tf.AUTO_REUSE):
-        name = name or self.name
+        raw_actions = tf.keras.layers.Lambda(
+            raw_actions_fn
+        )((shift, log_scale_diag, latents))
 
-        with tf.variable_scope(name, reuse=reuse):
-            distribution = Normal(
-                hidden_layers_sizes=self._hidden_layers,
-                Dx=self._Da,
-                reparameterize=self._reparameterize,
-                cond_t_lst=(observations,),
-                reg=self._reg
-            )
-        log_pis = distribution.log_prob(actions)
-        if self._squash:
-            log_pis -= self._squash_correction(actions)
-        return log_pis
+        squash_bijector = (
+            SquashBijector()
+            if self._squash
+            else tfp.bijectors.Identity())
 
-    def log_pis_for(self, observations, raw_actions=None, actions=None, name=None,
-                    reuse=tf.AUTO_REUSE):
-        assert raw_actions is not None or actions is not None, 'Must provide either actions or raw_actions'
+        actions = tf.keras.layers.Lambda(
+            lambda raw_actions: squash_bijector.forward(raw_actions)
+        )(raw_actions)
 
-        # we prefer to use raw actions as to avoid instability with atanh
-        if raw_actions is not None:
-            return self._log_pis_for_raw(observations, raw_actions, name, reuse)
-        if self._squash:
-            actions = tf.atanh(actions)
-        return self._log_pis_for_raw(observations, actions, name,
-                                     reuse)
+        self.actions_model = tf.keras.Model(self.condition_inputs, actions)
 
-    def build(self):
-        self._observations_ph = tf.placeholder(
-            dtype=tf.float32,
-            shape=(None, self._Ds),
-            name='observations',
-        )
-        self._actions_ph = tf.placeholder(
-            dtype=tf.float32,
-            shape=(None, self._Da),
-            name='actions',
-        )
+        deterministic_actions = tf.keras.layers.Lambda(
+            lambda shift: squash_bijector.forward(shift)
+        )(shift)
 
-        with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
-            self.distribution = Normal(
-                hidden_layers_sizes=self._hidden_layers,
-                Dx=self._Da,
-                reparameterize=self._reparameterize,
-                cond_t_lst=(self._observations_ph,),
-                reg=self._reg,
-            )
+        self.deterministic_actions_model = tf.keras.Model(
+            self.condition_inputs, deterministic_actions)
 
-        self._actions, self._log_pis, self._raw_actions = self.actions_for(
-            self._observations_ph, with_log_pis=True, with_raw_actions=True)
+        def log_pis_fn(inputs):
+            shift, log_scale_diag, actions = inputs
+            base_distribution = tfp.distributions.MultivariateNormalDiag(
+                loc=tf.zeros(output_shape),
+                scale_diag=tf.ones(output_shape))
+            bijector = tfp.bijectors.Chain((
+                squash_bijector,
+                tfp.bijectors.Affine(
+                    shift=shift,
+                    scale_diag=tf.exp(log_scale_diag)),
+            ))
+            distribution = (
+                tfp.distributions.ConditionalTransformedDistribution(
+                    distribution=base_distribution,
+                    bijector=bijector))
 
-    @overrides
-    def get_actions(self, observations, with_log_pis=False, with_raw_actions=False):
-        """Sample actions based on the observations.
+            log_pis = distribution.log_prob(actions)[:, None]
+            return log_pis
 
-        If `self._is_deterministic` is True, returns the mean action for the
-        observations. If False, return stochastically sampled action.
+        self.actions_input = tf.keras.layers.Input(shape=output_shape)
 
-        """
-        if self._is_deterministic:  # Handle the deterministic case separately.
+        log_pis = tf.keras.layers.Lambda(
+            log_pis_fn)([shift, log_scale_diag, actions])
 
-            feed_dict = {self._observations_ph: observations}
+        log_pis_for_action_input = tf.keras.layers.Lambda(
+            log_pis_fn)([shift, log_scale_diag, self.actions_input])
 
-            # TODO.code_consolidation: these shapes should be double checked
-            # for case where `observations.shape[0] > 1`
-            raw_mu = tf.get_default_session().run(
-                self.distribution.mu_t, feed_dict)  # 1 x Da
-            mu = np.tanh(raw_mu) if self._squash else raw_mu
+        self.log_pis_model = tf.keras.Model(
+            (*self.condition_inputs, self.actions_input),
+            log_pis_for_action_input)
 
-            assert not with_log_pis, "No log_pis for deterministic action"
+        self.diagnostics_model = tf.keras.Model(
+            self.condition_inputs,
+            (shift, log_scale_diag, log_pis, raw_actions, actions))
 
-            if with_raw_actions:
-                return mu, None, raw_mu
+    def _shift_and_log_scale_diag_net(self, input_shapes, output_size):
+        raise NotImplementedError
 
-            return mu, None, None
+    def get_weights(self):
+        return self.actions_model.get_weights()
 
-        return super(GaussianPolicy, self).get_actions(
-            observations, with_log_pis, with_raw_actions)
+    def set_weights(self, *args, **kwargs):
+        return self.actions_model.set_weights(*args, **kwargs)
 
-    @contextmanager
-    def deterministic(self, set_deterministic=True):
-        """Context manager for changing the determinism of the policy.
+    @property
+    def trainable_variables(self):
+        return self.actions_model.trainable_variables
 
-        See `self.get_action` for further information about the effect of
-        self._is_deterministic.
+    @property
+    def non_trainable_weights(self):
+        """Due to our nested model structure, we need to filter duplicates."""
+        return list(set(super(GaussianPolicy, self).non_trainable_weights))
 
-        Args:
-            set_deterministic (`bool`): Value to set the self._is_deterministic
-                to during the context. The value will be reset back to the
-                previous value when the context exits.
-        """
-        was_deterministic = self._is_deterministic
+    def reset(self):
+        pass
 
-        self._is_deterministic = set_deterministic
+    def actions(self, conditions):
+        if self._deterministic:
+            raise NotImplementedError
 
-        yield
+        return self.actions_model(conditions)
 
-        self._is_deterministic = was_deterministic
+    def log_pis(self, conditions, actions):
+        assert not self._deterministic, self._deterministic
+        return self.log_pis_model([*conditions, actions])
 
-    def log_diagnostics(self, iteration, batch):
-        """Record diagnostic information to the logger.
+    def actions_np(self, conditions):
+        if self._deterministic:
+            return self.deterministic_actions_model.predict(conditions)
+        else:
+            return self.actions_model.predict(conditions)
 
-        Records the mean, min, max, and standard deviation of means and
+    def log_pis_np(self, conditions, actions):
+        assert not self._deterministic, self._deterministic
+        return self.log_pis_model.predict([*conditions, actions])
+
+    def get_diagnostics(self, conditions):
+        """Return diagnostic information of the policy.
+
+        Returns the mean, min, max, and standard deviation of means and
         covariances.
         """
+        (shifts_np,
+         log_scale_diags_np,
+         log_pis_np,
+         raw_actions_np,
+         actions_np) = self.diagnostics_model.predict(conditions)
 
-        feeds = {self._observations_ph: batch['observations']}
-        sess = tf_utils.get_default_session()
-        actions, raw_actions, log_pi, mu, log_sig, = sess.run(
-            (
-                self._actions,
-                self._raw_actions,
-                self._log_pis,
-                self.distribution.mu_t,
-                self.distribution.log_sig_t,
-            ),
-            feeds
-        )
+        return OrderedDict({
+            'shifts-mean': np.mean(shifts_np),
+            'shifts-std': np.std(shifts_np),
 
-        logger.record_tabular('policy-mus-mean', np.mean(mu))
-        logger.record_tabular('policy-mus-min', np.min(mu))
-        logger.record_tabular('policy-mus-max', np.max(mu))
-        logger.record_tabular('policy-mus-std', np.std(mu))
+            'log_scale_diags-mean': np.mean(log_scale_diags_np),
+            'log_scale_diags-std': np.std(log_scale_diags_np),
 
-        logger.record_tabular('log-sigs-mean', np.mean(log_sig))
-        logger.record_tabular('log-sigs-min', np.min(log_sig))
-        logger.record_tabular('log-sigs-max', np.max(log_sig))
-        logger.record_tabular('log-sigs-std', np.std(log_sig))
+            '-log-pis-mean': np.mean(-log_pis_np),
+            '-log-pis-std': np.std(-log_pis_np),
 
-        logger.record_tabular('-log-pi-mean', np.mean(-log_pi))
-        logger.record_tabular('-log-pi-max', np.max(-log_pi))
-        logger.record_tabular('-log-pi-min', np.min(-log_pi))
-        logger.record_tabular('-log-pi-std', np.std(-log_pi))
+            'raw-actions-mean': np.mean(raw_actions_np),
+            'raw-actions-std': np.std(raw_actions_np),
 
-        logger.record_tabular('actions-mean', np.mean(actions))
-        logger.record_tabular('actions-min', np.min(actions))
-        logger.record_tabular('actions-max', np.max(actions))
-        logger.record_tabular('actions-std', np.std(actions))
+            'actions-mean': np.mean(actions_np),
+            'actions-std': np.std(actions_np),
+        })
 
-        logger.record_tabular('raw-actions-mean', np.mean(raw_actions))
-        logger.record_tabular('raw-actions-min', np.min(raw_actions))
-        logger.record_tabular('raw-actions-max', np.max(raw_actions))
-        logger.record_tabular('raw-actions-std', np.std(raw_actions))
+
+class FeedforwardGaussianPolicy(GaussianPolicy):
+    def __init__(self,
+                 hidden_layer_sizes,
+                 activation='relu',
+                 output_activation='linear',
+                 *args, **kwargs):
+        self._hidden_layer_sizes = hidden_layer_sizes
+        self._activation = activation
+        self._output_activation = output_activation
+
+        self._Serializable__initialize(locals())
+        super(FeedforwardGaussianPolicy, self).__init__(*args, **kwargs)
+
+    def _shift_and_log_scale_diag_net(self, input_shapes, output_size):
+        shift_and_log_scale_diag_net = feedforward_model(
+            input_shapes=input_shapes,
+            hidden_layer_sizes=self._hidden_layer_sizes,
+            output_size=output_size,
+            activation=self._activation,
+            output_activation=self._output_activation)
+
+        return shift_and_log_scale_diag_net

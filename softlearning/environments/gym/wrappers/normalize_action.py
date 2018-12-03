@@ -1,4 +1,5 @@
 import gym
+from gym import spaces
 import numpy as np
 
 
@@ -9,7 +10,7 @@ class NormalizeActionWrapper(gym.ActionWrapper):
     """Rescale the action space of the environment."""
 
     def action(self, action):
-        if not isinstance(self.env.action_space, gym.spaces.Box):
+        if not isinstance(self.env.action_space, spaces.Box):
             return action
 
         # rescale the action

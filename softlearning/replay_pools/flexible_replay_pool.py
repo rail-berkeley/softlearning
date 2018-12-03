@@ -1,12 +1,10 @@
 import numpy as np
 
-from serializable import Serializable
 from .replay_pool import ReplayPool
 
 
-class FlexibleReplayPool(ReplayPool, Serializable):
+class FlexibleReplayPool(ReplayPool):
     def __init__(self, max_size, fields):
-        self._Serializable__initialize(locals())
         super(FlexibleReplayPool, self).__init__()
 
         max_size = int(max_size)
@@ -54,37 +52,8 @@ class FlexibleReplayPool(ReplayPool, Serializable):
 
         self._advance(num_samples)
 
-    def __getstate__(self):
-        pool_state = super(FlexibleReplayPool, self).__getstate__()
-        pool_state.update({
-            **{
-                field_name: getattr(self, field_name).tobytes()
-                for field_name in self.field_names
-            },
-            **{
-                '_pointer': self._pointer,
-                '_size': self._size
-            }
-        })
-
-        return pool_state
-
-    def __setstate__(self, pool_state):
-        super(FlexibleReplayPool, self).__setstate__(pool_state)
-
-        for field_name in self.field_names:
-            field = self.fields[field_name]
-            flat_values = np.frombuffer(
-                pool_state[field_name], dtype=field['dtype'])
-            values = flat_values.reshape(
-                (self._max_size, *field['shape']))
-            setattr(self, field_name, values)
-
-        self._pointer = pool_state['_pointer']
-        self._size = pool_state['_size']
-
     def random_indices(self, batch_size):
-        if self._size == 0: return ()
+        if self._size == 0: return np.arange(0, 0)
         return np.random.randint(0, self._size, batch_size)
 
     def random_batch(self, batch_size, field_name_filter=None, **kwargs):
@@ -94,11 +63,17 @@ class FlexibleReplayPool(ReplayPool, Serializable):
 
     def last_n_batch(self, last_n, field_name_filter=None, **kwargs):
         last_n_indices = np.arange(
-            self._pointer - last_n, self._pointer) % self._max_size
+            self._pointer - min(self.size, last_n), self._pointer
+        ) % self._max_size
         return self.batch_by_indices(
             last_n_indices, field_name_filter, **kwargs)
 
     def batch_by_indices(self, indices, field_name_filter=None):
+        if any(indices % self._max_size) > self.size:
+            raise ValueError(
+                "Tried to retrieve batch with indices greater than current"
+                " size")
+
         field_names = self.field_names
         if field_name_filter is not None:
             field_names = [
@@ -110,3 +85,23 @@ class FlexibleReplayPool(ReplayPool, Serializable):
             field_name: getattr(self, field_name)[indices]
             for field_name in field_names
         }
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        if self.size < self._max_size:
+            for field_name in self.field_names:
+                state[field_name] = state[field_name][:self.size]
+
+        return state
+
+    def __setstate__(self, state):
+        if state['_size'] < state['_max_size']:
+            pad_size = state['_max_size'] - state['_size']
+            for field_name in state['field_names']:
+                field_shape = state['fields'][field_name]['shape']
+                state[field_name] = np.concatenate((
+                    state[field_name],
+                    np.zeros((pad_size, *field_shape))
+                ), axis=0)
+
+        self.__dict__ = state
