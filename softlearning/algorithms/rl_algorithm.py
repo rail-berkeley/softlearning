@@ -204,6 +204,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 ('epoch', self._epoch),
                 ('timestep', self._timestep),
                 ('timesteps_total', self._total_timestep),
+                ('train-steps', self._num_train_steps),
             )))
 
             if self._eval_render and hasattr(
