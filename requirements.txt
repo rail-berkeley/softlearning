@@ -31,6 +31,7 @@ google-api-python-client==1.7.5
 google-auth==1.6.1
 google-auth-httplib2==0.0.3
 grpcio==1.16.1
+gtimer==1.0.0b5
 gym==0.10.9
 h5py==2.8.0
 httplib2==0.12.0
@@ -68,6 +69,7 @@ python-dateutil==2.7.5
 pytz==2018.7
 PyWavelets==1.0.1
 PyYAML==3.13
+psutil==5.4.8
 ray==0.6.0
 redis==3.0.1
 requests==2.20.1
@@ -78,6 +80,7 @@ scikit-image==0.14.1
 scikit-learn==0.20.1
 scipy==1.1.0
 Serializable==0.1.0
+setproctitle==1.1.10
 six==1.11.0
 smmap2==2.0.5
 tensorboard==1.12.0
