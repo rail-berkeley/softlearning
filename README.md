@@ -17,32 +17,35 @@ Most of the models require a [MuJoCo](https://www.roboti.us/license.html) licens
 
 ## Docker Installation
 
-Currently, rendering of simulations is not supported on Docker due to a missing display setup. As a fix, you can use a [local installation](#local-installation). If you want to run the MuJoCo environments without rendering, the docker environment needs to know where to find your MuJoCo license key (`mjkey.txt`). You can either copy your key into `<PATH_TO_THIS_REPOSITY>/.mujoco/mjkey.txt`, or you can specify the path to the key in your environment variables:
+TODO(hartikainen): Fill these in.
 
+### docker-compose
+To build the image and run the container:
 ```
-export MUJOCO_LICENSE_PATH=<path_to_mujoco>/mjkey.txt
+export MJKEY="$(cat ~/.mujoco/mjkey.txt)" && docker-compose -f ./docker/docker-compose.dev.gpu.yml up -d --force-recreate
 ```
-
-Once that's done, you can run the Docker container with
-
-```
-docker-compose up
-```
-
-Docker compose creates a Docker container named `soft-TODO-learning` and automatically sets the needed environment variables and volumes.
-
-You can access the container with the typical Docker [exec](https://docs.docker.com/engine/reference/commandline/exec/)-command, i.e.
-
-```
-docker exec -it soft-TODO-learning bash
-```
-
-See examples section for examples of how to train and simulate the agents.
 
 To clean up the setup:
 ```
 docker-compose down
 ```
+
+### docker run
+To build the image and run the container:
+- TODO(hartikainen): Fill these in.
+
+To clean up the setup:
+```
+docker rm -f softlearning
+```
+
+You can access the container with the typical Docker [exec](https://docs.docker.com/engine/reference/commandline/exec/)-command, i.e.
+
+```
+docker exec -it softlearning bash
+```
+
+See examples section for examples of how to train and simulate the agents.
 
 ## Local Installation
 
@@ -71,7 +74,7 @@ MUJOCO_ZIP="mjpro${MUJOCO_VERSION}_${MUJOCO_TYPE}.zip" \
 3. Clone `softlearning`
 ```
 cd <installation_path_of_your_choice>
-git clone https://github.com/haarnoja/softlearning.git
+git clone https://github.com/rail-berkeley/softlearning.git
 ```
 
 4. Create and activate conda environment
@@ -93,12 +96,13 @@ conda remove --name softlearning --all
 ### Training and simulating an agent
 1. To train the agent
 ```
-python ./examples/TODO.py --env=swimmer --log_dir="TODO"
+python ./examples/TODO.py --universe=gym --domain=swimmer --task=default --log_dir="TODO"
 ```
 
 2. To simulate the agent (*NOTE*: This step currently fails with the Docker installation, due to missing display.)
+TODO(hartikainen): update
 ```
-python ./scripts/sim_policy.py TODO/itr_<iteration>.pkl
+python ./scripts/TODO.py TODO
 ```
 
 `TODO.py` contains several different environments and there are more example scripts available in the  `/examples` folder. For more information about the agents and configurations, run the scripts with `--help` flag. For example:
@@ -106,24 +110,9 @@ python ./scripts/sim_policy.py TODO/itr_<iteration>.pkl
 python ./examples/TODO.py --help
 usage: TODO
 ```
-### Training and combining policies
-It is also possible to merge two existing maximum entropy policies to form a new composed skill that approximately optimizes both constituent tasks simultaneously as discussed in [ Composable Deep Reinforcement Learning for Robotic Manipulation](https://arxiv.org/abs/1803.06773). To run the pusher experiment described in the paper, you can first train two policies for the constituent tasks ("push the object to the given x-coordinate" and "push the object to the given y-coordinate") by running
-```
-python ./examples/pusher_pretrain.py --log_dir=TODO
-```
-You can then combine the two policies to form a combined skill ("push the object to the given x and y coordinates"), without collecting more experience form the environment, with
-```
-python ./examples/pusher_combine.py --log_dir=TODO \
---snapshot1=TODO \
---snapshot2=TODO
-```
-
 
 # Credits
-- The soft actor-critic algorithm was developed by: [Tuomas Haarnoja](https://people.eecs.berkeley.edu/~haarnoja/), [Aurick Zhou](https://github.com/azhou42), Prof. [Sergey Levine](https://people.eecs.berkeley.edu/~svlevine/), and Prof. [Pieter Abbeel](https://people.eecs.berkeley.edu/~pabbeel/)
-- The soft q-learning algorithm was developed by: [Haoran Tang](https://math.berkeley.edu/~hrtang/), [Tuomas Haarnoja](https://people.eecs.berkeley.edu/~haarnoja/), Prof. [Sergey Levine](https://people.eecs.berkeley.edu/~svlevine/), and Prof. [Pieter Abbeel](https://people.eecs.berkeley.edu/~pabbeel/)
-
-All the soft reinforcement learning algorithms in this package were developed at UC Berkeley. Special thanks to [Vitchyr Pong](https://github.com/vitchyr), who wrote some parts of the code, and [Kristian Hartikainen](https://github.com/hartikainen) who helped testing, documenting, and polishing the code and streamlining the installation process. The work was supported by [Berkeley Deep Drive](https://deepdrive.berkeley.edu/).
+TODO(hartikainen): Fill these in.
 
 # References
 ```
