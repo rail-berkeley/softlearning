@@ -72,8 +72,11 @@ class ExperimentRunner(tune.Trainable):
         if self.train_generator is None:
             self.train_generator = self.algorithm.train()
 
-        diagnostics = next(self.train_generator)
-        return diagnostics
+        try:
+            diagnostics = next(self.train_generator)
+            return diagnostics
+        except StopIteration:
+            return {'done': True}
 
     def _pickle_path(self, checkpoint_dir):
         return os.path.join(checkpoint_dir, 'checkpoint.pkl')
