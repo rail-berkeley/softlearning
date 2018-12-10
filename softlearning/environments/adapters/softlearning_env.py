@@ -223,7 +223,6 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
             path_results = {
                 k: [
                     info[k]
-                    for path in paths
                     for info in path['infos']
                 ] for k in keys
             }
@@ -237,8 +236,5 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
         aggregated_results = {}
         for key, value in results.items():
             aggregated_results[key + '-mean'] = np.mean(value)
-            aggregated_results[key + '-median'] = np.median(value)
-            aggregated_results[key + '-min'] = np.min(value)
-            aggregated_results[key + '-max'] = np.max(value)
 
         return aggregated_results
