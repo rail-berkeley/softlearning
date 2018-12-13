@@ -8,15 +8,15 @@
 
 version: "2.4"
 services:
-  softlearning-dev:
-    image: softlearning:${SOFTLEARNING_DEV_TAG}
+  softlearning-dev-cpu:
+    image: softlearning:${SOFTLEARNING_DEV_CPU_TAG}
     container_name: softlearning-dev-cpu
     build:
       context: ../.
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile.softlearning.base.cpu
       args:
         - MJKEY
-    working_dir: /root/softqlearning-private
+    working_dir: /root/softlearning
     environment:
       - DISPLAY=:0
     ports:
@@ -27,7 +27,7 @@ services:
        - ~/.aws:/root/.aws  # If using aws, e.g. for s3
        - ~/.config/gcloud:/root/.config/gcloud  # If using gcp, e.g. for gs
        - ~/.mujoco:/root/.mujoco  # mjkey.txt
-       - ..:/root/softqlearning-private
+       - ..:/root/softlearning
     command:
       - bash
     stdin_open: true

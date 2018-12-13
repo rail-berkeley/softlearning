@@ -38,7 +38,7 @@ def simulate_policy(args):
                     env,
                     policy,
                     path_length=args.max_path_length,
-                    render=True)
+                    render_mode='human')
 
 
 if __name__ == "__main__":

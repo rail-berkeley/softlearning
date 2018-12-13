@@ -18,7 +18,7 @@ RUN apt-get update \
     && chmod 0600 /root/.ssh/id_rsa \
     && touch /root/.ssh/known_hosts \
     && ssh-keyscan github.com >> /root/.ssh/known_hosts \
-    && git clone git@github.com:haarnoja/softqlearning-private.git /root/softqlearning-private \
+    && git clone git@github.com:rail-berkeley/softlearning.git /root/softlearning \
     && rm -vf /root/.ssh/id_rsa
 
 # Base container to clone the sac_envs repo
@@ -42,6 +42,6 @@ RUN apt-get update \
 FROM softlearning-dev
 
 # ========== Add codebase stub ==========
-COPY --from=softlearning_cloner /root/softqlearning-private /root/softqlearning-private
+COPY --from=softlearning_cloner /root/softlearning /root/softlearning
 COPY --from=sac_envs_cloner /root/sac_envs /root/sac_envs
-WORKDIR /root/softqlearning-private
+WORKDIR /root/softlearning

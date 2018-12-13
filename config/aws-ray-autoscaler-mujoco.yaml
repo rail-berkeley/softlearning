@@ -1,5 +1,5 @@
 # An unique identifier for the head node and workers of this cluster.
-cluster_name: sac-mujoco
+cluster_name: softlearning
 
 # The minimum number of workers nodes to launch in addition to the head
 # node. This number should be >= 0.
@@ -48,10 +48,7 @@ auth:
 head_node:
     InstanceType: c4.2xlarge
     # InstanceType: t2.micro
-    ImageId: ami-58295f20  # Custom sac AMI
-    # ImageId: ami-2192f559  # Ubutu 17.10
-    # ImageId: ami-40ddb938  # Amazon ECS-Optimized AMI with Docker
-    # ImageId: ami-3b6bce43  # Amazon Deep Learning AMI (Ubuntu)
+    ImageId: <TODO:AMI>
 
     # # You can provision additional disk space with a conf as follows
     # BlockDeviceMappings:
@@ -68,10 +65,7 @@ head_node:
 worker_nodes:
     InstanceType: c4.2xlarge
     # InstanceType: t2.micro
-    ImageId: ami-58295f20  # Custom sac AMI
-    # ImageId: ami-2192f559  # Ubutu 17.10
-    # ImageId: ami-40ddb938  # Amazon ECS-Optimized AMI with Docker
-    # ImageId: ami-3b6bce43  # Amazon Deep Learning AMI (Ubuntu)
+    ImageId: <TODO:AMI>
 
     # Run workers on spot by default. Comment this out to use on-demand.
     InstanceMarketOptions:
@@ -85,18 +79,16 @@ worker_nodes:
 # Files or directories to copy to the head and worker nodes. The format is a
 # dictionary from REMOTE_PATH: LOCAL_PATH, e.g.
 file_mounts: {
-    "/tmp/current_branch_sha": "<TODO>/softqlearning-private/.git/refs/heads/<TODO>",
+    "/tmp/current_branch_sha": "<TODO>/softlearning/.git/refs/heads/<TODO>",
     "~/.mujoco/mjkey.txt": "~/.mujoco/mjkey.txt",
 }
 
 # List of shell commands to run to set up nodes.
 setup_commands:
     - >-
-        eval "$(ssh-agent -s)"
-        && ssh-add ~/.ssh/sac_deploy_id_rsa
-        && (test -e softqlearning-private
-        || git clone git@github.com:haarnoja/softqlearning-private.git)
-        && cd ~/softqlearning-private
+        (test -e softlearning
+        || git clone git@github.com:haarnoja/softlearning.git)
+        && cd ~/softlearning
         && git fetch
         && git checkout `cat /tmp/current_branch_sha`
 

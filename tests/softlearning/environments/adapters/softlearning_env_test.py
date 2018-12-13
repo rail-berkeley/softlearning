@@ -13,9 +13,6 @@ class AdapterTestClass(object):
             ('pusher-2d', 'image-default'),
             ('pusher-2d', 'image-reach'),
             ('pusher-2d', 'blind-reach'),
-            ('ImageDClaw3', 'Screw'),
-            ('HardwareDClaw3', 'ScrewV2'),
-            ('HardwareDClaw3', 'FlipV1'),
         )
         environments = [
             str(self.create_adapter(domain=domain, task=task))

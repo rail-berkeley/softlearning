@@ -1,10 +1,13 @@
 import os
-import pickle
 import copy
+from distutils.util import strtobool
+import pickle
+from pprint import pprint
+import sys
 
-import numpy as np
 import tensorflow as tf
 from ray import tune
+from deepdiff import DeepDiff
 
 from softlearning.environments.utils import get_environment_from_variant
 from softlearning.algorithms.utils import get_algorithm_from_variant
@@ -126,12 +129,24 @@ class ExperimentRunner(tune.Trainable):
     def _restore(self, checkpoint_dir):
         assert isinstance(checkpoint_dir, str), checkpoint_dir
 
+        checkpoint_dir = checkpoint_dir.rstrip('/')
+
         with self._session.as_default():
             pickle_path = self._pickle_path(checkpoint_dir)
             with open(pickle_path, 'rb') as f:
                 pickleable = pickle.load(f)
 
-        np.testing.assert_equal(self._variant, pickleable['variant'])
+        variant_diff = DeepDiff(self._variant, pickleable['variant'])
+
+        if variant_diff:
+            print("Your current variant is different from the checkpointed"
+                  " variable. Please make sure that the differences are"
+                  " expected. Differences:")
+            pprint(variant_diff)
+
+            if not strtobool(
+                    input("Continue despite the variant differences?\n")):
+                sys.exit(0)
 
         env = self.env = pickleable['env']
         replay_pool = self.replay_pool = pickleable['replay_pool']

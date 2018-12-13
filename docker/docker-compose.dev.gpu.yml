@@ -8,8 +8,8 @@
 
 version: "2.4"
 services:
-  softlearning-dev:
-    image: softlearning:${SOFTLEARNING_DEV_TAG}
+  softlearning-dev-gpu:
+    image: softlearning:${SOFTLEARNING_DEV_GPU_TAG}
     container_name: softlearning-dev
     runtime: nvidia
     build:
@@ -17,7 +17,7 @@ services:
       dockerfile: docker/Dockerfile.softlearning.base.gpu
       args:
         - MJKEY
-    working_dir: /root/softqlearning-private
+    working_dir: /root/softlearning
     environment:
       - DISPLAY=:0
     ports:
@@ -28,9 +28,7 @@ services:
        - ~/.aws:/root/.aws  # If using aws, e.g. for s3
        - ~/.config/gcloud:/root/.config/gcloud  # If using gcp, e.g. for gs
        - ~/.mujoco/mjkey.txt:/root/.mujoco/mjkey.txt  # mjkey.txt
-       - ~/.mujoco/mjkey.txt:/root/rllab/vendor/mujoco/mjkey.txt
-       - ${SAC_ENVS_PATH:-~/github/vikashplus/sac_envs}:/root/sac_envs
-       - ..:/root/softqlearning-private
+       - ..:/root/softlearning
     command:
       - bash
     stdin_open: true
