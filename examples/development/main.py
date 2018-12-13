@@ -200,8 +200,11 @@ def main():
 
     variant_spec['mode'] = args.mode
 
-    local_dir = os.path.join('~/ray_results', universe, domain, task)
-
+    local_dir_base = (
+        '~/ray_results/local'
+        if args.mode in ('local', 'debug')
+        else '~/ray_results')
+    local_dir = os.path.join(local_dir_base, universe, domain, task)
     launch_experiments_ray([variant_spec], args, local_dir, ExperimentRunner)
 
 
