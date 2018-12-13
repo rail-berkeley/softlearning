@@ -37,9 +37,7 @@ def sync_gs(args):
     if not os.path.exists(local_gs_path):
         os.makedirs(local_gs_path)
 
-    command_parts = [
-        'gsutil -m rsync',
-    ]
+    command_parts = ['gsutil', '-m', 'rsync']
 
     if not args.sync_checkpoints:
         command_parts += ['-x', '".*./checkpoint_.*./.*"']
