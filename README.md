@@ -18,7 +18,6 @@ The environment can be run either locally using conda or inside a docker contain
 
 3. Clone `softlearning`
 ```
-cd ${SOFTLEARNING_PATH}
 git clone https://github.com/rail-berkeley/softlearning.git ${SOFTLEARNING_PATH}
 ```
 
@@ -165,7 +164,7 @@ arXiv preprint, 2018.</br>
 [paper](TODO)  |  [videos](https://sites.google.com/view/sac-and-applications)
 
 *Latent Space Policies for Hierarchical Reinforcement Learning*.</br>
-Tuomas Haarnoja, Kristian Hartikainen, Pieter Abbeel, and Sergey Levine.
+Tuomas Haarnoja*, Kristian Hartikainen*, Pieter Abbeel, and Sergey Levine.
 International Conference on Machine Learning (ICML), 2018.</br>
 [paper](https://arxiv.org/abs/1804.02808) | [videos](https://sites.google.com/view/latent-space-deep-rl)
 
