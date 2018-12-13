@@ -53,7 +53,7 @@ ALGORITHM_PARAMS_BASE = {
         'n_train_repeat': 1,
         'n_initial_exploration_steps': int(1e3),
         'reparameterize': REPARAMETERIZE,
-        'eval_render': False,
+        'eval_render_mode': None,
         'eval_n_episodes': 1,
         'eval_deterministic': True,
 

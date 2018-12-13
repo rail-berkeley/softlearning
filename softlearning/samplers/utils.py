@@ -36,7 +36,6 @@ def get_sampler_from_variant(variant, *args, **kwargs):
 def rollout(env,
             policy,
             path_length,
-            render=False,
             callback=None,
             render_mode='human',
             break_on_terminal=True):
@@ -63,7 +62,7 @@ def rollout(env,
         if callback is not None:
             callback(observation)
 
-        if render:
+        if render_mode is not None:
             if render_mode == 'rgb_array':
                 image = env.render(mode=render_mode)
                 images.append(image)
@@ -85,10 +84,9 @@ def rollout(env,
     return path
 
 
-def rollouts(env, policy, path_length, n_paths, render=False,
-             render_mode='human'):
+def rollouts(env, policy, path_length, n_paths, render_mode='human'):
     paths = [
-        rollout(env, policy, path_length, render, render_mode=render_mode)
+        rollout(env, policy, path_length, render_mode=render_mode)
         for i in range(n_paths)
     ]
 

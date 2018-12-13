@@ -26,7 +26,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             epoch_length=1000,
             eval_n_episodes=10,
             eval_deterministic=True,
-            eval_render=False,
+            eval_render_mode=None,
             session=None,
     ):
         """
@@ -40,8 +40,8 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             eval_n_episodes (`int`): Number of rollouts to evaluate.
             eval_deterministic (`int`): Whether or not to run the policy in
                 deterministic mode when evaluating policy.
-            eval_render (`int`): Whether or not to render the evaluation
-                environment.
+            eval_render_mode (`str`): Mode to render evaluation rollouts in.
+                None to disable rendering.
         """
         self.sampler = sampler
 
@@ -53,7 +53,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
         self._eval_n_episodes = eval_n_episodes
         self._eval_deterministic = eval_deterministic
-        self._eval_render = eval_render
+        self._eval_render_mode = eval_render_mode
 
         self._session = session or tf.keras.backend.get_session()
 
@@ -70,7 +70,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 " n_initial_exploration_steps > 0.")
 
         self.sampler.initialize(env, initial_exploration_policy, pool)
-        while self._pool.size < self._n_initial_exploration_steps:
+        while pool.size < self._n_initial_exploration_steps:
             self.sampler.sample()
 
     def _training_before_hook(self):
@@ -207,7 +207,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 ('train-steps', self._num_train_steps),
             )))
 
-            if self._eval_render and hasattr(
+            if self._eval_render_mode is not None and hasattr(
                     evaluation_env, 'render_rollouts'):
                 # TODO(hartikainen): Make this consistent such that there's no
                 # need for the hasattr check.
@@ -229,7 +229,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                     policy,
                     self.sampler._max_path_length,
                     self._eval_n_episodes,
-                    render=self._eval_render)
+                    render_mode=self._eval_render_mode)
 
         return paths
 
