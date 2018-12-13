@@ -39,9 +39,6 @@ POLICY_PARAMS_FOR_DOMAIN.update({
 DEFAULT_MAX_PATH_LENGTH = 1000
 MAX_PATH_LENGTH_PER_DOMAIN = {
     'Point2DEnv': 50,
-    'DClaw3': 200,
-    'ImageDClaw3': 200,
-    'HardwareDClaw3': 200,
 }
 
 ALGORITHM_PARAMS_BASE = {
@@ -83,8 +80,6 @@ NUM_EPOCHS_PER_DOMAIN = {
     'HandManipulateEgg': int(1e4 + 1),
     'HandManipulateBlock': int(1e4 + 1),
     'HandReach': int(1e4 + 1),
-    'DClaw3': int(5e2 + 1),
-    'ImageDClaw3': int(5e3 + 1),
     'Point2DEnv': int(200 + 1),
     'Reacher': int(200 + 1),
 }
@@ -151,31 +146,6 @@ ENV_PARAMS = {
             'image_shape': (32, 32, 3),
             'arm_goal_distance_cost_coeff': 1.0,
             'arm_object_distance_cost_coeff': 0.0,
-        }
-    },
-    'DClaw3': {
-        'ScrewV2': {
-            'object_target_distance_cost_coeff': 2.0,
-            'pose_difference_cost_coeff': 0.0,
-            'joint_velocity_cost_coeff': 0.0,
-            'joint_acceleration_cost_coeff': tune.grid_search([0]),
-            'target_initial_velocity_range': (0, 0),
-            'target_initial_position_range': (np.pi, np.pi),
-            'object_initial_velocity_range': (0, 0),
-            'object_initial_position_range': (-np.pi, np.pi),
-        }
-    },
-    'ImageDClaw3': {
-        'Screw': {
-            'image_shape': (32, 32, 3),
-            'object_target_distance_cost_coeff': 2.0,
-            'pose_difference_cost_coeff': 0.0,
-            'joint_velocity_cost_coeff': 0.0,
-            'joint_acceleration_cost_coeff': tune.grid_search([0]),
-            'target_initial_velocity_range': (0, 0),
-            'target_initial_position_range': (np.pi, np.pi),
-            'object_initial_velocity_range': (0, 0),
-            'object_initial_position_range': (-np.pi, np.pi),
         }
     },
     'Point2DEnv': {

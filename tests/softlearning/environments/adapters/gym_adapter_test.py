@@ -74,10 +74,6 @@ class TestGymAdapter(unittest.TestCase, AdapterTestClass):
         '<<NormalizeActionWrapper<ReacherEnv<Reacher-v2>>>>>',
         '<GymAdapter(domain=InvertedPendulum, task=v2) '
         '<<NormalizeActionWrapper<InvertedPendulumEnv<InvertedPendulum-v2>>>>>',
-        '<GymAdapter(domain=DClaw3, task=ScrewV2) '
-        '<<NormalizeActionWrapper<DClaw3ScrewV2 instance>>>>',
-        '<GymAdapter(domain=DClaw3, task=FlipV1) '
-        '<<NormalizeActionWrapper<DClaw3FlipV1 instance>>>>',
         '<GymAdapter(domain=MultiGoal, task=default) '
         '<<NormalizeActionWrapper<MultiGoalEnv instance>>>>'
     )
