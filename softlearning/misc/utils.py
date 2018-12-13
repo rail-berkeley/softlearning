@@ -44,9 +44,11 @@ def set_seed(seed):
     print("Using seed {}".format(seed))
 
 
-def datetimestamp(divider='-'):
+def datetimestamp(divider='-', datetime_divider='T'):
     now = datetime.datetime.now()
-    return now.strftime('%Y-%m-%d-%H-%M-%S-%f').replace('-', divider)
+    return now.strftime(
+        '%Y{d}%m{d}%dT%H{d}%M{d}%S'
+        ''.format(d=divider, dtd=datetime_divider))
 
 
 def datestamp(divider='-'):
@@ -56,7 +58,8 @@ def datestamp(divider='-'):
 def timestamp(divider='-'):
     now = datetime.datetime.now()
     time_now = datetime.datetime.time(now)
-    return time_now.strftime('%H-%M-%S-%Z').replace('-', divider)
+    return time_now.strftime(
+        '%H{d}%M{d}%S'.format(d=divider))
 
 
 def concat_obs_z(obs, z, num_skills):

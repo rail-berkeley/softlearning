@@ -2,19 +2,9 @@ import multiprocessing
 import argparse
 from distutils.util import strtobool
 import json
-import math
-import os
-
-try:
-    from ray.tune.variant_generator import generate_variants
-except ImportError:
-    # TODO(hartikainen): generate_variants has moved in >0.5.0, and some of my
-    # stuff uses newer version. Remove this once we bump up the version in
-    # requirements.txt
-    from ray.tune.suggest.variant_generator import generate_variants
 
 import softlearning.environments.utils as env_utils
-from softlearning.misc.utils import datetimestamp, datestamp
+from softlearning.misc.utils import datetimestamp
 
 
 DEFAULT_UNIVERSE = 'gym'
@@ -169,27 +159,21 @@ def get_parser(allow_policy_list=False):
                             choices=('gaussian', ),
                             default='gaussian')
     parser.add_argument('--env', type=str, default='gym-swimmer-default')
-    parser.add_argument('--exp_name',
+    parser.add_argument('--exp-name',
                         type=str,
                         default=datetimestamp())
     parser.add_argument('--mode', type=str, default='local')
-    parser.add_argument('--log_dir', type=str, default=None)
+    parser.add_argument('--log-dir', type=str, default=None)
     parser.add_argument('--upload-dir', type=str, default='',
                         help=("Optional URI to sync training results to (e.g."
                               " s3://<bucket> or gs://<bucket>)."))
 
-    parser.add_argument("--confirm_remote",
+    parser.add_argument("--confirm-remote",
                         type=strtobool,
                         nargs='?',
                         const=True,
                         default=True,
                         help="Whether or not to query yes/no on remote run.")
-    parser.add_argument('--log_extra_policy_info', type=strtobool, nargs='?',
-                        const=True, default=False,
-                        help=(
-                            "Stores log pis and raw (unsquashed) actions in the"
-                            "replay pool."
-                        ))
 
     return parser
 
