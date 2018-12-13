@@ -72,14 +72,13 @@ ALGORITHM_PARAMS_BASE = {
 DEFAULT_NUM_EPOCHS = 200
 
 NUM_EPOCHS_PER_DOMAIN = {
-    'swimmer': int(3e2 + 1),
-    'hopper': int(1e3 + 1),
-    'half-cheetah': int(3e3 + 1),
-    'walker': int(3e3 + 1),
-    'ant': int(3e3 + 1),
-    'humanoid': int(1e4 + 1),
-    'pusher-2d': int(2e3 + 1),
-    'sawyer-torque': int(1e3 + 1),
+    'Swimmer': int(3e2 + 1),
+    'Hopper': int(1e3 + 1),
+    'HalfCheetah': int(3e3 + 1),
+    'Walker': int(3e3 + 1),
+    'Ant': int(3e3 + 1),
+    'Humanoid': int(1e4 + 1),
+    'Pusher2d': int(2e3 + 1),
     'HandManipulatePen': int(1e4 + 1),
     'HandManipulateEgg': int(1e4 + 1),
     'HandManipulateBlock': int(1e4 + 1),
@@ -106,56 +105,53 @@ ALGORITHM_PARAMS_PER_DOMAIN = {
 }
 
 ENV_PARAMS = {
-    'swimmer': {  # 2 DoF
+    'Swimmer': {  # 2 DoF
     },
-    'hopper': {  # 3 DoF
+    'Hopper': {  # 3 DoF
     },
-    'half-cheetah': {  # 6 DoF
+    'HalfCheetah': {  # 6 DoF
     },
-    'walker': {  # 6 DoF
+    'Walker': {  # 6 DoF
     },
-    'ant': {  # 8 DoF
-        'custom-default': {
+    'Ant': {  # 8 DoF
+        'CustomDefault': {
             'survive_reward': 0.0,
             'healthy_z_range': (-np.inf, np.inf),
             'exclude_current_positions_from_observation': False,
         }
     },
-    'humanoid': {  # 17 DoF
-        'custom-default': {
+    'Humanoid': {  # 17 DoF
+        'CustomDefault': {
             'survive_reward': 0.0,
             'healthy_z_range': (-np.inf, np.inf),
             'exclude_current_positions_from_observation': False,
         }
     },
-    'pusher-2d': {  # 3 DoF
-        'default': {
+    'Pusher2d': {  # 3 DoF
+        'Default': {
             'arm_object_distance_cost_coeff': 0.0,
             'goal_object_distance_cost_coeff': 1.0,
             'goal': (0, -1),
         },
-        'default-reach': {
+        'DefaultReach': {
             'arm_goal_distance_cost_coeff': 1.0,
             'arm_object_distance_cost_coeff': 0.0,
         },
-        'image-default': {
+        'ImageDefault': {
             'image_shape': (32, 32, 3),
             'arm_object_distance_cost_coeff': 0.0,
             'goal_object_distance_cost_coeff': 3.0,
         },
-        'image-reach': {
+        'ImageReach': {
             'image_shape': (32, 32, 3),
             'arm_goal_distance_cost_coeff': 1.0,
             'arm_object_distance_cost_coeff': 0.0,
         },
-        'blind-reach': {
+        'BlindReach': {
             'image_shape': (32, 32, 3),
             'arm_goal_distance_cost_coeff': 1.0,
             'arm_object_distance_cost_coeff': 0.0,
         }
-    },
-    'sawyer-torque': {
-
     },
     'DClaw3': {
         'ScrewV2': {
@@ -183,10 +179,10 @@ ENV_PARAMS = {
         }
     },
     'Point2DEnv': {
-        'default': {
+        'Default': {
             'observation_keys': ('observation', ),
         },
-        'wall': {
+        'Wall': {
             'observation_keys': ('observation', ),
         },
     }

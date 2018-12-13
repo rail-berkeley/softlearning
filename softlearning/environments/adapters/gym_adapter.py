@@ -49,69 +49,78 @@ except ModuleNotFoundError as e:
 
 
 GYM_ENVIRONMENTS = {
-    'swimmer': {
-        'default': lambda: gym.envs.make('Swimmer-v2'),
-        'custom-default': CustomSwimmerEnv,
+    'Swimmer': {
+        'v2': lambda: gym.envs.make('Swimmer-v2'),
+        'CustomDefault': CustomSwimmerEnv,
+        'Default': lambda: gym.envs.make('Swimmer-v2'),
     },
-    'ant': {
-        'default': lambda: gym.envs.make('Ant-v2'),
-        'custom-default': CustomAntEnv,
+    'Ant': {
+        'v2': lambda: gym.envs.make('Ant-v2'),
+        'Custom': CustomAntEnv,
+        'Default': lambda: gym.envs.make('Ant-v2'),
     },
-    'humanoid': {
-        'default': lambda: gym.envs.make('Humanoid-v2'),
-        'standup': lambda: gym.envs.make('HumanoidStandup-v2'),
-        'custom-default': CustomHumanoidEnv,
+    'Humanoid': {
+        'v2': lambda: gym.envs.make('Humanoid-v2'),
+        'Standup-v2': lambda: gym.envs.make('HumanoidStandup-v2'),
+        'Custom': CustomHumanoidEnv,
+        'Default': lambda: gym.envs.make('Humanoid-v2'),
     },
-    'hopper': {
-        'default': lambda: gym.envs.make('Hopper-v2'),
-        'custom-default': CustomHopperEnv,
+    'Hopper': {
+        'v2': lambda: gym.envs.make('Hopper-v2'),
+        'Custom': CustomHopperEnv,
+        'Default': lambda: gym.envs.make('Hopper-v2'),
     },
-    'half-cheetah': {
-        'default': lambda: gym.envs.make('HalfCheetah-v2')
+    'HalfCheetah': {
+        'v2': lambda: gym.envs.make('HalfCheetah-v2'),
+        'Default': lambda: gym.envs.make('HalfCheetah-v2'),
     },
-    'walker': {
-        'default': lambda: gym.envs.make('Walker2d-v2'),
-        'custom-default': CustomWalker2dEnv,
+    'Walker': {
+        'v2': lambda: gym.envs.make('Walker2d-v2'),
+        'Custom': CustomWalker2dEnv,
+        'Default': lambda: gym.envs.make('Walker2d-v2'),
     },
-    'pusher-2d': {
-        'default': Pusher2dEnv,
-        'default-reach': ForkReacherEnv,
+    'Pusher2d': {
+        'Default': Pusher2dEnv,
+        'DefaultReach': ForkReacherEnv,
 
-        'image-default': ImagePusherEnv,
-        'image-reach': ImageForkReacherEnv,
-        'blind-reach': BlindForkReacherEnv,
+        'ImageDefault': ImagePusherEnv,
+        'ImageReach': ImageForkReacherEnv,
+        'BlindReach': BlindForkReacherEnv,
     },
     'Point2DEnv': {
-        'default': Point2DEnv,
-        'wall': Point2DWallEnv,
+        'Default': Point2DEnv,
+        'Wall': Point2DWallEnv,
     },
     'HandManipulatePen': {
         'v0': lambda: gym.envs.make('HandManipulatePen-v0'),
         'Dense-v0': lambda: gym.envs.make('HandManipulatePenDense-v0'),
-        'default': lambda: gym.envs.make('HandManipulatePen-v0'),
+        'Default': lambda: gym.envs.make('HandManipulatePen-v0'),
     },
     'HandManipulateEgg': {
         'v0': lambda: gym.envs.make('HandManipulateEgg-v0'),
         'Dense-v0': lambda: gym.envs.make('HandManipulateEggDense-v0'),
-        'default': lambda: gym.envs.make('HandManipulateEgg-v0'),
+        'Default': lambda: gym.envs.make('HandManipulateEgg-v0'),
     },
     'HandManipulateBlock': {
         'v0': lambda: gym.envs.make('HandManipulateBlock-v0'),
         'Dense-v0': lambda: gym.envs.make('HandManipulateBlockDense-v0'),
-        'default': lambda: gym.envs.make('HandManipulateBlock-v0'),
+        'Default': lambda: gym.envs.make('HandManipulateBlock-v0'),
     },
     'HandReach': {
         'v0': lambda: gym.envs.make('HandReach-v0'),
         'Dense-v0': lambda: gym.envs.make('HandReachDense-v0'),
-        'default': lambda: gym.envs.make('HandReach-v0'),
+        'Default': lambda: gym.envs.make('HandReach-v0'),
     },
     'InvertedDoublePendulum': {
+        'Default': lambda: gym.envs.make('InvertedDoublePendulum-v2'),
         'v2': lambda: gym.envs.make('InvertedDoublePendulum-v2'),
     },
     'Reacher': {
+        'Default': lambda: gym.envs.make('Reacher-v2'),
         'v2': lambda: gym.envs.make('Reacher-v2'),
     },
     'InvertedPendulum': {
+        'Default': lambda: gym.envs.make('InvertedPendulum-v2'),
         'v2': lambda: gym.envs.make('InvertedPendulum-v2'),
     },
     'DClaw3': {
@@ -161,7 +170,7 @@ GYM_ENVIRONMENTS = {
                 **kwargs)),
     },
     'MultiGoal': {
-        'default': MultiGoalEnv
+        'Default': MultiGoalEnv
     },
 }
 
