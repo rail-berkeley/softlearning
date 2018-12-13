@@ -58,15 +58,18 @@ def convnet_preprocessor(
         lambda x: tf.concat(x, axis=-1)
     )([flattened, input_raw])
 
-    output = feedforward_model(
-        input_shapes=(concatenated_output.shape[1:].as_list(), ),
-        output_size=output_size,
-        hidden_layer_sizes=dense_hidden_layer_sizes,
-        activation='relu',
-        output_activation='linear',
-        *args,
-        **kwargs
-    )([concatenated_output])
+    output = (
+        feedforward_model(
+            input_shapes=(concatenated_output.shape[1:].as_list(), ),
+            output_size=output_size,
+            hidden_layer_sizes=dense_hidden_layer_sizes,
+            activation='relu',
+            output_activation='linear',
+            *args,
+            **kwargs
+        )([concatenated_output])
+        if dense_hidden_layer_sizes
+        else concatenated_output)
 
     model = PicklableKerasModel(inputs, output, name=name)
 

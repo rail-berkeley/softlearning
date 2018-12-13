@@ -214,7 +214,7 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
     variant_spec = get_variant_spec(
         universe, domain, task, policy, *args, **kwargs)
 
-    if 'image' in task or 'image' in domain.lower():
+    if 'image' in task.lower() or 'image' in domain.lower():
         preprocessor_params = {
             'type': 'convnet_preprocessor',
             'kwargs': {

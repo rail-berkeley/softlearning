@@ -1,5 +1,6 @@
 import abc
 from collections import OrderedDict
+from itertools import count
 import gtimer as gt
 import math
 
@@ -22,6 +23,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             n_epochs=1000,
             train_every_n_steps=1,
             n_train_repeat=1,
+            max_train_repeat_per_timestep=5,
             n_initial_exploration_steps=0,
             epoch_length=1000,
             eval_n_episodes=10,
@@ -47,6 +49,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
         self._n_epochs = n_epochs
         self._n_train_repeat = n_train_repeat
+        self._max_train_repeat_per_timestep = max_train_repeat_per_timestep
         self._train_every_n_steps = train_every_n_steps
         self._epoch_length = epoch_length
         self._n_initial_exploration_steps = n_initial_exploration_steps
@@ -91,7 +94,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
     def _epoch_before_hook(self):
         """Hook called at the beginning of each epoch."""
-        pass
+        self._train_steps_this_epoch = 0
 
     def _epoch_after_hook(self, *args, **kwargs):
         """Hook called at the end of each epoch."""
@@ -142,7 +145,11 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             self._epoch_before_hook()
             gt.stamp('epoch_before_hook')
 
-            for self._timestep in range(1, self._epoch_length + 1):
+            start_samples = self.sampler._total_samples
+            for i in count():
+                samples_now = self.sampler._total_samples
+                self._timestep = samples_now - start_samples
+
                 self._timestep_before_hook()
                 gt.stamp('timestep_before_hook')
 
@@ -155,6 +162,9 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
                 self._timestep_after_hook()
                 gt.stamp('timestep_after_hook')
+
+                if samples_now >= start_samples + self._epoch_length:
+                    break
 
             training_paths = self.sampler.get_last_n_paths(
                 math.ceil(self._epoch_length / self.sampler._max_path_length))
@@ -278,6 +288,10 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
     def _do_training_repeats(self, timestep):
         """Repeat training _n_train_repeat times every _train_every_n_steps"""
         if timestep % self._train_every_n_steps > 0: return
+        trained_enough = (
+            self._train_steps_this_epoch
+            > self._max_train_repeat_per_timestep * self._timestep)
+        if trained_enough: return
 
         for i in range(self._n_train_repeat):
             self._do_training(
@@ -285,6 +299,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 batch=self._training_batch())
 
         self._num_train_steps += self._n_train_repeat
+        self._train_steps_this_epoch += self._n_train_repeat
 
     @abc.abstractmethod
     def _do_training(self, iteration, batch):
@@ -300,8 +315,10 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
     def __getstate__(self):
         state = {
-            '_epoch': self._epoch,
-            '_timestep': self._timestep,
+            '_epoch_length': self._epoch_length,
+            '_epoch': (
+                self._epoch + int(self._timestep >= self._epoch_length)),
+            '_timestep': self._timestep % self._epoch_length,
             '_num_train_steps': self._num_train_steps,
         }
 
