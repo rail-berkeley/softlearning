@@ -55,7 +55,7 @@ head_node:
         initializeParams:
           diskSizeGb: 50
           # See https://cloud.google.com/compute/docs/images for more images
-          sourceImage: projects/sac-ray-test/global/images/family/softlearning # Based on Ubuntu 16.04 LTS
+          sourceImage: projects/<TODO:projectId>/global/images/family/<TODO:familyId>
 
     # Additional options can be found in in the compute docs at
     # https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert
@@ -73,7 +73,7 @@ worker_nodes:
         initializeParams:
           diskSizeGb: 50
           # See https://cloud.google.com/compute/docs/images for more images
-          sourceImage: projects/sac-ray-test/global/images/family/softlearning # Based on Ubuntu 16.04 LTS
+          sourceImage: projects/<TODO:projectId>/global/images/family/<TODO:familyId>
     # Run workers on preemtible instance by default.
     # Note that GCP preemptible instances automatically shut down after 24h.
     # Comment this out to use on-demand.
@@ -86,16 +86,16 @@ worker_nodes:
 # Files or directories to copy to the head and worker nodes. The format is a
 # dictionary from REMOTE_PATH: LOCAL_PATH, e.g.
 file_mounts: {
-    "/tmp/current_branch_sha": "<TODO>/softqlearning-private/.git/refs/heads/<TODO>",
+    "/tmp/current_branch_sha": "<TODO>/softlearning/.git/refs/heads/<TODO>",
     "~/rllab/vendor/mujoco/mjkey.txt": "~/.mujoco/mjkey.txt",
 }
 
 # List of shell commands to run to set up nodes.
 setup_commands:
     - >-
-        (test -e ~/softqlearning-private
-        || git clone git@github.com:haarnoja/softqlearning-private.git)
-        && cd ~/softqlearning-private
+        (test -e ~/softlearning
+        || git clone git@github.com:rail-berkeley/softlearning.git)
+        && cd ~/softlearning
         && git fetch
         && git checkout `cat /tmp/current_branch_sha`
 
