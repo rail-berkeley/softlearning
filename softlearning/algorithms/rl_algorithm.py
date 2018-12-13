@@ -233,13 +233,12 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         if self._eval_n_episodes < 1: return ()
 
         with policy.set_deterministic(self._eval_deterministic):
-            with policy.set_deterministic(self._eval_deterministic):
-                paths = rollouts(
-                    evaluation_env,
-                    policy,
-                    self.sampler._max_path_length,
-                    self._eval_n_episodes,
-                    render_mode=self._eval_render_mode)
+            paths = rollouts(
+                evaluation_env,
+                policy,
+                self.sampler._max_path_length,
+                self._eval_n_episodes,
+                render_mode=self._eval_render_mode)
 
         return paths
 
