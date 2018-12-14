@@ -6,14 +6,14 @@ import tensorflow as tf
 
 import gym
 
-from softlearning.policies.gaussian_policy import GaussianPolicy
+from softlearning.policies.gaussian_policy import FeedforwardGaussianPolicy
 
 
 class GaussianPolicyTest(tf.test.TestCase):
     def setUp(self):
         self.env = gym.envs.make('Swimmer-v2')
         self.hidden_layer_sizes = (128, 128)
-        self.policy = GaussianPolicy(
+        self.policy = FeedforwardGaussianPolicy(
             input_shapes=(self.env.observation_space.shape, ),
             output_shape=self.env.action_space.shape,
             hidden_layer_sizes=self.hidden_layer_sizes)
