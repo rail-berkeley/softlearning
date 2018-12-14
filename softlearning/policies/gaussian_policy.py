@@ -8,27 +8,31 @@ import tensorflow_probability as tfp
 from softlearning.distributions.squash_bijector import SquashBijector
 from softlearning.models.feedforward import feedforward_model
 
-from .base_policy import BasePolicy
+from .base_policy import LatentSpacePolicy
 
 
 SCALE_DIAG_MIN_MAX = (-20, 2)
 
 
-class GaussianPolicy(BasePolicy):
+class GaussianPolicy(LatentSpacePolicy):
     def __init__(self,
                  input_shapes,
                  output_shape,
                  squash=True,
                  preprocessor=None,
-                 name=None):
+                 name=None,
+                 *args,
+                 **kwargs):
         self._Serializable__initialize(locals())
-        super(GaussianPolicy, self).__init__()
+
         self._input_shapes = input_shapes
         self._output_shape = output_shape
         self._squash = squash
         self._squash = squash
         self._name = name
         self._preprocessor = preprocessor
+
+        super(GaussianPolicy, self).__init__(*args, **kwargs)
 
         self.condition_inputs = [
             tf.keras.layers.Input(shape=input_shape)
@@ -70,6 +74,9 @@ class GaussianPolicy(BasePolicy):
             lambda batch_size: base_distribution.sample(batch_size)
         )(batch_size)
 
+        self.latents_model = tf.keras.Model(self.condition_inputs, latents)
+        self.latents_input = tf.keras.layers.Input(shape=output_shape)
+
         def raw_actions_fn(inputs):
             shift, log_scale_diag, latents = inputs
             bijector = tfp.bijectors.Affine(
@@ -82,6 +89,10 @@ class GaussianPolicy(BasePolicy):
             raw_actions_fn
         )((shift, log_scale_diag, latents))
 
+        raw_actions_for_fixed_latents = tf.keras.layers.Lambda(
+            raw_actions_fn
+        )((shift, log_scale_diag, self.latents_input))
+
         squash_bijector = (
             SquashBijector()
             if self._squash
@@ -90,8 +101,14 @@ class GaussianPolicy(BasePolicy):
         actions = tf.keras.layers.Lambda(
             lambda raw_actions: squash_bijector.forward(raw_actions)
         )(raw_actions)
-
         self.actions_model = tf.keras.Model(self.condition_inputs, actions)
+
+        actions_for_fixed_latents = tf.keras.layers.Lambda(
+            lambda raw_actions: squash_bijector.forward(raw_actions)
+        )(raw_actions_for_fixed_latents)
+        self.actions_model_for_fixed_latents = tf.keras.Model(
+            (*self.condition_inputs, self.latents_input),
+            actions_for_fixed_latents)
 
         deterministic_actions = tf.keras.layers.Lambda(
             lambda shift: squash_bijector.forward(shift)
@@ -153,9 +170,6 @@ class GaussianPolicy(BasePolicy):
         """Due to our nested model structure, we need to filter duplicates."""
         return list(set(super(GaussianPolicy, self).non_trainable_weights))
 
-    def reset(self):
-        pass
-
     def actions(self, conditions):
         if self._deterministic:
             raise NotImplementedError
@@ -167,10 +181,7 @@ class GaussianPolicy(BasePolicy):
         return self.log_pis_model([*conditions, actions])
 
     def actions_np(self, conditions):
-        if self._deterministic:
-            return self.deterministic_actions_model.predict(conditions)
-        else:
-            return self.actions_model.predict(conditions)
+        return super(GaussianPolicy, self).actions_np(conditions)
 
     def log_pis_np(self, conditions, actions):
         assert not self._deterministic, self._deterministic
