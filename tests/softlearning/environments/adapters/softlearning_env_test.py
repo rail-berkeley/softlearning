@@ -10,9 +10,9 @@ class AdapterTestClass(object):
     def test_environments(self):
         # Make sure that all the environments are creatable
         SKIP_ENVIRONMENTS = (
-            ('pusher-2d', 'image-default'),
-            ('pusher-2d', 'image-reach'),
-            ('pusher-2d', 'blind-reach'),
+            ('Pusher2d', 'ImageDefault'),
+            ('Pusher2d', 'ImageReach'),
+            ('Pusher2d', 'BlindReach'),
         )
         environments = [
             str(self.create_adapter(domain=domain, task=task))

@@ -6,14 +6,14 @@ import tensorflow as tf
 
 import gym
 
-from softlearning.policies.gaussian_policy import GaussianPolicy
+from softlearning.policies.gaussian_policy import FeedforwardGaussianPolicy
 
 
 class GaussianPolicyTest(tf.test.TestCase):
     def setUp(self):
         self.env = gym.envs.make('Swimmer-v2')
         self.hidden_layer_sizes = (128, 128)
-        self.policy = GaussianPolicy(
+        self.policy = FeedforwardGaussianPolicy(
             input_shapes=(self.env.observation_space.shape, ),
             output_shape=self.env.action_space.shape,
             hidden_layer_sizes=self.hidden_layer_sizes)
@@ -107,6 +107,35 @@ class GaussianPolicyTest(tf.test.TestCase):
         np.testing.assert_array_equal(log_pis_np, log_pis_np_2)
         np.testing.assert_equal(
             actions_np.shape, deserialized.actions_np([observations_np]).shape)
+
+    def test_latent_smoothing(self):
+        observation_np = self.env.reset()
+        smoothed_policy = FeedforwardGaussianPolicy(
+            input_shapes=(self.env.observation_space.shape, ),
+            output_shape=self.env.action_space.shape,
+            hidden_layer_sizes=self.hidden_layer_sizes,
+            smoothing_coefficient=0.5)
+
+        np.testing.assert_equal(smoothed_policy._smoothing_x, 0.0)
+        self.assertEqual(smoothed_policy._smoothing_alpha, 0.5)
+        self.assertEqual(
+            smoothed_policy._smoothing_beta,
+            np.sqrt(1.0 - np.power(smoothed_policy._smoothing_alpha, 2.0)))
+
+        smoothing_x_previous = smoothed_policy._smoothing_x
+        for i in range(5):
+            action_np = smoothed_policy.actions_np([
+                observation_np[None, :]])[0]
+            observation_np = self.env.step(action_np)[0]
+
+            self.assertFalse(np.all(np.equal(
+                smoothing_x_previous,
+                smoothed_policy._smoothing_x)))
+            smoothing_x_previous = smoothed_policy._smoothing_x
+
+        smoothed_policy.reset()
+
+        np.testing.assert_equal(smoothed_policy._smoothing_x, 0.0)
 
 
 if __name__ == '__main__':
