@@ -14,7 +14,7 @@ from examples.utils import get_parser, launch_experiments_ray
 
 
 def run_experiment(variant, reporter):
-    env = get_environment('gym', 'MultiGoal', 'default', {
+    env = get_environment('gym', 'MultiGoal', 'Default', {
         'actuation_cost_coeff': 1,
         'distance_cost_coeff': 0.1,
         'goal_reward': 1,
