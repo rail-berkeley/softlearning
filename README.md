@@ -160,7 +160,7 @@ The algorithms are based on the following papers:
 *Soft Actor-Critic Algorithms and Applications*.</br>
 Tuomas Haarnoja*, Aurick Zhou*, Kristian Hartikainen*, George Tucker, Sehoon Ha, Jie Tan, Vikash Kumar, Henry Zhu, Abhishek Gupta, Pieter Abbeel, and Sergey Levine.
 arXiv preprint, 2018.</br>
-[paper](TODO)  |  [videos](https://sites.google.com/view/sac-and-applications)
+[paper](https://arxiv.org/abs/1812.05905)  |  [videos](https://sites.google.com/view/sac-and-applications)
 
 *Latent Space Policies for Hierarchical Reinforcement Learning*.</br>
 Tuomas Haarnoja*, Kristian Hartikainen*, Pieter Abbeel, and Sergey Levine.
@@ -187,7 +187,7 @@ If Softlearning helps you in your academic research, you are encouraged to cite 
 @techreport{haarnoja2018sacapps,
   title={Soft Actor-Critic Algorithms and Applications},
   author={Tuomas Haarnoja, Aurick Zhou, Kristian Hartikainen, George Tucker, Sehoon Ha, Jie Tan, Vikash Kumar, Henry Zhu, Abhishek Gupta, Pieter Abbeel, and Sergey Levine},
-  journal={arXiv preprint arXiv:<TODO>},
+  journal={arXiv preprint arXiv:1812.05905},
   year={2018}
 }
 ```
