@@ -69,19 +69,19 @@ ALGORITHM_PARAMS_BASE = {
 DEFAULT_NUM_EPOCHS = 200
 
 NUM_EPOCHS_PER_DOMAIN = {
-    'Swimmer': int(3e2 + 1),
-    'Hopper': int(1e3 + 1),
-    'HalfCheetah': int(3e3 + 1),
-    'Walker': int(3e3 + 1),
-    'Ant': int(3e3 + 1),
-    'Humanoid': int(1e4 + 1),
-    'Pusher2d': int(2e3 + 1),
-    'HandManipulatePen': int(1e4 + 1),
-    'HandManipulateEgg': int(1e4 + 1),
-    'HandManipulateBlock': int(1e4 + 1),
-    'HandReach': int(1e4 + 1),
-    'Point2DEnv': int(200 + 1),
-    'Reacher': int(200 + 1),
+    'Swimmer': int(3e2),
+    'Hopper': int(1e3),
+    'HalfCheetah': int(3e3),
+    'Walker': int(3e3),
+    'Ant': int(3e3),
+    'Humanoid': int(1e4),
+    'Pusher2d': int(2e3),
+    'HandManipulatePen': int(1e4),
+    'HandManipulateEgg': int(1e4),
+    'HandManipulateBlock': int(1e4),
+    'HandReach': int(1e4),
+    'Point2DEnv': int(200),
+    'Reacher': int(200),
 }
 
 ALGORITHM_PARAMS_PER_DOMAIN = {
