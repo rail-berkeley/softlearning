@@ -8,7 +8,7 @@ from softlearning.misc.utils import datetimestamp
 
 
 DEFAULT_UNIVERSE = 'gym'
-DEFAULT_TASK = 'default'
+DEFAULT_TASK = 'Default'
 
 TASKS_BY_DOMAIN_BY_UNIVERSE = {
     universe: {
