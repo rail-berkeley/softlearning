@@ -8,7 +8,7 @@ from softlearning.misc.utils import datetimestamp
 
 
 DEFAULT_UNIVERSE = 'gym'
-DEFAULT_TASK = 'default'
+DEFAULT_TASK = 'Default'
 
 TASKS_BY_DOMAIN_BY_UNIVERSE = {
     universe: {
@@ -134,7 +134,7 @@ def get_parser(allow_policy_list=False):
                             " epochs. If set, takes precedence over"
                             " variant['run_params']['checkpoint_frequency']."))
     parser.add_argument('--checkpoint-at-end',
-                        type=bool,
+                        type=lambda x: bool(strtobool(x)),
                         default=None,
                         help=(
                             "Whether a checkpoint should be saved at the end"
@@ -169,7 +169,7 @@ def get_parser(allow_policy_list=False):
                               " s3://<bucket> or gs://<bucket>)."))
 
     parser.add_argument("--confirm-remote",
-                        type=strtobool,
+                        type=lambda x: bool(strtobool(x)),
                         nargs='?',
                         const=True,
                         default=True,
@@ -211,7 +211,11 @@ def _normalize_trial_resources(resources, cpu, gpu, extra_cpu, extra_gpu):
     return resources
 
 
-def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
+def launch_experiments_ray(variant_specs,
+                           args,
+                           local_dir,
+                           experiment_fn,
+                           scheduler=None):
     import ray
     from ray import tune
 
@@ -247,25 +251,28 @@ def launch_experiments_ray(variant_specs, args, local_dir, experiment_fn):
     datetime_prefix = datetimestamp()
     experiment_id = '-'.join((datetime_prefix, args.exp_name))
 
-    tune.run_experiments({
-        "{}-{}".format(experiment_id, i): {
-            'run': 'mujoco-runner',
-            'trial_resources': trial_resources,
-            'config': variant_spec,
-            'local_dir': local_dir,
-            'num_samples': args.num_samples,
-            'upload_dir': args.upload_dir,
-            'checkpoint_freq': (
-                args.checkpoint_frequency
-                if args.checkpoint_frequency is not None
-                else variant_spec['run_params'].get('checkpoint_frequency', 0)
-            ),
-            'checkpoint_at_end': (
-                args.checkpoint_at_end
-                if args.checkpoint_at_end is not None
-                else variant_spec['run_params'].get('checkpoint_at_end', True)
-            ),
-            'restore': args.restore,  # Defaults to None
-        }
-        for i, variant_spec in enumerate(variant_specs)
-    })
+    tune.run_experiments(
+        {
+            "{}-{}".format(experiment_id, i): {
+                'run': 'mujoco-runner',
+                'trial_resources': trial_resources,
+                'config': variant_spec,
+                'local_dir': local_dir,
+                'num_samples': args.num_samples,
+                'upload_dir': args.upload_dir,
+                'checkpoint_freq': (
+                    args.checkpoint_frequency
+                    if args.checkpoint_frequency is not None
+                    else variant_spec['run_params'].get('checkpoint_frequency', 0)
+                ),
+                'checkpoint_at_end': (
+                    args.checkpoint_at_end
+                    if args.checkpoint_at_end is not None
+                    else variant_spec['run_params'].get('checkpoint_at_end', True)
+                ),
+                'restore': args.restore,  # Defaults to None
+            }
+            for i, variant_spec in enumerate(variant_specs)
+        },
+        scheduler=scheduler,
+    )

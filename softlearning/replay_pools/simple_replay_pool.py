@@ -118,10 +118,11 @@ class SimpleReplayPool(FlexibleReplayPool):
         batch['next_observations'] = next_observations
 
         if field_name_filter is not None:
+            filtered_fields = self.filter_fields(
+                batch.keys(), field_name_filter)
             batch = {
-                field_name: values
-                for field_name, values in batch.items()
-                if field_name_filter(field_name)
+                field_name: batch[field_name]
+                for field_name in filtered_fields
             }
 
         return batch
