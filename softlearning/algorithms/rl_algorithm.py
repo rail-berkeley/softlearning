@@ -273,10 +273,6 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                         evaluation_paths):
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def get_snapshot(self, epoch):
-        raise NotImplementedError
-
     @property
     def ready_to_train(self):
         return self.sampler.batch_ready()

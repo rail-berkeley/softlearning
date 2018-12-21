@@ -65,8 +65,6 @@ class SAC(RLAlgorithm):
             reparameterize ('bool'): If True, we use a gradient estimator for
                 the policy derived using the reparameterization trick. We use
                 a likelihood ratio based estimator otherwise.
-            save_full_state (`bool`): If True, save the full class in the
-                snapshot. See `self.get_snapshot` for more information.
         """
 
         super(SAC, self).__init__(**kwargs)
