@@ -120,7 +120,8 @@ class GaussianPolicyTest(tf.test.TestCase):
         self.assertEqual(smoothed_policy._smoothing_alpha, 0.5)
         self.assertEqual(
             smoothed_policy._smoothing_beta,
-            np.sqrt(1.0 - np.power(smoothed_policy._smoothing_alpha, 2.0)))
+            np.sqrt((1.0 - np.power(smoothed_policy._smoothing_alpha, 2.0)))
+            / (1.0 - smoothed_policy._smoothing_alpha))
 
         smoothing_x_previous = smoothed_policy._smoothing_x
         for i in range(5):
