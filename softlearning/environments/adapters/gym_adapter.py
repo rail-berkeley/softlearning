@@ -2,8 +2,7 @@
 
 import numpy as np
 import gym
-from gym import spaces
-from gym.wrappers.dict import FlattenDictWrapper
+from gym import spaces, wrappers
 
 from multiworld.envs.pygame.point2d import Point2DEnv, Point2DWallEnv
 
@@ -135,7 +134,7 @@ class GymAdapter(SoftlearningEnv):
 
         env = GYM_ENVIRONMENTS[domain][task](*args, **kwargs)
 
-        if isinstance(env, gym.wrappers.TimeLimit) and unwrap_time_limit:
+        if isinstance(env, wrappers.TimeLimit) and unwrap_time_limit:
             # Remove the TimeLimit wrapper that sets 'done = True' when
             # the time limit specified for each environment has been passed and
             # therefore the environment is not Markovian (terminal condition
