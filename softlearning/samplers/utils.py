@@ -75,7 +75,9 @@ def rollout(env,
 
     assert pool._size == t + 1
 
-    path = pool.batch_by_indices(np.arange(pool._size))
+    path = pool.batch_by_indices(
+        np.arange(pool._size),
+        observation_keys=getattr(env, 'observation_keys', None))
     path['infos'] = infos
 
     if render_mode == 'rgb_array':
