@@ -222,6 +222,7 @@ def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
                 'output_size': M,
                 'conv_filters': (4, 4),
                 'conv_kernel_sizes': ((3, 3), (3, 3)),
+                'pool_type': 'MaxPool2D',
                 'pool_sizes': ((2, 2), (2, 2)),
                 'pool_strides': (2, 2),
                 'dense_hidden_layer_sizes': (),

@@ -10,6 +10,7 @@ def convnet_preprocessor(
         output_size,
         conv_filters=(32, 32),
         conv_kernel_sizes=((5, 5), (5, 5)),
+        pool_type='MaxPool2D',
         pool_sizes=((2, 2), (2, 2)),
         pool_strides=(2, 2),
         dense_hidden_layer_sizes=(64, 64),
@@ -49,7 +50,7 @@ def convnet_preprocessor(
             *args,
             **kwargs
         )(conv_out)
-        conv_out = tf.keras.layers.MaxPool2D(
+        conv_out = getattr(tf.keras.layers, pool_type)(
             pool_size=pool_size, strides=strides
         )(conv_out)
 
