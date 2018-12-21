@@ -134,7 +134,7 @@ def get_parser(allow_policy_list=False):
                             " epochs. If set, takes precedence over"
                             " variant['run_params']['checkpoint_frequency']."))
     parser.add_argument('--checkpoint-at-end',
-                        type=bool,
+                        type=lambda x: bool(strtobool(x)),
                         default=None,
                         help=(
                             "Whether a checkpoint should be saved at the end"
@@ -169,7 +169,7 @@ def get_parser(allow_policy_list=False):
                               " s3://<bucket> or gs://<bucket>)."))
 
     parser.add_argument("--confirm-remote",
-                        type=strtobool,
+                        type=lambda x: bool(strtobool(x)),
                         nargs='?',
                         const=True,
                         default=True,
