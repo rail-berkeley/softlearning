@@ -79,7 +79,7 @@ worker_nodes:
 # Files or directories to copy to the head and worker nodes. The format is a
 # dictionary from REMOTE_PATH: LOCAL_PATH, e.g.
 file_mounts: {
-    "/tmp/current_branch_sha": "<TODO>/softlearning/.git/refs/heads/<TODO>",
+    "/tmp/current_git_HEAD": "<TODO>/.git/HEAD",
     "~/.mujoco/mjkey.txt": "~/.mujoco/mjkey.txt",
 }
 
@@ -89,8 +89,9 @@ setup_commands:
         (test -e softlearning
         || git clone git@github.com:haarnoja/softlearning.git)
         && cd ~/softlearning
-        && git fetch
-        && git checkout `cat /tmp/current_branch_sha`
+        && git fetch --all
+        && git_HEAD=`cat /tmp/current_git_HEAD | cut -d \  -f 2`
+        && git checkout ${git_HEAD#"refs/heads/"}
 
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands: []
