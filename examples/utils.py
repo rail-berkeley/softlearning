@@ -106,7 +106,7 @@ def get_parser(allow_policy_list=False):
                         help=("Gpus to allocate to ray process. Passed"
                               " to `ray.init`."))
 
-    parser.add_argument('--trial-resources', type=json.loads, default={},
+    parser.add_argument('--resources-per-trial', type=json.loads, default={},
                         help=("Resources to allocate for each trial. Passed"
                               " to `tune.run_experiments`."))
     parser.add_argument('--trial-cpus',
@@ -221,8 +221,8 @@ def launch_experiments_ray(variant_specs,
 
     tune.register_trainable('mujoco-runner', experiment_fn)
 
-    trial_resources = _normalize_trial_resources(
-        args.trial_resources,
+    resources_per_trial = _normalize_trial_resources(
+        args.resources_per_trial,
         args.trial_cpus,
         args.trial_gpus,
         args.trial_extra_cpus,
@@ -239,7 +239,7 @@ def launch_experiments_ray(variant_specs,
             # 'debug-resource' once tune supports custom resources.
             # See: https://github.com/ray-project/ray/pull/2979.
             resources['extra_gpu'] = 1
-            trial_resources['extra_gpu'] = 1
+            resources_per_trial['extra_gpu'] = 1
 
         ray.init(
             resources=resources,
@@ -255,7 +255,7 @@ def launch_experiments_ray(variant_specs,
         {
             "{}-{}".format(experiment_id, i): {
                 'run': 'mujoco-runner',
-                'trial_resources': trial_resources,
+                'resources_per_trial': resources_per_trial,
                 'config': variant_spec,
                 'local_dir': local_dir,
                 'num_samples': args.num_samples,
