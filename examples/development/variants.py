@@ -200,7 +200,8 @@ def get_variant_spec(universe, domain, task, policy):
             }
         },
         'run_params': {
-            'seed': lambda spec: np.random.randint(0, 10000),
+            'seed': tune.sample_from(
+                lambda spec: np.random.randint(0, 10000)),
             'checkpoint_at_end': True,
             'checkpoint_frequency': NUM_EPOCHS_PER_DOMAIN.get(
                 domain, DEFAULT_NUM_EPOCHS) // NUM_CHECKPOINTS

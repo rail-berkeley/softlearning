@@ -17,9 +17,10 @@ class SAC(RLAlgorithm):
 
     References
     ----------
-    [1] Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, and Sergey Levine, "Soft
-        Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning
-        with a Stochastic Actor," Deep Learning Symposium, NIPS 2017.
+    [1] Tuomas Haarnoja*, Aurick Zhou*, Kristian Hartikainen*, George Tucker,
+        Sehoon Ha, Jie Tan, Vikash Kumar, Henry Zhu, Abhishek Gupta, Pieter
+        Abbeel, and Sergey Levine. Soft Actor-Critic Algorithms and
+        Applications. arXiv preprint arXiv:1812.05905. 2018.
     """
 
     def __init__(
@@ -215,7 +216,7 @@ class SAC(RLAlgorithm):
         critic Q-function with gradient descent, and appends it to
         `self._training_ops` attribute.
 
-        See Equation (10) in [1], for further information of the
+        See Equations (5, 6) in [1], for further information of the
         Q-function update rule.
         """
         Q_target = tf.stop_gradient(self._get_Q_target())
@@ -253,19 +254,14 @@ class SAC(RLAlgorithm):
         self._training_ops.update({'Q': tf.group(Q_training_ops)})
 
     def _init_actor_update(self):
-        """Create minimization operations for policy and state value functions.
+        """Create minimization operations for policy and entropy.
 
         Creates a `tf.optimizer.minimize` operations for updating
-        policy and value functions with gradient descent, and appends them to
+        policy and entropy with gradient descent, and adds them to
         `self._training_ops` attribute.
 
-        In principle, there is no need for a separate state value function
-        approximator, since it could be evaluated using the Q-function and
-        policy. However, in practice, the separate function approximator
-        stabilizes training.
-
-        See Equations (8, 13) in [1], for further information
-        of the value function and policy function update rules.
+        See Section 4.2 in [1], for further information of the policy update,
+        and Section 5 in [1] for further information of the entropy update.
         """
 
         actions = self._policy.actions([self._observations_ph])
@@ -338,13 +334,15 @@ class SAC(RLAlgorithm):
     def _init_training(self):
         self._update_target()
 
-    def _update_target(self):
+    def _update_target(self, tau=None):
+        tau = tau or self._tau
+
         for Q, Q_target in zip(self._Qs, self._Q_targets):
             source_params = Q.get_weights()
             target_params = Q_target.get_weights()
             Q_target.set_weights([
-                (1 - self._tau) * target + self._tau * source
-                for target, source in zip(target_params, source_params)
+                tau * source + (1.0 - tau) * target
+                for source, target in zip(source_params, target_params)
             ])
 
     def _do_training(self, iteration, batch):

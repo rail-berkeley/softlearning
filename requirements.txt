@@ -70,7 +70,7 @@ pytz==2018.7
 PyWavelets==1.0.1
 PyYAML==3.13
 psutil==5.4.8
-ray[rllib,debug]==0.6.0
+ray[rllib,debug]==0.6.1
 redis==3.0.1
 requests==2.20.1
 rsa==3.4.2

@@ -63,7 +63,7 @@ class SwimmerEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return observation
 
     def reset_model(self):
-        c = 1.0
+        c = 0.1
         qpos = self.init_qpos + self.np_random.uniform(
             low=-c, high=c, size=self.model.nq)
         qvel = self.init_qvel + self.np_random.uniform(

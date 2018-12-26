@@ -29,8 +29,7 @@ from examples.development.variants import (
 
 class ExperimentRunner(tune.Trainable):
     def _setup(self, variant):
-        if 'ray' in variant['mode']:
-            set_seed(variant['run_params']['seed'])
+        set_seed(variant['run_params']['seed'])
 
         self._variant = variant
         self._session = tf.keras.backend.get_session()
