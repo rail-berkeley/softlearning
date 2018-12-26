@@ -338,13 +338,15 @@ class SAC(RLAlgorithm):
     def _init_training(self):
         self._update_target()
 
-    def _update_target(self):
+    def _update_target(self, tau=None):
+        tau = tau or self._tau
+
         for Q, Q_target in zip(self._Qs, self._Q_targets):
             source_params = Q.get_weights()
             target_params = Q_target.get_weights()
             Q_target.set_weights([
-                (1 - self._tau) * target + self._tau * source
-                for target, source in zip(target_params, source_params)
+                tau * source + (1.0 - tau) * target
+                for source, target in zip(source_params, target_params)
             ])
 
     def _do_training(self, iteration, batch):
