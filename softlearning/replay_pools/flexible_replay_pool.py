@@ -89,7 +89,7 @@ class FlexibleReplayPool(ReplayPool):
         return filtered_field_names
 
     def batch_by_indices(self, indices, field_name_filter=None):
-        if any(indices % self._max_size) > self.size:
+        if np.any(indices % self._max_size > self.size):
             raise ValueError(
                 "Tried to retrieve batch with indices greater than current"
                 " size")
