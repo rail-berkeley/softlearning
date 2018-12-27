@@ -1,3 +1,6 @@
+import gzip
+import pickle
+
 import numpy as np
 
 from .replay_pool import ReplayPool
@@ -16,6 +19,7 @@ class FlexibleReplayPool(ReplayPool):
 
         self._pointer = 0
         self._size = 0
+        self._samples_since_save = 0
 
     @property
     def size(self):
@@ -34,6 +38,7 @@ class FlexibleReplayPool(ReplayPool):
     def _advance(self, count=1):
         self._pointer = (self._pointer + count) % self._max_size
         self._size = min(self._size + count, self._max_size)
+        self._samples_since_save += count
 
     def add_sample(self, **kwargs):
         self.add_samples(1, **kwargs)
@@ -103,6 +108,26 @@ class FlexibleReplayPool(ReplayPool):
             field_name: getattr(self, field_name)[indices]
             for field_name in field_names
         }
+
+    def save_latest_experience(self, pickle_path):
+        latest_samples = self.last_n_batch(self._samples_since_save)
+
+        with gzip.open(pickle_path, 'wb') as f:
+            pickle.dump(latest_samples, f)
+
+        self._samples_since_save = 0
+
+    def load_experience(self, experience_path):
+        with gzip.open(experience_path, 'rb') as f:
+            latest_samples = pickle.load(f)
+
+        key = list(latest_samples.keys())[0]
+        num_samples = latest_samples[key].shape[0]
+        for field_name, data in latest_samples.items():
+            assert data.shape[0] == num_samples, data.shape
+
+        self.add_samples(num_samples, **latest_samples)
+        self._samples_since_save = 0
 
     def __getstate__(self):
         state = self.__dict__.copy()
