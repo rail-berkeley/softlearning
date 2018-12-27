@@ -5,37 +5,25 @@ import numpy as np
 from softlearning.replay_pools.flexible_replay_pool import FlexibleReplayPool
 
 
+def create_pool(max_size=100, field_shapes=((1,), (1,))):
+    return FlexibleReplayPool(
+        max_size=max_size,
+        fields={
+            f'field{i}': {
+                'shape': shape,
+                'dtype': 'float32'
+            } for i, shape in enumerate(field_shapes, 1)
+        }
+    )
+
+
 class FlexibleReplayPoolTest(unittest.TestCase):
     def setUp(self):
-        self.pool = FlexibleReplayPool(
-            max_size=10,
-            fields={
-                'field1': {
-                    'shape': (1, ),
-                    'dtype': 'float32'
-                },
-                'field2': {
-                    'shape': (1, ),
-                    'dtype': 'float32'
-                },
-            }
-        )
+        self.pool = create_pool(100)
 
     def test_multi_dimensional_field(self):
         # Fill fields with random data
-        pool = FlexibleReplayPool(
-            max_size=10,
-            fields={
-                'field1': {
-                    'shape': (1, 3),
-                    'dtype': 'float32'
-                },
-                'field2': {
-                    'shape': (1, ),
-                    'dtype': 'float32'
-                },
-            }
-        )
+        pool = create_pool(10, field_shapes=((1, 3), (1, )))
         num_samples = pool._max_size // 2
         pool.add_samples(num_samples, **{
             field_name: np.random.uniform(
@@ -58,6 +46,101 @@ class FlexibleReplayPoolTest(unittest.TestCase):
             np.testing.assert_array_equal(
                 getattr(pool, field_name),
                 getattr(deserialized, field_name))
+
+    def test_save_load_latest_experience(self):
+        self.assertEqual(self.pool._samples_since_save, 0)
+
+        num_samples = self.pool._max_size // 2
+        self.pool.add_samples(num_samples, **{
+            field_name: np.random.uniform(
+                0, 1, (num_samples, *field_attrs['shape']))
+            for field_name, field_attrs in self.pool.fields.items()
+        })
+
+        self.assertEqual(self.pool.size, self.pool._max_size // 2)
+        self.assertEqual(self.pool._samples_since_save, self.pool.size)
+
+        self.pool.save_latest_experience('./tmp/pool_1.pkl')
+
+        self.assertEqual(self.pool._samples_since_save, 0)
+
+        self.pool.add_samples(num_samples, **{
+            field_name: np.random.uniform(
+                0, 1, (num_samples, *field_attrs['shape']))
+            for field_name, field_attrs in self.pool.fields.items()
+        })
+
+        self.assertEqual(self.pool.size, self.pool._max_size)
+        self.assertEqual(
+            self.pool._samples_since_save, self.pool._max_size // 2)
+
+        self.pool.save_latest_experience('./tmp/pool_2.pkl')
+
+        self.pool.add_samples(num_samples, **{
+            field_name: np.random.uniform(
+                0, 1, (num_samples, *field_attrs['shape']))
+            for field_name, field_attrs in self.pool.fields.items()
+        })
+
+        self.assertEqual(self.pool.size, self.pool._max_size)
+        self.assertEqual(
+            self.pool._samples_since_save, self.pool._max_size // 2)
+
+        self.pool.save_latest_experience('./tmp/pool_3.pkl')
+
+        pool = create_pool(self.pool._max_size)
+
+        self.assertEqual(pool.size, 0)
+        pool.load_experience('./tmp/pool_1.pkl')
+        self.assertEqual(pool.size, self.pool._max_size // 2)
+        pool.load_experience('./tmp/pool_2.pkl')
+        self.assertEqual(pool.size, self.pool.size)
+        pool.load_experience('./tmp/pool_3.pkl')
+        self.assertEqual(pool.size, self.pool.size)
+
+        for field_name, field_attrs in pool.fields.items():
+            np.testing.assert_array_equal(
+                getattr(pool, field_name),
+                getattr(self.pool, field_name))
+
+    def test_save_load_latest_experience_empty_pool(self):
+        self.assertEqual(self.pool._samples_since_save, 0)
+        self.pool.save_latest_experience('./tmp/pool_1.pkl')
+        pool = create_pool(self.pool._max_size)
+        pool.load_experience('./tmp/pool_1.pkl')
+        self.assertEqual(pool.size, 0)
+
+    def test_save_latest_experience_with_overflown_pool(self):
+        self.assertEqual(self.pool._samples_since_save, 0)
+
+        num_samples = self.pool._max_size + 10
+        samples = {
+            'field1': np.arange(self.pool._max_size + 10)[:, None],
+            'field2': -np.arange(self.pool._max_size + 10)[:, None] * 2,
+        }
+        self.pool.add_samples(num_samples, **samples)
+
+        self.assertEqual(self.pool.size, self.pool._max_size)
+        self.assertEqual(self.pool._samples_since_save, self.pool._max_size + 10)
+        self.pool.save_latest_experience('./tmp/pool_1.pkl')
+        pool = create_pool(self.pool._max_size)
+        self.assertEqual(pool.size, 0)
+
+        import gzip
+        with gzip.open('./tmp/pool_1.pkl', 'rb') as f:
+            latest_samples = pickle.load(f)
+            for field_name, data in latest_samples.items():
+                expected_shape = (
+                    self.pool._max_size, *self.pool.fields[field_name]['shape'])
+                assert data.shape == expected_shape, data.shape
+
+        pool.load_experience('./tmp/pool_1.pkl')
+        self.assertEqual(pool.size, self.pool._max_size)
+
+        for field_name, field_attrs in pool.fields.items():
+            np.testing.assert_array_equal(
+                getattr(pool, field_name),
+                samples[field_name][-self.pool._max_size:])
 
     def test_field_initialization(self):
         # Fill fields with random data
@@ -216,6 +299,19 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         for key, values in full_pool_batch.items():
             np.testing.assert_array_equal(samples[key][-4:], values)
             self.assertEqual(values.shape, (4, 1))
+
+    def test_last_n_batch_with_overflown_pool(self):
+        samples = {
+            'field1': np.arange(self.pool._max_size + 10)[:, None],
+            'field2': -np.arange(self.pool._max_size + 10)[:, None] * 2,
+        }
+        self.pool.add_samples(num_samples=self.pool._max_size + 10, **samples)
+        full_pool_batch = self.pool.last_n_batch(20)
+
+        for key, values in full_pool_batch.items():
+            np.testing.assert_array_equal(
+                samples[key][-20:], values)
+            self.assertEqual(values.shape, (20, 1))
 
     def test_batch_by_indices(self):
         with self.assertRaises(ValueError):

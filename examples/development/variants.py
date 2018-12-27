@@ -57,12 +57,11 @@ ALGORITHM_PARAMS_BASE = {
         'lr': 3e-4,
         'discount': 0.99,
         'target_update_interval': 1,
-        'tau': 0.005,
+        'tau': 5e-3,
         'target_entropy': 'auto',
         'reward_scale': 1.0,
         'store_extra_policy_info': False,
         'action_prior': 'uniform',
-        'save_full_state': False,
     }
 }
 
@@ -158,7 +157,7 @@ ENV_PARAMS = {
     }
 }
 
-NUM_CHECKPOINTS = 5
+NUM_CHECKPOINTS = 10
 
 
 def get_variant_spec(universe, domain, task, policy):
@@ -204,7 +203,8 @@ def get_variant_spec(universe, domain, task, policy):
                 lambda spec: np.random.randint(0, 10000)),
             'checkpoint_at_end': True,
             'checkpoint_frequency': NUM_EPOCHS_PER_DOMAIN.get(
-                domain, DEFAULT_NUM_EPOCHS) // NUM_CHECKPOINTS
+                domain, DEFAULT_NUM_EPOCHS) // NUM_CHECKPOINTS,
+            'checkpoint_replay_pool': False,
         },
     }
 

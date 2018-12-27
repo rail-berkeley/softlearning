@@ -140,6 +140,16 @@ def get_parser(allow_policy_list=False):
                             "Whether a checkpoint should be saved at the end"
                             " of training. If set, takes precedence over"
                             " variant['run_params']['checkpoint_at_end']."))
+    parser.add_argument('--checkpoint-replay-pool',
+                        type=lambda x: bool(strtobool(x)),
+                        default=None,
+                        help=(
+                            "Whether a checkpoint should also saved the replay"
+                            " pool. If set, takes precedence over"
+                            " variant['run_params']['checkpoint_replay_pool']."
+                            " Note that the replay pool is saved (and "
+                            " constructed) piece by piece so that each"
+                            " experience is saved only once."))
     parser.add_argument('--restore',
                         type=str,
                         default=None,

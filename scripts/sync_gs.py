@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import shlex
 import subprocess
 
 
@@ -11,7 +12,7 @@ def parse_args():
     parser.add_argument(
         'sync_path', type=str, default=None, nargs='?')
     parser.add_argument(
-        '--sync_checkpoints', action='store_true', default=False)
+        '--sync-checkpoints', action='store_true', default=False)
     parser.add_argument(
         '--dry', action='store_true', default=False)
     args = parser.parse_args()
@@ -31,18 +32,25 @@ def sync_gs(args):
 
     bucket = os.environ['SAC_GS_BUCKET']
 
-    remote_gs_path = os.path.join(bucket, 'ray', 'results')
-    local_gs_path = os.path.expanduser('~/ray_results/gs/')
+    remote_gs_parts = [bucket, 'ray', 'results']
+    local_gs_parts = [os.path.expanduser('~/ray_results/gs/')]
+
+    if args.sync_path is not None:
+        remote_gs_parts.append(args.sync_path)
+        local_gs_parts.append(args.sync_path)
+
+    remote_gs_path = os.path.join(*remote_gs_parts)
+    local_gs_path = os.path.join(*local_gs_parts)
 
     if not os.path.exists(local_gs_path):
         os.makedirs(local_gs_path)
 
-    command_parts = ['gsutil', '-m', 'rsync']
+    command_parts = ['gsutil', '-m', 'rsync', '-r']
 
     if not args.sync_checkpoints:
         command_parts += ['-x', '".*./checkpoint_.*./.*"']
 
-    command_parts += ['-r', remote_gs_path, local_gs_path]
+    command_parts += [shlex.quote(remote_gs_path), shlex.quote(local_gs_path)]
 
     command = " ".join(command_parts)
 

@@ -33,11 +33,11 @@ class SAC(RLAlgorithm):
             plotter=None,
             tf_summaries=False,
 
-            lr=3e-3,
+            lr=3e-4,
             reward_scale=1.0,
             target_entropy='auto',
             discount=0.99,
-            tau=0.01,
+            tau=5e-3,
             target_update_interval=1,
             action_prior='uniform',
             reparameterize=False,
@@ -332,7 +332,7 @@ class SAC(RLAlgorithm):
         self._training_ops.update({'policy_train_op': policy_train_op})
 
     def _init_training(self):
-        self._update_target()
+        self._update_target(tau=1.0)
 
     def _update_target(self, tau=None):
         tau = tau or self._tau

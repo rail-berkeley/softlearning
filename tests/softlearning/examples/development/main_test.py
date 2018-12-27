@@ -84,7 +84,9 @@ class TestExperimentRunner(tf.test.TestCase):
         tf.keras.backend.clear_session()
         self.assertFalse(tf.trainable_variables())
 
-        experiment_runner = ExperimentRunner(config=CONFIG)
+        config = CONFIG.copy()
+
+        experiment_runner = ExperimentRunner(config=config)
 
         session = experiment_runner._session
         experiment_runner._build()
@@ -167,7 +169,7 @@ class TestExperimentRunner(tf.test.TestCase):
         tf.keras.backend.clear_session()
         self.assertFalse(tf.trainable_variables())
 
-        experiment_runner_2 = ExperimentRunner(config=CONFIG)
+        experiment_runner_2 = ExperimentRunner(config=config)
         session = experiment_runner_2._session
         self.assertFalse(experiment_runner_2._built)
 
@@ -262,7 +264,10 @@ class TestExperimentRunner(tf.test.TestCase):
         tf.keras.backend.clear_session()
         self.assertFalse(tf.trainable_variables())
 
-        experiment_runner = ExperimentRunner(config=CONFIG)
+        config = CONFIG.copy()
+
+        config['run_params']['checkpoint_replay_pool'] = True
+        experiment_runner = ExperimentRunner(config=config)
 
         session = experiment_runner._session
         experiment_runner._build()
@@ -275,8 +280,37 @@ class TestExperimentRunner(tf.test.TestCase):
         self.assertEqual(experiment_runner.replay_pool.size, 0)
         self.assertEqual(session.run(experiment_runner.algorithm._alpha), 1.0)
 
-        for i in range(10):
-            experiment_runner.train()
+        checkpoints = []
+        while (experiment_runner.replay_pool.size
+               < experiment_runner.replay_pool._max_size):
+            for i in range(10):
+                experiment_runner.train()
+            checkpoints.append(experiment_runner.save())
+
+        tf.reset_default_graph()
+        tf.keras.backend.clear_session()
+        self.assertFalse(tf.trainable_variables())
+
+        experiment_runner_2 = ExperimentRunner(config=config)
+        session = experiment_runner_2._session
+        self.assertFalse(experiment_runner_2._built)
+
+        experiment_runner_2.restore(checkpoints[-1])
+
+        replay_pool_1 = experiment_runner.replay_pool
+        replay_pool_2 = experiment_runner_2.replay_pool
+
+        self.assertEqual(replay_pool_1._max_size, replay_pool_2._max_size)
+        self.assertEqual(replay_pool_1.size, replay_pool_2.size)
+        self.assertEqual(replay_pool_2._max_size, replay_pool_2.size)
+        self.assertEqual(
+            set(replay_pool_1.fields.keys()),
+            set(replay_pool_2.fields.keys()))
+
+        for field_name, field_attrs in replay_pool_1.fields.items():
+            np.testing.assert_array_equal(
+                getattr(replay_pool_1, field_name),
+                getattr(replay_pool_2, field_name))
 
 
 if __name__ == "__main__":
