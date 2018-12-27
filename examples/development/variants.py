@@ -62,7 +62,6 @@ ALGORITHM_PARAMS_BASE = {
         'reward_scale': 1.0,
         'store_extra_policy_info': False,
         'action_prior': 'uniform',
-        'save_full_state': False,
     }
 }
 
@@ -204,7 +203,8 @@ def get_variant_spec(universe, domain, task, policy):
                 lambda spec: np.random.randint(0, 10000)),
             'checkpoint_at_end': True,
             'checkpoint_frequency': NUM_EPOCHS_PER_DOMAIN.get(
-                domain, DEFAULT_NUM_EPOCHS) // NUM_CHECKPOINTS
+                domain, DEFAULT_NUM_EPOCHS) // NUM_CHECKPOINTS,
+            'checkpoint_replay_pool': False,
         },
     }
 

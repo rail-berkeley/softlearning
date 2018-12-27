@@ -266,7 +266,7 @@ class TestExperimentRunner(tf.test.TestCase):
 
         config = CONFIG.copy()
 
-        config['run_params']['save_replay_pool'] = True
+        config['run_params']['checkpoint_replay_pool'] = True
         experiment_runner = ExperimentRunner(config=config)
 
         session = experiment_runner._session

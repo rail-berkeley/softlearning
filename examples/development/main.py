@@ -121,7 +121,7 @@ class ExperimentRunner(tune.Trainable):
         with open(pickle_path, 'wb') as f:
             pickle.dump(pickleable, f)
 
-        if self._variant['run_params'].get('save_replay_pool', False):
+        if self._variant['run_params'].get('checkpoint_replay_pool', False):
             self._save_replay_pool(checkpoint_dir)
 
         tf_checkpoint = self._get_tf_checkpoint()
@@ -175,7 +175,7 @@ class ExperimentRunner(tune.Trainable):
         replay_pool = self.replay_pool = (
             get_replay_pool_from_variant(self._variant, env))
 
-        if self._variant['run_params'].get('save_replay_pool', False):
+        if self._variant['run_params'].get('checkpoint_replay_pool', False):
             self._restore_replay_pool(checkpoint_dir)
 
         sampler = self.sampler = pickleable['sampler']
@@ -227,6 +227,10 @@ def main():
         variant_spec = get_variant_spec(universe, domain, task, args.policy)
 
     variant_spec['mode'] = args.mode
+
+    if args.checkpoint_replay_pool is not None:
+        variant_spec['run_params']['checkpoint_replay_pool'] = (
+            args.checkpoint_replay_pool)
 
     local_dir_base = (
         '~/ray_results/local'
