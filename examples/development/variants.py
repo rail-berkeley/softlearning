@@ -57,7 +57,7 @@ ALGORITHM_PARAMS_BASE = {
         'lr': 3e-4,
         'discount': 0.99,
         'target_update_interval': 1,
-        'tau': 0.005,
+        'tau': 5e-3,
         'target_entropy': 'auto',
         'reward_scale': 1.0,
         'store_extra_policy_info': False,

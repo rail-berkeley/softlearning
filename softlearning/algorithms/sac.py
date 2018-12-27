@@ -33,11 +33,11 @@ class SAC(RLAlgorithm):
             plotter=None,
             tf_summaries=False,
 
-            lr=3e-3,
+            lr=3e-4,
             reward_scale=1.0,
             target_entropy='auto',
             discount=0.99,
-            tau=0.01,
+            tau=5e-3,
             target_update_interval=1,
             action_prior='uniform',
             reparameterize=False,
