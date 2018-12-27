@@ -157,7 +157,7 @@ ENV_PARAMS = {
     }
 }
 
-NUM_CHECKPOINTS = 5
+NUM_CHECKPOINTS = 10
 
 
 def get_variant_spec(universe, domain, task, policy):
