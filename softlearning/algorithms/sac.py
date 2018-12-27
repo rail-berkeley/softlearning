@@ -332,7 +332,7 @@ class SAC(RLAlgorithm):
         self._training_ops.update({'policy_train_op': policy_train_op})
 
     def _init_training(self):
-        self._update_target()
+        self._update_target(tau=1.0)
 
     def _update_target(self, tau=None):
         tau = tau or self._tau
