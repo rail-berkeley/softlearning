@@ -6,6 +6,6 @@ dependencies:
 - python=3.6.5
 - pip>=18.0
 - conda>=4.5.9
-- patchelf=0.9
+- patchelf=0.9  # comment this out on Mac
 - pip:
     - -r ./requirements.txt
