@@ -3,12 +3,14 @@ import argparse
 from distutils.util import strtobool
 import json
 
+import softlearning.algorithms.utils as alg_utils
 import softlearning.environments.utils as env_utils
 from softlearning.misc.utils import datetimestamp
 
 
 DEFAULT_UNIVERSE = 'gym'
 DEFAULT_TASK = 'Default'
+DEFAULT_ALGORITHM = 'SAC'
 
 TASKS_BY_DOMAIN_BY_UNIVERSE = {
     universe: {
@@ -34,6 +36,8 @@ DOMAINS_BY_UNIVERSE = {
 AVAILABLE_DOMAINS = set(sum(DOMAINS_BY_UNIVERSE.values(), ()))
 
 UNIVERSES = tuple(env_utils.ENVIRONMENTS.keys())
+
+AVAILABLE_ALGORITHMS = set(alg_utils.ALGORITHM_CLASSES.keys())
 
 
 def parse_universe(env_name):
@@ -94,6 +98,10 @@ def get_parser(allow_policy_list=False):
                         type=str,
                         choices=AVAILABLE_TASKS,
                         default=DEFAULT_TASK)
+    parser.add_argument('--algorithm',
+                        type=str,
+                        choices=AVAILABLE_ALGORITHMS,
+                        default=DEFAULT_ALGORITHM)
     parser.add_argument('--num-samples', type=int, default=1)
 
     parser.add_argument('--resources', type=json.loads, default=None,

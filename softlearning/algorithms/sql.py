@@ -196,8 +196,8 @@ class SQL(RLAlgorithm):
         # \hat Q in Equation 11:
         ys = tf.stop_gradient(
             self._reward_scale
-            * self._rewards_ph[:, None]
-            + (1 - self._terminals_ph[:, None])
+            * self._rewards_ph
+            + (1 - self._terminals_ph)
             * self._discount
             * next_value)
         assert_shape(ys, [None, 1])
@@ -251,7 +251,7 @@ class SQL(RLAlgorithm):
 
         # Target log-density. Q_soft in Equation 13:
         squash_correction = tf.reduce_sum(
-            tf.log(1 - fixed_actions**2 + EPS), axis=-1)
+            tf.log(1 - fixed_actions ** 2 + EPS), axis=-1)
         log_p = svgd_target_values + squash_correction
 
         grad_log_p = tf.gradients(log_p, fixed_actions)[0]

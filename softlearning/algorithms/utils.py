@@ -9,8 +9,20 @@ def create_SAC_algorithm(variant, *args, **kwargs):
     return algorithm
 
 
+def create_SQL_algorithm(variant, *args, **kwargs):
+    from .sql import SQL
+
+    algorithm = SQL(*args, **kwargs)
+
+    print('KWARGS')
+    print(kwargs)
+
+    return algorithm
+
+
 ALGORITHM_CLASSES = {
     'SAC': create_SAC_algorithm,
+    'SQL': create_SQL_algorithm,
 }
 
 
