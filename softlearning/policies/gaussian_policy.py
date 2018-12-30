@@ -28,7 +28,6 @@ class GaussianPolicy(LatentSpacePolicy):
         self._input_shapes = input_shapes
         self._output_shape = output_shape
         self._squash = squash
-        self._squash = squash
         self._name = name
         self._preprocessor = preprocessor
 
