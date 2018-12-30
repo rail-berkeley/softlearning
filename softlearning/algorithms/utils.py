@@ -14,9 +14,6 @@ def create_SQL_algorithm(variant, *args, **kwargs):
 
     algorithm = SQL(*args, **kwargs)
 
-    print('KWARGS')
-    print(kwargs)
-
     return algorithm
 
 
