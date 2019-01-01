@@ -38,7 +38,7 @@ def raise_on_use_wrapper(e):
 GYM_ENVIRONMENTS = {
     'Swimmer': {
         'v2': lambda: gym.envs.make('Swimmer-v2'),
-        'CustomDefault': CustomSwimmerEnv,
+        'Custom': CustomSwimmerEnv,
         'Default': lambda: gym.envs.make('Swimmer-v2'),
     },
     'Ant': {
