@@ -27,7 +27,7 @@ def feedforward_model(input_shapes,
     ]
 
     concatenated = tf.keras.layers.Lambda(
-        lambda x: tf.concat(x, axis=-1)
+        lambda x: tf.concat(x, axis=-2)
     )(preprocessed_inputs)
 
     out = concatenated

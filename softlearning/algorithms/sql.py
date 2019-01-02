@@ -12,6 +12,7 @@ EPS = 1e-6
 
 def assert_shape(tensor, expected_shape):
     tensor_shape = tensor.shape.as_list()
+    print(tensor_shape, expected_shape)
     assert len(tensor_shape) == len(expected_shape)
     assert all([a == b for a, b in zip(tensor_shape, expected_shape)])
 
@@ -216,10 +217,10 @@ class SQL(RLAlgorithm):
     def _create_svgd_update(self):
         """Create a minimization operation for policy update (SVGD)."""
 
-        actions = self.policy.actions_for(
-            observations=self._observations_ph,
-            n_action_samples=self._kernel_n_particles,
-            reuse=True)
+        action_tensors = [tf.expand_dims(self.policy.actions(self._observations_ph), -2)
+                          for _ in range(self._kernel_n_particles)]
+        actions = tf.concat(action_tensors, 1)
+
         assert_shape(
             actions, (None, self._kernel_n_particles, *self._action_shape))
 
@@ -236,9 +237,9 @@ class SQL(RLAlgorithm):
             actions, [n_fixed_actions, n_updated_actions], axis=1)
         fixed_actions = tf.stop_gradient(fixed_actions)
         assert_shape(fixed_actions,
-                     [None, n_fixed_actions] + self._action_shape)
+                     [None, n_fixed_actions, *self._action_shape])
         assert_shape(updated_actions,
-                     [None, n_updated_actions] + self._action_shape)
+                     [None, n_updated_actions, *self._action_shape])
 
         next_observations = tf.tile(
             self._next_observations_ph[:, tf.newaxis, :],
@@ -258,19 +259,19 @@ class SQL(RLAlgorithm):
         grad_log_p = tf.expand_dims(grad_log_p, axis=2)
         grad_log_p = tf.stop_gradient(grad_log_p)
         assert_shape(grad_log_p,
-                     [None, n_fixed_actions, 1] + self._action_shape)
+                     [None, n_fixed_actions, 1, *self._action_shape])
 
         kernel_dict = self._kernel_fn(xs=fixed_actions, ys=updated_actions)
 
         # Kernel function in Equation 13:
-        kappa = tf.expand_dims(kernel_dict["output"], dim=3)
+        kappa = tf.expand_dims(kernel_dict["output"], axis=3)
         assert_shape(kappa, [None, n_fixed_actions, n_updated_actions, 1])
 
         # Stein Variational Gradient in Equation 13:
         action_gradients = tf.reduce_mean(
             kappa * grad_log_p + kernel_dict["gradient"], reduction_indices=1)
         assert_shape(action_gradients,
-                     [None, n_updated_actions] + self._action_shape)
+                     [None, n_updated_actions, *self._action_shape])
 
         # Propagate the gradient through the policy network (Equation 14).
         gradients = tf.gradients(
