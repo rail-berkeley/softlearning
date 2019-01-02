@@ -13,6 +13,8 @@ from softlearning.environments.gym.mujoco.humanoid_env import (
     HumanoidEnv as CustomHumanoidEnv)
 from softlearning.environments.gym.mujoco.walker2d_env import (
     Walker2dEnv as CustomWalker2dEnv)
+from softlearning.environments.gym.mujoco.half_cheetah_env import (
+    HalfCheetahEnv as CustomHalfCheetahEnv)
 from softlearning.environments.gym.mujoco.hopper_env import (
     HopperEnv as CustomHopperEnv)
 from softlearning.environments.gym.mujoco.swimmer_env import (
@@ -36,7 +38,7 @@ def raise_on_use_wrapper(e):
 GYM_ENVIRONMENTS = {
     'Swimmer': {
         'v2': lambda: gym.envs.make('Swimmer-v2'),
-        'CustomDefault': CustomSwimmerEnv,
+        'Custom': CustomSwimmerEnv,
         'Default': lambda: gym.envs.make('Swimmer-v2'),
     },
     'Ant': {
@@ -57,6 +59,7 @@ GYM_ENVIRONMENTS = {
     },
     'HalfCheetah': {
         'v2': lambda: gym.envs.make('HalfCheetah-v2'),
+        'Custom': CustomHalfCheetahEnv,
         'Default': lambda: gym.envs.make('HalfCheetah-v2'),
     },
     'Walker': {

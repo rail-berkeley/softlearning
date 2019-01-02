@@ -108,14 +108,14 @@ ENV_PARAMS = {
     'Walker': {  # 6 DoF
     },
     'Ant': {  # 8 DoF
-        'CustomDefault': {
+        'Custom': {
             'survive_reward': 0.0,
             'healthy_z_range': (-np.inf, np.inf),
             'exclude_current_positions_from_observation': False,
         }
     },
     'Humanoid': {  # 17 DoF
-        'CustomDefault': {
+        'Custom': {
             'survive_reward': 0.0,
             'healthy_z_range': (-np.inf, np.inf),
             'exclude_current_positions_from_observation': False,
