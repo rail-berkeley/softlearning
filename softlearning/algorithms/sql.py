@@ -44,6 +44,7 @@ class SQL(RLAlgorithm):
             kernel_n_particles=16,
             kernel_update_ratio=0.5,
             discount=0.99,
+            tau=0.99,
             reward_scale=1,
             use_saved_Q=False,
             use_saved_policy=False,
@@ -94,6 +95,7 @@ class SQL(RLAlgorithm):
         self._Q_lr = Q_lr
         self._policy_lr = policy_lr
         self._discount = discount
+        self._tau = tau
         self._reward_scale = reward_scale
 
         self._value_n_particles = value_n_particles
