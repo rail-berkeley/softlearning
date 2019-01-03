@@ -275,19 +275,19 @@ class SQL(RLAlgorithm):
         # Propagate the gradient through the policy network (Equation 14).
         gradients = tf.gradients(
             updated_actions,
-            self.policy.get_params_internal(),
+            self.policy.trainable_variables,
             grad_ys=action_gradients)
 
         surrogate_loss = tf.reduce_sum([
             tf.reduce_sum(w * tf.stop_gradient(g))
-            for w, g in zip(self.policy.get_params_internal(), gradients)
+            for w, g in zip(self.policy.trainable_variables, gradients)
         ])
 
         if self._train_policy:
             optimizer = tf.train.AdamOptimizer(self._policy_lr)
             svgd_training_op = optimizer.minimize(
                 loss=-surrogate_loss,
-                var_list=self.policy.get_params_internal())
+                var_list=self.policy.trainable_variables)
             self._training_ops.append(svgd_training_op)
 
     # TODO: do not pass, policy, and pool to `__init__` directly.
