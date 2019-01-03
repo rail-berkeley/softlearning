@@ -302,15 +302,16 @@ class SQL(RLAlgorithm):
             initial_exploration_policy=initial_exploration_policy)
 
     def _init_training(self):
-        self._update_target()
+        self._update_target(tau=1.0)
 
-    def _update_target(self):
+    def _update_target(self, tau=None):
+        tau = tau or self._tau
+
         source_params = self._Q.get_weights()
         target_params = self._Q_target.get_weights()
-
         self._Q_target.set_weights([
-            (1 - self._tau) * target + self._tau * source
-            for target, source in zip(target_params, source_params)
+            tau * source + (1.0 - tau) * target
+            for source, target in zip(source_params, target_params)
         ])
 
     def _do_training(self, iteration, batch):
