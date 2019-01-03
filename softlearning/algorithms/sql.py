@@ -301,6 +301,9 @@ class SQL(RLAlgorithm):
             self.pool,
             initial_exploration_policy=initial_exploration_policy)
 
+    def _init_training(self):
+        self._update_target()
+
     def _update_target(self):
         source_params = self._Q.get_weights()
         target_params = self._Q_target.get_weights()
