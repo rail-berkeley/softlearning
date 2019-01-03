@@ -241,35 +241,34 @@ class SQL(RLAlgorithm):
         assert_shape(updated_actions,
                      [None, n_updated_actions, *self._action_shape])
 
-        next_observations = tf.tile(
-            self._next_observations_ph[:, tf.newaxis, :],
-            (1, n_fixed_actions, 1))
-        next_observations = tf.reshape(
-            next_observations, (-1, *self._observation_shape))
-
-        svgd_target_values = self._Q([
-            self._observations_ph[:, None, :], fixed_actions])
+        svgd_target_values = self._Q_target([
+            tf.tile(self._observations_ph, (n_fixed_actions, 1)),
+            tf.reshape(fixed_actions, (-1, *self._action_shape))
+        ])
+        svgd_target_values = tf.reshape(
+            svgd_target_values,
+            (-1, n_fixed_actions, 1))
 
         # Target log-density. Q_soft in Equation 13:
         squash_correction = tf.reduce_sum(
-            tf.log(1 - fixed_actions ** 2 + EPS), axis=-1)
-        log_p = svgd_target_values + squash_correction
+            tf.log(1 - fixed_actions ** 2 + EPS), axis=-1, keepdims=True)
+        log_probs = svgd_target_values + squash_correction
 
-        grad_log_p = tf.gradients(log_p, fixed_actions)[0]
-        grad_log_p = tf.expand_dims(grad_log_p, axis=2)
-        grad_log_p = tf.stop_gradient(grad_log_p)
-        assert_shape(grad_log_p,
+        grad_log_probs = tf.gradients(log_probs, fixed_actions)[0]
+        grad_log_probs = tf.expand_dims(grad_log_probs, axis=2)
+        grad_log_probs = tf.stop_gradient(grad_log_probs)
+        assert_shape(grad_log_probs,
                      [None, n_fixed_actions, 1, *self._action_shape])
 
         kernel_dict = self._kernel_fn(xs=fixed_actions, ys=updated_actions)
 
         # Kernel function in Equation 13:
-        kappa = tf.expand_dims(kernel_dict["output"], axis=3)
+        kappa = kernel_dict["output"][..., tf.newaxis]
         assert_shape(kappa, [None, n_fixed_actions, n_updated_actions, 1])
 
         # Stein Variational Gradient in Equation 13:
         action_gradients = tf.reduce_mean(
-            kappa * grad_log_p + kernel_dict["gradient"], reduction_indices=1)
+            kappa * grad_log_probs + kernel_dict["gradient"], axis=1)
         assert_shape(action_gradients,
                      [None, n_updated_actions, *self._action_shape])
 
