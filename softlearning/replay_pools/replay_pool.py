@@ -5,8 +5,7 @@ class ReplayPool(object):
     """A class used to save and replay data."""
 
     @abc.abstractmethod
-    def add_sample(self, observation, action, reward, next_observation,
-                   terminal, **kwargs):
+    def add_sample(self, sample):
         """Add a transition tuple."""
         pass
 
@@ -31,8 +30,7 @@ class ReplayPool(object):
 
         :param path: Dict like one outputted by railrl.samplers.util.rollout
         """
-        path_length = path['observations'].shape[0]
-        self.add_samples(num_samples=path_length, **{
+        self.add_samples({
             key: value
             for key, value in path.items()
             if key in self.field_names

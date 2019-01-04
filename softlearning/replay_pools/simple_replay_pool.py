@@ -64,29 +64,28 @@ class SimpleReplayPool(FlexibleReplayPool):
             }
         }
 
-        super(SimpleReplayPool, self).__init__(*args, fields=fields, **kwargs)
+        super(SimpleReplayPool, self).__init__(
+            *args, fields_attrs=fields, **kwargs)
 
-    def add_samples(self, num_samples, **kwargs):
+    def add_samples(self, samples):
         if not isinstance(self._observation_space, Dict):
-            return super(SimpleReplayPool, self).add_samples(
-                num_samples, **kwargs)
+            return super(SimpleReplayPool, self).add_samples(samples)
 
-        kwargs.update(
+        samples.update(
            **{
                'observations.{}'.format(key): value
-               for key, value in kwargs['observations'].items()
+               for key, value in samples['observations'].items()
            },
            **{
                'next_observations.{}'.format(key): value
-               for key, value in kwargs['next_observations'].items()
+               for key, value in samples['next_observations'].items()
            },
         )
 
-        del kwargs['observations']
-        del kwargs['next_observations']
+        del samples['observations']
+        del samples['next_observations']
 
-        return super(SimpleReplayPool, self).add_samples(
-            num_samples, **kwargs)
+        return super(SimpleReplayPool, self).add_samples(samples)
 
     def batch_by_indices(self,
                          indices,
