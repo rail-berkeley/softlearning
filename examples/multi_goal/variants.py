@@ -14,6 +14,7 @@ ALGORITHM_PARAMS_BASE = {
         'discount': 0.99,
         'reward_scale': 1.0,
         'save_full_state': True,
+        'tau': 1e-4,
     }
 }
 
@@ -24,7 +25,6 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'reparameterize': True,
             'lr': 3e-4,
             'target_update_interval': 1,
-            'tau': 1e-4,
             'target_entropy': -2.0,
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
@@ -43,10 +43,6 @@ ALGORITHM_PARAMS_ADDITIONAL = {
 
 def get_variant_spec(universe, domain, task, policy, local_dir, algorithm):
     layer_size = 64
-    print(deep_update(
-        ALGORITHM_PARAMS_BASE,
-        ALGORITHM_PARAMS_ADDITIONAL.get(algorithm, {})
-    ))
     variant_spec = {
         'seed': 1,
 

@@ -12,7 +12,6 @@ EPS = 1e-6
 
 def assert_shape(tensor, expected_shape):
     tensor_shape = tensor.shape.as_list()
-    print(tensor_shape, expected_shape)
     assert len(tensor_shape) == len(expected_shape)
     assert all([a == b for a, b in zip(tensor_shape, expected_shape)])
 
