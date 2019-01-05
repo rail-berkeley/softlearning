@@ -19,6 +19,7 @@ class Walker2dEnv(mujoco_env.MujocoEnv, utils.EzPickle):
                  terminate_when_unhealthy=True,
                  healthy_z_range=(0.8, 2.0),
                  healthy_angle_range=(-1.0, 1.0),
+                 reset_noise_scale=5e-3,
                  exclude_current_positions_from_observation=True):
         self._forward_reward_weight = forward_reward_weight
         self._ctrl_cost_weight = ctrl_cost_weight
@@ -28,6 +29,8 @@ class Walker2dEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
         self._healthy_z_range = healthy_z_range
         self._healthy_angle_range = healthy_angle_range
+
+        self._reset_noise_scale = reset_noise_scale
 
         self._exclude_current_positions_from_observation = (
             exclude_current_positions_from_observation)
@@ -41,6 +44,7 @@ class Walker2dEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             terminate_when_unhealthy=self._terminate_when_unhealthy,
             healthy_z_range=self._healthy_z_range,
             healthy_angle_range=self._healthy_angle_range,
+            reset_noise_scale=self._reset_noise_scale,
             exclude_current_positions_from_observation=(
                 self._exclude_current_positions_from_observation),
         )
@@ -113,11 +117,13 @@ class Walker2dEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return observation, reward, done, info
 
     def reset_model(self):
-        c = 5e-3
+        noise_low = -self._reset_noise_scale
+        noise_high = self._reset_noise_scale
+
         qpos = self.init_qpos + self.np_random.uniform(
-            low=-c, high=c, size=self.model.nq)
+            low=noise_low, high=noise_high, size=self.model.nq)
         qvel = self.init_qvel + self.np_random.uniform(
-            low=-c, high=c, size=self.model.nv)
+            low=noise_low, high=noise_high, size=self.model.nv)
 
         self.set_state(qpos, qvel)
 

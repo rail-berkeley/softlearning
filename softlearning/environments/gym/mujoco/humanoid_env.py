@@ -26,6 +26,7 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
                  healthy_reward=5.0,
                  terminate_when_unhealthy=True,
                  healthy_z_range=(1.0, 2.0),
+                 reset_noise_scale=1e-2,
                  exclude_current_positions_from_observation=True):
         self._forward_reward_weight = forward_reward_weight
         self._ctrl_cost_weight = ctrl_cost_weight
@@ -34,6 +35,9 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self._healthy_reward = healthy_reward
         self._terminate_when_unhealthy = terminate_when_unhealthy
         self._healthy_z_range = healthy_z_range
+
+        self._reset_noise_scale = reset_noise_scale
+
         self._exclude_current_positions_from_observation = (
             exclude_current_positions_from_observation)
 
@@ -47,6 +51,7 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             contact_cost_weight=self._contact_cost_weight,
             contact_cost_range=self._contact_cost_range,
             healthy_z_range=self._healthy_z_range,
+            reset_noise_scale=self._reset_noise_scale,
             exclude_current_positions_from_observation=(
                 self._exclude_current_positions_from_observation))
 
@@ -137,11 +142,13 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return observation, reward, done, info
 
     def reset_model(self):
-        c = 0.01
+        noise_low = -self._reset_noise_scale
+        noise_high = self._reset_noise_scale
+
         qpos = self.init_qpos + self.np_random.uniform(
-            low=-c, high=c, size=self.model.nq)
+            low=noise_low, high=noise_high, size=self.model.nq)
         qvel = self.init_qvel + self.np_random.uniform(
-            low=-c, high=c, size=self.model.nv)
+            low=noise_low, high=noise_high, size=self.model.nv)
         self.set_state(qpos, qvel)
 
         observation = self._get_obs()
