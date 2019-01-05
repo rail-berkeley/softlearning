@@ -208,8 +208,13 @@ class SQL(RLAlgorithm):
         bellman_residual = tf.losses.mean_squared_error(
             labels=ys, predictions=self._Q_values, weights=0.5)
 
+        self._Q_optimizer = tf.train.AdamOptimizer(
+            learning_rate=self._Q_lr,
+            name='Q_optimizer'
+        )
+
         if self._train_Q:
-            td_train_op = tf.train.AdamOptimizer(self._Q_lr).minimize(
+            td_train_op = self._Q_optimizer.minimize(
                 loss=bellman_residual, var_list=self._Q.trainable_variables)
             self._training_ops.append(td_train_op)
 
@@ -284,9 +289,13 @@ class SQL(RLAlgorithm):
             for w, g in zip(self.policy.trainable_variables, gradients)
         ])
 
+        self._policy_optimizer = tf.train.AdamOptimizer(
+            learning_rate=self._policy_lr,
+            name='policy_optimizer'
+        )
+
         if self._train_policy:
-            optimizer = tf.train.AdamOptimizer(self._policy_lr)
-            svgd_training_op = optimizer.minimize(
+            svgd_training_op = self._policy_optimizer.minimize(
                 loss=-surrogate_loss,
                 var_list=self.policy.trainable_variables)
             self._training_ops.append(svgd_training_op)
@@ -394,8 +403,6 @@ class SQL(RLAlgorithm):
     def tf_saveables(self):
         return {
             '_Q_target': self._Q_target,
-            **{
-                f'training_optimizer_{i}': optimizer
-                for i, optimizer in enumerate(self._training_ops)
-            },
+            '_Q_optimizer': self._Q_optimizer,
+            '_policy_optimizer': self._policy_optimizer
         }
