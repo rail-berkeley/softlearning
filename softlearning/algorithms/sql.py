@@ -389,3 +389,13 @@ class SQL(RLAlgorithm):
             state.update({'replay_pool': self.pool})
 
         return state
+
+    @property
+    def tf_saveables(self):
+        return {
+            '_Q_target': self._Q_target,
+            **{
+                f'training_optimizer_{i}': optimizer
+                for i, optimizer in enumerate(self._training_ops)
+            },
+        }
