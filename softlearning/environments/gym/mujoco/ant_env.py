@@ -16,6 +16,7 @@ class AntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
                  terminate_when_unhealthy=True,
                  healthy_z_range=(0.2, 1.0),
                  contact_force_range=(-1.0, 1.0),
+                 reset_noise_scale=0.1,
                  exclude_current_positions_from_observation=True):
         self._ctrl_cost_weight = ctrl_cost_weight
         self._contact_cost_weight = contact_cost_weight
@@ -25,6 +26,8 @@ class AntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self._healthy_z_range = healthy_z_range
 
         self._contact_force_range = contact_force_range
+
+        self._reset_noise_scale = reset_noise_scale
 
         self._exclude_current_positions_from_observation = (
             exclude_current_positions_from_observation)
@@ -38,6 +41,7 @@ class AntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             terminate_when_unhealthy=self._terminate_when_unhealthy,
             healthy_z_range=self._healthy_z_range,
             contact_force_range=self._contact_force_range,
+            reset_noise_scale=self._reset_noise_scale,
             exclude_current_positions_from_observation=(
                 self._exclude_current_positions_from_observation))
 
@@ -119,9 +123,13 @@ class AntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return observations
 
     def reset_model(self):
+        noise_low = -self._reset_noise_scale
+        noise_high = self._reset_noise_scale
+
         qpos = self.init_qpos + self.np_random.uniform(
-            size=self.model.nq, low=-0.1, high=0.1)
-        qvel = self.init_qvel + self.np_random.randn(self.model.nv) * 0.1
+            low=noise_low, high=noise_high, size=self.model.nq)
+        qvel = self.init_qvel + self._reset_noise_scale * self.np_random.randn(
+            self.model.nv)
         self.set_state(qpos, qvel)
 
         observation = self._get_obs()
