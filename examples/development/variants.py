@@ -105,9 +105,9 @@ ALGORITHM_PARAMS_PER_DOMAIN = {
                 'n_epochs': NUM_EPOCHS_PER_DOMAIN.get(
                     domain, DEFAULT_NUM_EPOCHS),
                 'n_initial_exploration_steps': (
-                        MAX_PATH_LENGTH_PER_DOMAIN.get(
-                            domain, DEFAULT_MAX_PATH_LENGTH
-                        ) * 10),
+                    MAX_PATH_LENGTH_PER_DOMAIN.get(
+                        domain, DEFAULT_MAX_PATH_LENGTH
+                    ) * 10),
             }
         } for domain in NUM_EPOCHS_PER_DOMAIN
     }
@@ -164,10 +164,10 @@ ENV_PARAMS = {
     },
     'Point2DEnv': {
         'Default': {
-            'observation_keys': ('observation',),
+            'observation_keys': ('observation', ),
         },
         'Wall': {
-            'observation_keys': ('observation',),
+            'observation_keys': ('observation', ),
         },
     }
 }
