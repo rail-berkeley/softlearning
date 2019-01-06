@@ -7,7 +7,7 @@ ALGORITHM_PARAMS_BASE = {
         'epoch_length': 100,
         'n_epochs': 1000,
         'n_train_repeat': 1,
-        'eval_render_mode': None,
+        'eval_render_mode': 'human',
         'eval_n_episodes': 10,
         'eval_deterministic': False,
 
