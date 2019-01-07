@@ -19,10 +19,7 @@ from softlearning.value_functions.utils import get_Q_function_from_variant
 
 from softlearning.misc.utils import set_seed, initialize_tf_variables
 
-from examples.utils import (
-    parse_universe_domain_task,
-    get_parser,
-    launch_experiments_ray)
+from examples.utils import get_parser, launch_experiments_ray
 from examples.development.variants import (
     get_variant_spec,
     get_variant_spec_image)
@@ -227,7 +224,7 @@ class ExperimentRunner(tune.Trainable):
 def main():
     args = get_parser().parse_args()
 
-    universe, domain, task = parse_universe_domain_task(args)
+    universe, domain, task = args.universe, args.domain, args.task
 
     if ('image' in task.lower()
             or 'blind' in task.lower()

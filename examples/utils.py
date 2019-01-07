@@ -9,6 +9,7 @@ from softlearning.misc.utils import datetimestamp
 
 
 DEFAULT_UNIVERSE = 'gym'
+DEFAULT_DOMAIN = 'Swimmer'
 DEFAULT_TASK = 'Default'
 DEFAULT_ALGORITHM = 'SAC'
 
@@ -47,53 +48,17 @@ def parse_universe(env_name):
     return universe
 
 
-def parse_domain_task(env_name, universe):
-    env_name = env_name.replace(universe, '').strip('-')
-    domains = DOMAINS_BY_UNIVERSE[universe]
-    domain = next(domain for domain in domains if domain in env_name)
-
-    env_name = env_name.replace(domain, '').strip('-')
-    tasks = TASKS_BY_DOMAIN_BY_UNIVERSE[universe][domain]
-    task = next((task for task in tasks if task == env_name), None)
-
-    if task is None:
-        matching_tasks = [task for task in tasks if task in env_name]
-        if len(matching_tasks) > 1:
-            raise ValueError(
-                "Task name cannot be unmbiguously determined: {}."
-                " Following task names match: {}"
-                "".format(env_name, matching_tasks))
-        elif len(matching_tasks) == 1:
-            task = matching_tasks[-1]
-        else:
-            task = DEFAULT_TASK
-
-    return domain, task
-
-
-def parse_universe_domain_task(args):
-    universe, domain, task = args.universe, args.domain, args.task
-
-    if not universe:
-        universe = parse_universe(args.env)
-
-    if (not domain) or (not task):
-        domain, task = parse_domain_task(args.env, universe)
-
-    return universe, domain, task
-
-
 def get_parser(allow_policy_list=False):
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--universe',
                         type=str,
                         choices=UNIVERSES,
-                        default=None)
+                        default=DEFAULT_UNIVERSE)
     parser.add_argument('--domain',
                         type=str,
                         choices=AVAILABLE_DOMAINS,
-                        default=None)
+                        default=DEFAULT_DOMAIN)
     parser.add_argument('--task',
                         type=str,
                         choices=AVAILABLE_TASKS,
@@ -176,7 +141,6 @@ def get_parser(allow_policy_list=False):
                             type=str,
                             choices=('gaussian', ),
                             default='gaussian')
-    parser.add_argument('--env', type=str, default='gym-swimmer-default')
     parser.add_argument('--exp-name',
                         type=str,
                         default=datetimestamp())
