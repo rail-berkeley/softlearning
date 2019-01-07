@@ -130,7 +130,7 @@ class SQL(RLAlgorithm):
         self._create_svgd_update()
 
         if use_saved_Q:
-            saved_Q_weights = tuple(Q.get_param_values() for Q in self._Qs)
+            saved_Q_weights = tuple(Q.get_weights() for Q in self._Qs)
         if use_saved_policy:
             saved_policy_weights = policy.get_weights()
 
