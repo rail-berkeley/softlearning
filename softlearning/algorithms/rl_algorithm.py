@@ -25,6 +25,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             n_train_repeat=1,
             max_train_repeat_per_timestep=5,
             n_initial_exploration_steps=0,
+            initial_exploration_policy=None,
             epoch_length=1000,
             eval_n_episodes=10,
             eval_deterministic=True,
@@ -53,6 +54,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         self._train_every_n_steps = train_every_n_steps
         self._epoch_length = epoch_length
         self._n_initial_exploration_steps = n_initial_exploration_steps
+        self._initial_exploration_policy = initial_exploration_policy
 
         self._eval_n_episodes = eval_n_episodes
         self._eval_deterministic = eval_deterministic
