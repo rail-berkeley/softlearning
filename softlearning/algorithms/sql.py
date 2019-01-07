@@ -223,9 +223,14 @@ class SQL(RLAlgorithm):
     def _create_svgd_update(self):
         """Create a minimization operation for policy update (SVGD)."""
 
-        action_tensors = [tf.expand_dims(self.policy.actions(self._observations_ph), -2)
-                          for _ in range(self._kernel_n_particles)]
-        actions = tf.concat(action_tensors, 1)
+        actions = self.policy.actions(
+            tf.tile(
+                self._observations_ph,
+                (self._kernel_n_particles,
+                 *np.ones_like(self._observation_shape))))
+        actions = tf.reshape(
+            actions,
+            (-1, self._kernel_n_particles, *self._observation_shape))
 
         assert_shape(
             actions, (None, self._kernel_n_particles, *self._action_shape))
