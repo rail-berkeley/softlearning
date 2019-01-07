@@ -53,25 +53,15 @@ class ExperimentRunner(tune.Trainable):
         initial_exploration_policy = self.initial_exploration_policy = (
             get_policy('UniformPolicy', env))
 
-        if self._variant['algorithm_params']['type'] == 'SQL':
-            self.algorithm = get_algorithm_from_variant(
-                variant=self._variant,
-                env=self.env,
-                policy=policy,
-                Q=Qs[0],
-                pool=replay_pool,
-                sampler=sampler,
-                session=self._session)
-        else:
-            self.algorithm = get_algorithm_from_variant(
-                variant=self._variant,
-                env=self.env,
-                policy=policy,
-                initial_exploration_policy=initial_exploration_policy,
-                Qs=Qs,
-                pool=replay_pool,
-                sampler=sampler,
-                session=self._session)
+        self.algorithm = get_algorithm_from_variant(
+            variant=self._variant,
+            env=self.env,
+            policy=policy,
+            initial_exploration_policy=initial_exploration_policy,
+            Qs=Qs,
+            pool=replay_pool,
+            sampler=sampler,
+            session=self._session)
 
         initialize_tf_variables(self._session, only_uninitialized=True)
 

@@ -42,26 +42,15 @@ def run_experiment(variant, reporter):
         default_action=(np.nan, np.nan),
         n_samples=100)
 
-    if variant['algorithm_params']['type'] == 'SQL':
-        algorithm = get_algorithm_from_variant(
-            variant=variant,
-            env=env,
-            policy=policy,
-            Q=Qs[0],
-            pool=pool,
-            sampler=sampler,
-            plotter=plotter,
-        )
-    else:
-        algorithm = get_algorithm_from_variant(
-            variant=variant,
-            env=env,
-            policy=policy,
-            Qs=Qs,
-            pool=pool,
-            sampler=sampler,
-            plotter=plotter
-        )
+    algorithm = get_algorithm_from_variant(
+        variant=variant,
+        env=env,
+        policy=policy,
+        Qs=Qs,
+        pool=pool,
+        sampler=sampler,
+        plotter=plotter
+    )
 
     initialize_tf_variables(algorithm._session, only_uninitialized=True)
 
