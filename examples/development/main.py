@@ -183,25 +183,15 @@ class ExperimentRunner(tune.Trainable):
         initial_exploration_policy = self.initial_exploration_policy = (
             get_policy('UniformPolicy', env))
 
-        if self._variant['algorithm_params']['type'] == 'SQL':
-            self.algorithm = get_algorithm_from_variant(
-                variant=self._variant,
-                env=self.env,
-                policy=policy,
-                Q=Qs[0],
-                pool=replay_pool,
-                sampler=sampler,
-                session=self._session)
-        else:
-            self.algorithm = get_algorithm_from_variant(
-                variant=self._variant,
-                env=self.env,
-                policy=policy,
-                initial_exploration_policy=initial_exploration_policy,
-                Qs=Qs,
-                pool=replay_pool,
-                sampler=sampler,
-                session=self._session)
+        self.algorithm = get_algorithm_from_variant(
+            variant=self._variant,
+            env=self.env,
+            policy=policy,
+            initial_exploration_policy=initial_exploration_policy,
+            Qs=Qs,
+            pool=replay_pool,
+            sampler=sampler,
+            session=self._session)
         self.algorithm.__setstate__(pickleable['algorithm'].__getstate__())
 
         tf_checkpoint = self._get_tf_checkpoint()
@@ -212,11 +202,8 @@ class ExperimentRunner(tune.Trainable):
         initialize_tf_variables(self._session, only_uninitialized=True)
 
         # TODO(hartikainen): target Qs should either be checkpointed or pickled.
-        if self._variant['algorithm_params']['type'] == 'SQL':
-            self.algorithm._Q_target.set_weights(self.algorithm._Q.get_weights())
-        else:
-            for Q, Q_target in zip(self.algorithm._Qs, self.algorithm._Q_targets):
-                Q_target.set_weights(Q.get_weights())
+        for Q, Q_target in zip(self.algorithm._Qs, self.algorithm._Q_targets):
+            Q_target.set_weights(Q.get_weights())
 
         self._built = True
 
