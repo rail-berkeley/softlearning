@@ -30,11 +30,7 @@ class ReplayPool(object):
 
         :param path: Dict like one outputted by railrl.samplers.util.rollout
         """
-        self.add_samples({
-            key: value
-            for key, value in path.items()
-            if key in self.field_names
-        })
+        self.add_samples(path)
         self.terminate_episode()
 
     @abc.abstractmethod

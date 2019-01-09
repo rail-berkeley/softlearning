@@ -1,5 +1,7 @@
+from collections import defaultdict
+
 import numpy as np
-from gym.spaces import Box, Dict, Discrete, Tuple
+from gym.spaces import Box, Dict, Discrete
 
 from .flexible_replay_pool import FlexibleReplayPool
 
@@ -71,14 +73,24 @@ class SimpleReplayPool(FlexibleReplayPool):
         if not isinstance(self._observation_space, Dict):
             return super(SimpleReplayPool, self).add_samples(samples)
 
+        dict_observations = defaultdict(list)
+        for observation in samples['observations']:
+            for key, value in observation.items():
+                dict_observations[key].append(value)
+
+        dict_next_observations = defaultdict(list)
+        for next_observation in samples['next_observations']:
+            for key, value in next_observation.items():
+                dict_next_observations[key].append(value)
+
         samples.update(
            **{
-               'observations.{}'.format(key): value
-               for key, value in samples['observations'].items()
+               f'observations.{observation_key}': np.array(values)
+               for observation_key, values in dict_observations.items()
            },
            **{
-               'next_observations.{}'.format(key): value
-               for key, value in samples['next_observations'].items()
+               f'next_observations.{observation_key}': np.array(values)
+               for observation_key, values in dict_next_observations.items()
            },
         )
 
@@ -96,7 +108,7 @@ class SimpleReplayPool(FlexibleReplayPool):
                 indices, field_name_filter=field_name_filter)
 
         batch = {
-            field_name: getattr(self, field_name)[indices]
+            field_name: self.fields[field_name][indices]
             for field_name in self.field_names
         }
 
