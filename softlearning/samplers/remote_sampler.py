@@ -80,7 +80,7 @@ class RemoteSampler(BaseSampler):
     def __getstate__(self):
         super_state = super(RemoteSampler, self).__getstate__()
         state = {
-            key: value for key, value in super_state
+            key: value for key, value in super_state.items()
             if key not in ('_remote_environment', '_remote_path')
         }
 
