@@ -124,14 +124,14 @@ ENV_PARAMS = {
     },
     'Ant': {  # 8 DoF
         'Custom': {
-            'survive_reward': 0.0,
+            'healthy_reward': 0.0,
             'healthy_z_range': (-np.inf, np.inf),
             'exclude_current_positions_from_observation': False,
         }
     },
     'Humanoid': {  # 17 DoF
         'Custom': {
-            'survive_reward': 0.0,
+            'healthy_reward': 0.0,
             'healthy_z_range': (-np.inf, np.inf),
             'exclude_current_positions_from_observation': False,
         }
