@@ -16,9 +16,9 @@ from examples.multi_goal.variants import get_variant_spec
 
 def run_experiment(variant, reporter):
     env = get_environment('gym', 'MultiGoal', 'Default', {
-        'actuation_cost_coeff': 1,
-        'distance_cost_coeff': 0.1,
-        'goal_reward': 1,
+        'actuation_cost_coeff': 10,
+        'distance_cost_coeff': 1,
+        'goal_reward': 10,
         'init_sigma': 0.1,
     })
 

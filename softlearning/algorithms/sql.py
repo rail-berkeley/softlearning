@@ -36,8 +36,8 @@ class SQL(RLAlgorithm):
             pool,
             plotter=None,
 
-            policy_lr=1E-3,
-            Q_lr=1E-3,
+            policy_lr=3e-4,
+            Q_lr=3e-4,
             value_n_particles=16,
             td_target_update_interval=1,
             kernel_fn=adaptive_isotropic_gaussian_kernel,

@@ -36,13 +36,17 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         'kwargs': {
             'policy_lr': 3e-4,
             'td_target_update_interval': 1,
+            'reward_scale': 0.1,
+            'value_n_particles': 16,
+            'kernel_n_particles': 32,
+            'kernel_update_ratio': 0.5,
         }
     }
 }
 
 
 def get_variant_spec(universe, domain, task, policy, local_dir, algorithm):
-    layer_size = 64
+    layer_size = 128
     variant_spec = {
         'seed': 1,
 
