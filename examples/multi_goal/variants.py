@@ -9,12 +9,12 @@ ALGORITHM_PARAMS_BASE = {
         'n_train_repeat': 1,
         'eval_render_mode': 'human',
         'eval_n_episodes': 10,
-        'eval_deterministic': False,
+        'eval_deterministic': True,
 
         'discount': 0.99,
         'reward_scale': 1.0,
         'save_full_state': True,
-        'tau': 1e-4,
+        'tau': 5e-3,
     }
 }
 
@@ -35,7 +35,8 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         'type': 'SQL',
         'kwargs': {
             'policy_lr': 3e-4,
-            'td_target_update_interval': 1,
+            'td_target_update_interval': 1000,
+            'tau': 1.0,
             'reward_scale': 0.1,
             'value_n_particles': 16,
             'kernel_n_particles': 32,
@@ -54,13 +55,13 @@ def get_variant_spec(universe, domain, task, policy, local_dir, algorithm):
         'domain': domain,
         'task': task,
 
-        'policy': policy,
         'local_dir': local_dir,
         'layer_size': layer_size,
         'policy_params': {
             'type': 'GaussianPolicy',
             'kwargs': {
                 'hidden_layer_sizes': (layer_size, layer_size),
+                'squash': True,
             },
         },
         'algorithm_params': deep_update(

@@ -56,6 +56,7 @@ ALGORITHM_PARAMS_BASE = {
     }
 }
 
+
 ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
         'type': 'SAC',
@@ -75,7 +76,17 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         'kwargs': {
             'policy_lr': 3e-4,
             'td_target_update_interval': 1,
-            'n_initial_exploration_steps': 0,
+            'n_initial_exploration_steps': int(1e3),
+            'reward_scale': tune.sample_from(lambda spec: (
+                {
+                    'Swimmer': 30,
+                    'Hopper': 30,
+                    'HalfCheetah': 30,
+                    'Walker': 10,
+                    'Ant': 300,
+                    'Humanoid': 100,
+                }[spec.get('config', spec)['domain']],
+            ))
         }
     }
 }

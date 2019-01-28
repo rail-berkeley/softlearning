@@ -209,7 +209,7 @@ class SQL(RLAlgorithm):
         assert_shape(next_value, [None, 1])
 
         # Importance weights add just a constant to the value.
-        next_value -= tf.log(tf.cast(self._value_n_particles, tf.float32))
+        next_value -= tf.log(tf.to_float(self._value_n_particles))
         next_value += np.prod(self._action_shape) * np.log(2)
 
         # \hat Q in Equation 11:
@@ -296,6 +296,7 @@ class SQL(RLAlgorithm):
             (-1, n_fixed_actions, 1))
 
         # Target log-density. Q_soft in Equation 13:
+        assert self._policy._squash
         squash_correction = tf.reduce_sum(
             tf.log(1 - fixed_actions ** 2 + EPS), axis=-1, keepdims=True)
         log_probs = svgd_target_values + squash_correction
