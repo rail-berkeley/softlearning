@@ -258,10 +258,12 @@ class SQL(RLAlgorithm):
         """Create a minimization operation for policy update (SVGD)."""
 
         actions = self._policy.actions([
-            tf.tile(
-                self._observations_ph,
-                (self._kernel_n_particles,
-                 *np.ones_like(self._observation_shape)))])
+            tf.reshape(
+                tf.tile(
+                    self._observations_ph[:, None, :],
+                    (1, self._kernel_n_particles, 1)),
+                (-1, *self._observation_shape))
+        ])
         actions = tf.reshape(
             actions,
             (-1, self._kernel_n_particles, *self._action_shape))
@@ -287,8 +289,14 @@ class SQL(RLAlgorithm):
                      [None, n_updated_actions, *self._action_shape])
 
         Q_log_targets = tuple(
-            Q([tf.tile(self._observations_ph, (n_fixed_actions, 1)),
-               tf.reshape(fixed_actions, (-1, *self._action_shape))])
+            Q([
+                tf.reshape(
+                    tf.tile(
+                        self._observations_ph[:, None, :],
+                        (1, n_fixed_actions, 1)),
+                    (-1, *self._observation_shape)),
+                tf.reshape(fixed_actions, (-1, *self._action_shape))
+            ])
             for Q in self._Qs)
         min_Q_log_target = tf.reduce_min(Q_log_targets, axis=0)
         svgd_target_values = tf.reshape(
