@@ -6,7 +6,13 @@ import json
 import softlearning.algorithms.utils as alg_utils
 import softlearning.environments.utils as env_utils
 from softlearning.misc.utils import datetimestamp
-
+from .instrument import (
+    run_experiments_dry,
+    run_experiments_local,
+    run_experiments_debug,
+    launch_experiments_gce,
+    launch_experiments_ec2,
+    run_experiments_cluster)
 
 DEFAULT_UNIVERSE = 'gym'
 DEFAULT_DOMAIN = 'Swimmer'
@@ -188,17 +194,6 @@ def add_ray_tune_args(parser):
             " takes precedence over variant['run_params']"
             "['checkpoint_at_end']."))
     parser.add_argument(
-        '--scheduler',
-        default="FIFO",
-        type=str,
-        help=tune_help_string("FIFO (default), MedianStopping, AsyncHyperBand, "
-                              "HyperBand, or HyperOpt."))
-    parser.add_argument(
-        '--scheduler-config',
-        default="{}",
-        type=json.loads,
-        help=tune_help_string("Config options to pass to the scheduler."))
-    parser.add_argument(
         '--max-failures',
         default=3,
         type=int,
@@ -218,6 +213,47 @@ def add_ray_tune_args(parser):
         default=False,
         help=tune_help_string("Starts a background Tune server. Needed for"
                               " using the Client API."))
+
+    return parser
+
+
+# class AutoscalerConfigFileType(argparse.Action):
+#     def __call__(self, parser, namespace, values, option_string=None):
+#         if values is None and namespace.mode in ('gce', 'ec2'):
+#             values = DEFAULT_AUTOSCALER_CONFIG_PATHS[namespace.mode]
+
+#         from pprint import pprint; import ipdb; ipdb.set_trace(context=30)
+#         setattr(namespace, self.dest, values)
+
+
+def add_ray_autoscaler_exec_args(parser):
+    parser.add_argument(
+        '--autoscaler-config-file',
+        type=str)
+    parser.add_argument(
+        '--autoscaler-tmux',
+        type=lambda x: bool(strtobool(x)),
+        default=True)
+    parser.add_argument(
+        '--autoscaler-screen',
+        type=lambda x: bool(strtobool(x)),
+        default=False)
+    parser.add_argument(
+        '--autoscaler-start',
+        type=lambda x: bool(strtobool(x)),
+        default=True)
+    parser.add_argument(
+        '--autoscaler-stop',
+        type=lambda x: bool(strtobool(x)),
+        default=True)
+    parser.add_argument(
+        '--autoscaler-override-cluster-name',
+        type=str,
+        default=None)
+    parser.add_argument(
+        '--autoscaler-port-forward',
+        type=int,
+        default=None)
 
     return parser
 
@@ -278,6 +314,7 @@ def get_parser(allow_policy_list=False):
 
     parser = add_ray_init_args(parser)
     parser = add_ray_tune_args(parser)
+    parser = add_ray_autoscaler_exec_args(parser)
 
     return parser
 
@@ -315,68 +352,81 @@ def _normalize_trial_resources(resources, cpu, gpu, extra_cpu, extra_gpu):
     return resources
 
 
+def add_command_line_args_to_variant_spec(variant_spec, command_line_args):
+    variant_spec['run_params'].update({
+        'checkpoint_freq': (
+            command_line_args.checkpoint_frequency
+            if command_line_args.checkpoint_frequency is not None
+            else variant_spec['run_params'].get('checkpoint_frequency', 0)
+        ),
+        'checkpoint_at_end': (
+            command_line_args.checkpoint_at_end
+            if command_line_args.checkpoint_at_end is not None
+            else variant_spec['run_params'].get('checkpoint_at_end', True)
+        ),
+    })
+
+    variant_spec['restore'] = command_line_args.restore
+
+    return variant_spec
+
+
+def add_command_line_args_to_variant_specs(variant_specs, command_line_args):
+    variant_specs = [
+        add_command_line_args_to_variant_spec(variant_spec, command_line_args)
+        for variant_spec in variant_specs
+    ]
+
+    return variant_specs
+
+
 def launch_experiments_ray(variant_specs,
-                           args,
+                           command_line_args,
                            local_dir,
                            experiment_fn,
-                           scheduler=None):
-    import ray
-    from ray import tune
-
-    tune.register_trainable('mujoco-runner', experiment_fn)
-
+                           *args,
+                           **kwargs):
     resources_per_trial = _normalize_trial_resources(
-        args.resources_per_trial,
-        args.trial_cpus,
-        args.trial_gpus,
-        args.trial_extra_cpus,
-        args.trial_extra_gpus)
-
-    if 'local' in args.mode or 'debug' in args.mode:
-        resources = args.resources or {}
-
-        if 'debug' in args.mode:
-            # Require a debug resource for each trial, so that we never run
-            # more than one trial at a time. This makes debugging easier, since
-            # the debugger stdout behaves more reasonably with single process.
-            # TODO(hartikainen): Change this from 'extra_gpu' to
-            # 'debug-resource' once tune supports custom resources.
-            # See: https://github.com/ray-project/ray/pull/2979.
-            resources['extra_gpu'] = 1
-            resources_per_trial['extra_gpu'] = 1
-
-        ray.init(
-            resources=resources,
-            num_cpus=args.cpus,
-            num_gpus=args.gpus)
-    else:
-        ray.init(redis_address=ray.services.get_node_ip_address() + ':6379')
+        command_line_args.resources_per_trial,
+        command_line_args.trial_cpus,
+        command_line_args.trial_gpus,
+        command_line_args.trial_extra_cpus,
+        command_line_args.trial_extra_gpus)
 
     datetime_prefix = datetimestamp()
-    experiment_id = '-'.join((datetime_prefix, args.exp_name))
+    experiment_id = '-'.join((datetime_prefix, command_line_args.exp_name))
 
-    tune.run_experiments(
-        {
-            "{}-{}".format(experiment_id, i): {
-                'run': 'mujoco-runner',
-                'resources_per_trial': resources_per_trial,
-                'config': variant_spec,
-                'local_dir': local_dir,
-                'num_samples': args.num_samples,
-                'upload_dir': args.upload_dir,
-                'checkpoint_freq': (
-                    args.checkpoint_frequency
-                    if args.checkpoint_frequency is not None
-                    else variant_spec['run_params'].get('checkpoint_frequency', 0)
-                ),
-                'checkpoint_at_end': (
-                    args.checkpoint_at_end
-                    if args.checkpoint_at_end is not None
-                    else variant_spec['run_params'].get('checkpoint_at_end', True)
-                ),
-                'restore': args.restore,  # Defaults to None
-            }
-            for i, variant_spec in enumerate(variant_specs)
-        },
-        scheduler=scheduler,
-    )
+    variant_specs = add_command_line_args_to_variant_specs(
+        variant_specs, command_line_args)
+
+    experiments = {
+        "{}-{}".format(experiment_id, i): {
+            'run': experiment_fn,
+            'resources_per_trial': resources_per_trial,
+            'config': variant_spec,
+            'local_dir': local_dir,
+            'num_samples': command_line_args.num_samples,
+            'upload_dir': command_line_args.upload_dir,
+            'checkpoint_freq': (
+                variant_spec['run_params']['checkpoint_frequency']),
+            'checkpoint_at_end': (
+                variant_spec['run_params']['checkpoint_at_end']),
+            'restore': command_line_args.restore,  # Defaults to None
+        }
+        for i, variant_spec in enumerate(variant_specs)
+    }
+
+    if command_line_args.mode == 'dry':
+        run_experiments_dry(experiments, command_line_args, *args, **kwargs)
+    elif command_line_args.mode == 'debug':
+        run_experiments_debug(experiments, command_line_args, *args, **kwargs)
+    elif command_line_args.mode == 'local':
+        run_experiments_local(experiments, command_line_args, *args, **kwargs)
+    elif command_line_args.mode == 'gce':
+        launch_experiments_gce(experiments, command_line_args, *args, **kwargs)
+    elif command_line_args.mode == 'ec2':
+        launch_experiments_ec2(experiments, command_line_args, *args, **kwargs)
+    elif command_line_args.mode == 'cluster':
+        run_experiments_cluster(experiments, command_line_args, *args, **kwargs)
+    else:
+        raise ValueError(command_line_args.mode)
