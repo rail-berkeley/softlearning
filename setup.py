@@ -30,6 +30,11 @@ setup(
         'deep-learning',
         'python',
     ),
+    entry_points={
+        'console_scripts': (
+            'softlearning=softlearning.scripts.console_scripts:main',
+        )
+    },
     requires=(),
     zip_safe=True,
     license='MIT'

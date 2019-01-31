@@ -19,11 +19,6 @@ from softlearning.value_functions.utils import get_Q_function_from_variant
 
 from softlearning.misc.utils import set_seed, initialize_tf_variables
 
-from examples.utils import get_parser, launch_experiments_ray
-from examples.development.variants import (
-    get_variant_spec,
-    get_variant_spec_image)
-
 
 class ExperimentRunner(tune.Trainable):
     def _setup(self, variant):
@@ -206,34 +201,3 @@ class ExperimentRunner(tune.Trainable):
             Q_target.set_weights(Q.get_weights())
 
         self._built = True
-
-
-def main():
-    args = get_parser().parse_args()
-
-    universe, domain, task = args.universe, args.domain, args.task
-
-    if ('image' in task.lower()
-            or 'blind' in task.lower()
-            or 'image' in domain.lower()):
-        variant_spec = get_variant_spec_image(
-            universe, domain, task, args.policy, args.algorithm)
-    else:
-        variant_spec = get_variant_spec(universe, domain, task, args.policy, args.algorithm)
-
-    variant_spec['mode'] = args.mode
-
-    if args.checkpoint_replay_pool is not None:
-        variant_spec['run_params']['checkpoint_replay_pool'] = (
-            args.checkpoint_replay_pool)
-
-    local_dir_base = (
-        '~/ray_results/local'
-        if args.mode in ('local', 'debug')
-        else '~/ray_results')
-    local_dir = os.path.join(local_dir_base, universe, domain, task)
-    launch_experiments_ray([variant_spec], args, local_dir, ExperimentRunner)
-
-
-if __name__ == '__main__':
-    main()
