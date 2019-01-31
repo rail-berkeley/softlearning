@@ -18,6 +18,7 @@ from softlearning.samplers.utils import get_sampler_from_variant
 from softlearning.value_functions.utils import get_Q_function_from_variant
 
 from softlearning.misc.utils import set_seed, initialize_tf_variables
+from examples.instrument import run_example_local
 
 
 class ExperimentRunner(tune.Trainable):
@@ -201,3 +202,20 @@ class ExperimentRunner(tune.Trainable):
             Q_target.set_weights(Q.get_weights())
 
         self._built = True
+
+
+def main(argv=None):
+    """Run ExperimentRunner locally on ray.
+
+    To run this example on cloud (e.g. gce/ec2), use the setup scripts:
+    'softlearning launch_example_{gce,ec2} examples.development <options>'.
+
+    Run 'softlearning launch_example_{gce,ec2} --help' for further
+    instructions.
+    """
+    # __package__ should be `development.main`
+    run_example_local(__package__, argv)
+
+
+if __name__ == '__main__':
+    main(argv=sys.argv[1:])
