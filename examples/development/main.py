@@ -159,7 +159,8 @@ class ExperimentRunner(tune.Trainable):
             pprint(variant_diff)
 
             if not strtobool(
-                    input("Continue despite the variant differences?\n")):
+                    input("Continue despite the variant differences?\n"
+                          "(yes/no) ")):
                 sys.exit(0)
 
         env = self.env = pickleable['env']
