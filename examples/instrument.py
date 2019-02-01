@@ -52,7 +52,7 @@ def _normalize_trial_resources(resources, cpu, gpu, extra_cpu, extra_gpu):
 
 def add_command_line_args_to_variant_spec(variant_spec, command_line_args):
     variant_spec['run_params'].update({
-        'checkpoint_freq': (
+        'checkpoint_frequency': (
             command_line_args.checkpoint_frequency
             if command_line_args.checkpoint_frequency is not None
             else variant_spec['run_params'].get('checkpoint_frequency', 0)
