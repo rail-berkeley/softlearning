@@ -150,19 +150,6 @@ class ExperimentRunner(tune.Trainable):
             with open(pickle_path, 'rb') as f:
                 pickleable = pickle.load(f)
 
-        variant_diff = DeepDiff(self._variant, pickleable['variant'])
-
-        if variant_diff:
-            print("Your current variant is different from the checkpointed"
-                  " variable. Please make sure that the differences are"
-                  " expected. Differences:")
-            pprint(variant_diff)
-
-            if not strtobool(
-                    input("Continue despite the variant differences?\n"
-                          "(yes/no) ")):
-                sys.exit(0)
-
         env = self.env = pickleable['env']
 
         replay_pool = self.replay_pool = (
