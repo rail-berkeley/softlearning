@@ -2,7 +2,7 @@
 
 In particular, the examples are exposed to the command line interface
 (defined in `softlearning.scripts.console_scripts`) through the
-`get_trainable_class` and `get_variant_spec` functions.
+`get_trainable_class`, `get_variant_spec`, and `get_parser` functions.
 """
 
 

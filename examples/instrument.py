@@ -136,7 +136,7 @@ def get_experiments_info(experiments):
 
 def confirm_yes_no(prompt):
     # raw_input returns the empty string for "enter"
-    yes = {'yes', 'y', 'ye'}
+    yes = {'yes', 'ye', 'y'}
     no = {'no', 'n'}
 
     choice = input(prompt).lower()

@@ -14,7 +14,8 @@ ALGORITHM_PARAMS_BASE = {
         'discount': 0.99,
         'reward_scale': 1.0,
         'save_full_state': True,
-        'tau': 5e-3,
+        'target_update_interval': 1000,
+        'tau': 1.0,
     }
 }
 
@@ -24,8 +25,8 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         'kwargs': {
             'reparameterize': True,
             'lr': 3e-4,
-            'target_update_interval': 1,
-            'target_entropy': -2.0,
+            'reward_scale': 0.1,
+            'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
             'initial_exploration_policy': None
@@ -35,8 +36,6 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         'type': 'SQL',
         'kwargs': {
             'policy_lr': 3e-4,
-            'td_target_update_interval': 1000,
-            'tau': 1.0,
             'reward_scale': 0.1,
             'value_n_particles': 16,
             'kernel_n_particles': 32,
@@ -46,16 +45,13 @@ ALGORITHM_PARAMS_ADDITIONAL = {
 }
 
 
-def get_variant_spec(universe, domain, task, policy, local_dir, algorithm):
+def get_variant_spec(args):
+    algorithm = args.algorithm
+
     layer_size = 128
     variant_spec = {
         'seed': 1,
 
-        'universe': universe,
-        'domain': domain,
-        'task': task,
-
-        'local_dir': local_dir,
         'layer_size': layer_size,
         'policy_params': {
             'type': 'GaussianPolicy',

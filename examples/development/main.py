@@ -1,14 +1,11 @@
 import os
 import copy
 import glob
-from distutils.util import strtobool
 import pickle
-from pprint import pprint
 import sys
 
 import tensorflow as tf
 from ray import tune
-from deepdiff import DeepDiff
 
 from softlearning.environments.utils import get_environment_from_variant
 from softlearning.algorithms.utils import get_algorithm_from_variant
