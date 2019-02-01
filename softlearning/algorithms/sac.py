@@ -420,12 +420,16 @@ class SAC(RLAlgorithm):
 
     @property
     def tf_saveables(self):
-        return {
+        saveables = {
             '_policy_optimizer': self._policy_optimizer,
             **{
                 f'Q_optimizer_{i}': optimizer
                 for i, optimizer in enumerate(self._Q_optimizers)
             },
             '_log_alpha': self._log_alpha,
-            '_alpha_optimizer': self._alpha_optimizer,
         }
+
+        if hasattr(self, '_alpha_optimizer'):
+            saveables['_alpha_optimizer'] = self._alpha_optimizer
+
+        return saveables
