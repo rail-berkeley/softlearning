@@ -9,6 +9,8 @@ class SwimmerEnv(mujoco_env.MujocoEnv, utils.EzPickle):
                  ctrl_cost_weight=1e-4,
                  reset_noise_scale=0.1,
                  exclude_current_positions_from_observation=True):
+        utils.EzPickle.__init__(**locals())
+
         self._forward_reward_weight = forward_reward_weight
         self._ctrl_cost_weight = ctrl_cost_weight
 
@@ -18,13 +20,6 @@ class SwimmerEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             exclude_current_positions_from_observation)
 
         mujoco_env.MujocoEnv.__init__(self, 'swimmer.xml', 4)
-        utils.EzPickle.__init__(
-            self,
-            forward_reward_weight=self._forward_reward_weight,
-            ctrl_cost_weight=self._ctrl_cost_weight,
-            reset_noise_scale=self._reset_noise_scale,
-            exclude_current_positions_from_observation=(
-                self._exclude_current_positions_from_observation))
 
     def control_cost(self, action):
         control_cost = self._ctrl_cost_weight * np.sum(np.square(action))
