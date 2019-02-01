@@ -68,7 +68,7 @@ pytest==4.0.1
 python-dateutil==2.7.5
 pytz==2018.7
 PyWavelets==1.0.1
-PyYAML==3.13
+PyYAML==4.2b4
 psutil==5.4.8
 ray[rllib,debug]==0.6.1
 redis==3.0.1
