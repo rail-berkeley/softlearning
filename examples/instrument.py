@@ -26,9 +26,9 @@ from softlearning.misc.utils import datetimestamp, PROJECT_PATH
 
 
 AUTOSCALER_DEFAULT_CONFIG_FILE_GCE = os.path.join(
-    PROJECT_PATH, 'config', 'gcp-ray-autoscaler-mujoco.yaml')
+    PROJECT_PATH, 'config', 'ray-autoscaler-gce.yaml')
 AUTOSCALER_DEFAULT_CONFIG_FILE_EC2 = os.path.join(
-    PROJECT_PATH, 'config', 'aws-ray-autoscaler-mujoco.yaml')
+    PROJECT_PATH, 'config', 'ray-autoscaler-ec2.yaml')
 
 
 def _normalize_trial_resources(resources, cpu, gpu, extra_cpu, extra_gpu):
