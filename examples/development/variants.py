@@ -8,7 +8,6 @@ REPARAMETERIZE = True
 
 NUM_COUPLING_LAYERS = 2
 
-
 GAUSSIAN_POLICY_PARAMS_BASE = {
     'type': 'GaussianPolicy',
     'kwargs': {
@@ -26,7 +25,6 @@ POLICY_PARAMS_BASE = {
 POLICY_PARAMS_BASE.update({
     'gaussian': POLICY_PARAMS_BASE['GaussianPolicy'],
 })
-
 
 POLICY_PARAMS_FOR_DOMAIN = {
     'GaussianPolicy': GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN,
@@ -48,20 +46,48 @@ ALGORITHM_PARAMS_BASE = {
         'epoch_length': 1000,
         'train_every_n_steps': 1,
         'n_train_repeat': 1,
-        'n_initial_exploration_steps': int(1e3),
-        'reparameterize': REPARAMETERIZE,
         'eval_render_mode': None,
         'eval_n_episodes': 1,
         'eval_deterministic': True,
 
-        'lr': 3e-4,
         'discount': 0.99,
-        'target_update_interval': 1,
         'tau': 5e-3,
-        'target_entropy': 'auto',
         'reward_scale': 1.0,
-        'store_extra_policy_info': False,
-        'action_prior': 'uniform',
+    }
+}
+
+
+ALGORITHM_PARAMS_ADDITIONAL = {
+    'SAC': {
+        'type': 'SAC',
+        'kwargs': {
+            'reparameterize': REPARAMETERIZE,
+            'lr': 3e-4,
+            'target_update_interval': 1,
+            'tau': 1e-4,
+            'target_entropy': 'auto',
+            'store_extra_policy_info': False,
+            'action_prior': 'uniform',
+            'n_initial_exploration_steps': int(1e3),
+        }
+    },
+    'SQL': {
+        'type': 'SQL',
+        'kwargs': {
+            'policy_lr': 3e-4,
+            'td_target_update_interval': 1,
+            'n_initial_exploration_steps': int(1e3),
+            'reward_scale': tune.sample_from(lambda spec: (
+                {
+                    'Swimmer': 30,
+                    'Hopper': 30,
+                    'HalfCheetah': 30,
+                    'Walker': 10,
+                    'Ant': 300,
+                    'Humanoid': 100,
+                }[spec.get('config', spec)['domain']],
+            ))
+        }
     }
 }
 
@@ -109,14 +135,14 @@ ENV_PARAMS = {
     },
     'Ant': {  # 8 DoF
         'Custom': {
-            'survive_reward': 0.0,
+            'healthy_reward': 0.0,
             'healthy_z_range': (-np.inf, np.inf),
             'exclude_current_positions_from_observation': False,
         }
     },
     'Humanoid': {  # 17 DoF
         'Custom': {
-            'survive_reward': 0.0,
+            'healthy_reward': 0.0,
             'healthy_z_range': (-np.inf, np.inf),
             'exclude_current_positions_from_observation': False,
         }
@@ -160,7 +186,15 @@ ENV_PARAMS = {
 NUM_CHECKPOINTS = 10
 
 
-def get_variant_spec(universe, domain, task, policy):
+def get_variant_spec(universe, domain, task, policy, algorithm):
+    algorithm_params = deep_update(
+        ALGORITHM_PARAMS_BASE,
+        ALGORITHM_PARAMS_PER_DOMAIN.get(domain, {})
+    )
+    algorithm_params = deep_update(
+        algorithm_params,
+        ALGORITHM_PARAMS_ADDITIONAL.get(algorithm, {})
+    )
     variant_spec = {
         'domain': domain,
         'task': task,
@@ -178,10 +212,7 @@ def get_variant_spec(universe, domain, task, policy):
                 'hidden_layer_sizes': (M, M),
             }
         },
-        'algorithm_params': deep_update(
-            ALGORITHM_PARAMS_BASE,
-            ALGORITHM_PARAMS_PER_DOMAIN.get(domain, {})
-        ),
+        'algorithm_params': algorithm_params,
         'replay_pool_params': {
             'type': 'SimpleReplayPool',
             'kwargs': {
@@ -211,9 +242,9 @@ def get_variant_spec(universe, domain, task, policy):
     return variant_spec
 
 
-def get_variant_spec_image(universe, domain, task, policy, *args, **kwargs):
+def get_variant_spec_image(universe, domain, task, policy, algorithm, *args, **kwargs):
     variant_spec = get_variant_spec(
-        universe, domain, task, policy, *args, **kwargs)
+        universe, domain, task, policy, algorithm, *args, **kwargs)
 
     if 'image' in task.lower() or 'image' in domain.lower():
         preprocessor_params = {

@@ -27,7 +27,6 @@ class SAC(RLAlgorithm):
             self,
             env,
             policy,
-            initial_exploration_policy,
             Qs,
             pool,
             plotter=None,
@@ -72,7 +71,6 @@ class SAC(RLAlgorithm):
 
         self._env = env
         self._policy = policy
-        self._initial_exploration_policy = initial_exploration_policy
 
         self._Qs = Qs
         self._Q_targets = tuple(tf.keras.models.clone_model(Q) for Q in Qs)

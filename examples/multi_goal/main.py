@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 
-from softlearning.algorithms import SAC
+from softlearning.algorithms.utils import get_algorithm_from_variant
 from softlearning.environments.utils import get_environment
 from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.samplers import SimpleSampler
@@ -11,13 +11,14 @@ from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions.utils import get_Q_function_from_variant
 from softlearning.misc.utils import initialize_tf_variables
 from examples.utils import get_parser, launch_experiments_ray
+from examples.multi_goal.variants import get_variant_spec
 
 
 def run_experiment(variant, reporter):
     env = get_environment('gym', 'MultiGoal', 'Default', {
-        'actuation_cost_coeff': 1,
-        'distance_cost_coeff': 0.1,
-        'goal_reward': 1,
+        'actuation_cost_coeff': 30,
+        'distance_cost_coeff': 1,
+        'goal_reward': 10,
         'init_sigma': 0.1,
     })
 
@@ -41,29 +42,14 @@ def run_experiment(variant, reporter):
         default_action=(np.nan, np.nan),
         n_samples=100)
 
-    algorithm = SAC(
-        sampler=sampler,
-        reparameterize=True,
-        epoch_length=100,
-        n_epochs=1000,
-        n_train_repeat=1,
-        eval_render_mode=None,
-        eval_n_episodes=10,
-        eval_deterministic=False,
-
+    algorithm = get_algorithm_from_variant(
+        variant=variant,
         env=env,
         policy=policy,
-        initial_exploration_policy=None,
-        pool=pool,
         Qs=Qs,
-        plotter=plotter,
-
-        lr=3e-4,
-        target_entropy=-2.0,
-        discount=0.99,
-        tau=1e-4,
-
-        save_full_state=True,
+        pool=pool,
+        sampler=sampler,
+        plotter=plotter
     )
 
     initialize_tf_variables(algorithm._session, only_uninitialized=True)
@@ -79,31 +65,7 @@ def main():
     local_dir = os.path.join(
         '~/ray_results', universe, domain, task)
 
-    layer_size = 64
-    variant_spec = {
-        'seed': 1,
-
-        'universe': universe,
-        'domain': domain,
-        'task': task,
-
-        'policy': args.policy,
-        'local_dir': local_dir,
-        'layer_size': layer_size,
-        'policy_params': {
-            'type': 'GaussianPolicy',
-            'kwargs': {
-                'hidden_layer_sizes': (layer_size, layer_size),
-            },
-        },
-        'Q_params': {
-            'type': 'double_feedforward_Q_function',
-            'kwargs': {
-                'hidden_layer_sizes': (layer_size, layer_size),
-            }
-        },
-        'run_params': {}
-    }
+    variant_spec = get_variant_spec(universe, domain, task, args.policy, local_dir, args.algorithm)
 
     launch_experiments_ray([variant_spec], args, local_dir, run_experiment)
 

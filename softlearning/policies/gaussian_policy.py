@@ -171,7 +171,7 @@ class GaussianPolicy(LatentSpacePolicy):
 
     def actions(self, conditions):
         if self._deterministic:
-            raise NotImplementedError
+            return self.deterministic_actions_model(conditions)
 
         return self.actions_model(conditions)
 

@@ -19,10 +19,7 @@ from softlearning.value_functions.utils import get_Q_function_from_variant
 
 from softlearning.misc.utils import set_seed, initialize_tf_variables
 
-from examples.utils import (
-    parse_universe_domain_task,
-    get_parser,
-    launch_experiments_ray)
+from examples.utils import get_parser, launch_experiments_ray
 from examples.development.variants import (
     get_variant_spec,
     get_variant_spec_image)
@@ -54,15 +51,14 @@ class ExperimentRunner(tune.Trainable):
             get_policy('UniformPolicy', env))
 
         self.algorithm = get_algorithm_from_variant(
-            variant=variant,
-            env=env,
+            variant=self._variant,
+            env=self.env,
             policy=policy,
             initial_exploration_policy=initial_exploration_policy,
             Qs=Qs,
             pool=replay_pool,
             sampler=sampler,
-            session=self._session,
-        )
+            session=self._session)
 
         initialize_tf_variables(self._session, only_uninitialized=True)
 
@@ -142,7 +138,7 @@ class ExperimentRunner(tune.Trainable):
         experience_paths = [
             self._replay_pool_pickle_path(checkpoint_dir)
             for checkpoint_dir in sorted(glob.iglob(
-                    os.path.join(experiment_root, 'checkpoint_*')))
+                os.path.join(experiment_root, 'checkpoint_*')))
         ]
 
         for experience_path in experience_paths:
@@ -205,8 +201,7 @@ class ExperimentRunner(tune.Trainable):
         status.assert_consumed().run_restore_ops(self._session)
         initialize_tf_variables(self._session, only_uninitialized=True)
 
-        # TODO(hartikainen): target Qs should either be checkpointed
-        # or pickled.
+        # TODO(hartikainen): target Qs should either be checkpointed or pickled.
         for Q, Q_target in zip(self.algorithm._Qs, self.algorithm._Q_targets):
             Q_target.set_weights(Q.get_weights())
 
@@ -216,15 +211,15 @@ class ExperimentRunner(tune.Trainable):
 def main():
     args = get_parser().parse_args()
 
-    universe, domain, task = parse_universe_domain_task(args)
+    universe, domain, task = args.universe, args.domain, args.task
 
     if ('image' in task.lower()
-        or 'blind' in task.lower()
-        or 'image' in domain.lower()):
+            or 'blind' in task.lower()
+            or 'image' in domain.lower()):
         variant_spec = get_variant_spec_image(
-            universe, domain, task, args.policy)
+            universe, domain, task, args.policy, args.algorithm)
     else:
-        variant_spec = get_variant_spec(universe, domain, task, args.policy)
+        variant_spec = get_variant_spec(universe, domain, task, args.policy, args.algorithm)
 
     variant_spec['mode'] = args.mode
 

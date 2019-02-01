@@ -19,6 +19,8 @@ class MultiGoalEnv(MujocoEnv, EzPickle):
                  actuation_cost_coeff=30.0,
                  distance_cost_coeff=1.0,
                  init_sigma=0.1):
+        EzPickle.__init__(**locals())
+
         self.dynamics = PointDynamics(dim=2, sigma=0)
         self.init_mu = np.zeros(2, dtype=np.float32)
         self.init_sigma = init_sigma
@@ -44,13 +46,6 @@ class MultiGoalEnv(MujocoEnv, EzPickle):
         self._env_lines = []
         self.fixed_plots = None
         self.dynamic_plots = []
-
-        EzPickle.__init__(
-            self,
-            goal_reward=10,
-            actuation_cost_coeff=30,
-            distance_cost_coeff=1,
-            init_sigma=0.1)
 
     def reset(self):
         unclipped_observation = (
