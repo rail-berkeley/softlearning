@@ -22,6 +22,8 @@ class HopperEnv(mujoco_env.MujocoEnv, utils.EzPickle):
                  healthy_angle_range=(-0.2, 0.2),
                  reset_noise_scale=5e-3,
                  exclude_current_positions_from_observation=True):
+        utils.EzPickle.__init__(**locals())
+
         self._forward_reward_weight = forward_reward_weight
 
         self._ctrl_cost_weight = ctrl_cost_weight
@@ -39,18 +41,6 @@ class HopperEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             exclude_current_positions_from_observation)
 
         mujoco_env.MujocoEnv.__init__(self, 'hopper.xml', 4)
-        utils.EzPickle.__init__(
-            self,
-            forward_reward_weight=self._forward_reward_weight,
-            ctrl_cost_weight=self._ctrl_cost_weight,
-            healthy_reward=self._healthy_reward,
-            terminate_when_unhealthy=self._terminate_when_unhealthy,
-            healthy_z_range=self._healthy_z_range,
-            healthy_angle_range=self._healthy_angle_range,
-            reset_noise_scale=self._reset_noise_scale,
-            exclude_current_positions_from_observation=(
-                self._exclude_current_positions_from_observation),
-        )
 
     @property
     def healthy_reward(self):

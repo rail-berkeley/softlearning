@@ -1,14 +1,11 @@
 import os
 import copy
 import glob
-from distutils.util import strtobool
 import pickle
-from pprint import pprint
 import sys
 
 import tensorflow as tf
 from ray import tune
-from deepdiff import DeepDiff
 
 from softlearning.environments.utils import get_environment_from_variant
 from softlearning.algorithms.utils import get_algorithm_from_variant
@@ -18,11 +15,7 @@ from softlearning.samplers.utils import get_sampler_from_variant
 from softlearning.value_functions.utils import get_Q_function_from_variant
 
 from softlearning.misc.utils import set_seed, initialize_tf_variables
-
-from examples.utils import get_parser, launch_experiments_ray
-from examples.development.variants import (
-    get_variant_spec,
-    get_variant_spec_image)
+from examples.instrument import run_example_local
 
 
 class ExperimentRunner(tune.Trainable):
@@ -154,18 +147,6 @@ class ExperimentRunner(tune.Trainable):
             with open(pickle_path, 'rb') as f:
                 pickleable = pickle.load(f)
 
-        variant_diff = DeepDiff(self._variant, pickleable['variant'])
-
-        if variant_diff:
-            print("Your current variant is different from the checkpointed"
-                  " variable. Please make sure that the differences are"
-                  " expected. Differences:")
-            pprint(variant_diff)
-
-            if not strtobool(
-                    input("Continue despite the variant differences?\n")):
-                sys.exit(0)
-
         env = self.env = pickleable['env']
 
         replay_pool = self.replay_pool = (
@@ -208,32 +189,18 @@ class ExperimentRunner(tune.Trainable):
         self._built = True
 
 
-def main():
-    args = get_parser().parse_args()
+def main(argv=None):
+    """Run ExperimentRunner locally on ray.
 
-    universe, domain, task = args.universe, args.domain, args.task
+    To run this example on cloud (e.g. gce/ec2), use the setup scripts:
+    'softlearning launch_example_{gce,ec2} examples.development <options>'.
 
-    if ('image' in task.lower()
-            or 'blind' in task.lower()
-            or 'image' in domain.lower()):
-        variant_spec = get_variant_spec_image(
-            universe, domain, task, args.policy, args.algorithm)
-    else:
-        variant_spec = get_variant_spec(universe, domain, task, args.policy, args.algorithm)
-
-    variant_spec['mode'] = args.mode
-
-    if args.checkpoint_replay_pool is not None:
-        variant_spec['run_params']['checkpoint_replay_pool'] = (
-            args.checkpoint_replay_pool)
-
-    local_dir_base = (
-        '~/ray_results/local'
-        if args.mode in ('local', 'debug')
-        else '~/ray_results')
-    local_dir = os.path.join(local_dir_base, universe, domain, task)
-    launch_experiments_ray([variant_spec], args, local_dir, ExperimentRunner)
+    Run 'softlearning launch_example_{gce,ec2} --help' for further
+    instructions.
+    """
+    # __package__ should be `development.main`
+    run_example_local(__package__, argv)
 
 
 if __name__ == '__main__':
-    main()
+    main(argv=sys.argv[1:])

@@ -21,11 +21,12 @@ The environment can be run either locally using conda or inside a docker contain
 git clone https://github.com/rail-berkeley/softlearning.git ${SOFTLEARNING_PATH}
 ```
 
-4. Create and activate conda environment
+4. Create and activate conda environment, install softlearning to enable command line interface.
 ```
 cd ${SOFTLEARNING_PATH}
 conda env create -f environment.yml
 conda activate softlearning
+pip install -e ${SOFTLEARNING_PATH}
 ```
 
 The environment should be ready to run. See examples section for examples of how to train and simulate the agents.
@@ -70,8 +71,7 @@ docker-compose \
 ### Training and simulating an agent
 1. To train the agent
 ```
-python -m examples.development.main \
-    --mode=local \
+softlearning run_example_local examples.development \
     --universe=gym \
     --domain=HalfCheetah \
     --task=v2 \
@@ -131,7 +131,6 @@ optional arguments:
   --policy {gaussian}
   --env ENV
   --exp-name EXP_NAME
-  --mode MODE
   --log-dir LOG_DIR
   --upload-dir UPLOAD_DIR
                         Optional URI to sync training results to (e.g.
@@ -144,8 +143,7 @@ optional arguments:
 In order to resume training from previous checkpoint, run the original example main-script, with an additional `--restore` flag. For example, the previous example can be resumed as follows:
 
 ```
-python -m examples.development.main \
-    --mode=local \
+softlearning run_example_local examples.development \
     --universe=gym \
     --domain=HalfCheetah \
     --task=v2 \

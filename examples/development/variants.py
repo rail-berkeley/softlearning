@@ -64,7 +64,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'reparameterize': REPARAMETERIZE,
             'lr': 3e-4,
             'target_update_interval': 1,
-            'tau': 1e-4,
+            'tau': 5e-3,
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
@@ -186,7 +186,7 @@ ENV_PARAMS = {
 NUM_CHECKPOINTS = 10
 
 
-def get_variant_spec(universe, domain, task, policy, algorithm):
+def get_variant_spec_base(universe, domain, task, policy, algorithm):
     algorithm_params = deep_update(
         ALGORITHM_PARAMS_BASE,
         ALGORITHM_PARAMS_PER_DOMAIN.get(domain, {})
@@ -242,8 +242,14 @@ def get_variant_spec(universe, domain, task, policy, algorithm):
     return variant_spec
 
 
-def get_variant_spec_image(universe, domain, task, policy, algorithm, *args, **kwargs):
-    variant_spec = get_variant_spec(
+def get_variant_spec_image(universe,
+                           domain,
+                           task,
+                           policy,
+                           algorithm,
+                           *args,
+                           **kwargs):
+    variant_spec = get_variant_spec_base(
         universe, domain, task, policy, algorithm, *args, **kwargs)
 
     if 'image' in task.lower() or 'image' in domain.lower():
@@ -264,5 +270,24 @@ def get_variant_spec_image(universe, domain, task, policy, algorithm, *args, **k
             preprocessor_params.copy())
         variant_spec['Q_params']['kwargs']['preprocessor_params'] = (
             preprocessor_params.copy())
+
+    return variant_spec
+
+
+def get_variant_spec(args):
+    universe, domain, task = args.universe, args.domain, args.task
+
+    if ('image' in task.lower()
+        or 'blind' in task.lower()
+        or 'image' in domain.lower()):
+        variant_spec = get_variant_spec_image(
+            universe, domain, task, args.policy, args.algorithm)
+    else:
+        variant_spec = get_variant_spec_base(
+            universe, domain, task, args.policy, args.algorithm)
+
+    if args.checkpoint_replay_pool is not None:
+        variant_spec['run_params']['checkpoint_replay_pool'] = (
+            args.checkpoint_replay_pool)
 
     return variant_spec

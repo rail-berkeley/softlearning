@@ -23,7 +23,7 @@ def parse_args():
                         choices=('human', 'rgb_array', None),
                         help="Mode to render the rollouts in.")
     parser.add_argument('--deterministic', '-d',
-                        type=strtobool,
+                        type=lambda x: bool(strtobool(x)),
                         nargs='?',
                         const=True,
                         default=True,

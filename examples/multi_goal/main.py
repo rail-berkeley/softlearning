@@ -1,4 +1,4 @@
-import os
+import sys
 
 import numpy as np
 
@@ -10,8 +10,7 @@ from softlearning.policies.utils import get_policy_from_variant
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions.utils import get_Q_function_from_variant
 from softlearning.misc.utils import initialize_tf_variables
-from examples.utils import get_parser, launch_experiments_ray
-from examples.multi_goal.variants import get_variant_spec
+from examples.instrument import run_example_local
 
 
 def run_experiment(variant, reporter):
@@ -58,17 +57,18 @@ def run_experiment(variant, reporter):
         reporter(**train_result)
 
 
-def main():
-    args = get_parser().parse_args()
+def main(argv=None):
+    """Run ExperimentRunner locally on ray.
 
-    universe, domain, task = 'general', 'multigoal', 'default'
-    local_dir = os.path.join(
-        '~/ray_results', universe, domain, task)
+    To run this example on cloud (e.g. gce/ec2), use the setup scripts:
+    'softlearning launch_example_{gce,ec2} examples.development <options>'.
 
-    variant_spec = get_variant_spec(universe, domain, task, args.policy, local_dir, args.algorithm)
+    Run 'softlearning launch_example_{gce,ec2} --help' for further
+    instructions.
+    """
+    # __package__ should be `development.main`
+    run_example_local(__package__, argv)
 
-    launch_experiments_ray([variant_spec], args, local_dir, run_experiment)
 
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    main(argv=sys.argv[1:])
