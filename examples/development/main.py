@@ -84,6 +84,17 @@ class ExperimentRunner(tune.Trainable):
 
         return tf_checkpoint
 
+    @property
+    def picklables(self):
+        return {
+            'variant': self._variant,
+            'env': self.env,
+            'sampler': self.sampler,
+            'algorithm': self.algorithm,
+            'Qs': self.Qs,
+            'policy_weights': self.policy.get_weights(),
+        }
+
     def _save(self, checkpoint_dir):
         """Implements the checkpoint logic.
 
@@ -97,23 +108,15 @@ class ExperimentRunner(tune.Trainable):
             `tf.train.Checkpoint` and `pickle.dump` in very unorganized way
             which makes things not so usable.
         """
-        pickleable = {
-            'variant': self._variant,
-            'env': self.env,
-            'sampler': self.sampler,
-            'algorithm': self.algorithm,
-            'Qs': self.Qs,
-            'policy_weights': self.policy.get_weights(),
-        }
-
         pickle_path = self._pickle_path(checkpoint_dir)
         with open(pickle_path, 'wb') as f:
-            pickle.dump(pickleable, f)
+            pickle.dump(self.picklables, f)
 
         if self._variant['run_params'].get('checkpoint_replay_pool', False):
             self._save_replay_pool(checkpoint_dir)
 
         tf_checkpoint = self._get_tf_checkpoint()
+
         tf_checkpoint.save(
             file_prefix=self._tf_checkpoint_prefix(checkpoint_dir),
             session=self._session)
