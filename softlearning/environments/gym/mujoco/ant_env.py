@@ -104,13 +104,13 @@ class AntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
     def _get_obs(self):
         position = self.sim.data.qpos.flat.copy()
-        velocitie = self.sim.data.qvel.flat.copy()
+        velocity = self.sim.data.qvel.flat.copy()
         contact_force = self.contact_forces.flat.copy()
 
         if self._exclude_current_positions_from_observation:
             position = position[2:]
 
-        observations = np.concatenate((position, velocitie, contact_force))
+        observations = np.concatenate((position, velocity, contact_force))
 
         return observations
 
@@ -129,4 +129,8 @@ class AntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return observation
 
     def viewer_setup(self):
-        self.viewer.cam.distance = self.model.stat.extent * 0.5
+        for key, value in DEFAULT_CAMERA_CONFIG.items():
+            if isinstance(value, np.ndarray):
+                getattr(self.viewer.cam, key)[:] = value
+            else:
+                setattr(self.viewer.cam, key, value)

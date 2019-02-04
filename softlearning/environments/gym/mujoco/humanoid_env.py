@@ -6,7 +6,7 @@ from gym import utils
 DEFAULT_CAMERA_CONFIG = {
     'trackbodyid': 1,
     'distance': 4.0,
-    'lookat': (None, None, 2.0),
+    'lookat': np.array((0.0, 0.0, 2.0)),
     'elevation': -20.0,
 }
 
@@ -146,7 +146,8 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return observation
 
     def viewer_setup(self):
-        self.viewer.cam.trackbodyid = 1
-        self.viewer.cam.distance = self.model.stat.extent * 1.0
-        self.viewer.cam.lookat[2] = 2.0
-        self.viewer.cam.elevation = -20
+        for key, value in DEFAULT_CAMERA_CONFIG.items():
+            if isinstance(value, np.ndarray):
+                getattr(self.viewer.cam, key)[:] = value
+            else:
+                setattr(self.viewer.cam, key, value)
