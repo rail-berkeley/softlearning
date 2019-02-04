@@ -161,6 +161,13 @@ def add_ray_tune_args(parser):
         help=tune_help_string("Optional URI to sync training results to (e.g."
                               " s3://<bucket> or gs://<bucket>)."))
     parser.add_argument(
+        '--trial-name-template',
+        type=str,
+        default=None,
+        help=tune_help_string(
+            "Optional string template for trial name. For example:"
+            " '{trial.trial_id}-seed={trial.config[run_params][seed]}'"))
+    parser.add_argument(
         '--trial-name-creator',
         default=None,
         help=tune_help_string(

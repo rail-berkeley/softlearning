@@ -88,6 +88,15 @@ def generate_experiment(trainable_class, variant_spec, command_line_args):
     variant_spec = add_command_line_args_to_variant_spec(
         variant_spec, command_line_args)
 
+    def create_trial_name_creator(trial_name_template=None):
+        if not trial_name_template:
+            return None
+
+        def trial_name_creator(trial):
+            return trial_name_template.format(trial=trial)
+
+        return tune.function(trial_name_creator)
+
     experiment = {
         'run': trainable_class,
         'resources_per_trial': resources_per_trial,
@@ -99,6 +108,8 @@ def generate_experiment(trainable_class, variant_spec, command_line_args):
             variant_spec['run_params']['checkpoint_frequency']),
         'checkpoint_at_end': (
             variant_spec['run_params']['checkpoint_at_end']),
+        'trial_name_creator': create_trial_name_creator(
+            command_line_args.trial_name_template),
         'restore': command_line_args.restore,  # Defaults to None
     }
 
