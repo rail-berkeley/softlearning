@@ -7,23 +7,6 @@ from gym import spaces
 class AdapterTestClass(object):
     ENVIRONMENTS = []
 
-    def test_environments(self):
-        # Make sure that all the environments are creatable
-        SKIP_ENVIRONMENTS = (
-            ('Pusher2d', 'ImageDefault'),
-            ('Pusher2d', 'ImageReach'),
-            ('Pusher2d', 'BlindReach'),
-        )
-        environments = [
-            str(self.create_adapter(domain=domain, task=task))
-            for domain, tasks in self.ENVIRONMENTS.items()
-            for task in tasks
-            if (domain, task) not in SKIP_ENVIRONMENTS
-        ]
-
-        self.assertEqual(
-            environments, self.EXPECTED_ENVIRONMENTS)
-
     def test_observation_space(self):
         env = self.create_adapter()
         observation_space = env.observation_space

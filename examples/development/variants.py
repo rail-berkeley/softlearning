@@ -37,6 +37,7 @@ POLICY_PARAMS_FOR_DOMAIN.update({
 DEFAULT_MAX_PATH_LENGTH = 1000
 MAX_PATH_LENGTH_PER_DOMAIN = {
     'Point2DEnv': 50,
+    'Pendulum': 200,
 }
 
 ALGORITHM_PARAMS_BASE = {
@@ -82,7 +83,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
                     'Swimmer': 30,
                     'Hopper': 30,
                     'HalfCheetah': 30,
-                    'Walker': 10,
+                    'Walker2d': 10,
                     'Ant': 300,
                     'Humanoid': 100,
                 }[spec.get('config', spec)['domain']],
@@ -97,7 +98,7 @@ NUM_EPOCHS_PER_DOMAIN = {
     'Swimmer': int(3e2),
     'Hopper': int(1e3),
     'HalfCheetah': int(3e3),
-    'Walker': int(3e3),
+    'Walker2d': int(3e3),
     'Ant': int(3e3),
     'Humanoid': int(1e4),
     'Pusher2d': int(2e3),
@@ -107,6 +108,7 @@ NUM_EPOCHS_PER_DOMAIN = {
     'HandReach': int(1e4),
     'Point2DEnv': int(200),
     'Reacher': int(200),
+    'Pendulum': 10,
 }
 
 ALGORITHM_PARAMS_PER_DOMAIN = {
@@ -131,53 +133,53 @@ ENV_PARAMS = {
     },
     'HalfCheetah': {  # 6 DoF
     },
-    'Walker': {  # 6 DoF
+    'Walker2d': {  # 6 DoF
     },
     'Ant': {  # 8 DoF
-        'Custom': {
+        'Parameterizable-v0': {
             'healthy_reward': 0.0,
             'healthy_z_range': (-np.inf, np.inf),
             'exclude_current_positions_from_observation': False,
         }
     },
     'Humanoid': {  # 17 DoF
-        'Custom': {
+        'Parameterizable-v0': {
             'healthy_reward': 0.0,
             'healthy_z_range': (-np.inf, np.inf),
             'exclude_current_positions_from_observation': False,
         }
     },
     'Pusher2d': {  # 3 DoF
-        'Default': {
+        'Default-v0': {
             'arm_object_distance_cost_coeff': 0.0,
             'goal_object_distance_cost_coeff': 1.0,
             'goal': (0, -1),
         },
-        'DefaultReach': {
+        'DefaultReach-v0': {
             'arm_goal_distance_cost_coeff': 1.0,
             'arm_object_distance_cost_coeff': 0.0,
         },
-        'ImageDefault': {
+        'ImageDefault-v0': {
             'image_shape': (32, 32, 3),
             'arm_object_distance_cost_coeff': 0.0,
             'goal_object_distance_cost_coeff': 3.0,
         },
-        'ImageReach': {
+        'ImageReach-v0': {
             'image_shape': (32, 32, 3),
             'arm_goal_distance_cost_coeff': 1.0,
             'arm_object_distance_cost_coeff': 0.0,
         },
-        'BlindReach': {
+        'BlindReach-v0': {
             'image_shape': (32, 32, 3),
             'arm_goal_distance_cost_coeff': 1.0,
             'arm_object_distance_cost_coeff': 0.0,
         }
     },
     'Point2DEnv': {
-        'Default': {
+        'Default-v0': {
             'observation_keys': ('observation', ),
         },
-        'Wall': {
+        'Wall-v0': {
             'observation_keys': ('observation', ),
         },
     }

@@ -2,7 +2,6 @@ import multiprocessing
 import argparse
 from distutils.util import strtobool
 import json
-import os
 
 import softlearning.algorithms.utils as alg_utils
 import softlearning.environments.utils as env_utils
@@ -14,9 +13,10 @@ DEFAULT_DOMAIN = 'Swimmer'
 DEFAULT_TASK = 'Default'
 DEFAULT_ALGORITHM = 'SAC'
 
+
 TASKS_BY_DOMAIN_BY_UNIVERSE = {
     universe: {
-        domain: tuple(tasks.keys())
+        domain: tuple(tasks)
         for domain, tasks in domains.items()
     }
     for universe, domains in env_utils.ENVIRONMENTS.items()
@@ -31,13 +31,13 @@ AVAILABLE_TASKS = set(sum(
     ()))
 
 DOMAINS_BY_UNIVERSE = {
-    universe: tuple(domains.keys())
+    universe: tuple(domains)
     for universe, domains in env_utils.ENVIRONMENTS.items()
 }
 
 AVAILABLE_DOMAINS = set(sum(DOMAINS_BY_UNIVERSE.values(), ()))
 
-UNIVERSES = tuple(env_utils.ENVIRONMENTS.keys())
+UNIVERSES = tuple(env_utils.ENVIRONMENTS)
 
 AVAILABLE_ALGORITHMS = set(alg_utils.ALGORITHM_CLASSES.keys())
 

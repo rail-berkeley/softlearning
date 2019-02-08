@@ -2,6 +2,7 @@ from .adapters.gym_adapter import (
     GYM_ENVIRONMENTS,
     GymAdapter,
 )
+
 ENVIRONMENTS = {
     'gym': GYM_ENVIRONMENTS,
 }

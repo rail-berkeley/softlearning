@@ -4,117 +4,38 @@ import numpy as np
 import gym
 from gym import spaces, wrappers
 
-from multiworld.envs.pygame.point2d import Point2DEnv, Point2DWallEnv
-
 from .softlearning_env import SoftlearningEnv
+from softlearning.environments.gym import register_environments
 from softlearning.environments.gym.wrappers import NormalizeActionWrapper
-from softlearning.environments.gym.mujoco.ant_env import AntEnv as CustomAntEnv
-from softlearning.environments.gym.mujoco.humanoid_env import (
-    HumanoidEnv as CustomHumanoidEnv)
-from softlearning.environments.gym.mujoco.walker2d_env import (
-    Walker2dEnv as CustomWalker2dEnv)
-from softlearning.environments.gym.mujoco.half_cheetah_env import (
-    HalfCheetahEnv as CustomHalfCheetahEnv)
-from softlearning.environments.gym.mujoco.hopper_env import (
-    HopperEnv as CustomHopperEnv)
-from softlearning.environments.gym.mujoco.swimmer_env import (
-    SwimmerEnv as CustomSwimmerEnv)
-from softlearning.environments.gym.mujoco.pusher_2d_env import (
-    Pusher2dEnv,
-    ForkReacherEnv)
-from softlearning.environments.gym.mujoco.image_pusher import (
-    ImagePusherEnv,
-    ImageForkReacherEnv,
-    BlindForkReacherEnv)
-from softlearning.environments.gym.multi_goal import MultiGoalEnv
+from collections import defaultdict
 
 
-def raise_on_use_wrapper(e):
-    def raise_on_use(*args, **kwargs):
-        raise e
-    return raise_on_use
+def parse_domain_task(gym_id):
+    domain_task_parts = gym_id.split('-')
+    domain = '-'.join(domain_task_parts[:1])
+    task = '-'.join(domain_task_parts[1:])
+
+    return domain, task
 
 
-GYM_ENVIRONMENTS = {
-    'Swimmer': {
-        'v2': lambda: gym.envs.make('Swimmer-v2'),
-        'Custom': CustomSwimmerEnv,
-        'Default': lambda: gym.envs.make('Swimmer-v2'),
-    },
-    'Ant': {
-        'v2': lambda: gym.envs.make('Ant-v2'),
-        'Custom': CustomAntEnv,
-        'Default': lambda: gym.envs.make('Ant-v2'),
-    },
-    'Humanoid': {
-        'v2': lambda: gym.envs.make('Humanoid-v2'),
-        'Standup-v2': lambda: gym.envs.make('HumanoidStandup-v2'),
-        'Custom': CustomHumanoidEnv,
-        'Default': lambda: gym.envs.make('Humanoid-v2'),
-    },
-    'Hopper': {
-        'v2': lambda: gym.envs.make('Hopper-v2'),
-        'Custom': CustomHopperEnv,
-        'Default': lambda: gym.envs.make('Hopper-v2'),
-    },
-    'HalfCheetah': {
-        'v2': lambda: gym.envs.make('HalfCheetah-v2'),
-        'Custom': CustomHalfCheetahEnv,
-        'Default': lambda: gym.envs.make('HalfCheetah-v2'),
-    },
-    'Walker': {
-        'v2': lambda: gym.envs.make('Walker2d-v2'),
-        'Custom': CustomWalker2dEnv,
-        'Default': lambda: gym.envs.make('Walker2d-v2'),
-    },
-    'Pusher2d': {
-        'Default': Pusher2dEnv,
-        'DefaultReach': ForkReacherEnv,
+CUSTOM_GYM_ENVIRONMENT_IDS = register_environments()
+CUSTOM_GYM_ENVIRONMENTS = defaultdict(list)
 
-        'ImageDefault': ImagePusherEnv,
-        'ImageReach': ImageForkReacherEnv,
-        'BlindReach': BlindForkReacherEnv,
-    },
-    'Point2DEnv': {
-        'Default': Point2DEnv,
-        'Wall': Point2DWallEnv,
-    },
-    'HandManipulatePen': {
-        'v0': lambda: gym.envs.make('HandManipulatePen-v0'),
-        'Dense-v0': lambda: gym.envs.make('HandManipulatePenDense-v0'),
-        'Default': lambda: gym.envs.make('HandManipulatePen-v0'),
-    },
-    'HandManipulateEgg': {
-        'v0': lambda: gym.envs.make('HandManipulateEgg-v0'),
-        'Dense-v0': lambda: gym.envs.make('HandManipulateEggDense-v0'),
-        'Default': lambda: gym.envs.make('HandManipulateEgg-v0'),
-    },
-    'HandManipulateBlock': {
-        'v0': lambda: gym.envs.make('HandManipulateBlock-v0'),
-        'Dense-v0': lambda: gym.envs.make('HandManipulateBlockDense-v0'),
-        'Default': lambda: gym.envs.make('HandManipulateBlock-v0'),
-    },
-    'HandReach': {
-        'v0': lambda: gym.envs.make('HandReach-v0'),
-        'Dense-v0': lambda: gym.envs.make('HandReachDense-v0'),
-        'Default': lambda: gym.envs.make('HandReach-v0'),
-    },
-    'InvertedDoublePendulum': {
-        'Default': lambda: gym.envs.make('InvertedDoublePendulum-v2'),
-        'v2': lambda: gym.envs.make('InvertedDoublePendulum-v2'),
-    },
-    'Reacher': {
-        'Default': lambda: gym.envs.make('Reacher-v2'),
-        'v2': lambda: gym.envs.make('Reacher-v2'),
-    },
-    'InvertedPendulum': {
-        'Default': lambda: gym.envs.make('InvertedPendulum-v2'),
-        'v2': lambda: gym.envs.make('InvertedPendulum-v2'),
-    },
-    'MultiGoal': {
-        'Default': MultiGoalEnv
-    },
-}
+for gym_id in CUSTOM_GYM_ENVIRONMENT_IDS:
+    domain, task = parse_domain_task(gym_id)
+    CUSTOM_GYM_ENVIRONMENTS[domain].append(task)
+
+CUSTOM_GYM_ENVIRONMENTS = dict(CUSTOM_GYM_ENVIRONMENTS)
+
+GYM_ENVIRONMENT_IDS = tuple(gym.envs.registry.env_specs.keys())
+GYM_ENVIRONMENTS = defaultdict(list)
+
+
+for gym_id in GYM_ENVIRONMENT_IDS:
+    domain, task = parse_domain_task(gym_id)
+    GYM_ENVIRONMENTS[domain].append(task)
+
+GYM_ENVIRONMENTS = dict(GYM_ENVIRONMENTS)
 
 
 class GymAdapter(SoftlearningEnv):
@@ -128,6 +49,9 @@ class GymAdapter(SoftlearningEnv):
                  observation_keys=None,
                  unwrap_time_limit=True,
                  **kwargs):
+        assert not args, (
+            "Gym environments don't support args. Use kwargs instead.")
+
         self.normalize = normalize
         self.observation_keys = observation_keys
         self.unwrap_time_limit = unwrap_time_limit
@@ -135,7 +59,8 @@ class GymAdapter(SoftlearningEnv):
         self._Serializable__initialize(locals())
         super(GymAdapter, self).__init__(domain, task, *args, **kwargs)
 
-        env = GYM_ENVIRONMENTS[domain][task](*args, **kwargs)
+        env_id = f"{domain}-{task}"
+        env = gym.envs.make(env_id, **kwargs)
 
         if isinstance(env, wrappers.TimeLimit) and unwrap_time_limit:
             # Remove the TimeLimit wrapper that sets 'done = True' when
