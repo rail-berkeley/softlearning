@@ -4,7 +4,7 @@ from softlearning.environments.helpers import random_point_in_circle
 from .pusher_2d_env import Pusher2dEnv
 
 
-class ImagePusherEnv(Pusher2dEnv):
+class ImagePusher2dEnv(Pusher2dEnv):
     def __init__(self, image_shape, *args, **kwargs):
         self._Serializable__initialize(locals())
         self.image_shape = image_shape
@@ -24,7 +24,7 @@ class ImagePusherEnv(Pusher2dEnv):
     def step(self, action):
         """Step, computing reward from 'true' observations and not images."""
 
-        reward_observations = super(ImagePusherEnv, self)._get_obs()
+        reward_observations = super(ImagePusher2dEnv, self)._get_obs()
         reward, info = self.compute_reward(reward_observations, action)
 
         self.do_simulation(action, self.frame_skip)
@@ -43,7 +43,7 @@ class ImagePusherEnv(Pusher2dEnv):
         self.viewer.cam.trackbodyid = -1
 
 
-class ImageForkReacherEnv(ImagePusherEnv):
+class ImageForkReacher2dEnv(ImagePusher2dEnv):
     def __init__(self,
                  arm_goal_distance_cost_coeff,
                  arm_object_distance_cost_coeff,
@@ -54,7 +54,7 @@ class ImageForkReacherEnv(ImagePusherEnv):
         self._arm_goal_distance_cost_coeff = arm_goal_distance_cost_coeff
         self._arm_object_distance_cost_coeff = arm_object_distance_cost_coeff
 
-        super(ImageForkReacherEnv, self).__init__(*args, **kwargs)
+        super(ImageForkReacher2dEnv, self).__init__(*args, **kwargs)
 
     def compute_reward(self, observations, actions):
         is_batch = True
@@ -135,7 +135,7 @@ class ImageForkReacherEnv(ImagePusherEnv):
         return self._get_obs()
 
 
-class BlindForkReacherEnv(ImageForkReacherEnv):
+class BlindForkReacher2dEnv(ImageForkReacher2dEnv):
     def _get_obs(self):
         return np.concatenate([
             self.sim.data.qpos.flat[self.JOINT_INDS],
