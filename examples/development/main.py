@@ -23,6 +23,10 @@ class ExperimentRunner(tune.Trainable):
         set_seed(variant['run_params']['seed'])
 
         self._variant = variant
+
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        tf.keras.backend.set_session(session)
         self._session = tf.keras.backend.get_session()
 
         self.train_generator = None
