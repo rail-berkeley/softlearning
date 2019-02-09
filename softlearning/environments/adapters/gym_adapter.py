@@ -45,6 +45,7 @@ class GymAdapter(SoftlearningEnv):
                  domain,
                  task,
                  *args,
+                 env=None,
                  normalize=True,
                  observation_keys=None,
                  unwrap_time_limit=True,
@@ -59,8 +60,12 @@ class GymAdapter(SoftlearningEnv):
         self._Serializable__initialize(locals())
         super(GymAdapter, self).__init__(domain, task, *args, **kwargs)
 
-        env_id = f"{domain}-{task}"
-        env = gym.envs.make(env_id, **kwargs)
+        if env is None:
+            assert (domain is not None and task is not None), (domain, task)
+            env_id = f"{domain}-{task}"
+            env = gym.envs.make(env_id, **kwargs)
+        else:
+            assert domain is None and task is None, (domain, task)
 
         if isinstance(env, wrappers.TimeLimit) and unwrap_time_limit:
             # Remove the TimeLimit wrapper that sets 'done = True' when
