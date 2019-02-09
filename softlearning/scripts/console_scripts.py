@@ -198,6 +198,12 @@ cli.add_command(run_example_local_cmd)
 cli.add_command(run_example_dry_cmd)
 cli.add_command(run_example_cluster_cmd)
 
+# Alias for run_example_local
+cli.add_command(run_example_local_cmd, name='launch_example_local')
+# Alias for run_example_dry
+cli.add_command(run_example_dry_cmd, name='launch_example_dry')
+# Alias for run_example_debug
+cli.add_command(run_example_debug_cmd, name='launch_example_debug')
 cli.add_command(launch_example_cluster_cmd)
 cli.add_command(launch_example_gce_cmd)
 cli.add_command(launch_example_ec2_cmd)
