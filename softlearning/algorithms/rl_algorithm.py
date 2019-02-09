@@ -50,7 +50,8 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
         self._n_epochs = n_epochs
         self._n_train_repeat = n_train_repeat
-        self._max_train_repeat_per_timestep = max_train_repeat_per_timestep
+        self._max_train_repeat_per_timestep = max(
+            max_train_repeat_per_timestep, n_train_repeat)
         self._train_every_n_steps = train_every_n_steps
         self._epoch_length = epoch_length
         self._n_initial_exploration_steps = n_initial_exploration_steps
@@ -152,7 +153,8 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 samples_now = self.sampler._total_samples
                 self._timestep = samples_now - start_samples
 
-                if samples_now >= start_samples + self._epoch_length:
+                if (samples_now >= start_samples + self._epoch_length
+                    and self.ready_to_train):
                     break
 
                 self._timestep_before_hook()

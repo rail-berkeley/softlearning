@@ -23,6 +23,10 @@ class ExperimentRunner(tune.Trainable):
         set_seed(variant['run_params']['seed'])
 
         self._variant = variant
+
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        tf.keras.backend.set_session(session)
         self._session = tf.keras.backend.get_session()
 
         self.train_generator = None
@@ -84,6 +88,17 @@ class ExperimentRunner(tune.Trainable):
 
         return tf_checkpoint
 
+    @property
+    def picklables(self):
+        return {
+            'variant': self._variant,
+            'env': self.env,
+            'sampler': self.sampler,
+            'algorithm': self.algorithm,
+            'Qs': self.Qs,
+            'policy_weights': self.policy.get_weights(),
+        }
+
     def _save(self, checkpoint_dir):
         """Implements the checkpoint logic.
 
@@ -97,23 +112,15 @@ class ExperimentRunner(tune.Trainable):
             `tf.train.Checkpoint` and `pickle.dump` in very unorganized way
             which makes things not so usable.
         """
-        pickleable = {
-            'variant': self._variant,
-            'env': self.env,
-            'sampler': self.sampler,
-            'algorithm': self.algorithm,
-            'Qs': self.Qs,
-            'policy_weights': self.policy.get_weights(),
-        }
-
         pickle_path = self._pickle_path(checkpoint_dir)
         with open(pickle_path, 'wb') as f:
-            pickle.dump(pickleable, f)
+            pickle.dump(self.picklables, f)
 
         if self._variant['run_params'].get('checkpoint_replay_pool', False):
             self._save_replay_pool(checkpoint_dir)
 
         tf_checkpoint = self._get_tf_checkpoint()
+
         tf_checkpoint.save(
             file_prefix=self._tf_checkpoint_prefix(checkpoint_dir),
             session=self._session)
@@ -145,9 +152,9 @@ class ExperimentRunner(tune.Trainable):
         with self._session.as_default():
             pickle_path = self._pickle_path(checkpoint_dir)
             with open(pickle_path, 'rb') as f:
-                pickleable = pickle.load(f)
+                picklable = pickle.load(f)
 
-        env = self.env = pickleable['env']
+        env = self.env = picklable['env']
 
         replay_pool = self.replay_pool = (
             get_replay_pool_from_variant(self._variant, env))
@@ -155,12 +162,12 @@ class ExperimentRunner(tune.Trainable):
         if self._variant['run_params'].get('checkpoint_replay_pool', False):
             self._restore_replay_pool(checkpoint_dir)
 
-        sampler = self.sampler = pickleable['sampler']
-        Qs = self.Qs = pickleable['Qs']
-        # policy = self.policy = pickleable['policy']
+        sampler = self.sampler = picklable['sampler']
+        Qs = self.Qs = picklable['Qs']
+        # policy = self.policy = picklable['policy']
         policy = self.policy = (
             get_policy_from_variant(self._variant, env, Qs))
-        self.policy.set_weights(pickleable['policy_weights'])
+        self.policy.set_weights(picklable['policy_weights'])
         initial_exploration_policy = self.initial_exploration_policy = (
             get_policy('UniformPolicy', env))
 
@@ -173,7 +180,7 @@ class ExperimentRunner(tune.Trainable):
             pool=replay_pool,
             sampler=sampler,
             session=self._session)
-        self.algorithm.__setstate__(pickleable['algorithm'].__getstate__())
+        self.algorithm.__setstate__(picklable['algorithm'].__getstate__())
 
         tf_checkpoint = self._get_tf_checkpoint()
         status = tf_checkpoint.restore(tf.train.latest_checkpoint(

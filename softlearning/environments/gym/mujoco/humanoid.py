@@ -6,7 +6,7 @@ from gym import utils
 DEFAULT_CAMERA_CONFIG = {
     'trackbodyid': 1,
     'distance': 4.0,
-    'lookat': (None, None, 2.0),
+    'lookat': np.array((0.0, 0.0, 2.0)),
     'elevation': -20.0,
 }
 
@@ -19,6 +19,7 @@ def mass_center(model, sim):
 
 class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self,
+                 xml_file='humanoid.xml',
                  forward_reward_weight=0.25,
                  ctrl_cost_weight=0.1,
                  contact_cost_weight=5e-7,
@@ -43,7 +44,7 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self._exclude_current_positions_from_observation = (
             exclude_current_positions_from_observation)
 
-        mujoco_env.MujocoEnv.__init__(self, 'humanoid.xml', 5)
+        mujoco_env.MujocoEnv.__init__(self, xml_file, 5)
 
     @property
     def healthy_reward(self):
@@ -145,7 +146,8 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return observation
 
     def viewer_setup(self):
-        self.viewer.cam.trackbodyid = 1
-        self.viewer.cam.distance = self.model.stat.extent * 1.0
-        self.viewer.cam.lookat[2] = 2.0
-        self.viewer.cam.elevation = -20
+        for key, value in DEFAULT_CAMERA_CONFIG.items():
+            if isinstance(value, np.ndarray):
+                getattr(self.viewer.cam, key)[:] = value
+            else:
+                setattr(self.viewer.cam, key, value)

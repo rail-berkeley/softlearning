@@ -16,7 +16,7 @@ def convnet_preprocessor(
         dense_hidden_layer_sizes=(64, 64),
         data_format='channels_last',
         name="convnet_preprocessor",
-        make_pickleable=True,
+        make_picklable=True,
         *args,
         **kwargs):
     if data_format == 'channels_last':

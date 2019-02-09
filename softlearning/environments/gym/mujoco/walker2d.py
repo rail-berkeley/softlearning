@@ -6,13 +6,14 @@ from gym import utils
 DEFAULT_CAMERA_CONFIG = {
     'trackbodyid': 2,
     'distance': 4.0,
-    'lookat': (None, None, 1.15),
+    'lookat': np.array((0.0, 0.0, 1.15)),
     'elevation': -20.0,
 }
 
 
 class Walker2dEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self,
+                 xml_file='walker2d.xml',
                  forward_reward_weight=1.0,
                  ctrl_cost_weight=1e-3,
                  healthy_reward=1.0,
@@ -37,7 +38,7 @@ class Walker2dEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self._exclude_current_positions_from_observation = (
             exclude_current_positions_from_observation)
 
-        mujoco_env.MujocoEnv.__init__(self, "walker2d.xml", 4)
+        mujoco_env.MujocoEnv.__init__(self, xml_file, 4)
 
     @property
     def healthy_reward(self):
@@ -121,7 +122,8 @@ class Walker2dEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return observation
 
     def viewer_setup(self):
-        self.viewer.cam.trackbodyid = 2
-        self.viewer.cam.distance = self.model.stat.extent * 0.5
-        self.viewer.cam.lookat[2] = 1.15
-        self.viewer.cam.elevation = -20
+        for key, value in DEFAULT_CAMERA_CONFIG.items():
+            if isinstance(value, np.ndarray):
+                getattr(self.viewer.cam, key)[:] = value
+            else:
+                setattr(self.viewer.cam, key, value)

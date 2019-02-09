@@ -230,6 +230,13 @@ class TestExperimentRunner(tf.test.TestCase):
                 else:
                     np.testing.assert_allclose(variable_1_np, variable_2_np)
 
+        # for optimizer_key in optimizer_variables_1_np.keys():
+        #     variables_1_np = optimizer_variables_1_np[optimizer_key]
+        #     variables_2_np = optimizer_variables_2_np[optimizer_key]
+        #     for variable_1_np, variable_2_np in zip(
+        #             variables_1_np, variables_2_np):
+        #         np.testing.assert_allclose(variable_1_np, variable_2_np)
+
         for i in (0, 1):
             Q_variables_tf = trainable_variables_1[f'Q{i}']
             Q_variables_np = trainable_variables_1_np[f'Q{i}']

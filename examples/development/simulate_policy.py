@@ -46,12 +46,12 @@ def simulate_policy(args):
     with session.as_default():
         pickle_path = os.path.join(checkpoint_path, 'checkpoint.pkl')
         with open(pickle_path, 'rb') as f:
-            pickleable = pickle.load(f)
+            picklable = pickle.load(f)
 
-    env = pickleable['env']
+    env = picklable['env']
     policy = (
         get_policy_from_variant(variant, env, Qs=[None]))
-    policy.set_weights(pickleable['policy_weights'])
+    policy.set_weights(picklable['policy_weights'])
 
     with policy.set_deterministic(args.deterministic):
         paths = rollouts(env,

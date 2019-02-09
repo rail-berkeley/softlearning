@@ -50,13 +50,12 @@ def sync_gs(args):
     if not args.sync_checkpoints:
         command_parts += ['-x', '".*./checkpoint_.*./.*"']
 
+    if args.dry:
+        command_parts += ["-n"]
+
     command_parts += [shlex.quote(remote_gs_path), shlex.quote(local_gs_path)]
 
     command = " ".join(command_parts)
-
-    if args.dry:
-        print(command)
-        return
 
     subprocess.call(command, shell=True)
 
