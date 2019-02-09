@@ -234,7 +234,12 @@ def run_example_debug(example_module_name, example_argv):
     implemented using the 'local_mode' argument for ray.init(), once tune
     supports it.
     """
-    raise NotImplementedError
+
+    example_argv = (
+        *example_argv,
+        '--resources={"debug-resource": 1}',
+        '--resources-per-trial={"custom_resources": {"debug-resource": 1}}')
+    run_example_local(example_module_name, example_argv)
 
 
 def run_example_cluster(example_module_name, example_argv):
