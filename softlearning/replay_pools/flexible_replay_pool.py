@@ -33,11 +33,11 @@ class FlexibleReplayPool(ReplayPool):
     def add_fields(self, fields_attrs):
         self.fields_attrs.update(fields_attrs)
 
-        for field_name, fields_attrs in fields_attrs.items():
-            field_shape = (self._max_size, *fields_attrs['shape'])
-            initializer = fields_attrs.get('initializer', np.zeros)
+        for field_name, field_attrs in fields_attrs.items():
+            field_shape = (self._max_size, *field_attrs['shape'])
+            initializer = field_attrs.get('initializer', np.zeros)
             self.fields[field_name] = initializer(
-                field_shape, dtype=fields_attrs['dtype'])
+                field_shape, dtype=field_attrs['dtype'])
 
     def _advance(self, count=1):
         self._pointer = (self._pointer + count) % self._max_size
