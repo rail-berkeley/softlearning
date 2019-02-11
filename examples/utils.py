@@ -3,6 +3,8 @@ import argparse
 from distutils.util import strtobool
 import json
 
+from ray.tune import sample_from
+
 import softlearning.algorithms.utils as alg_utils
 import softlearning.environments.utils as env_utils
 from softlearning.misc.utils import datetimestamp
@@ -291,4 +293,4 @@ def variant_equals(*keys):
 
         return node
 
-    return get_from_spec
+    return sample_from(get_from_spec)
