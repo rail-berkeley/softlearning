@@ -99,12 +99,6 @@ def _save_video(paths, filename):
     writer.release()
 
 
-def _softmax(x):
-    max_x = np.max(x)
-    exp_x = np.exp(x - max_x)
-    return exp_x / np.sum(exp_x)
-
-
 def deep_update(d, *us):
     d = d.copy()
 
