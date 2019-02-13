@@ -86,10 +86,6 @@ def rollout(env,
     return path
 
 
-def rollouts(env, policy, path_length, n_paths, render_mode=None):
-    paths = [
-        rollout(env, policy, path_length, render_mode=render_mode)
-        for i in range(n_paths)
-    ]
-
+def rollouts(n_paths, *args, **kwargs):
+    paths = [rollout(*args, **kwargs) for i in range(n_paths)]
     return paths
