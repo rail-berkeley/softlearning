@@ -275,6 +275,12 @@ def get_parser(allow_policy_list=False):
         default=True,
         help="Whether or not to query yes/no on remote run.")
 
+    parser.add_argument(
+        '--video-save-frequency',
+        type=int,
+        default=None,
+        help="Save frequency for videos.")
+
     parser = add_ray_init_args(parser)
     parser = add_ray_tune_args(parser)
     # parser = add_ray_autoscaler_exec_args(parser)
