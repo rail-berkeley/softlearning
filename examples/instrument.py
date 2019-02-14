@@ -244,7 +244,6 @@ def run_example_debug(example_module_name, example_argv):
         *example_argv,
         '--resources={"debug-resource": 1}',
         '--resources-per-trial={"custom_resources": {"debug-resource": 1}}')
-    run_example_local(example_module_name, example_argv)
     run_example_local(example_module_name,
                       example_argv,
                       redirect_output=False,
