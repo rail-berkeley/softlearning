@@ -88,6 +88,11 @@ def generate_experiment(trainable_class, variant_spec, command_line_args):
     variant_spec = add_command_line_args_to_variant_spec(
         variant_spec, command_line_args)
 
+    if command_line_args.video_save_frequency is not None:
+        assert 'algorithm_params' in variant_spec
+        variant_spec['algorithm_params']['kwargs']['video_save_frequency'] = (
+            command_line_args.video_save_frequency)
+
     def create_trial_name_creator(trial_name_template=None):
         if not trial_name_template:
             return None
@@ -244,7 +249,6 @@ def run_example_debug(example_module_name, example_argv):
         *example_argv,
         '--resources={"debug-resource": 1}',
         '--resources-per-trial={"custom_resources": {"debug-resource": 1}}')
-    run_example_local(example_module_name, example_argv)
     run_example_local(example_module_name,
                       example_argv,
                       redirect_output=False,

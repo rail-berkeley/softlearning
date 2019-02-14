@@ -83,19 +83,19 @@ def _make_dir(filename):
         os.makedirs(folder)
 
 
-def _save_video(paths, filename):
+def save_video(video_frames, filename):
     import cv2
-    assert all(['ims' in path for path in paths])
-    ims = [im for path in paths for im in path['ims']]
     _make_dir(filename)
+
+    video_frames = np.flip(video_frames, axis=-1)
 
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
     fps = 30.0
-    (height, width, _) = ims[0].shape
+    (height, width, _) = video_frames[0].shape
     writer = cv2.VideoWriter(filename, fourcc, fps, (width, height))
-    for im in ims:
-        writer.write(im)
+    for video_frame in video_frames:
+        writer.write(video_frame)
     writer.release()
 
 
