@@ -1,7 +1,7 @@
 import numpy as np
 
 from softlearning.environments.helpers import random_point_in_circle
-from .pusher_2d_env import Pusher2dEnv
+from .pusher_2d import Pusher2dEnv
 
 
 class ImagePusher2dEnv(Pusher2dEnv):

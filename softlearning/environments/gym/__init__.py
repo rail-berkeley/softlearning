@@ -55,17 +55,17 @@ MUJOCO_ENVIRONMENT_SPECS = (
     {
         'id': 'Pusher2d-ImageDefault-v0',
         'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.image_pusher:ImagePusherEnv'),
+                        '.image_pusher_2d:ImagePusher2dEnv'),
     },
     {
         'id': 'Pusher2d-ImageReach-v0',
         'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.image_pusher:ImageForkReacherEnv'),
+                        '.image_pusher_2d:ImageForkReacher2dEnv'),
     },
     {
         'id': 'Pusher2d-BlindReach-v0',
         'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.image_pusher:BlindForkReacherEnv'),
+                        '.image_pusher_2d:BlindForkReacher2dEnv'),
     },
 )
 
