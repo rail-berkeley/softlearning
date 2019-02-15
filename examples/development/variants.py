@@ -218,7 +218,16 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
         'replay_pool_params': {
             'type': 'SimpleReplayPool',
             'kwargs': {
-                'max_size': 1e6,
+                'max_size': tune.sample_from(lambda spec: (
+                    {
+                        'SimpleReplayPool': int(1e6),
+                        'TrajectoryReplayPool': int(1e4),
+                    }.get(
+                        spec.get('config', spec)
+                        ['replay_pool_params']
+                        ['type'],
+                        int(1e6))
+                )),
             }
         },
         'sampler_params': {

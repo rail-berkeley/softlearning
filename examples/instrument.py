@@ -88,6 +88,11 @@ def generate_experiment(trainable_class, variant_spec, command_line_args):
     variant_spec = add_command_line_args_to_variant_spec(
         variant_spec, command_line_args)
 
+    if command_line_args.video_save_frequency is not None:
+        assert 'algorithm_params' in variant_spec
+        variant_spec['algorithm_params']['kwargs']['video_save_frequency'] = (
+            command_line_args.video_save_frequency)
+
     def create_trial_name_creator(trial_name_template=None):
         if not trial_name_template:
             return None
@@ -193,7 +198,10 @@ Number of total trials (including samples/seeds): {total_number_of_trials}
     print(experiments_info_text)
 
 
-def run_example_local(example_module_name, example_argv):
+def run_example_local(example_module_name,
+                      example_argv,
+                      redirect_worker_output=False,
+                      redirect_output=True):
     """Run example locally, potentially parallelizing across cpus/gpus."""
     example_module = importlib.import_module(example_module_name)
 
@@ -212,6 +220,8 @@ def run_example_local(example_module_name, example_argv):
         # Tune doesn't currently support local mode
         local_mode=False,
         include_webui=example_args.include_webui,
+        redirect_worker_output=redirect_worker_output,
+        redirect_output=redirect_output,
         temp_dir=example_args.temp_dir)
 
     tune.run_experiments(
@@ -239,7 +249,10 @@ def run_example_debug(example_module_name, example_argv):
         *example_argv,
         '--resources={"debug-resource": 1}',
         '--resources-per-trial={"custom_resources": {"debug-resource": 1}}')
-    run_example_local(example_module_name, example_argv)
+    run_example_local(example_module_name,
+                      example_argv,
+                      redirect_output=False,
+                      redirect_worker_output=False)
 
 
 def run_example_cluster(example_module_name, example_argv):

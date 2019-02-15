@@ -3,11 +3,13 @@ from collections import OrderedDict
 from itertools import count
 import gtimer as gt
 import math
+import os
 
 import tensorflow as tf
 import numpy as np
 
 from softlearning.samplers import rollouts
+from softlearning.misc.utils import save_video
 
 
 class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
@@ -30,6 +32,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             eval_n_episodes=10,
             eval_deterministic=True,
             eval_render_mode=None,
+            video_save_frequency=0,
             session=None,
     ):
         """
@@ -59,7 +62,14 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
         self._eval_n_episodes = eval_n_episodes
         self._eval_deterministic = eval_deterministic
-        self._eval_render_mode = eval_render_mode
+        self._video_save_frequency = video_save_frequency
+
+        if self._video_save_frequency > 0:
+            assert eval_render_mode != 'human', (
+                "RlAlgorithm cannot render and save videos at the same time")
+            self._eval_render_mode = 'rgb_array'
+        else:
+            self._eval_render_mode = eval_render_mode
 
         self._session = session or tf.keras.backend.get_session()
 
@@ -243,6 +253,18 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 self.sampler._max_path_length,
                 self._eval_n_episodes,
                 render_mode=self._eval_render_mode)
+
+        should_save_video = (
+            self._video_save_frequency > 0
+            and self._epoch % self._video_save_frequency == 0)
+
+        if should_save_video:
+            for i, path in enumerate(paths):
+                video_frames = path.pop('images')
+                video_file_name = f'evaluation_path_{self._epoch}_{i}.avi'
+                video_file_path = os.path.join(
+                    os.getcwd(), 'videos', video_file_name)
+                save_video(video_frames, video_file_path)
 
         return paths
 
