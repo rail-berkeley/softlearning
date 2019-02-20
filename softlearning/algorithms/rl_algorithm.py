@@ -243,6 +243,8 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
         self._training_after_hook()
 
+        yield {'done': True, **diagnostics}
+
     def _evaluation_paths(self, policy, evaluation_env):
         if self._eval_n_episodes < 1: return ()
 
