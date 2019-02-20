@@ -1,4 +1,4 @@
-from .sampler_base import BaseSampler
+from .base_sampler import BaseSampler
 
 
 class DummySampler(BaseSampler):

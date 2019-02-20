@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from .sampler_base import BaseSampler
+from .base_sampler import BaseSampler
 
 
 class SimpleSampler(BaseSampler):
