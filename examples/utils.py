@@ -110,7 +110,7 @@ def add_ray_init_args(parser):
     parser.add_argument(
         '--include-webui',
         type=str,
-        default=True,
+        default=False,
         help=init_help_string("Boolean flag indicating whether to start the"
                               "web UI, which is a Jupyter notebook."))
     parser.add_argument(
