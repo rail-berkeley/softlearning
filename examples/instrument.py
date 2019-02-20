@@ -199,9 +199,7 @@ Number of total trials (including samples/seeds): {total_number_of_trials}
 
 
 def run_example_local(example_module_name,
-                      example_argv,
-                      redirect_worker_output=False,
-                      redirect_output=True):
+                      example_argv):
     """Run example locally, potentially parallelizing across cpus/gpus."""
     example_module = importlib.import_module(example_module_name)
 
@@ -220,8 +218,6 @@ def run_example_local(example_module_name,
         # Tune doesn't currently support local mode
         local_mode=False,
         include_webui=example_args.include_webui,
-        redirect_worker_output=redirect_worker_output,
-        redirect_output=redirect_output,
         temp_dir=example_args.temp_dir)
 
     tune.run_experiments(
@@ -250,9 +246,7 @@ def run_example_debug(example_module_name, example_argv):
         '--resources={"debug-resource": 1}',
         '--resources-per-trial={"custom_resources": {"debug-resource": 1}}')
     run_example_local(example_module_name,
-                      example_argv,
-                      redirect_output=False,
-                      redirect_worker_output=False)
+                      example_argv)
 
 
 def run_example_cluster(example_module_name, example_argv):

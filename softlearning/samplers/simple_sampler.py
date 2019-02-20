@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from .sampler_base import BaseSampler
+from .base_sampler import BaseSampler
 
 
 class SimpleSampler(BaseSampler):
@@ -70,13 +70,12 @@ class SimpleSampler(BaseSampler):
             self.pool.add_path(last_path)
             self._last_n_paths.appendleft(last_path)
 
-            self.policy.reset()
-            self._current_observation = self.env.reset()
-
             self._max_path_return = max(self._max_path_return,
                                         self._path_return)
             self._last_path_return = self._path_return
 
+            self.policy.reset()
+            self._current_observation = None
             self._path_length = 0
             self._path_return = 0
             self._current_path = defaultdict(list)
@@ -85,7 +84,7 @@ class SimpleSampler(BaseSampler):
         else:
             self._current_observation = next_observation
 
-        return self._current_observation, reward, terminal, info
+        return next_observation, reward, terminal, info
 
     def random_batch(self, batch_size=None, **kwargs):
         batch_size = batch_size or self._batch_size

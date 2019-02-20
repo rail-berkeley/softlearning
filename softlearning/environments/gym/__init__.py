@@ -15,42 +15,42 @@ MUJOCO_ENVIRONMENT_SPECS = (
     {
         'id': 'Swimmer-Parameterizable-v0',
         'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.swimmer_env:SwimmerEnv'),
+                        '.swimmer:SwimmerEnv'),
     },
     {
         'id': 'Hopper-Parameterizable-v0',
         'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.hopper_env:HopperEnv'),
+                        '.hopper:HopperEnv'),
     },
     {
         'id': 'Walker2d-Parameterizable-v0',
         'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.walker2d_env:Walker2dEnv'),
+                        '.walker2d:Walker2dEnv'),
     },
     {
         'id': 'HalfCheetah-Parameterizable-v0',
         'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.half_cheetah_env:HalfCheetahEnv'),
+                        '.half_cheetah:HalfCheetahEnv'),
     },
     {
         'id': 'Ant-Parameterizable-v0',
         'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.ant_env:AntEnv'),
+                        '.ant:AntEnv'),
     },
     {
         'id': 'Humanoid-Parameterizable-v0',
         'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.humanoid_env:HumanoidEnv'),
+                        '.humanoid:HumanoidEnv'),
     },
     {
         'id': 'Pusher2d-Default-v0',
         'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.pusher_2d_env:Pusher2dEnv'),
+                        '.pusher_2d:Pusher2dEnv'),
     },
     {
         'id': 'Pusher2d-DefaultReach-v0',
         'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.pusher_2d_env:ForkReacherEnv'),
+                        '.pusher_2d:ForkReacherEnv'),
     },
     {
         'id': 'Pusher2d-ImageDefault-v0',

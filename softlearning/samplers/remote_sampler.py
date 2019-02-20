@@ -6,7 +6,7 @@ import tensorflow as tf
 import numpy as np
 
 
-from .sampler_base import BaseSampler
+from .base_sampler import BaseSampler
 from .utils import rollout
 
 
