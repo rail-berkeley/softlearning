@@ -11,8 +11,8 @@ from softlearning.misc.utils import datetimestamp
 
 
 DEFAULT_UNIVERSE = 'gym'
-DEFAULT_DOMAIN = 'Swimmer'
-DEFAULT_TASK = 'Default'
+DEFAULT_DOMAIN = 'Pendulum'
+DEFAULT_TASK = 'v0'
 DEFAULT_ALGORITHM = 'SAC'
 
 
@@ -219,9 +219,15 @@ def get_parser(allow_policy_list=False):
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        '--universe', type=str, choices=UNIVERSES, default=None)
+        '--universe',
+        type=str,
+        choices=UNIVERSES,
+        default=DEFAULT_UNIVERSE)
     parser.add_argument(
-        '--domain', type=str, choices=AVAILABLE_DOMAINS, default=None)
+        '--domain',
+        type=str,
+        choices=AVAILABLE_DOMAINS,
+        default=DEFAULT_DOMAIN)
     parser.add_argument(
         '--task', type=str, choices=AVAILABLE_TASKS, default=DEFAULT_TASK)
 
@@ -277,7 +283,6 @@ def get_parser(allow_policy_list=False):
 
     parser = add_ray_init_args(parser)
     parser = add_ray_tune_args(parser)
-    # parser = add_ray_autoscaler_exec_args(parser)
 
     return parser
 
