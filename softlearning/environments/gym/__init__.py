@@ -80,7 +80,7 @@ GENERAL_ENVIRONMENT_SPECS = (
 MULTIWORLD_ENVIRONMENT_SPECS = (
     {
         'id': 'Point2DEnv-Default-v0',
-        'entry_point': 'multiworld.envs.pygame.point2d:Point2DWallEnv'
+        'entry_point': 'multiworld.envs.pygame.point2d:Point2DEnv'
     },
     {
         'id': 'Point2DEnv-Wall-v0',
