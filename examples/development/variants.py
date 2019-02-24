@@ -177,10 +177,10 @@ ENV_PARAMS = {
     },
     'Point2DEnv': {
         'Default-v0': {
-            'observation_keys': ('observation', ),
+            'observation_keys': ('observation', 'desired_goal'),
         },
         'Wall-v0': {
-            'observation_keys': ('observation', ),
+            'observation_keys': ('observation', 'desired_goal'),
         },
     }
 }
