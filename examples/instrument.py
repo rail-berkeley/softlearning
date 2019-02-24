@@ -162,7 +162,7 @@ def confirm_yes_no(prompt):
         elif choice in no:
             exit(0)
         else:
-            print("Please respond with 'yes' or 'no'")
+            print("Please respond with 'yes' or 'no'.\n(yes/no)")
         choice = input().lower()
 
 
@@ -230,15 +230,11 @@ def run_example_local(example_module_name,
 def run_example_debug(example_module_name, example_argv):
     """The debug mode limits tune trial runs to enable use of debugger.
 
-    TODO(hartikainen): The debug mode should allow easy switch between
-    parallelized andnon-parallelized runs such that the debugger can be
-    reasonably used when running the code. This could be implemented for
-    example by requiring a custom resource (e.g. 'debug-resource') that
-    limits the number of parallel runs to one. For this to work, tune needs to
-    merge the support for custom resources:
-    https://github.com/ray-project/ray/pull/2979. Alternatively, this could be
-    implemented using the 'local_mode' argument for ray.init(), once tune
-    supports it.
+    The debug mode should allow easy switch between parallelized and
+    non-parallelized runs such that the debugger can be reasonably used when
+    running the code. TODO(hartikainen): this should be implemented using the
+    'ray.init(local_mode=True)', once tune supports it
+    (https://github.com/ray-project/ray/issues/2796).
     """
 
     example_argv = (
