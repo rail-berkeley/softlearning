@@ -136,21 +136,21 @@ ENV_PARAMS = {
     'Walker2d': {  # 6 DoF
     },
     'Ant': {  # 8 DoF
-        'Parameterizable-v0': {
+        'Parameterizable-v3': {
             'healthy_reward': 0.0,
             'healthy_z_range': (-np.inf, np.inf),
             'exclude_current_positions_from_observation': False,
         }
     },
     'Humanoid': {  # 17 DoF
-        'Parameterizable-v0': {
+        'Parameterizable-v3': {
             'healthy_reward': 0.0,
             'healthy_z_range': (-np.inf, np.inf),
             'exclude_current_positions_from_observation': False,
         }
     },
     'Pusher2d': {  # 3 DoF
-        'Default-v0': {
+        'Default-v3': {
             'arm_object_distance_cost_coeff': 0.0,
             'goal_object_distance_cost_coeff': 1.0,
             'goal': (0, -1),

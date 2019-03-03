@@ -39,7 +39,7 @@ class TestGymAdapter(unittest.TestCase, AdapterTestClass):
         }
 
         env = GymAdapter(
-            domain='Swimmer', task='Parameterizable-v0', **env_kwargs)
+            domain='Swimmer', task='Parameterizable-v3', **env_kwargs)
 
         observation1, reward, done, info = env.step(env.action_space.sample())
 
