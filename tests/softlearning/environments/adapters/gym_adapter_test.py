@@ -9,7 +9,7 @@ class TestGymAdapter(unittest.TestCase, AdapterTestClass):
     # TODO(hartikainen): This is a terrible way of testing the envs.
     # All the envs should be tested independently.
 
-    def create_adapter(self, domain='Swimmer', task='v2', *args, **kwargs):
+    def create_adapter(self, domain='Swimmer', task='v3', *args, **kwargs):
         return GymAdapter(domain, task, *args, **kwargs)
 
     def test_environments(self):
@@ -39,7 +39,7 @@ class TestGymAdapter(unittest.TestCase, AdapterTestClass):
         }
 
         env = GymAdapter(
-            domain='Swimmer', task='Parameterizable-v0', **env_kwargs)
+            domain='Swimmer', task='Parameterizable-v3', **env_kwargs)
 
         observation1, reward, done, info = env.step(env.action_space.sample())
 

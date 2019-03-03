@@ -74,13 +74,13 @@ docker-compose \
 softlearning run_example_local examples.development \
     --universe=gym \
     --domain=HalfCheetah \
-    --task=v2 \
+    --task=v3 \
     --exp-name=my-sac-experiment-1 \
     --checkpoint-frequency=1000  # Save the checkpoint to resume training later
 ```
 
 2. To simulate the resulting policy:
-First, find the path that the checkpoint is saved to. By default (i.e. without specifying the `log-dir` argument to the previous script), the data is saved under `~/ray_results/<universe>/<domain>/<task>/<datatimestamp>-<exp-name>/<trial-id>/<checkpoint-id>`. For example: `~/ray_results/gym/HalfCheetah/v2/2018-12-12T16-48-37-my-sac-experiment-1-0/mujoco-runner_0_seed=7585_2018-12-12_16-48-37xuadh9vd/checkpoint_1000/`. The next command assumes that this path is found from `${SAC_CHECKPOINT_DIR}` environment variable.
+First, find the path that the checkpoint is saved to. By default (i.e. without specifying the `log-dir` argument to the previous script), the data is saved under `~/ray_results/<universe>/<domain>/<task>/<datatimestamp>-<exp-name>/<trial-id>/<checkpoint-id>`. For example: `~/ray_results/gym/HalfCheetah/v3/2018-12-12T16-48-37-my-sac-experiment-1-0/mujoco-runner_0_seed=7585_2018-12-12_16-48-37xuadh9vd/checkpoint_1000/`. The next command assumes that this path is found from `${SAC_CHECKPOINT_DIR}` environment variable.
 
 ```
 python -m examples.development.simulate_policy \
@@ -146,7 +146,7 @@ In order to resume training from previous checkpoint, run the original example m
 softlearning run_example_local examples.development \
     --universe=gym \
     --domain=HalfCheetah \
-    --task=v2 \
+    --task=v3 \
     --exp-name=my-sac-experiment-1 \
     --checkpoint-frequency=1000 \
     --restore=${SAC_CHECKPOINT_PATH}

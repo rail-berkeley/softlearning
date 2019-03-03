@@ -13,34 +13,28 @@ MUJOCO_ENVIRONMENTS_PATH = f'{CUSTOM_GYM_ENVIRONMENTS_PATH}.mujoco'
 
 MUJOCO_ENVIRONMENT_SPECS = (
     {
-        'id': 'Swimmer-Parameterizable-v0',
-        'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.swimmer:SwimmerEnv'),
+        'id': 'Swimmer-Parameterizable-v3',
+        'entry_point': (f'gym.envs.mujoco.swimmer_v3:SwimmerEnv'),
     },
     {
-        'id': 'Hopper-Parameterizable-v0',
-        'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.hopper:HopperEnv'),
+        'id': 'Hopper-Parameterizable-v3',
+        'entry_point': (f'gym.envs.mujoco.hopper_v3:HopperEnv'),
     },
     {
-        'id': 'Walker2d-Parameterizable-v0',
-        'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.walker2d:Walker2dEnv'),
+        'id': 'Walker2d-Parameterizable-v3',
+        'entry_point': (f'gym.envs.mujoco.walker2d_v3:Walker2dEnv'),
     },
     {
-        'id': 'HalfCheetah-Parameterizable-v0',
-        'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.half_cheetah:HalfCheetahEnv'),
+        'id': 'HalfCheetah-Parameterizable-v3',
+        'entry_point': (f'gym.envs.mujoco.half_cheetah_v3:HalfCheetahEnv'),
     },
     {
-        'id': 'Ant-Parameterizable-v0',
-        'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.ant:AntEnv'),
+        'id': 'Ant-Parameterizable-v3',
+        'entry_point': (f'gym.envs.mujoco.ant_v3:AntEnv'),
     },
     {
-        'id': 'Humanoid-Parameterizable-v0',
-        'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
-                        '.humanoid:HumanoidEnv'),
+        'id': 'Humanoid-Parameterizable-v3',
+        'entry_point': (f'gym.envs.mujoco.humanoid_v3:HumanoidEnv'),
     },
     {
         'id': 'Pusher2d-Default-v0',

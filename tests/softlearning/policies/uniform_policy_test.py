@@ -11,7 +11,7 @@ from softlearning.policies.uniform_policy import UniformPolicy
 
 class UniformPolicyTest(tf.test.TestCase):
     def setUp(self):
-        self.env = gym.envs.make('Swimmer-v2')
+        self.env = gym.envs.make('Swimmer-v3')
         self.policy = UniformPolicy(
             input_shapes=(self.env.observation_space.shape, ),
             output_shape=self.env.action_space.shape)
