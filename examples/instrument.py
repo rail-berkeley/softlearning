@@ -276,7 +276,8 @@ def run_example_cluster(example_module_name, example_argv):
         experiments,
         with_server=example_args.with_server,
         server_port=4321,
-        scheduler=None)
+        scheduler=None,
+        queue_trials=True)
 
 
 def launch_example_cluster(example_module_name,
