@@ -77,18 +77,7 @@ def run_example_local_cmd(example_module_name, example_argv):
 @click.argument("example_module_name", required=True, type=str)
 @click.argument('example_argv', nargs=-1, type=click.UNPROCESSED)
 def run_example_debug_cmd(example_module_name, example_argv):
-    """The debug mode limits tune trial runs to enable use of debugger.
-
-    TODO(hartikainen): The debug mode should allow easy switch between
-    parallelized andnon-parallelized runs such that the debugger can be
-    reasonably used when running the code. This could be implemented for
-    example by requiring a custom resource (e.g. 'debug-resource') that
-    limits the number of parallel runs to one. For this to work, tune needs to
-    merge the support for custom resources:
-    https://github.com/ray-project/ray/pull/2979. Alternatively, this could be
-    implemented using the 'local_mode' argument for ray.init(), once tune
-    supports it.
-    """
+    """The debug mode limits tune trial runs to enable use of debugger."""
     return run_example_debug(example_module_name, example_argv)
 
 
