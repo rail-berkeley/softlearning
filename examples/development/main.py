@@ -33,7 +33,8 @@ class ExperimentRunner(tune.Trainable):
         self._built = False
 
     def _stop(self):
-        pass
+        tf.reset_default_graph()
+        tf.keras.backend.clear_session()
 
     def _build(self):
         variant = copy.deepcopy(self._variant)
