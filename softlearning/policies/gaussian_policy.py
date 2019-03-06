@@ -5,7 +5,6 @@ from collections import OrderedDict
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
-from softlearning.distributions.squash_bijector import SquashBijector
 from softlearning.models.feedforward import feedforward_model
 
 from .base_policy import LatentSpacePolicy
@@ -93,7 +92,7 @@ class GaussianPolicy(LatentSpacePolicy):
         )((shift, log_scale_diag, self.latents_input))
 
         squash_bijector = (
-            SquashBijector()
+            tfp.bijectors.Tanh()
             if self._squash
             else tfp.bijectors.Identity())
 
