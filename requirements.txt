@@ -83,9 +83,10 @@ git+https://github.com/hartikainen/serializable.git@76516385a3a716ed4a2a9ad877e2
 setproctitle==1.1.10
 six==1.11.0
 smmap2==2.0.5
-tensorboard==1.12.0
-tensorflow==1.12.0
-tensorflow-probability==0.5.0
+tensorboard==1.13.1
+tensorflow==1.13.1
+tensorflow-estimator==1.13.0
+tensorflow-probability==0.6.0
 termcolor==1.1.0
 toolz==0.9.0
 uritemplate==3.0.0
