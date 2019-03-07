@@ -5,7 +5,7 @@
 # the container. You are encouraged to use docker-compose (docker-compose.dev.yml),
 # which should allow you to setup your environment with a single one command.
 
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 MAINTAINER Kristian Hartikainen <kristian.hartikainen@gmail.com>
 

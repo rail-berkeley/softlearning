@@ -5,13 +5,27 @@
 # the container. You are encouraged to use docker-compose (docker-compose.dev.yml),
 # which should allow you to setup your environment with a single one command.
 
-FROM nvidia/cuda:9.0-base-ubuntu16.04
+ARG UBUNTU_VERSION=18.04
+ARG ARCH=
+ARG CUDA=10.0
 
-MAINTAINER Kristian Hartikainen <kristian.hartikainen@gmail.com>
+FROM nvidia/cuda${ARCH:+-$ARCH}:${CUDA}-base-ubuntu${UBUNTU_VERSION} as base
+# ARCH and CUDA are specified again because the FROM directive resets ARGs
+# (but their default value is retained if set previously)
 
+ARG UBUNTU_VERSION
+ARG ARCH
+ARG CUDA
+
+ARG CUDNN=7.4.1.5-1
 ARG MJKEY
 
+SHELL ["/bin/bash", "-c"]
+
+# MAINTAINER Kristian Hartikainen <kristian.hartikainen@gmail.com>
+
 ENV DEBIAN_FRONTEND="noninteractive"
+# See http://bugs.python.org/issue19846
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 ENV PATH /opt/conda/bin:$PATH
 
@@ -38,32 +52,36 @@ RUN conda update -y --name base conda
 
 
 # ========== Tensorflow dependencies ==========
-RUN DEBIAN_FRONTEND="noninteractive" \
-    && apt-get update \
+RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
-        cuda-command-line-tools-9-0 \
-        cuda-cublas-9-0 \
-        cuda-cufft-9-0 \
-        cuda-curand-9-0 \
-        cuda-cusolver-9-0 \
-        cuda-cusparse-9-0 \
-        libcudnn7=7.2.1.38-1+cuda9.0 \
-        libnccl2=2.2.13-1+cuda9.0 \
+        cuda-command-line-tools-${CUDA/./-} \
+        cuda-cublas-${CUDA/./-} \
+        cuda-cufft-${CUDA/./-} \
+        cuda-curand-${CUDA/./-} \
+        cuda-cusolver-${CUDA/./-} \
+        cuda-cusparse-${CUDA/./-} \
+        curl \
+        libcudnn7=${CUDNN}+cuda${CUDA} \
         libfreetype6-dev \
         libhdf5-serial-dev \
-        libpng12-dev \
         libzmq3-dev \
         pkg-config \
-        python \
-        python-dev \
-        rsync \
         software-properties-common \
+        zip \
         unzip \
-        gcc \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+RUN [ ${ARCH} = ppc64le ] || (apt-get update && \
+        apt-get install nvinfer-runtime-trt-repo-ubuntu${UBUNTU_VERSION/./}-5.0.2-ga-cuda${CUDA} \
+        && apt-get update \
+        && apt-get install -y --no-install-recommends libnvinfer5=5.0.2-1+cuda${CUDA} \
+        && apt-get clean \
+        && rm -rf /var/lib/apt/lists/*)
+
+# For CUDA profiling, TensorFlow requires CUPTI.
+ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:$LD_LIBRARY_PATH
 
 # ========== Softlearning dependencies ==========
 RUN apt-get update \

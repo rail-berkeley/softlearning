@@ -14,6 +14,7 @@ There are two types of functions in this file:
 """
 
 import importlib
+import multiprocessing
 import os
 import uuid
 from pprint import pformat
@@ -198,8 +199,7 @@ Number of total trials (including samples/seeds): {total_number_of_trials}
     print(experiments_info_text)
 
 
-def run_example_local(example_module_name,
-                      example_argv):
+def run_example_local(example_module_name, example_argv, local_mode=False):
     """Run example locally, potentially parallelizing across cpus/gpus."""
     example_module = importlib.import_module(example_module_name)
 
@@ -215,8 +215,7 @@ def run_example_local(example_module_name,
         num_cpus=example_args.cpus,
         num_gpus=example_args.gpus,
         resources=example_args.resources or {},
-        # Tune doesn't currently support local mode
-        local_mode=False,
+        local_mode=local_mode,
         include_webui=example_args.include_webui,
         temp_dir=example_args.temp_dir)
 
@@ -232,17 +231,25 @@ def run_example_debug(example_module_name, example_argv):
 
     The debug mode should allow easy switch between parallelized and
     non-parallelized runs such that the debugger can be reasonably used when
-    running the code. TODO(hartikainen): this should be implemented using the
-    'ray.init(local_mode=True)', once tune supports it
-    (https://github.com/ray-project/ray/issues/2796).
+    running the code. In practice, this allocates all the cpus available in ray
+    such that only a single trial can run at once.
+
+    TODO(hartikainen): This should allocate a custom "debug_resource" instead
+    of all cpus once ray local mode supports custom resources.
     """
 
-    example_argv = (
-        *example_argv,
-        '--resources={"debug-resource": 1}',
-        '--resources-per-trial={"custom_resources": {"debug-resource": 1}}')
-    run_example_local(example_module_name,
-                      example_argv)
+    debug_example_argv = []
+    for option in example_argv:
+        if '--trial-cpus' in option:
+            available_cpus = multiprocessing.cpu_count()
+            debug_example_argv.append(f'--trial-cpus={available_cpus}')
+        elif '--upload-dir' in option:
+            print(f"Ignoring {option} due to debug mode.")
+            continue
+        else:
+            debug_example_argv.append(option)
+
+    run_example_local(example_module_name, debug_example_argv, local_mode=True)
 
 
 def run_example_cluster(example_module_name, example_argv):
@@ -267,7 +274,6 @@ def run_example_cluster(example_module_name, example_argv):
         redis_address=redis_address,
         num_cpus=example_args.cpus,
         num_gpus=example_args.gpus,
-        # Tune doesn't currently support local mode
         local_mode=False,
         include_webui=example_args.include_webui,
         temp_dir=example_args.temp_dir)
@@ -330,6 +336,7 @@ def launch_example_cluster(example_module_name,
     return exec_cluster(
         config_file=config_file,
         cmd=cluster_command,
+        docker=False,
         screen=screen,
         tmux=tmux,
         stop=stop,
