@@ -5,23 +5,24 @@
 # the container. You are encouraged to use docker-compose (docker-compose.dev.yml),
 # which should allow you to setup your environment with a single one command.
 
-ARG UBUNTU_VERSION=16.04
-
+ARG UBUNTU_VERSION=18.04
 ARG ARCH=
 ARG CUDA=10.0
+
 FROM nvidia/cuda${ARCH:+-$ARCH}:${CUDA}-base-ubuntu${UBUNTU_VERSION} as base
 # ARCH and CUDA are specified again because the FROM directive resets ARGs
 # (but their default value is retained if set previously)
+
+ARG UBUNTU_VERSION
 ARG ARCH
 ARG CUDA
+
 ARG CUDNN=7.4.1.5-1
+ARG MJKEY
 
 SHELL ["/bin/bash", "-c"]
 
-ARG MJKEY
-
 # MAINTAINER Kristian Hartikainen <kristian.hartikainen@gmail.com>
-
 
 ENV DEBIAN_FRONTEND="noninteractive"
 # See http://bugs.python.org/issue19846
@@ -73,7 +74,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 RUN [ ${ARCH} = ppc64le ] || (apt-get update && \
-        apt-get install nvinfer-runtime-trt-repo-ubuntu1604-5.0.2-ga-cuda${CUDA} \
+        apt-get install nvinfer-runtime-trt-repo-ubuntu${UBUNTU_VERSION/./}-5.0.2-ga-cuda${CUDA} \
         && apt-get update \
         && apt-get install -y --no-install-recommends libnvinfer5=5.0.2-1+cuda${CUDA} \
         && apt-get clean \

@@ -4,7 +4,7 @@
 # image. Should be used for running stuff on the cloud, e.g. with ray.
 
 # Base container to clone the softlearning-private repo
-FROM ubuntu:16.04 as git_cloner
+FROM ubuntu:18.04 as git_cloner
 # Note that the SSH_PRIVATE_KEY arg is NOT saved on the final container
 
 # add credentials on build
@@ -22,7 +22,7 @@ RUN apt-get update \
     && rm -vf /root/.ssh/id_rsa
 
 # Base container to clone the sac_envs repo
-FROM ubuntu:16.04 as sac_envs_cloner
+FROM ubuntu:18.04 as sac_envs_cloner
 # Note that the SSH_PRIVATE_KEY arg is NOT saved on the final container
 
 # add credentials on build
