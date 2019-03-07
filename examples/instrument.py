@@ -243,6 +243,9 @@ def run_example_debug(example_module_name, example_argv):
         if '--trial-cpus' in option:
             available_cpus = multiprocessing.cpu_count()
             debug_example_argv.append(f'--trial-cpus={available_cpus}')
+        elif '--upload-dir' in option:
+            print(f"Ignoring {option} due to debug mode.")
+            continue
         else:
             debug_example_argv.append(option)
 
