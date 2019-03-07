@@ -126,7 +126,7 @@ ALGORITHM_PARAMS_PER_DOMAIN = {
     }
 }
 
-ENV_PARAMS = {
+ENVIRONMENT_PARAMS = {
     'Swimmer': {  # 2 DoF
     },
     'Hopper': {  # 3 DoF
@@ -203,7 +203,7 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
         'universe': universe,
         'git_sha': get_git_rev(),
 
-        'env_params': ENV_PARAMS.get(domain, {}).get(task, {}),
+        'environment_params': ENVIRONMENT_PARAMS.get(domain, {}).get(task, {}),
         'policy_params': deep_update(
             POLICY_PARAMS_BASE[policy],
             POLICY_PARAMS_FOR_DOMAIN[policy].get(domain, {})
@@ -267,7 +267,10 @@ def get_variant_spec_image(universe,
         preprocessor_params = {
             'type': 'convnet_preprocessor',
             'kwargs': {
-                'image_shape': variant_spec['env_params']['image_shape'],
+                'image_shape': (
+                    variant_spec
+                    ['environment_params']
+                    ['image_shape']),
                 'output_size': M,
                 'conv_filters': (4, 4),
                 'conv_kernel_sizes': ((3, 3), (3, 3)),

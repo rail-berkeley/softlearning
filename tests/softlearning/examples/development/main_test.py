@@ -36,7 +36,7 @@ CONFIG = {
     },
     'domain': 'Swimmer',
     'task': 'Default',
-    'env_params': {},
+    'environment_params': {},
     'git_sha':
     'fb03db4b0ffafc61d8ea6d550e7fdebeecb34d15 '
     'refactor/pick-utils-changes',
