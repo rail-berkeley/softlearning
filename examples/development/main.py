@@ -42,7 +42,6 @@ class ExperimentRunner(tune.Trainable):
         environment_params = variant['environment_params']
         training_environment = self.training_environment = (
             get_environment_from_params(environment_params['training']))
-
         evaluation_environment = self.evaluation_environment = (
             get_environment_from_params(environment_params['evaluation'])
             if 'evaluation' in environment_params

@@ -86,8 +86,15 @@ ALGORITHM_PARAMS_ADDITIONAL = {
                     'Walker2d': 10,
                     'Ant': 300,
                     'Humanoid': 100,
-                }[spec.get('config', spec)['domain']],
-            ))
+                    'Pendulum': 1,
+                }.get(
+                    spec.get('config', spec)
+                    ['environment_params']
+                    ['training']
+                    ['domain'],
+                    1.0
+                ),
+            )),
         }
     }
 }
