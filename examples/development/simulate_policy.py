@@ -49,11 +49,10 @@ def simulate_policy(args):
         with open(pickle_path, 'rb') as f:
             picklable = pickle.load(f)
 
-    environment_params = variant['environment_params']
     environment_params = (
-        environment_params['evaluation']
-        if 'evaluation' in environment_params
-        else environment_params['training'])
+        variant['environment_params']['evaluation']
+        if 'evaluation' in variant['environment_params']
+        else variant['environment_params']['training'])
     evaluation_environment = get_environment_from_params(environment_params)
 
     policy = (
