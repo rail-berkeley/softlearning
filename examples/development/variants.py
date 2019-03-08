@@ -76,7 +76,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         'type': 'SQL',
         'kwargs': {
             'policy_lr': 3e-4,
-            'td_target_update_interval': 1,
+            'target_update_interval': 1,
             'n_initial_exploration_steps': int(1e3),
             'reward_scale': tune.sample_from(lambda spec: (
                 {
