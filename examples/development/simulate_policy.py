@@ -54,10 +54,10 @@ def simulate_policy(args):
     policy.set_weights(picklable['policy_weights'])
 
     with policy.set_deterministic(args.deterministic):
-        paths = rollouts(env,
+        paths = rollouts(args.num_rollouts,
+                         env,
                          policy,
                          path_length=args.max_path_length,
-                         n_paths=args.num_rollouts,
                          render_mode=args.render_mode)
 
     if args.render_mode != 'human':
