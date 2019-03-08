@@ -14,23 +14,25 @@ from examples.instrument import run_example_local
 
 
 def run_experiment(variant, reporter):
-    env = get_environment('gym', 'MultiGoal', 'Default', {
-        'actuation_cost_coeff': 30,
-        'distance_cost_coeff': 1,
-        'goal_reward': 10,
-        'init_sigma': 0.1,
-    })
+    training_environment = (
+        get_environment('gym', 'MultiGoal', 'Default-v0', {
+            'actuation_cost_coeff': 30,
+            'distance_cost_coeff': 1,
+            'goal_reward': 10,
+            'init_sigma': 0.1,
+        }))
+    evaluation_environment = training_environment.copy()
 
     pool = SimpleReplayPool(
-        observation_space=env.observation_space,
-        action_space=env.action_space,
+        observation_space=training_environment.observation_space,
+        action_space=training_environment.action_space,
         max_size=1e6)
 
     sampler = SimpleSampler(
         max_path_length=30, min_pool_size=100, batch_size=64)
 
-    Qs = get_Q_function_from_variant(variant, env)
-    policy = get_policy_from_variant(variant, env, Qs)
+    Qs = get_Q_function_from_variant(variant, training_environment)
+    policy = get_policy_from_variant(variant, training_environment, Qs)
     plotter = QFPolicyPlotter(
         Q=Qs[0],
         policy=policy,
@@ -43,7 +45,8 @@ def run_experiment(variant, reporter):
 
     algorithm = get_algorithm_from_variant(
         variant=variant,
-        env=env,
+        training_environment=training_environment,
+        evaluation_environment=evaluation_environment,
         policy=policy,
         Qs=Qs,
         pool=pool,

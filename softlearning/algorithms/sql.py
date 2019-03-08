@@ -40,7 +40,7 @@ class SQL(RLAlgorithm):
             policy_lr=3e-4,
             Q_lr=3e-4,
             value_n_particles=16,
-            td_target_update_interval=1,
+            target_update_interval=1,
             kernel_fn=adaptive_isotropic_gaussian_kernel,
             kernel_n_particles=16,
             kernel_update_ratio=0.5,
@@ -67,7 +67,7 @@ class SQL(RLAlgorithm):
             Q_lr (`float`): Learning rate used for the Q-function approximator.
             value_n_particles (`int`): The number of action samples used for
                 estimating the value of next state.
-            td_target_update_interval (`int`): How often the target network is
+            target_update_interval (`int`): How often the target network is
                 updated to match the current Q-function.
             kernel_fn (function object): A function object that represents
                 a kernel function.
@@ -105,7 +105,7 @@ class SQL(RLAlgorithm):
         self._reward_scale = reward_scale
 
         self._value_n_particles = value_n_particles
-        self._Q_target_update_interval = td_target_update_interval
+        self._Q_target_update_interval = target_update_interval
 
         self._kernel_fn = kernel_fn
         self._kernel_n_particles = kernel_n_particles
