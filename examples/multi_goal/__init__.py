@@ -23,7 +23,7 @@ def get_parser():
 
     for dest, value in (('universe', 'gym'),
                         ('task', 'MultiGoal'),
-                        ('domain', 'Default')):
+                        ('domain', 'Default-v0')):
         option = next(x for x in parser._actions if x.dest == dest)
         option.default = value
         option.choices = {value}
