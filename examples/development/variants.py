@@ -198,12 +198,22 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
         ALGORITHM_PARAMS_ADDITIONAL.get(algorithm, {})
     )
     variant_spec = {
-        'domain': domain,
-        'task': task,
-        'universe': universe,
         'git_sha': get_git_rev(),
 
-        'environment_params': ENVIRONMENT_PARAMS.get(domain, {}).get(task, {}),
+        'environment_params': {
+            'training': {
+                'domain': domain,
+                'task': task,
+                'universe': universe,
+                'kwargs': (
+                    ENVIRONMENT_PARAMS.get(domain, {}).get(task, {})),
+            },
+            'evaluation': tune.sample_from(lambda spec: (
+                spec.get('config', spec)
+                ['environment_params']
+                ['training']
+            )),
+        },
         'policy_params': deep_update(
             POLICY_PARAMS_BASE[policy],
             POLICY_PARAMS_FOR_DOMAIN[policy].get(domain, {})
@@ -269,6 +279,7 @@ def get_variant_spec_image(universe,
             'kwargs': {
                 'image_shape': (
                     variant_spec
+                    ['training']
                     ['environment_params']
                     ['image_shape']),
                 'output_size': M,
