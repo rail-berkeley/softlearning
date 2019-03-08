@@ -25,7 +25,8 @@ class SAC(RLAlgorithm):
 
     def __init__(
             self,
-            env,
+            training_environment,
+            evaluation_environment,
             policy,
             Qs,
             pool,
@@ -69,7 +70,8 @@ class SAC(RLAlgorithm):
 
         super(SAC, self).__init__(**kwargs)
 
-        self._env = env
+        self._training_environment = training_environment
+        self._evaluation_environment = evaluation_environment
         self._policy = policy
 
         self._Qs = Qs
@@ -84,7 +86,7 @@ class SAC(RLAlgorithm):
 
         self._reward_scale = reward_scale
         self._target_entropy = (
-            -np.prod(self._env.action_space.shape)
+            -np.prod(self._training_environment.action_space.shape)
             if target_entropy == 'auto'
             else target_entropy)
 
@@ -98,8 +100,8 @@ class SAC(RLAlgorithm):
 
         self._save_full_state = save_full_state
 
-        observation_shape = self._env.active_observation_shape
-        action_shape = self._env.action_space.shape
+        observation_shape = self._training_environment.active_observation_shape
+        action_shape = self._training_environment.action_space.shape
 
         assert len(observation_shape) == 1, observation_shape
         self._observation_shape = observation_shape
@@ -118,14 +120,7 @@ class SAC(RLAlgorithm):
 
     def train(self, *args, **kwargs):
         """Initiate training of the SAC instance."""
-
-        return self._train(
-            self._env,
-            self._policy,
-            self._pool,
-            initial_exploration_policy=self._initial_exploration_policy,
-            *args,
-            **kwargs)
+        return self._train(*args, **kwargs)
 
     def _init_global_step(self):
         self.global_step = training_util.get_or_create_global_step()

@@ -6,6 +6,7 @@ import pickle
 
 import tensorflow as tf
 
+from softlearning.environments.utils import get_environment_from_params
 from softlearning.policies.utils import get_policy_from_variant
 from softlearning.samplers import rollouts
 
@@ -48,16 +49,21 @@ def simulate_policy(args):
         with open(pickle_path, 'rb') as f:
             picklable = pickle.load(f)
 
-    env = picklable['env']
+    environment_params = (
+        variant['environment_params']['evaluation']
+        if 'evaluation' in variant['environment_params']
+        else variant['environment_params']['training'])
+    evaluation_environment = get_environment_from_params(environment_params)
+
     policy = (
-        get_policy_from_variant(variant, env, Qs=[None]))
+        get_policy_from_variant(variant, evaluation_environment, Qs=[None]))
     policy.set_weights(picklable['policy_weights'])
 
     with policy.set_deterministic(args.deterministic):
-        paths = rollouts(env,
+        paths = rollouts(args.num_rollouts,
+                         evaluation_environment,
                          policy,
                          path_length=args.max_path_length,
-                         n_paths=args.num_rollouts,
                          render_mode=args.render_mode)
 
     if args.render_mode != 'human':

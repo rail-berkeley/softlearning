@@ -30,7 +30,8 @@ class SQL(RLAlgorithm):
 
     def __init__(
             self,
-            env,
+            training_environment,
+            evaluation_environment,
             policy,
             Qs,
             pool,
@@ -87,7 +88,8 @@ class SQL(RLAlgorithm):
         """
         super(SQL, self).__init__(**kwargs)
 
-        self._env = env
+        self._training_environment = training_environment
+        self._evaluation_environment = evaluation_environment
         self._policy = policy
 
         self._Qs = Qs
@@ -95,7 +97,6 @@ class SQL(RLAlgorithm):
 
         self._pool = pool
         self._plotter = plotter
-        self._env = env
 
         self._Q_lr = Q_lr
         self._policy_lr = policy_lr
@@ -114,8 +115,8 @@ class SQL(RLAlgorithm):
         self._train_Q = train_Q
         self._train_policy = train_policy
 
-        observation_shape = env.active_observation_shape
-        action_shape = env.action_space.shape
+        observation_shape = training_environment.active_observation_shape
+        action_shape = training_environment.action_space.shape
 
         assert len(observation_shape) == 1, observation_shape
         self._observation_shape = observation_shape
@@ -351,14 +352,7 @@ class SQL(RLAlgorithm):
 
     def train(self, *args, **kwargs):
         """Initiate training of the SAC instance."""
-
-        return self._train(
-            self._env,
-            self._policy,
-            self._pool,
-            initial_exploration_policy=self._initial_exploration_policy,
-            *args,
-            **kwargs)
+        return self._train(*args, **kwargs)
 
     def _init_training(self):
         self._update_target(tau=1.0)
@@ -443,7 +437,8 @@ class SQL(RLAlgorithm):
             'epoch': epoch,
             'policy': self._policy,
             'Q': self._Q,
-            'env': self._env,
+            'training_environment': self._training_environment,
+            'evaluation_environment': self._evaluation_environment,
         }
 
         if self._save_full_state:

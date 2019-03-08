@@ -1,6 +1,7 @@
+import copy
+
 import numpy as np
 import tensorflow as tf
-import unittest
 
 from examples.development.main import ExperimentRunner
 
@@ -34,9 +35,14 @@ CONFIG = {
         },
         'type': 'SAC'
     },
-    'domain': 'Swimmer',
-    'task': 'Default',
-    'env_params': {},
+    'environment_params': {
+        'training': {
+            'universe': 'gym',
+            'domain': 'Swimmer',
+            'task': 'v3',
+            'kwargs': {},
+        },
+    },
     'git_sha':
     'fb03db4b0ffafc61d8ea6d550e7fdebeecb34d15 '
     'refactor/pick-utils-changes',
@@ -68,7 +74,6 @@ CONFIG = {
         },
         'type': 'SimpleSampler'
     },
-    'universe': 'gym'
 }
 
 
@@ -84,7 +89,7 @@ class TestExperimentRunner(tf.test.TestCase):
         tf.keras.backend.clear_session()
         self.assertFalse(tf.trainable_variables())
 
-        config = CONFIG.copy()
+        config = copy.deepcopy(CONFIG)
 
         experiment_runner = ExperimentRunner(config=config)
 
@@ -271,7 +276,7 @@ class TestExperimentRunner(tf.test.TestCase):
         tf.keras.backend.clear_session()
         self.assertFalse(tf.trainable_variables())
 
-        config = CONFIG.copy()
+        config = copy.deepcopy(CONFIG)
 
         config['run_params']['checkpoint_replay_pool'] = True
         experiment_runner = ExperimentRunner(config=config)
@@ -314,10 +319,68 @@ class TestExperimentRunner(tf.test.TestCase):
             set(replay_pool_1.fields.keys()),
             set(replay_pool_2.fields.keys()))
 
-        for field_name, field_attrs in replay_pool_1.fields.items():
+        for field_name in replay_pool_1.fields.keys():
             np.testing.assert_array_equal(
-                getattr(replay_pool_1, field_name),
-                getattr(replay_pool_2, field_name))
+                replay_pool_1.fields[field_name],
+                replay_pool_2.fields[field_name])
+
+    def test_training_env_evaluation_env(self):
+        tf.reset_default_graph()
+        tf.keras.backend.clear_session()
+        self.assertFalse(tf.trainable_variables())
+
+        config = copy.deepcopy(CONFIG)
+        config['environment_params']['evaluation'] = (
+            config['environment_params']['training'])
+
+        config['run_params']['checkpoint_replay_pool'] = True
+        experiment_runner = ExperimentRunner(config=config)
+
+        session = experiment_runner._session
+        experiment_runner._build()
+
+        self.assertIsNot(experiment_runner.training_environment,
+                         experiment_runner.evaluation_environment)
+
+        self.assertEqual(experiment_runner.algorithm._epoch, 0)
+        self.assertEqual(experiment_runner.algorithm._timestep, 0)
+        self.assertEqual(experiment_runner.algorithm._total_timestep, 0)
+        self.assertFalse(experiment_runner.algorithm._training_started)
+
+        self.assertEqual(experiment_runner.replay_pool.size, 0)
+        self.assertEqual(session.run(experiment_runner.algorithm._alpha), 1.0)
+
+        for i in range(2):
+            experiment_runner.train()
+
+    def test_uses_training_env_as_evaluation_env(self):
+        tf.reset_default_graph()
+        tf.keras.backend.clear_session()
+        self.assertFalse(tf.trainable_variables())
+
+        config = copy.deepcopy(CONFIG)
+
+        self.assertNotIn('evaluation', config['environment_params'])
+
+        config['run_params']['checkpoint_replay_pool'] = True
+        experiment_runner = ExperimentRunner(config=config)
+
+        session = experiment_runner._session
+        experiment_runner._build()
+
+        self.assertIs(experiment_runner.training_environment,
+                      experiment_runner.evaluation_environment)
+
+        self.assertEqual(experiment_runner.algorithm._epoch, 0)
+        self.assertEqual(experiment_runner.algorithm._timestep, 0)
+        self.assertEqual(experiment_runner.algorithm._total_timestep, 0)
+        self.assertFalse(experiment_runner.algorithm._training_started)
+
+        self.assertEqual(experiment_runner.replay_pool.size, 0)
+        self.assertEqual(session.run(experiment_runner.algorithm._alpha), 1.0)
+
+        for i in range(2):
+            experiment_runner.train()
 
 
 if __name__ == "__main__":
