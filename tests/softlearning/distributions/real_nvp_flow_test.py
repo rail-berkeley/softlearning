@@ -142,6 +142,17 @@ class RealNVPFlowTest(tf.test.TestCase):
         self.assertAllClose(x_, inverse_y_, rtol=1e-4, atol=0.)
         self.assertAllClose(ildj_, -fldj_, rtol=1e-6, atol=1e-8)
 
+    def test_with_batch_normalization(self):
+        x_ = np.reshape(np.linspace(-1.0, 1.0, 8, dtype=np.float32), (-1, 4))
+
+        with self.assertRaises(NotImplementedError):
+            flow = RealNVPFlow(
+                num_coupling_layers=2,
+                hidden_layer_sizes=(64,),
+                event_dims=x_.shape[1:],
+                use_batch_normalization=True,
+            )
+
 
 if __name__ == '__main__':
     tf.test.main()
