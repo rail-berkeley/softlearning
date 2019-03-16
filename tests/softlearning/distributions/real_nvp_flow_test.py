@@ -63,7 +63,7 @@ class RealNVPFlowTest(tf.test.TestCase):
         # Use identity to invalidate cache.
         ildj = flow.inverse_log_det_jacobian(tf.identity(forward_x), event_ndims=1)
 
-        self.evaluate(tf.global_variables_initializer())
+        self.evaluate(tf.compat.v1.global_variables_initializer())
 
         forward_x_ = self.evaluate(forward_x)
         inverse_y_ = self.evaluate(inverse_y)
@@ -87,12 +87,12 @@ class RealNVPFlowTest(tf.test.TestCase):
 
         x = tf.constant(x_)
 
-        assert not tf.trainable_variables()
+        assert not tf.compat.v1.trainable_variables()
 
         forward_x = flow.forward(x)
 
         self.assertEqual(
-            len(tf.trainable_variables()), 4 * flow._num_coupling_layers)
+            len(tf.compat.v1.trainable_variables()), 4 * flow._num_coupling_layers)
 
         inverse_y = flow.inverse(tf.identity(forward_x))
         forward_inverse_y = flow.forward(inverse_y)
@@ -100,10 +100,10 @@ class RealNVPFlowTest(tf.test.TestCase):
         ildj = flow.inverse_log_det_jacobian(
             tf.identity(forward_x), event_ndims=1)
 
-        self.evaluate(tf.global_variables_initializer())
+        self.evaluate(tf.compat.v1.global_variables_initializer())
 
         self.assertEqual(
-            len(tf.trainable_variables()), 4 * flow._num_coupling_layers)
+            len(tf.compat.v1.trainable_variables()), 4 * flow._num_coupling_layers)
 
 
 if __name__ == '__main__':
