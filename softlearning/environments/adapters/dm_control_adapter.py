@@ -41,10 +41,14 @@ class DmControlAdapter(SoftlearningEnv):
                 domain_name=domain,
                 task_name=task,
                 # TODO(hartikainen): Figure out how to pass kwargs to this guy.
+                # Need to split into `task_kwargs`, `environment_kwargs`, and `visualize_reward` bool.
+                # Check the suite.load(.) in: 
+                # https://github.com/deepmind/dm_control/blob/master/dm_control/suite/__init__.py
             )
         else:
             assert domain is None and task is None, (domain, task)
 
+        assert (self.observation_keys is not None)
         # TODO(hartikainen): Need to handle "Dict" observation space keys here.
         # 1. I believe deepmind control suite only has dict observations, so
         #    might not need to do an if-statement like in GymAdapter. Instead,
