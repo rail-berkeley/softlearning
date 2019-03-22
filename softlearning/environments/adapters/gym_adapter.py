@@ -53,11 +53,12 @@ class GymAdapter(SoftlearningEnv):
         assert not args, (
             "Gym environments don't support args. Use kwargs instead.")
 
+        self._Serializable__initialize(locals())
+
         self.normalize = normalize
         self.observation_keys = observation_keys
         self.unwrap_time_limit = unwrap_time_limit
 
-        self._Serializable__initialize(locals())
         super(GymAdapter, self).__init__(domain, task, *args, **kwargs)
 
         if env is None:
