@@ -16,31 +16,31 @@ from .softlearning_env import SoftlearningEnv
 DM_CONTROL_ENVIRONMENTS = {}
 
 def convert_dm_control_to_gym_space(dm_control_space):
-	if isinstance(dm_control_space, BoundedArraySpec):
-		gym_box = spaces.Box(
-			low=dm_control_space.minimum,
-			high=dm_control_space.maximum,
-			shape=None,
-			dtype=dm_control_space.dtype)
-		assert gym_box.shape == dm_control_space.shape, (
-			(gym_box.shape, dm_control_space.shape))
-		return gym_box
-	elif isinstance(dm_control_space, ArraySpec):
-		#convert to Box
-		return spaces.Box(
-			low=-float("inf"),
-			high=float("inf"),
-			shape=dm_control_space.shape,
-			dtype=dm_control_space.dtype)
-	elif isinstance(dm_control_space, OrderedDict):
-		#convert to Dict
-		#convert each value to box if it is an ArraySpec
-		return spaces.Dict(OrderedDict([
-			(key, convert_dm_control_to_gym_space(value))
-			for key, value in dm_control_space.items()
-		]))
-	else:
-		raise ValueError(dm_control_space)
+    if isinstance(dm_control_space, BoundedArraySpec):
+        gym_box = spaces.Box(
+            low=dm_control_space.minimum,
+            high=dm_control_space.maximum,
+            shape=None,
+            dtype=dm_control_space.dtype)
+        assert gym_box.shape == dm_control_space.shape, (
+            (gym_box.shape, dm_control_space.shape))
+        return gym_box
+    elif isinstance(dm_control_space, ArraySpec):
+        #convert to Box
+        return spaces.Box(
+            low=-float("inf"),
+            high=float("inf"),
+            shape=dm_control_space.shape,
+            dtype=dm_control_space.dtype)
+    elif isinstance(dm_control_space, OrderedDict):
+        #convert to Dict
+        #convert each value to box if it is an ArraySpec
+        return spaces.Dict(OrderedDict([
+            (key, convert_dm_control_to_gym_space(value))
+            for key, value in dm_control_space.items()
+        ]))
+    else:
+        raise ValueError(dm_control_space)
 
 class DmControlAdapter(SoftlearningEnv):
     """Adapter that implements the SoftlearningEnv for Gym envs."""
@@ -139,17 +139,17 @@ class DmControlAdapter(SoftlearningEnv):
         return action_space
 
     def step(self, action, *args, **kwargs):
-    	# TODO(hartikainen): this might of different format than the gym
+        # TODO(hartikainen): this might of different format than the gym
         # observation. Needs to return a tuple of:
         #
         # (observation, reward, done, info)
-    	# Will be used (such as in simple_sampler.py): next_observation, reward, terminal, info = self.env.step(action)
+        # Will be used (such as in simple_sampler.py): next_observation, reward, terminal, info = self.env.step(action)
         return self._env.step(action, *args, **kwargs)
 
     def reset(self, *args, **kwargs):
         timestep = self._env.reset(*args, **kwargs)
         flattened_observation = np.concatenate([
-        	obs_array for attr, obs_array in timestep.observation.items()])
+            obs_array for attr, obs_array in timestep.observation.items()])
         return flattened_observation
 
     def render(self, *args, **kwargs):
