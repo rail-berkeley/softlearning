@@ -17,7 +17,6 @@ DM_CONTROL_ENVIRONMENTS = {}
 
 def convert_dm_control_to_gym_space(dm_control_space):
 	if isinstance(dm_control_space, BoundedArraySpec):
-		#import ipdb; ipdb.set_trace()
 		gym_box = spaces.Box(
 			low=dm_control_space.minimum,
 			high=dm_control_space.maximum,
@@ -35,7 +34,7 @@ def convert_dm_control_to_gym_space(dm_control_space):
 			dtype=dm_control_space.dtype)
 	elif isinstance(dm_control_space, OrderedDict):
 		#convert to Dict
-		#convert each value to box if it was ArraySpec
+		#convert each value to box if it is an ArraySpec
 		return spaces.Dict(OrderedDict([
 			(key, convert_dm_control_to_gym_space(value))
 			for key, value in dm_control_space.items()
@@ -64,12 +63,12 @@ class DmControlAdapter(SoftlearningEnv):
 
         self._Serializable__initialize(locals())
         super(DmControlAdapter, self).__init__(domain, task, *args, **kwargs)
-
         if env is None:
             assert (domain is not None and task is not None), (domain, task)
             env = suite.load(
                 domain_name=domain,
                 task_name=task,
+                task_kwargs=kwargs
                 # TODO(hartikainen): Figure out how to pass kwargs to this guy.
                 # Need to split into `task_kwargs`, `environment_kwargs`, and `visualize_reward` bool.
                 # Check the suite.load(.) in: 
@@ -91,13 +90,8 @@ class DmControlAdapter(SoftlearningEnv):
 
     @property
     def observation_space(self):
-        # TODO(hartikainen): Figure out how to retrieve the observation space
-        # from `self._env`. Something like:
-        # observation_space = self._env.observation_space
-        # return observation_space
-        raise NotImplementedError(
-            "TODO(hartikainen): Figure out how to retrieve the observation"
-            "space from `self._env`. Something like:")
+        observation_space = convert_dm_control_to_gym_space(self._env.observation_spec())
+        return observation_space
 
     @property
     def active_observation_shape(self):
@@ -143,8 +137,8 @@ class DmControlAdapter(SoftlearningEnv):
         #         "Action space ({}) is not flat, make sure to check the"
         #         " implemenation.".format(action_space))
         # return action_space
-        raise NotImplementedError(
-            "TODO(hartikainen): Figure out how to return env action space.")
+        action_space = convert_dm_control_to_gym_space(self._env.action_spec())
+        return action_space
 
     def step(self, action, *args, **kwargs):
         return self._env.step(action, *args, **kwargs)
