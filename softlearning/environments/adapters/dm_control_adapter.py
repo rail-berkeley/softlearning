@@ -58,7 +58,6 @@ class DmControlAdapter(SoftlearningEnv):
             "Gym environments don't support args. Use kwargs instead.")
 
         self.normalize = normalize
-        self.observation_keys = observation_keys
         self.unwrap_time_limit = unwrap_time_limit
 
         self._Serializable__initialize(locals())
@@ -76,11 +75,10 @@ class DmControlAdapter(SoftlearningEnv):
             )
         else:
             assert domain is None and task is None, (domain, task)
-        # TODO(hartikainen): Need to handle "Dict" observation space keys here.
-        # 1. I believe deepmind control suite only has dict observations, so
-        #    might not need to do an if-statement like in GymAdapter. Instead,
-        #    always have `self.observation_keys` set.
 
+        assert isinstance(env.observation_spec(), OrderedDict)
+        self.observation_keys = (
+            observation_keys or tuple(env.observation_spec().keys()))
         # TODO(hartikainen): Do we need to normalize actions? For now, assume
         # we don't.
 
@@ -149,7 +147,7 @@ class DmControlAdapter(SoftlearningEnv):
     def reset(self, *args, **kwargs):
         timestep = self._env.reset(*args, **kwargs)
         flattened_observation = np.concatenate([
-            obs_array for attr, obs_array in timestep.observation.items()])
+            timestep.observation[key] for key in self.observation_keys])
         return flattened_observation
 
     def render(self, *args, **kwargs):
