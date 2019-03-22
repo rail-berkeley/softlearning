@@ -3,7 +3,7 @@ from .adapters.gym_adapter import (
     GymAdapter,
 )
 
-from .adapter.dm_control_adapter import (
+from .adapters.dm_control_adapter import (
     DM_CONTROL_ENVIRONMENTS,
     DmControlAdapter,
 )
