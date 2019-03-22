@@ -90,19 +90,12 @@ class DmControlAdapter(SoftlearningEnv):
     @property
     def active_observation_shape(self):
         """Shape for the active observation based on observation_keys."""
-
-        # TODO(hartikainen): Figure out how to parse the dictionary observation
-        # space and convert it's shape into a "flattened" shape. Something
-        # like:
-        # active_size = sum(
-        #     np.prod(self._env.observation_space.spaces[key].shape)
-        #     for key in observation_keys)
-        # active_observation_shape = (active_size, )
-        # return active_observation_shape
-
-        raise NotImplementedError(
-            "TODO(hartikainen): Figure out how to parse the dictionary "
-            "observation space and convert it's shape into a flattened shape.")
+        observation_space = self.observation_space
+        active_size = sum(
+            np.prod(observation_space.spaces[key].shape)
+            for key in self.observation_keys)
+        active_shape = (int(active_size), )
+        return active_shape
 
     def convert_to_active_observation(self, observation):
         flattened_observation = np.concatenate([
