@@ -4,7 +4,10 @@
 # TODO(hartikainen): Need numpy? Import it here.
 # import numpy as np
 
+from collections import OrderedDict
 from dm_control import suite
+from dm_control.rl.specs import ArraySpec, BoundedArraySpec
+from gym import spaces
 
 from .softlearning_env import SoftlearningEnv
 
@@ -12,6 +15,33 @@ from .softlearning_env import SoftlearningEnv
 # See `gym_adapter.py` for example.
 DM_CONTROL_ENVIRONMENTS = {}
 
+def convert_dm_control_to_gym_space(dm_control_space):
+	if isinstance(dm_control_space, BoundedArraySpec):
+		#import ipdb; ipdb.set_trace()
+		gym_box = spaces.Box(
+			low=dm_control_space.minimum,
+			high=dm_control_space.maximum,
+			shape=None,
+			dtype=dm_control_space.dtype)
+		assert gym_box.shape == dm_control_space.shape, (
+			(gym_box.shape, dm_control_space.shape))
+		return gym_box
+	elif isinstance(dm_control_space, ArraySpec):
+		#convert to Box
+		return spaces.Box(
+			low=-float("inf"),
+			high=float("inf"),
+			shape=dm_control_space.shape,
+			dtype=dm_control_space.dtype)
+	elif isinstance(dm_control_space, OrderedDict):
+		#convert to Dict
+		#convert each value to box if it was ArraySpec
+		return spaces.Dict(OrderedDict([
+			(key, convert_dm_control_to_gym_space(value))
+			for key, value in dm_control_space.items()
+		]))
+	else:
+		raise ValueError(dm_control_space)
 
 class DmControlAdapter(SoftlearningEnv):
     """Adapter that implements the SoftlearningEnv for Gym envs."""
