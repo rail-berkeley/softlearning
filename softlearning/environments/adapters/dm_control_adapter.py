@@ -2,9 +2,9 @@
 
 
 # TODO(hartikainen): Need numpy? Import it here.
-# import numpy as np
 
 from collections import OrderedDict
+import numpy as np
 from dm_control import suite
 from dm_control.rl.specs import ArraySpec, BoundedArraySpec
 from gym import spaces
@@ -76,8 +76,6 @@ class DmControlAdapter(SoftlearningEnv):
             )
         else:
             assert domain is None and task is None, (domain, task)
-
-        assert (self.observation_keys is not None)
         # TODO(hartikainen): Need to handle "Dict" observation space keys here.
         # 1. I believe deepmind control suite only has dict observations, so
         #    might not need to do an if-statement like in GymAdapter. Instead,
@@ -141,17 +139,18 @@ class DmControlAdapter(SoftlearningEnv):
         return action_space
 
     def step(self, action, *args, **kwargs):
-        return self._env.step(action, *args, **kwargs)
-
-    def reset(self, *args, **kwargs):
-        # TODO(hartikainen): this might of different format than the gym
+    	# TODO(hartikainen): this might of different format than the gym
         # observation. Needs to return a tuple of:
         #
         # (observation, reward, done, info)
+    	# Will be used (such as in simple_sampler.py): next_observation, reward, terminal, info = self.env.step(action)
+        return self._env.step(action, *args, **kwargs)
 
-        # where `observation` is a dictionary of numpy arrays, `reward` is a
-        # scalar, `done` is a boolean, and `info` is a dictionary.
-        return self._env.reset(*args, **kwargs)
+    def reset(self, *args, **kwargs):
+        timestep = self._env.reset(*args, **kwargs)
+        flattened_observation = np.concatenate([
+        	obs_array for attr, obs_array in timestep.observation.items()])
+        return flattened_observation
 
     def render(self, *args, **kwargs):
         return self._env.render(*args, **kwargs)
