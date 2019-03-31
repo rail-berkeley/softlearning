@@ -16,12 +16,23 @@ DM_CONTROL_ENVIRONMENTS = {}
 
 
 def convert_dm_control_to_gym_space(dm_control_space):
+    # Note: Need to check the following cases of the input type, in the following order:
+    # (1) BoundedArraySpec
+    # (2) ArraySpec
+    # (3) OrderedDict.
+    # generally, dm_control observation_specs are OrderedDict with some ArraySpec nested items
+    # generally, dm_control action_specs are of type BoundedArraySpec
+    # To handle dm_control observation_specs as inputs, we check the following input types in order
+    # to enable recursive calling on each ArraySpec nested item.
     if isinstance(dm_control_space, BoundedArraySpec):
         gym_box = spaces.Box(
             low=dm_control_space.minimum,
             high=dm_control_space.maximum,
             shape=None,
             dtype=dm_control_space.dtype)
+        # Note: `gym.Box` doesn't allow both shape and min/max to be defined
+        # at the same time. Thus we omit shape in the constructor and verify
+        # that it's been implicitly set correctly.
         assert gym_box.shape == dm_control_space.shape, (
             (gym_box.shape, dm_control_space.shape))
         return gym_box
@@ -99,7 +110,7 @@ class DmControlAdapter(SoftlearningEnv):
 
     def convert_to_active_observation(self, observation):
         flattened_observation = np.concatenate([
-            observation[key] for key in self.observation_keys])
+            observation[key] for key in self.observation_keys], axis=-1)
         return flattened_observation
 
     @property
