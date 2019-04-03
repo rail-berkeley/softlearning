@@ -306,6 +306,7 @@ class SAC(RLAlgorithm):
 
         assert policy_kl_losses.shape.as_list() == [None, 1]
 
+        self._policy_losses = policy_kl_losses
         policy_loss = tf.reduce_mean(policy_kl_losses)
 
         self._policy_optimizer = tf.train.AdamOptimizer(
@@ -385,17 +386,20 @@ class SAC(RLAlgorithm):
 
         feed_dict = self._get_feed_dict(iteration, batch)
 
-        (Q_values, Q_losses, alpha, global_step) = self._session.run(
-            (self._Q_values,
-             self._Q_losses,
-             self._alpha,
-             self.global_step),
-            feed_dict)
+        (Q_values, Q_losses, policy_losses, alpha, global_step) = (
+            self._session.run(
+                (self._Q_values,
+                 self._Q_losses,
+                 self._policy_losses,
+                 self._alpha,
+                 self.global_step),
+                feed_dict))
 
         diagnostics = OrderedDict({
             'Q-avg': np.mean(Q_values),
             'Q-std': np.std(Q_values),
             'Q_loss': np.mean(Q_losses),
+            'policy_loss': np.mean(policy_losses),
             'alpha': alpha,
         })
 
