@@ -94,6 +94,21 @@ USER ubuntu
 
 
 # ========= MuJoCo ===============
+COPY ./scripts/install_mujoco.py /tmp/
+
+RUN /tmp/install_mujoco.py --mujoco-path=/root/.mujoco --versions 1.50 2.00 \
+    && cp -r /root/.mujoco/mujoco200_linux /root/.mujoco/mujoco200 \
+    && rm /tmp/install_mujoco.py
+
+ENV LD_LIBRARY_PATH /root/.mujoco/mjpro150/bin:${LD_LIBRARY_PATH}
+ENV LD_LIBRARY_PATH /root/.mujoco/mujoco200_linux/bin:${LD_LIBRARY_PATH}
+
+# This is a hack required to make mujocopy to compile in gpu mode
+RUN mkdir -p /usr/lib/nvidia-000
+ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/lib/nvidia-000
+
+
+# ========= MuJoCo ===============
 # Mujoco for gym and mujoco_py
 ENV MUJOCO_VERSION=150 \
     MUJOCO_PATH=/home/ubuntu/.mujoco
