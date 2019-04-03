@@ -20,7 +20,7 @@ dask==1.0.0
 decorator==4.3.0
 docutils==0.14
 deepdiff==3.3.0
-git+https://github.com/deepmind/dm_control.git
+git+https://github.com/deepmind/dm_control.git@0260f3effcfe2b0fdb25d9652dc27ba34b52d226
 flatbuffers==1.10
 funcsigs==1.0.2
 future==0.17.1
