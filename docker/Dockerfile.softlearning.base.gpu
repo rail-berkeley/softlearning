@@ -9,7 +9,7 @@ ARG UBUNTU_VERSION=18.04
 ARG ARCH=
 ARG CUDA=10.0
 
-FROM nvidia/cuda${ARCH:+-$ARCH}:${CUDA}-base-ubuntu${UBUNTU_VERSION} as base
+FROM nvidia/cudagl${ARCH:+-$ARCH}:${CUDA}-base-ubuntu${UBUNTU_VERSION} as base
 # ARCH and CUDA are specified again because the FROM directive resets ARGs
 # (but their default value is retained if set previously)
 
@@ -142,6 +142,11 @@ RUN MUJOCO_ZIP="mjpro${MUJOCO_VERSION}_linux.zip" \
     && wget -P ${MUJOCO_PATH} https://www.roboti.us/download/${MUJOCO_ZIP} \
     && unzip ${MUJOCO_PATH}/${MUJOCO_ZIP} -d ${MUJOCO_PATH} \
     && rm ${MUJOCO_PATH}/${MUJOCO_ZIP}
+
+
+# This is a hack required to make mujocopy to compile in gpu mode
+RUN mkdir -p /usr/lib/nvidia-000
+ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/lib/nvidia-000
 
 ENV LD_LIBRARY_PATH /home/ubuntu/.mujoco/mjpro${MUJOCO_VERSION}/bin:${LD_LIBRARY_PATH}
 
