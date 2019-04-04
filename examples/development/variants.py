@@ -286,8 +286,9 @@ def get_variant_spec_image(universe,
             'kwargs': {
                 'image_shape': (
                     variant_spec
-                    ['training']
                     ['environment_params']
+                    ['training']
+                    ['kwargs']
                     ['image_shape']),
                 'output_size': M,
                 'conv_filters': (4, 4),
