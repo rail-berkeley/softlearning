@@ -4,19 +4,18 @@ from collections import OrderedDict
 
 import numpy as np
 from dm_control import suite
+from dm_control import viewer
 from dm_control.rl.specs import ArraySpec, BoundedArraySpec
 from gym import spaces
 
 from .softlearning_env import SoftlearningEnv
 
 
-# TODO(hartikainen): Add information of the available environments.
-# See `gym_adapter.py` for example.
 DM_CONTROL_ENVIRONMENTS = {}
 
 
 def convert_dm_control_to_gym_space(dm_control_space):
-    """Recursively convert dm_control space into gym space.
+    """Recursively convert dm_control_space into gym space.
     Note: Need to check the following cases of the input type, in the following 
     order:
        (1) BoundedArraySpec
@@ -94,8 +93,11 @@ class DmControlAdapter(SoftlearningEnv):
         assert isinstance(env.observation_spec(), OrderedDict)
         self.observation_keys = (
             observation_keys or tuple(env.observation_spec().keys()))
-        # TODO(hartikainen): Do we need to normalize actions? For now, assume
-        # we don't.
+
+        # Ensure action space is already normalized.
+        action_space_bounds = (env.action_spec().minimum[0], env.action_spec().maximum[0])
+        if normalize and action_space_bounds != (-1, 1):
+            raise ValueError("Action space (min, max) should be (-1, 1)")
 
         self._env = env
 
@@ -134,15 +136,21 @@ class DmControlAdapter(SoftlearningEnv):
         reward = timestep.reward
         terminal = timestep.last()
         info = {}
-        #TODO: Find how to extract info
+        #TODO(Alacarter): See if there's a way to pull info from the environment.
         return observation, reward, terminal, info
 
     def reset(self, *args, **kwargs):
         timestep = self._env.reset(*args, **kwargs)
         return timestep.observation
 
-    def render(self, *args, **kwargs):
-        return self._env.render(*args, **kwargs)
+    def render(self, *args, mode="human", camera_id=0, **kwargs):
+        if mode == "human":
+            viewer.launch(self._env)
+            return None
+        elif mode == "rgb_array":
+            return self._env.physics.render(*args, camera_id=camera_id, **kwargs)
+        else:
+            raise NotImplementedError(render_mode)
 
     def close(self, *args, **kwargs):
         return self._env.close(*args, **kwargs)
@@ -152,7 +160,8 @@ class DmControlAdapter(SoftlearningEnv):
 
     @property
     def unwrapped(self):
-        return self._env.unwrapped
+        #return self._env.unwrapped
+        return self._env
 
     def get_param_values(self, *args, **kwargs):
         raise NotImplementedError
