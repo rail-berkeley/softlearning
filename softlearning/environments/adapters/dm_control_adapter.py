@@ -16,14 +16,18 @@ DM_CONTROL_ENVIRONMENTS = {}
 
 
 def convert_dm_control_to_gym_space(dm_control_space):
-    # Note: Need to check the following cases of the input type, in the following order:
-    # (1) BoundedArraySpec
-    # (2) ArraySpec
-    # (3) OrderedDict.
-    # generally, dm_control observation_specs are OrderedDict with some ArraySpec nested items
-    # generally, dm_control action_specs are of type BoundedArraySpec
-    # To handle dm_control observation_specs as inputs, we check the following input types in order
-    # to enable recursive calling on each ArraySpec nested item.
+    """Recursively convert dm_control space into gym space.
+    Note: Need to check the following cases of the input type, in the following 
+    order:
+       (1) BoundedArraySpec
+       (2) ArraySpec
+       (3) OrderedDict.
+    Generally, dm_control observation_specs are OrderedDict with other spaces 
+    (e.g. ArraySpec) nested in it.
+    Generally, dm_control action_specs are of type `BoundedArraySpec`.
+    To handle dm_control observation_specs as inputs, we check the following 
+    input types in order to enable recursive calling on each nested item.
+    """
     if isinstance(dm_control_space, BoundedArraySpec):
         gym_box = spaces.Box(
             low=dm_control_space.minimum,
@@ -37,6 +41,8 @@ def convert_dm_control_to_gym_space(dm_control_space):
             (gym_box.shape, dm_control_space.shape))
         return gym_box
     elif isinstance(dm_control_space, ArraySpec):
+        if isinstance(dm_control_space, BoundedArraySpec):
+            raise ValueError("The order of the if-statements matters.")
         return spaces.Box(
             low=-float("inf"),
             high=float("inf"),
