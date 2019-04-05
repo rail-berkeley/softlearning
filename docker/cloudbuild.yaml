@@ -2,7 +2,6 @@
 steps:
 
 # 1. Build gpu image
-# '--cache-from', 'gcr.io/$PROJECT_ID/[IMAGE_NAME]:latest',
 # Build image with docker-compose
 - name: 'docker/compose:1.24.0'
   args:
@@ -17,14 +16,18 @@ steps:
     - 'IMAGE_NAME=${REPO_NAME}'
     - 'IMAGE_TAG=${SHORT_SHA}'
 
-  # dir: '~/softlearning' # relative to (persistent) /workspace
-
 # 2. Retag the gpu image into a gce repository.
 - name: 'gcr.io/cloud-builders/docker'
   args:
     - 'tag'
     - '${REPO_NAME}:${SHORT_SHA}-gpu'
     - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:${SHORT_SHA}-gpu'
+
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'tag'
+    - '${REPO_NAME}:${SHORT_SHA}-gpu'
+    - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:latest-gpu'
 
 
 # 1. Build cpu image
@@ -41,14 +44,18 @@ steps:
     - 'IMAGE_NAME=${REPO_NAME}'
     - 'IMAGE_TAG=${SHORT_SHA}'
 
-  # dir: '~/softlearning' # relative to (persistent) /workspace
-
 # 2. Retag the cpu image into a gce repository.
 - name: 'gcr.io/cloud-builders/docker'
   args:
     - 'tag'
     - '${REPO_NAME}:${SHORT_SHA}-cpu'
     - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:${SHORT_SHA}-cpu'
+
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'tag'
+    - '${REPO_NAME}:${SHORT_SHA}-cpu'
+    - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:latest-cpu'
 
 
 options:
@@ -80,5 +87,7 @@ secrets:
 
 # logsBucket: 'gs://<bucket-name>'
 images:
+  - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:latest-gpu'
+  - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:latest-cpu'
   - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:${SHORT_SHA}-gpu'
   - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:${SHORT_SHA}-cpu'
