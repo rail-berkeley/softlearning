@@ -5,13 +5,20 @@
 # the container. You are encouraged to use docker-compose (docker-compose.dev.yml),
 # which should allow you to setup your environment with a single one command.
 
-FROM ubuntu:18.04
+ARG UBUNTU_VERSION=18.04
 
-MAINTAINER Kristian Hartikainen <kristian.hartikainen@gmail.com>
+FROM ubuntu:${UBUNTU_VERSION} as base
+
+ARG UBUNTU_VERSION
 
 ARG MJKEY
 
+SHELL ["/bin/bash", "-c"]
+
+# MAINTAINER Kristian Hartikainen <kristian.hartikainen@gmail.com>
+
 ENV DEBIAN_FRONTEND="noninteractive"
+# See http://bugs.python.org/issue19846
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 ENV PATH /opt/conda/bin:$PATH
 
@@ -37,13 +44,14 @@ RUN apt-get install -y curl grep sed dpkg && \
 RUN conda update -y --name base conda
 
 
-# ========== Special Deps ==========
-RUN export DEBIAN_FRONTEND="noninteractive" \
-    && apt update \
-    && apt -yq install \
+# ========== Softlearning dependencies ==========
+RUN apt-get update \
+    # DO NOT apt-get upgrade here, it'll fuck up the tensorflow dependencies
+    && apt-get install -y --no-install-recommends \
         build-essential \
         curl \
         git \
+        gnupg2 \
         make \
         cmake \
         swig \
@@ -62,13 +70,14 @@ RUN export DEBIAN_FRONTEND="noninteractive" \
         libosmesa6-dev \
         lsb-release \
         ack-grep \
+        patchelf \
         vim \
         emacs \
         wget \
         xpra \
         xserver-xorg-dev \
         xvfb \
-    && apt clean \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 

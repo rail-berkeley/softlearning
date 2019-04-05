@@ -16,8 +16,8 @@ FROM nvidia/cuda${ARCH:+-$ARCH}:${CUDA}-base-ubuntu${UBUNTU_VERSION} as base
 ARG UBUNTU_VERSION
 ARG ARCH
 ARG CUDA
-
 ARG CUDNN=7.4.1.5-1
+
 ARG MJKEY
 
 SHELL ["/bin/bash", "-c"]
