@@ -15,10 +15,11 @@ services:
     build:
       context: ../.
       dockerfile: docker/Dockerfile.softlearning.base.gpu
-      # cache_from: null
+      cache_from:
+        - ${IMAGE_NAME:-softlearning}:latest-gpu
       args:
         - MJKEY
-    working_dir: /root/softlearning
+    working_dir: /home/ubuntu/softlearning
     environment:
       - DISPLAY=:0
     ports:
@@ -26,10 +27,10 @@ services:
       - "5000"  # Viskit
       - "8888"  # Jupyter
     volumes:
-       - ~/.aws:/root/.aws  # If using aws, e.g. for s3
-       - ~/.config/gcloud:/root/.config/gcloud  # If using gcp, e.g. for gs
-       - ~/.mujoco/mjkey.txt:/root/.mujoco/mjkey.txt
-       - ..:/root/softlearning
+       - ~/.aws:/home/ubuntu/.aws  # If using aws, e.g. for s3
+       - ~/.config/gcloud:/home/ubuntu/.config/gcloud  # If using gcp, e.g. for gs
+       - ~/.mujoco/mjkey.txt:/home/ubuntu/.mujoco/mjkey.txt
+       - ..:/home/ubuntu/softlearning
     command:
       - bash
     stdin_open: true
