@@ -95,9 +95,9 @@ class DmControlAdapter(SoftlearningEnv):
             observation_keys or tuple(env.observation_spec().keys()))
 
         # Ensure action space is already normalized.
-        action_space_bounds = (env.action_spec().minimum[0], env.action_spec().maximum[0])
-        if normalize and action_space_bounds != (-1, 1):
-            raise ValueError("Action space (min, max) should be (-1, 1)")
+        if normalize:
+            np.testing.assert_equal(env.action_spec().minimum, -1)
+            np.testing.assert_equal(env.action_spec().maximum, 1)i
 
         self._env = env
 
@@ -150,7 +150,7 @@ class DmControlAdapter(SoftlearningEnv):
         elif mode == "rgb_array":
             return self._env.physics.render(*args, camera_id=camera_id, **kwargs)
         else:
-            raise NotImplementedError(render_mode)
+            raise NotImplementedError(mode)
 
     def close(self, *args, **kwargs):
         return self._env.close(*args, **kwargs)
@@ -160,7 +160,6 @@ class DmControlAdapter(SoftlearningEnv):
 
     @property
     def unwrapped(self):
-        #return self._env.unwrapped
         return self._env
 
     def get_param_values(self, *args, **kwargs):
