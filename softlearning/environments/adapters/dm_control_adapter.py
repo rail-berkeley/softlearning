@@ -97,7 +97,7 @@ class DmControlAdapter(SoftlearningEnv):
         # Ensure action space is already normalized.
         if normalize:
             np.testing.assert_equal(env.action_spec().minimum, -1)
-            np.testing.assert_equal(env.action_spec().maximum, 1)i
+            np.testing.assert_equal(env.action_spec().maximum, 1)
 
         self._env = env
 
