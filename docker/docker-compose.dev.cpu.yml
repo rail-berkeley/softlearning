@@ -18,6 +18,7 @@ services:
         - ${IMAGE_NAME:-softlearning}:latest-cpu
       args:
         - MJKEY
+    init: true
     working_dir: /home/ubuntu/softlearning
     environment:
       - DISPLAY=:0
