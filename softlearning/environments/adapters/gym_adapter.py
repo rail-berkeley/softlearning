@@ -53,11 +53,11 @@ class GymAdapter(SoftlearningEnv):
         assert not args, (
             "Gym environments don't support args. Use kwargs instead.")
 
+        self._Serializable__initialize(locals())
+
         self.normalize = normalize
-        self.observation_keys = observation_keys
         self.unwrap_time_limit = unwrap_time_limit
 
-        self._Serializable__initialize(locals())
         super(GymAdapter, self).__init__(domain, task, *args, **kwargs)
 
         if env is None:
@@ -76,7 +76,10 @@ class GymAdapter(SoftlearningEnv):
 
         if isinstance(env.observation_space, spaces.Dict):
             observation_keys = (
-                observation_keys or list(env.observation_space.spaces.keys()))
+                observation_keys or tuple(env.observation_space.spaces.keys()))
+
+        self.observation_keys = observation_keys
+
         if normalize:
             env = NormalizeActionWrapper(env)
 
@@ -93,13 +96,9 @@ class GymAdapter(SoftlearningEnv):
         if not isinstance(self._env.observation_space, spaces.Dict):
             return super(GymAdapter, self).active_observation_shape
 
-        observation_keys = (
-            self.observation_keys
-            or list(self._env.observation_space.spaces.keys()))
-
         active_size = sum(
             np.prod(self._env.observation_space.spaces[key].shape)
-            for key in observation_keys)
+            for key in self.observation_keys)
 
         active_observation_shape = (active_size, )
 
@@ -109,12 +108,8 @@ class GymAdapter(SoftlearningEnv):
         if not isinstance(self._env.observation_space, spaces.Dict):
             return observation
 
-        observation_keys = (
-            self.observation_keys
-            or list(self._env.observation_space.spaces.keys()))
-
         observation = np.concatenate([
-            observation[key] for key in observation_keys
+            observation[key] for key in self.observation_keys
         ], axis=-1)
 
         return observation
