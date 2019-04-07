@@ -1,4 +1,3 @@
-import unittest
 from collections import OrderedDict
 import numpy as np
 from gym import spaces
@@ -12,7 +11,8 @@ class AdapterTestClass(object):
         observation_space = env.observation_space
         self.assertTrue(
             isinstance(observation_space, (spaces.Box, spaces.Dict)))
-        #TODO: Test actual conversion of dimensions and types of inside items; not just outside type
+        # TODO(hartikainen): Test actual conversion of dimensions and types of
+        # inside items; not just outside type.
 
     def test_active_observation_shape(self):
         env = self.create_adapter()

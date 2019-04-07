@@ -4,7 +4,6 @@ from collections import OrderedDict
 
 import numpy as np
 from dm_control import suite
-from dm_control import viewer
 from dm_control.rl.specs import ArraySpec, BoundedArraySpec
 from gym import spaces
 
@@ -16,15 +15,18 @@ DM_CONTROL_ENVIRONMENTS = {}
 
 def convert_dm_control_to_gym_space(dm_control_space):
     """Recursively convert dm_control_space into gym space.
-    Note: Need to check the following cases of the input type, in the following 
+
+    Note: Need to check the following cases of the input type, in the following
     order:
        (1) BoundedArraySpec
        (2) ArraySpec
        (3) OrderedDict.
-    Generally, dm_control observation_specs are OrderedDict with other spaces 
-    (e.g. ArraySpec) nested in it.
-    Generally, dm_control action_specs are of type `BoundedArraySpec`.
-    To handle dm_control observation_specs as inputs, we check the following 
+
+    - Generally, dm_control observation_specs are OrderedDict with other spaces
+      (e.g. ArraySpec) nested in it.
+    - Generally, dm_control action_specs are of type `BoundedArraySpec`.
+
+    To handle dm_control observation_specs as inputs, we check the following
     input types in order to enable recursive calling on each nested item.
     """
     if isinstance(dm_control_space, BoundedArraySpec):
@@ -57,7 +59,7 @@ def convert_dm_control_to_gym_space(dm_control_space):
 
 
 class DmControlAdapter(SoftlearningEnv):
-    """Adapter that implements the SoftlearningEnv for DeepMind Control Suite envs."""
+    """Adapter between SoftlearningEnv and DeepMind Control Suite."""
 
     def __init__(self,
                  domain,
@@ -83,8 +85,8 @@ class DmControlAdapter(SoftlearningEnv):
                 task_name=task,
                 task_kwargs=kwargs
                 # TODO(hartikainen): Figure out how to pass kwargs to this guy.
-                # Need to split into `task_kwargs`, `environment_kwargs`, and `visualize_reward` bool.
-                # Check the suite.load(.) in:
+                # Need to split into `task_kwargs`, `environment_kwargs`, and
+                # `visualize_reward` bool. Check the suite.load(.) in:
                 # https://github.com/deepmind/dm_control/blob/master/dm_control/suite/__init__.py
             )
         else:
@@ -103,7 +105,8 @@ class DmControlAdapter(SoftlearningEnv):
 
     @property
     def observation_space(self):
-        observation_space = convert_dm_control_to_gym_space(self._env.observation_spec())
+        observation_space = convert_dm_control_to_gym_space(
+            self._env.observation_spec())
         return observation_space
 
     @property
@@ -136,7 +139,8 @@ class DmControlAdapter(SoftlearningEnv):
         reward = timestep.reward
         terminal = timestep.last()
         info = {}
-        #TODO(Alacarter): See if there's a way to pull info from the environment.
+        # TODO(Alacarter): See if there's a way to pull info from the
+        # environment.
         return observation, reward, terminal, info
 
     def reset(self, *args, **kwargs):
@@ -145,10 +149,13 @@ class DmControlAdapter(SoftlearningEnv):
 
     def render(self, *args, mode="human", camera_id=0, **kwargs):
         if mode == "human":
-            raise NotImplementedError("TODO(Alacarter): Figure out how to not continuously launch"
-            " viewers if one is already open. <https://github.com/deepmind/dm_control/issues/39>")
+            raise NotImplementedError(
+                "TODO(Alacarter): Figure out how to not continuously launch"
+                " viewers if one is already open."
+                " See: https://github.com/deepmind/dm_control/issues/39.")
         elif mode == "rgb_array":
-            return self._env.physics.render(*args, camera_id=camera_id, **kwargs)
+            return self._env.physics.render(
+                *args, camera_id=camera_id, **kwargs)
         else:
             raise NotImplementedError(mode)
 
