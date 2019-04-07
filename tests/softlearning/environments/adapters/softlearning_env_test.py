@@ -55,13 +55,15 @@ class AdapterTestClass(object):
         observation = env.reset()
         self.assertIsInstance(observation, expected_observation_type)
 
-    # @unittest.skip("The test annoyingly opens a glfw window.")
-    def test_render(self):
+    def test_render_rgb_array(self):
         env = self.create_adapter()
-        #result_human = env.render(mode="human")
-        #self.assertIsInstance(result_human, None)
         result = env.render(mode='rgb_array')
         self.assertIsInstance(result, np.ndarray)
+
+    def test_render_human(self):
+        env = self.create_adapter()
+        result = env.render(mode='human')
+        self.assertIsNone(result)
 
     def test_close(self):
         env = self.create_adapter()

@@ -28,6 +28,12 @@ class TestDmControlAdapter(unittest.TestCase, AdapterTestClass):
             print("testing: ", domain, task)
             verify_reset_and_step(domain, task)
 
+    def test_render_human(self):
+        env = self.create_adapter()
+        with self.assertRaises(NotImplementedError):
+            result = env.render(mode='human')
+            self.assertIsNone(result)
+
     def test_environment_kwargs(self):
         # TODO(hartikainen): Figure this out later.
         pass
