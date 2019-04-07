@@ -145,8 +145,10 @@ class DmControlAdapter(SoftlearningEnv):
 
     def render(self, *args, mode="human", camera_id=0, **kwargs):
         if mode == "human":
-            viewer.launch(self._env)
-            return None
+            #TODO(Alacarter): Figure out how to not continuously launch viewers if one is already open.
+            raise NotImplementedError
+            #viewer.launch(self._env)
+            #return None
         elif mode == "rgb_array":
             return self._env.physics.render(*args, camera_id=camera_id, **kwargs)
         else:
