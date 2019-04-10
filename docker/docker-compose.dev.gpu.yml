@@ -20,7 +20,7 @@ services:
       args:
         - MJKEY
     init: true
-    working_dir: /home/ubuntu/softlearning
+    working_dir: /root/softlearning
     environment:
       - DISPLAY=:0
     ports:
@@ -28,10 +28,10 @@ services:
       - "5000"  # Viskit
       - "8888"  # Jupyter
     volumes:
-       - ~/.aws:/home/ubuntu/.aws  # If using aws, e.g. for s3
-       - ~/.config/gcloud:/home/ubuntu/.config/gcloud  # If using gcp, e.g. for gs
-       - ~/.mujoco/mjkey.txt:/home/ubuntu/.mujoco/mjkey.txt
-       - ..:/home/ubuntu/softlearning
+       - ~/.aws:/root/.aws  # If using aws, e.g. for s3
+       - ~/.config/gcloud:/root/.config/gcloud  # If using gcp, e.g. for gs
+       - ~/.mujoco/mjkey.txt:/root/.mujoco/mjkey.txt
+       - ..:/root/softlearning
     command:
       - bash
     stdin_open: true
