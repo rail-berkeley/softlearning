@@ -210,7 +210,7 @@ class SQL(RLAlgorithm):
         assert_shape(next_value, [None, 1])
 
         # Importance weights add just a constant to the value.
-        next_value -= tf.log(tf.to_float(self._value_n_particles))
+        next_value -= tf.log(tf.cast(self._value_n_particles, tf.float32))
         next_value += np.prod(self._action_shape) * np.log(2)
 
         # \hat Q in Equation 11:
@@ -242,14 +242,7 @@ class SQL(RLAlgorithm):
                     name='{}_{}_optimizer'.format(Q._name, i)
                 ) for i, Q in enumerate(self._Qs))
             Q_training_ops = tuple(
-                tf.contrib.layers.optimize_loss(
-                    Q_loss,
-                    None,
-                    learning_rate=self._Q_lr,
-                    optimizer=Q_optimizer,
-                    variables=Q.trainable_variables,
-                    increment_global_step=False,
-                    summaries=())
+                Q_optimizer.minimize(loss=Q_loss, var_list=Q.trainable_variables)
                 for i, (Q, Q_loss, Q_optimizer)
                 in enumerate(zip(self._Qs, Q_losses, self._Q_optimizers)))
 

@@ -71,6 +71,7 @@ def add_command_line_args_to_variant_spec(variant_spec, command_line_args):
 
 
 def generate_experiment(trainable_class, variant_spec, command_line_args):
+    # TODO(hartikainen): Allow local dir to be modified through cli args
     local_dir = os.path.join(
         '~/ray_results',
         command_line_args.universe,

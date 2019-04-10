@@ -7,20 +7,18 @@ import subprocess
 
 def parse_args():
     parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        'archive_path', type=str, default=None, nargs='?')
-    parser.add_argument(
-        '--dry', action='store_true', default=False)
+    parser.add_argument('archive_path', type=str, default=None, nargs='?')
+    parser.add_argument('--unarchive', action='store_true', default=False)
+    parser.add_argument('--dry', action='store_true', default=False)
     args = parser.parse_args()
 
     return args
 
 
-def sync_gs(args):
+def archive_gs(args):
     """Archive files in google cloud storage bucket.
 
-    Moves files from `<bucket>/ray/results` to `<bucket>/archive/ray_results`.
+    Moves files from `<bucket>/ray/results` to `<bucket>/archive/ray/results`.
 
     TODO(hartikainen): Refactor this to use project config instead of
         environment variables (e.g. `SAC_GS_BUCKET`).
@@ -37,9 +35,9 @@ def sync_gs(args):
     archive_url = os.path.join(archive_results_path, args.archive_path)
 
     src_url, dst_url = (
-        fresh_url, archive_url
+        (archive_url, fresh_url)
         if args.unarchive
-        else archive_url, fresh_url)
+        else (fresh_url, archive_url))
 
     command_parts = ['gsutil', '-m', 'mv', src_url, dst_url]
     command = " ".join(command_parts)
@@ -53,7 +51,7 @@ def sync_gs(args):
 
 def main():
     args = parse_args()
-    sync_gs(args)
+    archive_gs(args)
 
 
 if __name__ == '__main__':

@@ -213,6 +213,8 @@ class GaussianPolicy(LatentSpacePolicy):
 
             'actions-mean': np.mean(actions_np),
             'actions-std': np.std(actions_np),
+            'actions-min': np.min(actions_np),
+            'actions-max': np.max(actions_np),
         })
 
 

@@ -1,0 +1,93 @@
+# https://cloud.google.com/cloud-build/docs/build-config
+steps:
+
+# 1. Build gpu image
+# Build image with docker-compose
+- name: 'docker/compose:1.24.0'
+  args:
+    - '-f'
+    - '/workspace/docker/docker-compose.dev.gpu.yml'
+    - 'build'
+    - '--force-rm'
+    - '--parallel'
+  secretEnv:
+    - MJKEY
+  env:
+    - 'IMAGE_NAME=${REPO_NAME}'
+    - 'IMAGE_TAG=${SHORT_SHA}'
+
+# 2. Retag the gpu image into a gce repository.
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'tag'
+    - '${REPO_NAME}:${SHORT_SHA}-gpu'
+    - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:${SHORT_SHA}-gpu'
+
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'tag'
+    - '${REPO_NAME}:${SHORT_SHA}-gpu'
+    - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:latest-gpu'
+
+
+# 1. Build cpu image
+- name: 'docker/compose:1.24.0'
+  args:
+    - '-f'
+    - '/workspace/docker/docker-compose.dev.cpu.yml'
+    - 'build'
+    - '--force-rm'
+    - '--parallel'
+  secretEnv:
+    - MJKEY
+  env:
+    - 'IMAGE_NAME=${REPO_NAME}'
+    - 'IMAGE_TAG=${SHORT_SHA}'
+
+# 2. Retag the cpu image into a gce repository.
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'tag'
+    - '${REPO_NAME}:${SHORT_SHA}-cpu'
+    - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:${SHORT_SHA}-cpu'
+
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'tag'
+    - '${REPO_NAME}:${SHORT_SHA}-cpu'
+    - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:latest-cpu'
+
+
+options:
+    substitution_option: 'ALLOW_LOOSE'
+secrets:
+- kmsKeyName: projects/tuomas-softlearning/locations/global/keyRings/softlearning-ring/cryptoKeys/softlearning-test
+  secretEnv:
+    MJKEY: |
+      CiQAAis3HkqhleV++GZn2GvPx8fsw7lGNoPscpAqqdhMA8T64ZgS7wcAsW+D72srQXBnF3Gxpn/D
+      WVPtYTiehuCCC+Knnl9MqU/X4/8b1TIqYzPfZMZmP85b4gzWZJ4LPYJVVZbjzZI3vSn8OB0ejXa3
+      5AK+NIjonhq/6/f6CeXJxlEXj8OL7PwFFe09yMjmpvcJPsvgJrGseKuZU/Bbl4iR3DTtNqA/0eId
+      YhPmuq3XL4MCnVQ+OKNFfQZtCHEVXNvtBjZ0j0U6/pQMEOmhbOzp/zMEYeMH4/P553bF3m3L7Qi5
+      Zt8lIVqIHs4mI9VBKQ2CRlUzIh5+Y8Luk5csErHM9ilg6dViEJAA3+cEijd92x3Df2/NevQdN7FB
+      c74obb5u87V6GRjYor0HJujH9RJNcFXKs5Wi9x1/8Fw4fNH2fDBEAdOjDsSlL9zF/b6+9D3ncvan
+      aWhtzNjr14coi9Ay9LoSJZRaCLUIB1VG6w5deQMpKuEs9b54u9UkwgMys5H9sEEnsuc6IQR1Prnz
+      7xQN7I8XfiSYwg3xoWgHMNHrcyZ/FLNXhP3j51L1AboSaNfe1SPrtiJie2pjrcaLMNI7iWbUkLgs
+      JFvszGbbDTFTw6RA+U+uz6S4EnioFJJHHxsM0nB7CU7JC81PQ2m1lKdaKWMcZ5qsIyj7iFZjQWn0
+      b1LMuPD0xdOt2FQ7BPlX8uE9Qrc3xJRFgscW0O0I1880OrjFaLQlosQjE/Sz43VaBE/xTsnRWAxT
+      gVK3wK0pok5oiLxwbvXII0T/tv5lQdOxAcbKhEMXSWLZv86tQaOKW6rFPrL2MY2yEOcE3bk1oHzX
+      vutfuCxdWKz42IPWFEhs69NxgxT1iBLRqR9KjKiTYnnXdTjOxJ0i/M1Q8PoMTB6QwXsyrYwDjsR7
+      yK8jmKNuFmi4N535bOLg2z+wN4ClHdwlJODrcBFBCI0Xbykd/KBlX+VuStd/E6NOuAEgl3XqBPNw
+      baHVo9OAyhLFNxGc9mrX3uKywzwEfkiDi0Zo0KLN4hi7J19kGvuKja22sm9aMpmeZKFMEP7bMc/3
+      YwGvLAMPmGKhDbmFDOkyKwy/RPifVHomCJ0U8s29PSHxjTmukooYLsVHe1OVbkz44Xo68xQ6afLz
+      LBVLfEIcWClbmDNYxDrCUQXnrZyGHpeNG3rCzqTX6a7ZUDh0locX9f+JphggJrcV05zBNiXeQ+XZ
+      lxuAI0cnx4euiHZb6MRXA3H6TlS9PIEF4n7eLuIC827w55qMRmJmEY59mZ/1xqs8buln087mcz4b
+      HIG5KpRwrSC80JHVpdiXrxupOjvknSWmvMo34dmNZvazcVkcWqT8otjwV8FDU7kTlIe+pXbV9YQx
+      eBMtntxk93yy9vM7RHvMccGObx/iaQ==
+
+
+# logsBucket: 'gs://<bucket-name>'
+images:
+  - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:latest-gpu'
+  - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:latest-cpu'
+  - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:${SHORT_SHA}-gpu'
+  - 'gcr.io/${PROJECT_ID}/${REPO_NAME}:${SHORT_SHA}-cpu'

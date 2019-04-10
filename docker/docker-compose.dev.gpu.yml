@@ -9,14 +9,17 @@
 version: "2.4"
 services:
   softlearning-dev-gpu:
-    image: softlearning:${SOFTLEARNING_DEV_GPU_TAG}
+    image: ${IMAGE_NAME:-softlearning}:${IMAGE_TAG:-latest}-gpu
     container_name: softlearning-dev-gpu
     runtime: nvidia
     build:
       context: ../.
       dockerfile: docker/Dockerfile.softlearning.base.gpu
+      cache_from:
+        - ${IMAGE_NAME:-softlearning}:latest-gpu
       args:
         - MJKEY
+    init: true
     working_dir: /root/softlearning
     environment:
       - DISPLAY=:0
@@ -27,8 +30,9 @@ services:
     volumes:
        - ~/.aws:/root/.aws  # If using aws, e.g. for s3
        - ~/.config/gcloud:/root/.config/gcloud  # If using gcp, e.g. for gs
-       - ~/.mujoco/mjkey.txt:/root/.mujoco/mjkey.txt  # mjkey.txt
+       - ~/.mujoco/mjkey.txt:/root/.mujoco/mjkey.txt
        - ..:/root/softlearning
+       - ~/ray_results/softlearning-dev-gpu:/root/ray_results
     command:
       - bash
     stdin_open: true
