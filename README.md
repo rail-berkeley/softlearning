@@ -12,7 +12,7 @@ The environment can be run either locally using conda or inside a docker contain
 
 ## Conda Installation
 
-1. [Download](https://www.roboti.us/index.html) and install MuJoCo 1.50 from the MuJoCo website. We assume that the MuJoCo files are extracted to the default location (`~/.mujoco/mjpro150`).
+1. [Download](https://www.roboti.us/index.html) and install MuJoCo 1.50 and 2.00 from the MuJoCo website. We assume that the MuJoCo files are extracted to the default location (`~/.mujoco/mjpro150` and `~/.mujoco/mujoco200_{platform}`). Unfortunately, `gym` and `dm_control` expect different paths for MuJoCo 2.00 installation, which is why you will need to have it installed both in `~/.mujoco/mujoco200_{platform}` and `~/.mujoco/mujoco200`. The easiest way is to create a symlink from `~/.mujoco/mujoco200_{plaftorm}` -> `~/.mujoco/mujoco200` with: `ln -s ~/.mujoco/mujoco200_linux ~/.mujoco/mujoco200`.
 
 2. Copy your MuJoCo license key (mjkey.txt) to ~/.mujoco/mjkey.txt:
 
