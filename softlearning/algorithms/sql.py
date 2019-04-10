@@ -210,7 +210,7 @@ class SQL(RLAlgorithm):
         assert_shape(next_value, [None, 1])
 
         # Importance weights add just a constant to the value.
-        next_value -= tf.log(tf.to_float(self._value_n_particles))
+        next_value -= tf.log(tf.cast(self._value_n_particles, tf.float32))
         next_value += np.prod(self._action_shape) * np.log(2)
 
         # \hat Q in Equation 11:
