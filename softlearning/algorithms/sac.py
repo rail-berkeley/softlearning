@@ -3,6 +3,7 @@ from numbers import Number
 
 import numpy as np
 import tensorflow as tf
+import tensorflow_probability as tfp
 from tensorflow.python.training import training_util
 
 from .rl_algorithm import RLAlgorithm
@@ -31,7 +32,6 @@ class SAC(RLAlgorithm):
             Qs,
             pool,
             plotter=None,
-            tf_summaries=False,
 
             lr=3e-4,
             reward_scale=1.0,
@@ -79,7 +79,6 @@ class SAC(RLAlgorithm):
 
         self._pool = pool
         self._plotter = plotter
-        self._tf_summaries = tf_summaries
 
         self._policy_lr = lr
         self._Q_lr = lr
@@ -230,17 +229,9 @@ class SAC(RLAlgorithm):
                 learning_rate=self._Q_lr,
                 name='{}_{}_optimizer'.format(Q._name, i)
             ) for i, Q in enumerate(self._Qs))
+
         Q_training_ops = tuple(
-            tf.contrib.layers.optimize_loss(
-                Q_loss,
-                self.global_step,
-                learning_rate=self._Q_lr,
-                optimizer=Q_optimizer,
-                variables=Q.trainable_variables,
-                increment_global_step=False,
-                summaries=((
-                    "loss", "gradients", "gradient_norm", "global_gradient_norm"
-                ) if self._tf_summaries else ()))
+            Q_optimizer.minimize(loss=Q_loss, var_list=Q.trainable_variables)
             for i, (Q, Q_loss, Q_optimizer)
             in enumerate(zip(self._Qs, Q_losses, self._Q_optimizers)))
 
@@ -284,7 +275,7 @@ class SAC(RLAlgorithm):
         self._alpha = alpha
 
         if self._action_prior == 'normal':
-            policy_prior = tf.contrib.distributions.MultivariateNormalDiag(
+            policy_prior = tfp.distributions.MultivariateNormalDiag(
                 loc=tf.zeros(self._action_shape),
                 scale_diag=tf.ones(self._action_shape))
             policy_prior_log_probs = policy_prior.log_prob(actions)
@@ -312,16 +303,10 @@ class SAC(RLAlgorithm):
         self._policy_optimizer = tf.train.AdamOptimizer(
             learning_rate=self._policy_lr,
             name="policy_optimizer")
-        policy_train_op = tf.contrib.layers.optimize_loss(
-            policy_loss,
-            self.global_step,
-            learning_rate=self._policy_lr,
-            optimizer=self._policy_optimizer,
-            variables=self._policy.trainable_variables,
-            increment_global_step=False,
-            summaries=(
-                "loss", "gradients", "gradient_norm", "global_gradient_norm"
-            ) if self._tf_summaries else ())
+
+        policy_train_op = self._policy_optimizer.minimize(
+            loss=policy_loss,
+            var_list=self._policy.trainable_variables)
 
         self._training_ops.update({'policy_train_op': policy_train_op})
 

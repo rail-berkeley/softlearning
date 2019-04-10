@@ -242,14 +242,7 @@ class SQL(RLAlgorithm):
                     name='{}_{}_optimizer'.format(Q._name, i)
                 ) for i, Q in enumerate(self._Qs))
             Q_training_ops = tuple(
-                tf.contrib.layers.optimize_loss(
-                    Q_loss,
-                    None,
-                    learning_rate=self._Q_lr,
-                    optimizer=Q_optimizer,
-                    variables=Q.trainable_variables,
-                    increment_global_step=False,
-                    summaries=())
+                Q_optimizer.minimize(loss=Q_loss, var_list=Q.trainable_variables)
                 for i, (Q, Q_loss, Q_optimizer)
                 in enumerate(zip(self._Qs, Q_losses, self._Q_optimizers)))
 
