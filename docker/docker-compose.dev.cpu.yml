@@ -31,6 +31,7 @@ services:
        - ~/.config/gcloud:/root/.config/gcloud  # If using gcp, e.g. for gs
        - ~/.mujoco/mjkey.txt:/root/.mujoco/mjkey.txt
        - ..:/root/softlearning
+       - ~/ray_results/softlearning-dev-cpu:/root/ray_results
     command:
       - bash
     stdin_open: true
