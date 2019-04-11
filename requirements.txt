@@ -4,7 +4,7 @@ astor==0.7.1
 atomicwrites==1.2.1
 attrs==18.2.0
 awscli==1.16.140
-boto3==1.9.57
+boto3==1.9.130
 botocore==1.12.130
 cachetools==3.0.0
 cffi==1.11.5
@@ -30,6 +30,7 @@ glfw==1.7.0
 google-api-python-client==1.7.5
 google-auth==1.6.1
 google-auth-httplib2==0.0.3
+google-compute-engine=2.8.13
 grpcio==1.16.1
 gtimer==1.0.0b5
 gym==0.12.1
@@ -69,7 +70,7 @@ pytest==4.0.1
 python-dateutil==2.7.5
 pytz==2018.7
 PyWavelets==1.0.1
-PyYAML==4.2b4
+PyYAML==5.1
 psutil==5.4.8
 ray[rllib,debug]==0.6.4
 redis==3.0.1
