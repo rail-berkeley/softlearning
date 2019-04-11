@@ -30,7 +30,7 @@ glfw==1.7.0
 google-api-python-client==1.7.5
 google-auth==1.6.1
 google-auth-httplib2==0.0.3
-google-compute-engine=2.8.13
+google-compute-engine==2.8.13
 grpcio==1.16.1
 gtimer==1.0.0b5
 gym==0.12.1
