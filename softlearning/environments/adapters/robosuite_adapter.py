@@ -1,43 +1,34 @@
 """Implements a RobosuiteAdapter that converts Robosuite envs into SoftlearningEnv."""
 
+from collections import OrderedDict
+
 import numpy as np
+import robosuite as suite
 import gym
-from gym import spaces, wrappers
+from gym import spaces
 
 from .softlearning_env import SoftlearningEnv
-#"""
-from softlearning.environments.gym import register_environments
-from softlearning.environments.gym.wrappers import NormalizeActionWrapper
-from collections import defaultdict
+from softlearning.environments.adapters.gym_adapter import GymAdapter
 
+ROBOSUITE_ENVIRONMENTS = {}
 
-def parse_domain_task(gym_id):
-    domain_task_parts = gym_id.split('-')
-    domain = '-'.join(domain_task_parts[:1])
-    task = '-'.join(domain_task_parts[1:])
+def convert_robosuite_to_gym_obs_space(robosuite_obs_space):
+    assert isinstance(robosuite_obs_space, OrderedDict)
+    listDict = []
+    for key, value in robosuite_obs_space.items():
+        listDict.append((key, spaces.Box(
+            low=-float("inf"),
+            high=float("inf"),
+            shape=(len(value),),
+            dtype=np.float32)))
+    return spaces.Dict(OrderedDict(listDict))
 
-    return domain, task
-
-
-CUSTOM_GYM_ENVIRONMENT_IDS = register_environments()
-CUSTOM_GYM_ENVIRONMENTS = defaultdict(list)
-
-for gym_id in CUSTOM_GYM_ENVIRONMENT_IDS:
-    domain, task = parse_domain_task(gym_id)
-    CUSTOM_GYM_ENVIRONMENTS[domain].append(task)
-
-CUSTOM_GYM_ENVIRONMENTS = dict(CUSTOM_GYM_ENVIRONMENTS)
-
-GYM_ENVIRONMENT_IDS = tuple(gym.envs.registry.env_specs.keys())
-GYM_ENVIRONMENTS = defaultdict(list)
-
-
-for gym_id in GYM_ENVIRONMENT_IDS:
-    domain, task = parse_domain_task(gym_id)
-    GYM_ENVIRONMENTS[domain].append(task)
-
-GYM_ENVIRONMENTS = dict(GYM_ENVIRONMENTS)
-#"""
+def convert_robosuite_to_gym_action_space(robosuite_action_space):
+    assert isinstance(robosuite_action_space, tuple)
+    return spaces.Box(
+        low=robosuite_action_space[0],
+        high=robosuite_action_space[1],
+        dtype=np.float32)
 
 class RobosuiteAdapter(SoftlearningEnv):
     """Adapter that implements the SoftlearningEnv for Robosuite envs."""
@@ -63,42 +54,37 @@ class RobosuiteAdapter(SoftlearningEnv):
 
         if env is None:
             assert (domain is not None and task is not None), (domain, task)
-            env_id = f"{domain}-{task}"
-            env = gym.envs.make(env_id, **kwargs)
+            env_id = f"{domain}{task}"
+            env = suite.make(env_id, **kwargs)
         else:
             assert domain is None and task is None, (domain, task)
 
-        if isinstance(env, wrappers.TimeLimit) and unwrap_time_limit:
-            # Remove the TimeLimit wrapper that sets 'done = True' when
-            # the time limit specified for each environment has been passed and
-            # therefore the environment is not Markovian (terminal condition
-            # depends on time rather than state).
-            env = env.env
+        # TODO(Alacarter): Check how robosuite handles max episode length termination.
 
-        if isinstance(env.observation_space, spaces.Dict):
-            observation_keys = (
-                observation_keys or tuple(env.observation_space.spaces.keys()))
-
-        self.observation_keys = observation_keys
+        assert isinstance(env.observation_spec(), OrderedDict), env.observation_spec()
+        self.observation_keys = observation_keys or tuple(env.observation_spec().keys())
+        assert set(self.observation_keys).issubset(set(env.observation_spec().keys())), (
+            (self.observation_keys, env.observation_spec().keys()))
 
         if normalize:
-            env = NormalizeActionWrapper(env)
+            np.testing.assert_equal(env.action_spec[0], -1, "Ensure spaces are normalized.")
+            np.testing.assert_equal(env.action_spec[1], 1, "Ensure spaces are normalized.")
 
         self._env = env
 
     @property
     def observation_space(self):
-        observation_space = self._env.observation_space
+        observation_space = convert_robosuite_to_gym_obs_space(
+            self._env.observation_spec())
         return observation_space
 
     @property
     def active_observation_shape(self):
         """Shape for the active observation based on observation_keys."""
-        if not isinstance(self._env.observation_space, spaces.Dict):
-            return super(RobosuiteAdapter, self).active_observation_shape
+        observation_space = self.observation_space
 
         active_size = sum(
-            np.prod(self._env.observation_space.spaces[key].shape)
+            np.prod(observation_space.spaces[key].shape)
             for key in self.observation_keys)
 
         active_observation_shape = (active_size, )
@@ -106,9 +92,6 @@ class RobosuiteAdapter(SoftlearningEnv):
         return active_observation_shape
 
     def convert_to_active_observation(self, observation):
-        if not isinstance(self._env.observation_space, spaces.Dict):
-            return observation
-
         observation = np.concatenate([
             observation[key] for key in self.observation_keys
         ], axis=-1)
@@ -117,7 +100,7 @@ class RobosuiteAdapter(SoftlearningEnv):
 
     @property
     def action_space(self, *args, **kwargs):
-        action_space = self._env.action_space
+        action_space = convert_robosuite_to_gym_action_space(self._env.action_spec)
         if len(action_space.shape) > 1:
             raise NotImplementedError(
                 "Action space ({}) is not flat, make sure to check the"
@@ -140,7 +123,9 @@ class RobosuiteAdapter(SoftlearningEnv):
         return self._env.reset(*args, **kwargs)
 
     def render(self, *args, **kwargs):
-        return self._env.render(*args, **kwargs)
+        # TODO(Alacarter): Implement rendering so that self._env.viewer.render()
+        # can take in args and kwargs
+        raise NotImplementedError
 
     def close(self, *args, **kwargs):
         return self._env.close(*args, **kwargs)
@@ -150,7 +135,7 @@ class RobosuiteAdapter(SoftlearningEnv):
 
     @property
     def unwrapped(self):
-        return self._env.unwrapped
+        return self._env
 
     def get_param_values(self, *args, **kwargs):
         raise NotImplementedError
