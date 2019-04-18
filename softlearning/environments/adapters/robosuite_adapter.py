@@ -13,18 +13,19 @@ from softlearning.environments.adapters.gym_adapter import GymAdapter
 ROBOSUITE_ENVIRONMENTS = {}
 
 def convert_robosuite_to_gym_obs_space(robosuite_obs_space):
-    assert isinstance(robosuite_obs_space, OrderedDict)
-    listDict = []
+    assert isinstance(robosuite_obs_space, OrderedDict), type(
+        robosuite_observation_space)
+    list_dict = []
     for key, value in robosuite_obs_space.items():
-        listDict.append((key, spaces.Box(
+        list_dict.append((key, spaces.Box(
             low=-float("inf"),
             high=float("inf"),
-            shape=(len(value),),
-            dtype=np.float32)))
-    return spaces.Dict(OrderedDict(listDict))
+            shape=value.shape,
+            dtype=value.dtype)))
+    return spaces.Dict(OrderedDict(list_dict))
 
 def convert_robosuite_to_gym_action_space(robosuite_action_space):
-    assert isinstance(robosuite_action_space, tuple)
+    assert isinstance(robosuite_action_space, tuple), type(robosuite_action_space)
     return spaces.Box(
         low=robosuite_action_space[0],
         high=robosuite_action_space[1],
@@ -40,7 +41,6 @@ class RobosuiteAdapter(SoftlearningEnv):
                  env=None,
                  normalize=True,
                  observation_keys=None,
-                 unwrap_time_limit=True,
                  **kwargs):
         assert not args, (
             "Robosuite environments don't support args. Use kwargs instead.")
@@ -48,7 +48,6 @@ class RobosuiteAdapter(SoftlearningEnv):
         self._Serializable__initialize(locals())
 
         self.normalize = normalize
-        self.unwrap_time_limit = unwrap_time_limit
 
         super(RobosuiteAdapter, self).__init__(domain, task, *args, **kwargs)
 

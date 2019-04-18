@@ -32,7 +32,6 @@ class TestRobosuiteAdapter(unittest.TestCase, AdapterTestClass):
             env.step(env.action_space.sample())
 
         for domain, task in TEST_ENVIRONMENTS:
-            print("testing: ", domain, task)
             verify_reset_and_step(domain, task)
 
     def test_copy_environments(self):
@@ -71,6 +70,15 @@ class TestRobosuiteAdapter(unittest.TestCase, AdapterTestClass):
             self.assertEqual(getattr(env1.unwrapped, key), value)
             self.assertEqual(getattr(env2.unwrapped, key), value)
 
+    def test_fails_with_invalid_environment_kwargs(self):
+        domain, task = 'Sawyer', 'Lift'
+        robosuite_adapter_kwargs = {
+            'observation_keys': ('joint_pos', 'invalid_key')
+        }
+        with self.assertRaises(AssertionError):
+            env = self.create_adapter(
+                domain=domain, task=task, **robosuite_adapter_kwargs)
+
     def test_environment_kwargs(self):
         env_kwargs = {
             "has_renderer": False,
@@ -100,6 +108,9 @@ class TestRobosuiteAdapter(unittest.TestCase, AdapterTestClass):
         env = self.create_adapter()
         with self.assertRaises(NotImplementedError):
             env.render()
+
+    def test_fails_with_unnormalized_action_spec(self):
+        raise NotImplementedError
 
 if __name__ == '__main__':
     unittest.main()

@@ -8,15 +8,22 @@ from .adapters.dm_control_adapter import (
     DmControlAdapter,
 )
 
+from .adapters.robosuite_adapter import (
+    ROBOSUITE_ENVIRONMENTS,
+    RobosuiteAdapter,
+)
+
 
 ENVIRONMENTS = {
     'gym': GYM_ENVIRONMENTS,
     'dm_control': DM_CONTROL_ENVIRONMENTS,
+    'robosuite': ROBOSUITE_ENVIRONMENTS,
 }
 
 ADAPTERS = {
     'gym': GymAdapter,
     'dm_control': DmControlAdapter,
+    'robosuite': RobosuiteAdapter,
 }
 
 
