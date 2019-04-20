@@ -1,5 +1,7 @@
 import unittest
 
+import numpy as np
+
 from .softlearning_env_test import AdapterTestClass
 from softlearning.environments.adapters.robosuite_adapter import (
     RobosuiteAdapter)
@@ -110,7 +112,20 @@ class TestRobosuiteAdapter(unittest.TestCase, AdapterTestClass):
             env.render()
 
     def test_fails_with_unnormalized_action_spec(self):
-        raise NotImplementedError
+        from robosuite.environments.sawyer_lift import SawyerLift
+        class UnnormalizedEnv(SawyerLift):
+            @property
+            def dof(self):
+                return 5
+
+            @property
+            def action_spec(self):
+                low, high = np.ones(self.dof) * -2.0, np.ones(self.dof) * 2.0
+                return low, high
+
+        env = UnnormalizedEnv()
+        with self.assertRaises(AssertionError):
+            adapter = RobosuiteAdapter(domain=None, task=None, env=env)
 
 if __name__ == '__main__':
     unittest.main()
