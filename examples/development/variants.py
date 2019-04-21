@@ -189,6 +189,13 @@ ENVIRONMENT_PARAMS = {
         'Wall-v0': {
             'observation_keys': ('observation', 'desired_goal'),
         },
+    },
+    'Sawyer': {
+      'Lift': {
+          'has_renderer': False,
+            'has_offscreen_renderer': False,
+            'use_camera_obs': False,
+      },
     }
 }
 

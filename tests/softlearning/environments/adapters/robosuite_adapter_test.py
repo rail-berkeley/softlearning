@@ -123,7 +123,10 @@ class TestRobosuiteAdapter(unittest.TestCase, AdapterTestClass):
                 low, high = np.ones(self.dof) * -2.0, np.ones(self.dof) * 2.0
                 return low, high
 
-        env = UnnormalizedEnv()
+        env = UnnormalizedEnv(
+                has_renderer=False,
+                has_offscreen_renderer=False,
+                use_camera_obs=False)
         with self.assertRaises(AssertionError):
             adapter = RobosuiteAdapter(domain=None, task=None, env=env)
 
