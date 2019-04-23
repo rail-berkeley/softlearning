@@ -191,11 +191,11 @@ ENVIRONMENT_PARAMS = {
         },
     },
     'Sawyer': {
-      'Lift': {
-          'has_renderer': False,
+        'Lift': {
+            'has_renderer': False,
             'has_offscreen_renderer': False,
             'use_camera_obs': False,
-      },
+        },
     }
 }
 
