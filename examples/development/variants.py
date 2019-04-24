@@ -116,6 +116,7 @@ NUM_EPOCHS_PER_DOMAIN = {
     'Point2DEnv': int(200),
     'Reacher': int(200),
     'Pendulum': 10,
+    'Sawyer': int(1e4),
 }
 
 ALGORITHM_PARAMS_PER_DOMAIN = {
@@ -191,11 +192,26 @@ ENVIRONMENT_PARAMS = {
         },
     },
     'Sawyer': {
-        'Lift': {
+        task_name: {
             'has_renderer': False,
             'has_offscreen_renderer': False,
             'use_camera_obs': False,
-        },
+            'reward_shaping': tune.grid_search([True, False]),
+        }
+        for task_name in (
+                'Lift',
+                'NutAssembly',
+                'NutAssemblyRound',
+                'NutAssemblySingle',
+                'NutAssemblySquare',
+                'PickPlace',
+                'PickPlaceBread',
+                'PickPlaceCan',
+                'PickPlaceCereal',
+                'PickPlaceMilk',
+                'PickPlaceSingle',
+                'Stack',
+        )
     }
 }
 
