@@ -223,7 +223,7 @@ def run_example_local(example_module_name, example_argv, local_mode=False):
     tune.run_experiments(
         experiments,
         with_server=example_args.with_server,
-        server_port=4321,
+        server_port=example_args.server_port,
         scheduler=None)
 
 
@@ -282,7 +282,7 @@ def run_example_cluster(example_module_name, example_argv):
     tune.run_experiments(
         experiments,
         with_server=example_args.with_server,
-        server_port=4321,
+        server_port=example_args.server_port,
         scheduler=None,
         queue_trials=True)
 
