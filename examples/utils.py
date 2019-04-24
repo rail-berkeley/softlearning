@@ -134,10 +134,21 @@ def add_ray_tune_args(parser):
         default={},
         help=tune_help_string("Resources to allocate for each trial."))
     parser.add_argument(
+        '--trial-cpus',
+        type=int,
+        default=multiprocessing.cpu_count(),
+        help=tune_help_string(
+            "CPUs to allocate for each trial. Note: this is only used for"
+            " Ray's internal scheduling bookkeeping, and is not an actual hard"
+            " limit for CPUs."))
+    parser.add_argument(
         '--trial-gpus',
         type=float,
         default=None,
-        help=("Resources to allocate for each trial. Passed to `tune.run`."))
+        help=tune_help_string(
+            "GPUs to allocate for each trial. Note: this is only used for"
+            " Ray's internal scheduling bookkeeping, and is not an actual hard"
+            " limit for GPUs."))
     parser.add_argument(
         '--trial-extra-cpus',
         type=int,
@@ -168,11 +179,6 @@ def add_ray_tune_args(parser):
         help=tune_help_string(
             "Optional string template for trial name. For example:"
             " '{trial.trial_id}-seed={trial.config[run_params][seed]}'"))
-    parser.add_argument(
-        '--trial-cpus',
-        type=int,
-        default=multiprocessing.cpu_count(),
-        help=tune_help_string("Resources to allocate for each trial."))
     parser.add_argument(
         '--checkpoint-frequency',
         type=int,
