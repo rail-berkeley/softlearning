@@ -6,6 +6,7 @@ from .softlearning_env_test import AdapterTestClass
 from softlearning.environments.adapters.robosuite_adapter import (
     RobosuiteAdapter)
 
+
 class TestRobosuiteAdapter(unittest.TestCase, AdapterTestClass):
     # TODO(hartikainen): This is a terrible way of testing the envs.
     # All the envs should be tested independently.
@@ -23,6 +24,7 @@ class TestRobosuiteAdapter(unittest.TestCase, AdapterTestClass):
     def test_environments(self):
         # Make sure that all the environments are creatable
         TEST_ENVIRONMENTS = [('Sawyer', 'Lift')]
+
         def verify_reset_and_step(domain, task):
             env = RobosuiteAdapter(
                 domain=domain,
@@ -113,6 +115,7 @@ class TestRobosuiteAdapter(unittest.TestCase, AdapterTestClass):
 
     def test_fails_with_unnormalized_action_spec(self):
         from robosuite.environments.sawyer_lift import SawyerLift
+
         class UnnormalizedEnv(SawyerLift):
             @property
             def dof(self):
@@ -129,6 +132,7 @@ class TestRobosuiteAdapter(unittest.TestCase, AdapterTestClass):
                 use_camera_obs=False)
         with self.assertRaises(AssertionError):
             adapter = RobosuiteAdapter(domain=None, task=None, env=env)
+
 
 if __name__ == '__main__':
     unittest.main()
