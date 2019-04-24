@@ -126,7 +126,7 @@ def add_ray_init_args(parser):
 def add_ray_tune_args(parser):
 
     def tune_help_string(help_string):
-        return help_string + " Passed to `tune.run_experiments`."
+        return help_string + " Passed to `tune.run`."
 
     parser.add_argument(
         '--resources-per-trial',
@@ -137,8 +137,7 @@ def add_ray_tune_args(parser):
         '--trial-gpus',
         type=float,
         default=None,
-        help=("Resources to allocate for each trial. Passed"
-              " to `tune.run_experiments`."))
+        help=("Resources to allocate for each trial. Passed to `tune.run`."))
     parser.add_argument(
         '--trial-extra-cpus',
         type=int,

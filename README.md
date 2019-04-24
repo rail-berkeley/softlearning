@@ -105,13 +105,13 @@ optional arguments:
   --gpus GPUS           Gpus to allocate to ray process. Passed to `ray.init`.
   --trial-resources TRIAL_RESOURCES
                         Resources to allocate for each trial. Passed to
-                        `tune.run_experiments`.
+                        `tune.run`.
   --trial-cpus TRIAL_CPUS
                         Resources to allocate for each trial. Passed to
-                        `tune.run_experiments`.
+                        `tune.run`.
   --trial-gpus TRIAL_GPUS
                         Resources to allocate for each trial. Passed to
-                        `tune.run_experiments`.
+                        `tune.run`.
   --trial-extra-cpus TRIAL_EXTRA_CPUS
                         Extra CPUs to reserve in case the trials need to
                         launch additional Ray actors that use CPUs.
