@@ -198,24 +198,24 @@ class GaussianPolicy(LatentSpacePolicy):
          raw_actions_np,
          actions_np) = self.diagnostics_model.predict(conditions)
 
-        return OrderedDict({
-            'shifts-mean': np.mean(shifts_np),
-            'shifts-std': np.std(shifts_np),
+        return OrderedDict((
+            ('shifts-mean', np.mean(shifts_np)),
+            ('shifts-std', np.std(shifts_np)),
 
-            'log_scale_diags-mean': np.mean(log_scale_diags_np),
-            'log_scale_diags-std': np.std(log_scale_diags_np),
+            ('log_scale_diags-mean', np.mean(log_scale_diags_np)),
+            ('log_scale_diags-std', np.std(log_scale_diags_np)),
 
-            '-log-pis-mean': np.mean(-log_pis_np),
-            '-log-pis-std': np.std(-log_pis_np),
+            ('-log-pis-mean', np.mean(-log_pis_np)),
+            ('-log-pis-std', np.std(-log_pis_np)),
 
-            'raw-actions-mean': np.mean(raw_actions_np),
-            'raw-actions-std': np.std(raw_actions_np),
+            ('raw-actions-mean', np.mean(raw_actions_np)),
+            ('raw-actions-std', np.std(raw_actions_np)),
 
-            'actions-mean': np.mean(actions_np),
-            'actions-std': np.std(actions_np),
-            'actions-min': np.min(actions_np),
-            'actions-max': np.max(actions_np),
-        })
+            ('actions-mean', np.mean(actions_np)),
+            ('actions-std', np.std(actions_np)),
+            ('actions-min', np.min(actions_np)),
+            ('actions-max', np.max(actions_np)),
+        ))
 
 
 class FeedforwardGaussianPolicy(GaussianPolicy):
