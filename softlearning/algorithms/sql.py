@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 import numpy as np
 import tensorflow as tf
+import tensorflow_probability as tfp
 
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 
@@ -129,6 +130,7 @@ class SQL(RLAlgorithm):
 
         self._create_td_update()
         self._create_svgd_update()
+        self._init_diagnostics_ops()
 
         if use_saved_Q:
             saved_Q_weights = tuple(Q.get_weights() for Q in self._Qs)
@@ -343,6 +345,23 @@ class SQL(RLAlgorithm):
                 var_list=self._policy.trainable_variables)
             self._training_ops.append(svgd_training_op)
 
+    def _init_diagnostics_ops(self):
+        diagnosables = OrderedDict((
+            ('Q_value', self._Q_values),
+            ('Q_loss', self._Q_losses),
+        ))
+
+        diagnostic_metrics = OrderedDict((
+            ('mean', tf.reduce_mean),
+            ('std', lambda x: tfp.stats.stddev(x, sample_axis=None)),
+        ))
+
+        self._diagnostics_ops = OrderedDict([
+            (f'{key}-{metric_name}', metric_fn(values))
+            for key, values in diagnosables.items()
+            for metric_name, metric_fn in diagnostic_metrics.items()
+        ])
+
     def train(self, *args, **kwargs):
         """Initiate training of the SAC instance."""
         return self._train(*args, **kwargs)
@@ -397,21 +416,14 @@ class SQL(RLAlgorithm):
         Also call the `draw` method of the plotter, if plotter is defined.
         """
 
-        feeds = self._get_feed_dict(batch)
-        Q_values, Q_losses =  self._session.run(
-            [self._Q_values, self._Q_losses], feeds)
+        feed_dict = self._get_feed_dict(iteration, batch)
+        diagnostics = self._session.run(self._diagnostics_ops, feed_dict)
 
-        diagnostics = OrderedDict({
-            'Q-avg': np.mean(Q_values),
-            'Q-std': np.std(Q_values),
-            'Q_loss': np.mean(Q_losses),
-        })
-
-        policy_diagnostics = self._policy.get_diagnostics(batch['observations'])
-        diagnostics.update({
-            f'policy/{key}': value
-            for key, value in policy_diagnostics.items()
-        })
+        diagnostics.update(OrderedDict([
+            (f'policy/{key}', value)
+            for key, value in
+            self._policy.get_diagnostics(batch['observations']).items()
+        ]))
 
         if self._plotter:
             self._plotter.draw()
