@@ -4,7 +4,6 @@ from numbers import Number
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
-from tensorflow.python.training import training_util
 
 from .rl_algorithm import RLAlgorithm
 
@@ -117,16 +116,6 @@ class SAC(RLAlgorithm):
         self._init_actor_update()
         self._init_critic_update()
         self._init_diagnostics_ops()
-
-    def train(self, *args, **kwargs):
-        """Initiate training of the SAC instance."""
-        return self._train(*args, **kwargs)
-
-    def _init_global_step(self):
-        self.global_step = training_util.get_or_create_global_step()
-        self._training_ops.update({
-            'increment_global_step': training_util._increment_global_step(1)
-        })
 
     def _init_placeholders(self):
         """Create input placeholders for the SAC algorithm.
@@ -348,7 +337,6 @@ class SAC(RLAlgorithm):
         """Runs the operations for updating training and target ops."""
 
         feed_dict = self._get_feed_dict(iteration, batch)
-
         self._session.run(self._training_ops, feed_dict)
 
         if iteration % self._target_update_interval == 0:
