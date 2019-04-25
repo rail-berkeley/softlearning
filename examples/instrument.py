@@ -219,7 +219,8 @@ def run_example_local(example_module_name, example_argv, local_mode=False):
         **experiment_kwargs,
         with_server=example_args.with_server,
         server_port=example_args.server_port,
-        scheduler=None)
+        scheduler=None,
+        reuse_actors=True)
 
 
 def run_example_debug(example_module_name, example_argv):
@@ -278,7 +279,8 @@ def run_example_cluster(example_module_name, example_argv):
         with_server=example_args.with_server,
         server_port=example_args.server_port,
         scheduler=None,
-        queue_trials=True)
+        queue_trials=True,
+        reuse_actors=True)
 
 
 def launch_example_cluster(example_module_name,
