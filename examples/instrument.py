@@ -6,7 +6,7 @@ different modes (e.g. locally, in google compute engine, or ec2).
 
 There are two types of functions in this file:
 1. run_example_* methods, which run the experiments by invoking
-    `tune.run_experiments` function.
+    `tune.run` function.
 2. launch_example_* methods, which are helpers function to submit an
     example to be run in the cloud. In practice, these launch a cluster,
     and then run the `run_example_cluster` method with the provided
@@ -70,7 +70,7 @@ def add_command_line_args_to_variant_spec(variant_spec, command_line_args):
     return variant_spec
 
 
-def generate_experiment(trainable_class, variant_spec, command_line_args):
+def generate_experiment_kwargs(variant_spec, command_line_args):
     # TODO(hartikainen): Allow local dir to be modified through cli args
     local_dir = os.path.join(
         '~/ray_results',
@@ -104,8 +104,8 @@ def generate_experiment(trainable_class, variant_spec, command_line_args):
 
         return tune.function(trial_name_creator)
 
-    experiment = {
-        'run': trainable_class,
+    experiment_kwargs = {
+        'name': experiment_id,
         'resources_per_trial': resources_per_trial,
         'config': variant_spec,
         'local_dir': local_dir,
@@ -120,7 +120,7 @@ def generate_experiment(trainable_class, variant_spec, command_line_args):
         'restore': command_line_args.restore,  # Defaults to None
     }
 
-    return experiment_id, experiment
+    return experiment_kwargs
 
 
 def unique_cluster_name(args):
@@ -136,11 +136,11 @@ def unique_cluster_name(args):
 
 def get_experiments_info(experiments):
     number_of_trials = {
-        experiment_id: len(list(
+        experiment_kwargs['name']: len(list(
             tune.suggest.variant_generator.generate_variants(
-                experiment_spec['config'])
-        )) * experiment_spec['num_samples']
-        for experiment_id, experiment_spec in experiments.items()
+                experiment_kwargs['config'])
+        )) * experiment_kwargs['num_samples']
+        for experiment_kwargs in experiments
     }
     total_number_of_trials = sum(number_of_trials.values())
 
@@ -174,14 +174,10 @@ def run_example_dry(example_module_name, example_argv):
 
     example_args = example_module.get_parser().parse_args(example_argv)
     variant_spec = example_module.get_variant_spec(example_args)
-    trainable_class = example_module.get_trainable_class(example_args)
 
-    experiment_id, experiment = generate_experiment(
-        trainable_class, variant_spec, example_args)
+    experiment_kwargs = generate_experiment_kwargs(variant_spec, example_args)
 
-    experiments = {experiment_id: experiment}
-
-    experiments_info = get_experiments_info(experiments)
+    experiments_info = get_experiments_info([experiment_kwargs])
     number_of_trials = experiments_info["number_of_trials"]
     total_number_of_trials = experiments_info["total_number_of_trials"]
 
@@ -189,7 +185,7 @@ def run_example_dry(example_module_name, example_argv):
 Dry run.
 
 Experiment specs:
-{pformat(experiments, indent=2)}
+{pformat(experiment_kwargs, indent=2)}
 
 Number of trials:
 {pformat(number_of_trials, indent=2)}
@@ -208,9 +204,7 @@ def run_example_local(example_module_name, example_argv, local_mode=False):
     variant_spec = example_module.get_variant_spec(example_args)
     trainable_class = example_module.get_trainable_class(example_args)
 
-    experiment_id, experiment = generate_experiment(
-        trainable_class, variant_spec, example_args)
-    experiments = {experiment_id: experiment}
+    experiment_kwargs = generate_experiment_kwargs(variant_spec, example_args)
 
     ray.init(
         num_cpus=example_args.cpus,
@@ -220,11 +214,13 @@ def run_example_local(example_module_name, example_argv, local_mode=False):
         include_webui=example_args.include_webui,
         temp_dir=example_args.temp_dir)
 
-    tune.run_experiments(
-        experiments,
+    tune.run(
+        trainable_class,
+        **experiment_kwargs,
         with_server=example_args.with_server,
-        server_port=4321,
-        scheduler=None)
+        server_port=example_args.server_port,
+        scheduler=None,
+        reuse_actors=True)
 
 
 def run_example_debug(example_module_name, example_argv):
@@ -265,9 +261,7 @@ def run_example_cluster(example_module_name, example_argv):
     variant_spec = example_module.get_variant_spec(example_args)
     trainable_class = example_module.get_trainable_class(example_args)
 
-    experiment_id, experiment = generate_experiment(
-        trainable_class, variant_spec, example_args)
-    experiments = {experiment_id: experiment}
+    experiment_kwargs = generate_experiment_kwargs(variant_spec, example_args)
 
     redis_address = ray.services.get_node_ip_address() + ':6379'
 
@@ -279,12 +273,14 @@ def run_example_cluster(example_module_name, example_argv):
         include_webui=example_args.include_webui,
         temp_dir=example_args.temp_dir)
 
-    tune.run_experiments(
-        experiments,
+    tune.run(
+        trainable_class,
+        **experiment_kwargs,
         with_server=example_args.with_server,
-        server_port=4321,
+        server_port=example_args.server_port,
         scheduler=None,
-        queue_trials=True)
+        queue_trials=True,
+        reuse_actors=True)
 
 
 def launch_example_cluster(example_module_name,
@@ -307,13 +303,10 @@ def launch_example_cluster(example_module_name,
 
     example_args = example_module.get_parser().parse_args(example_argv)
     variant_spec = example_module.get_variant_spec(example_args)
-    trainable_class = example_module.get_trainable_class(example_args)
 
-    experiment_id, experiment = generate_experiment(
-        trainable_class, variant_spec, example_args)
-    experiments = {experiment_id: experiment}
+    experiment_kwargs = generate_experiment_kwargs(variant_spec, example_args)
 
-    experiments_info = get_experiments_info(experiments)
+    experiments_info = get_experiments_info([experiment_kwargs])
     total_number_of_trials = experiments_info['total_number_of_trials']
 
     if not example_args.upload_dir:
