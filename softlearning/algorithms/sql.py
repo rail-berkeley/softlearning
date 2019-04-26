@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 import numpy as np
 import tensorflow as tf
+import tensorflow_probability as tfp
 
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 
@@ -20,10 +21,11 @@ class SQL(RLAlgorithm):
     """Soft Q-learning (SQL).
 
     Example:
-        See `examples/mujoco_all_sql.py`.
+        See `examples/development.py`.
 
-    Reference:
-        [1] Tuomas Haarnoja, Haoran Tang, Pieter Abbeel, and Sergey Levine,
+    References
+    ----------
+    [1] Tuomas Haarnoja, Haoran Tang, Pieter Abbeel, and Sergey Levine,
         "Reinforcement Learning with Deep Energy-Based Policies," International
         Conference on Machine Learning, 2017. https://arxiv.org/abs/1702.08165
     """
@@ -123,13 +125,6 @@ class SQL(RLAlgorithm):
         assert len(action_shape) == 1, action_shape
         self._action_shape = action_shape
 
-        self._create_placeholders()
-
-        self._training_ops = []
-
-        self._create_td_update()
-        self._create_svgd_update()
-
         if use_saved_Q:
             saved_Q_weights = tuple(Q.get_weights() for Q in self._Qs)
         if use_saved_policy:
@@ -143,8 +138,22 @@ class SQL(RLAlgorithm):
         if use_saved_policy:
             self._policy.set_weights(saved_policy_weights)
 
-    def _create_placeholders(self):
+        self._build()
+
+    def _build(self):
+        self._training_ops = {}
+
+        self._init_global_step()
+        self._init_placeholders()
+        self._init_td_update()
+        self._init_svgd_update()
+        self._init_diagnostics_ops()
+
+    def _init_placeholders(self):
         """Create all necessary placeholders."""
+
+        self._iteration_ph = tf.placeholder(
+            tf.int64, shape=None, name='iteration')
 
         self._observations_ph = tf.placeholder(
             tf.float32,
@@ -176,7 +185,7 @@ class SQL(RLAlgorithm):
             shape=(None, 1),
             name='terminals')
 
-    def _create_td_update(self):
+    def _init_td_update(self):
         """Create a minimization operation for Q-function update."""
 
         next_observations = tf.tile(
@@ -246,9 +255,9 @@ class SQL(RLAlgorithm):
                 for i, (Q, Q_loss, Q_optimizer)
                 in enumerate(zip(self._Qs, Q_losses, self._Q_optimizers)))
 
-            self._training_ops.append(tf.group(Q_training_ops))
+            self._training_ops.update({'Q': tf.group(Q_training_ops)})
 
-    def _create_svgd_update(self):
+    def _init_svgd_update(self):
         """Create a minimization operation for policy update (SVGD)."""
 
         actions = self._policy.actions([
@@ -341,11 +350,26 @@ class SQL(RLAlgorithm):
             svgd_training_op = self._policy_optimizer.minimize(
                 loss=-surrogate_loss,
                 var_list=self._policy.trainable_variables)
-            self._training_ops.append(svgd_training_op)
+            self._training_ops.update({
+                'svgd': svgd_training_op
+            })
 
-    def train(self, *args, **kwargs):
-        """Initiate training of the SAC instance."""
-        return self._train(*args, **kwargs)
+    def _init_diagnostics_ops(self):
+        diagnosables = OrderedDict((
+            ('Q_value', self._Q_values),
+            ('Q_loss', self._Q_losses),
+        ))
+
+        diagnostic_metrics = OrderedDict((
+            ('mean', tf.reduce_mean),
+            ('std', lambda x: tfp.stats.stddev(x, sample_axis=None)),
+        ))
+
+        self._diagnostics_ops = OrderedDict([
+            (f'{key}-{metric_name}', metric_fn(values))
+            for key, values in diagnosables.items()
+            for metric_name, metric_fn in diagnostic_metrics.items()
+        ])
 
     def _init_training(self):
         self._update_target(tau=1.0)
@@ -364,16 +388,16 @@ class SQL(RLAlgorithm):
     def _do_training(self, iteration, batch):
         """Run the operations for updating training and target ops."""
 
-        feed_dict = self._get_feed_dict(batch)
+        feed_dict = self._get_feed_dict(iteration, batch)
         self._session.run(self._training_ops, feed_dict)
 
         if iteration % self._Q_target_update_interval == 0 and self._train_Q:
             self._update_target()
 
-    def _get_feed_dict(self, batch):
+    def _get_feed_dict(self, iteration, batch):
         """Construct a TensorFlow feed dictionary from a sample batch."""
 
-        feeds = {
+        feed_dict = {
             self._observations_ph: batch['observations'],
             self._actions_ph: batch['actions'],
             self._next_observations_ph: batch['next_observations'],
@@ -381,7 +405,10 @@ class SQL(RLAlgorithm):
             self._terminals_ph: batch['terminals'],
         }
 
-        return feeds
+        if iteration is not None:
+            feed_dict[self._iteration_ph] = iteration
+
+        return feed_dict
 
     def get_diagnostics(self,
                         iteration,
@@ -397,47 +424,19 @@ class SQL(RLAlgorithm):
         Also call the `draw` method of the plotter, if plotter is defined.
         """
 
-        feeds = self._get_feed_dict(batch)
-        Q_values, Q_losses =  self._session.run(
-            [self._Q_values, self._Q_losses], feeds)
+        feed_dict = self._get_feed_dict(iteration, batch)
+        diagnostics = self._session.run(self._diagnostics_ops, feed_dict)
 
-        diagnostics = OrderedDict({
-            'Q-avg': np.mean(Q_values),
-            'Q-std': np.std(Q_values),
-            'Q_loss': np.mean(Q_losses),
-        })
-
-        policy_diagnostics = self._policy.get_diagnostics(batch['observations'])
-        diagnostics.update({
-            f'policy/{key}': value
-            for key, value in policy_diagnostics.items()
-        })
+        diagnostics.update(OrderedDict([
+            (f'policy/{key}', value)
+            for key, value in
+            self._policy.get_diagnostics(batch['observations']).items()
+        ]))
 
         if self._plotter:
             self._plotter.draw()
 
         return diagnostics
-
-    def get_snapshot(self, epoch):
-        """Return loggable snapshot of the SQL algorithm.
-
-        If `self._save_full_state == True`, returns snapshot including the
-        replay pool. If `self._save_full_state == False`, returns snapshot
-        of policy, Q-function, and environment instances.
-        """
-
-        state = {
-            'epoch': epoch,
-            'policy': self._policy,
-            'Q': self._Q,
-            'training_environment': self._training_environment,
-            'evaluation_environment': self._evaluation_environment,
-        }
-
-        if self._save_full_state:
-            state.update({'replay_pool': self._pool})
-
-        return state
 
     @property
     def tf_saveables(self):

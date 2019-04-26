@@ -6,6 +6,7 @@ import math
 import os
 
 import tensorflow as tf
+from tensorflow.python.training import training_util
 import numpy as np
 
 from softlearning.samplers import rollouts
@@ -77,6 +78,12 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         self._timestep = 0
         self._num_train_steps = 0
 
+    def _init_global_step(self):
+        self.global_step = training_util.get_or_create_global_step()
+        self._training_ops.update({
+            'increment_global_step': training_util._increment_global_step(1)
+        })
+
     def _initial_exploration_hook(self, env, initial_exploration_policy, pool):
         if self._n_initial_exploration_steps < 1: return
 
@@ -127,6 +134,10 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
     def _total_timestep(self):
         total_timestep = self._epoch * self._epoch_length + self._timestep
         return total_timestep
+
+    def train(self, *args, **kwargs):
+        """Initiate training of the SAC instance."""
+        return self._train(*args, **kwargs)
 
     def _train(self):
         """Return a generator that performs RL training.

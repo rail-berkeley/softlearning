@@ -12,7 +12,7 @@ The environment can be run either locally using conda or inside a docker contain
 
 ## Conda Installation
 
-1. [Download](https://www.roboti.us/index.html) and install MuJoCo 1.50 and 2.00 from the MuJoCo website. We assume that the MuJoCo files are extracted to the default location (`~/.mujoco/mjpro150` and `~/.mujoco/mujoco200_{platform}`). Unfortunately, `gym` and `dm_control` expect different paths for MuJoCo 2.00 installation, which is why you will need to have it installed both in `~/.mujoco/mujoco200_{platform}` and `~/.mujoco/mujoco200`. The easiest way is to create a symlink from `~/.mujoco/mujoco200_{plaftorm}` -> `~/.mujoco/mujoco200` with: `ln -s ~/.mujoco/mujoco200_linux ~/.mujoco/mujoco200`.
+1. [Download](https://www.roboti.us/index.html) and install MuJoCo 1.50 and 2.00 from the MuJoCo website. We assume that the MuJoCo files are extracted to the default location (`~/.mujoco/mjpro150` and `~/.mujoco/mujoco200_{platform}`). Unfortunately, `gym` and `dm_control` expect different paths for MuJoCo 2.00 installation, which is why you will need to have it installed both in `~/.mujoco/mujoco200_{platform}` and `~/.mujoco/mujoco200`. The easiest way is to create a symlink from `~/.mujoco/mujoco200_{plaftorm}` -> `~/.mujoco/mujoco200` with: `ln -s ~/.mujoco/mujoco200_{platform} ~/.mujoco/mujoco200`.
 
 2. Copy your MuJoCo license key (mjkey.txt) to ~/.mujoco/mjkey.txt:
 
@@ -105,13 +105,13 @@ optional arguments:
   --gpus GPUS           Gpus to allocate to ray process. Passed to `ray.init`.
   --trial-resources TRIAL_RESOURCES
                         Resources to allocate for each trial. Passed to
-                        `tune.run_experiments`.
+                        `tune.run`.
   --trial-cpus TRIAL_CPUS
                         Resources to allocate for each trial. Passed to
-                        `tune.run_experiments`.
+                        `tune.run`.
   --trial-gpus TRIAL_GPUS
                         Resources to allocate for each trial. Passed to
-                        `tune.run_experiments`.
+                        `tune.run`.
   --trial-extra-cpus TRIAL_EXTRA_CPUS
                         Extra CPUs to reserve in case the trials need to
                         launch additional Ray actors that use CPUs.

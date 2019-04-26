@@ -144,13 +144,14 @@ ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/lib/nvidia-000
 
 
 # ========== Conda Environment ==========
-COPY ./environment.yml /tmp/
-COPY ./requirements.txt /tmp/
+COPY ./environment.yml /tmp/environment.yml
+COPY ./requirements.txt /tmp/requirements.txt
 
 # NOTE: Don't separate the Mujoco key echo and remove commands into separate
 # run commands! Otherwise your key will be readable by anyone who has access
 # To the container. We need the key in order to compile mujoco_py.
 RUN echo "${MJKEY}" > ~/.mujoco/mjkey.txt \
+    && sed -i -e 's/^tensorflow==/tensorflow-gpu==/g' /tmp/requirements.txt \
     && conda env update -f /tmp/environment.yml \
     && conda clean --all -y \
     && rm ~/.mujoco/mjkey.txt

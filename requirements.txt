@@ -72,7 +72,7 @@ pytz==2018.7
 PyWavelets==1.0.1
 PyYAML==5.1
 psutil==5.4.8
-ray[rllib,debug]==0.6.4
+ray[rllib,debug]==0.6.6
 redis==3.0.1
 requests==2.20.1
 rsa==3.4.2
@@ -92,5 +92,5 @@ tensorflow-probability==0.6.0
 termcolor==1.1.0
 toolz==0.9.0
 uritemplate==3.0.0
-urllib3==1.23
+urllib3==1.25.1
 Werkzeug==0.14.1

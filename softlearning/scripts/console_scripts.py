@@ -7,8 +7,8 @@ locally, in google compute engine, or ec2).
 
 There are two types of cli commands in this file (each have their corresponding
 function in examples.instrument):
-1. run_example_* methods, which run the experiments by invoking
-    `tune.run_experiments` function.
+1. run_example_* methods, which run the experiments by invoking `tune.run`
+    function.
 2. launch_example_* methods, which are helpers function to submit an
     example to be run in the cloud. In practice, these launch a cluster,
     and then run the `run_example_cluster` method with the provided

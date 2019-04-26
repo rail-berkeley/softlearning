@@ -51,8 +51,7 @@ auth:
 # For more documentation on available fields, see:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 head_node:
-    InstanceType: c4.2xlarge
-    # InstanceType: t2.micro
+    InstanceType: m4.xlarge
     ImageId: <TODO:AMI>
 
     # # You can provision additional disk space with a conf as follows
@@ -68,7 +67,7 @@ head_node:
 # For more documentation on available fields, see:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 worker_nodes:
-    InstanceType: c4.2xlarge
+    InstanceType: m4.2xlarge
     # InstanceType: t2.micro
     ImageId: <TODO:AMI>
 

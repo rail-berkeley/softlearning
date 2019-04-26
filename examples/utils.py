@@ -126,7 +126,7 @@ def add_ray_init_args(parser):
 def add_ray_tune_args(parser):
 
     def tune_help_string(help_string):
-        return help_string + " Passed to `tune.run_experiments`."
+        return help_string + " Passed to `tune.run`."
 
     parser.add_argument(
         '--resources-per-trial',
@@ -134,11 +134,21 @@ def add_ray_tune_args(parser):
         default={},
         help=tune_help_string("Resources to allocate for each trial."))
     parser.add_argument(
+        '--trial-cpus',
+        type=int,
+        default=multiprocessing.cpu_count(),
+        help=tune_help_string(
+            "CPUs to allocate for each trial. Note: this is only used for"
+            " Ray's internal scheduling bookkeeping, and is not an actual hard"
+            " limit for CPUs."))
+    parser.add_argument(
         '--trial-gpus',
         type=float,
         default=None,
-        help=("Resources to allocate for each trial. Passed"
-              " to `tune.run_experiments`."))
+        help=tune_help_string(
+            "GPUs to allocate for each trial. Note: this is only used for"
+            " Ray's internal scheduling bookkeeping, and is not an actual hard"
+            " limit for GPUs."))
     parser.add_argument(
         '--trial-extra-cpus',
         type=int,
@@ -169,11 +179,6 @@ def add_ray_tune_args(parser):
         help=tune_help_string(
             "Optional string template for trial name. For example:"
             " '{trial.trial_id}-seed={trial.config[run_params][seed]}'"))
-    parser.add_argument(
-        '--trial-cpus',
-        type=int,
-        default=multiprocessing.cpu_count(),
-        help=tune_help_string("Resources to allocate for each trial."))
     parser.add_argument(
         '--checkpoint-frequency',
         type=int,
@@ -207,10 +212,15 @@ def add_ray_tune_args(parser):
             " Defaults to None."))
     parser.add_argument(
         '--with-server',
-        type=str,
+        type=lambda x: bool(strtobool(x)),
         default=True,
         help=tune_help_string("Starts a background Tune server. Needed for"
                               " using the Client API."))
+    parser.add_argument(
+        '--server-port',
+        type=int,
+        default=4321,
+        help=tune_help_string("Port number for launching TuneServer."))
 
     return parser
 
