@@ -15,76 +15,8 @@ DEFAULT_DOMAIN = 'Pendulum'
 DEFAULT_TASK = 'v0'
 DEFAULT_ALGORITHM = 'SAC'
 
-
-TASKS_BY_DOMAIN_BY_UNIVERSE = {
-    universe: {
-        domain: tuple(tasks)
-        for domain, tasks in domains.items()
-    }
-    for universe, domains in env_utils.ENVIRONMENTS.items()
-}
-
-AVAILABLE_TASKS = set(sum(
-    [
-        tasks
-        for universe, domains in TASKS_BY_DOMAIN_BY_UNIVERSE.items()
-        for domain, tasks in domains.items()
-    ],
-    ()))
-
-DOMAINS_BY_UNIVERSE = {
-    universe: tuple(domains)
-    for universe, domains in env_utils.ENVIRONMENTS.items()
-}
-
-AVAILABLE_DOMAINS = set(sum(DOMAINS_BY_UNIVERSE.values(), ()))
-
-UNIVERSES = tuple(env_utils.ENVIRONMENTS)
-
+AVAILABLE_UNIVERSES = tuple(env_utils.UNIVERSES)
 AVAILABLE_ALGORITHMS = set(alg_utils.ALGORITHM_CLASSES.keys())
-
-
-def parse_universe(env_name):
-    universe = next(
-        (universe for universe in UNIVERSES if universe in env_name),
-        DEFAULT_UNIVERSE)
-    return universe
-
-
-def parse_domain_task(env_name, universe):
-    env_name = env_name.replace(universe, '').strip('-')
-    domains = DOMAINS_BY_UNIVERSE[universe]
-    domain = next(domain for domain in domains if domain in env_name)
-
-    env_name = env_name.replace(domain, '').strip('-')
-    tasks = TASKS_BY_DOMAIN_BY_UNIVERSE[universe][domain]
-    task = next((task for task in tasks if task == env_name), None)
-
-    if task is None:
-        matching_tasks = [task for task in tasks if task in env_name]
-        if len(matching_tasks) > 1:
-            raise ValueError(
-                "Task name cannot be unmbiguously determined: {}."
-                " Following task names match: {}"
-                "".format(env_name, matching_tasks))
-        elif len(matching_tasks) == 1:
-            task = matching_tasks[-1]
-        else:
-            task = DEFAULT_TASK
-
-    return domain, task
-
-
-def parse_universe_domain_task(args):
-    universe, domain, task = args.universe, args.domain, args.task
-
-    if not universe:
-        universe = parse_universe(args.env)
-
-    if (not domain) or (not task):
-        domain, task = parse_domain_task(args.env, universe)
-
-    return universe, domain, task
 
 
 def add_ray_init_args(parser):
@@ -231,7 +163,7 @@ def get_parser(allow_policy_list=False):
     parser.add_argument(
         '--universe',
         type=str,
-        choices=UNIVERSES,
+        choices=AVAILABLE_UNIVERSES,
         default=DEFAULT_UNIVERSE)
     parser.add_argument(
         '--domain',
