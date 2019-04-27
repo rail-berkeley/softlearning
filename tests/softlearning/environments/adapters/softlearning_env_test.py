@@ -18,7 +18,8 @@ class AdapterTestClass(object):
         env = self.create_adapter()
         active_observation_shape = env.active_observation_shape
         self.assertEqual(len(active_observation_shape), 1)
-        self.assertIsInstance(active_observation_shape[0], int)
+        self.assertTrue(
+            np.issubdtype(type(active_observation_shape[0]), np.int))
 
     def test_action_space(self):
         env = self.create_adapter()

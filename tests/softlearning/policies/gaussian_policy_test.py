@@ -79,7 +79,9 @@ class GaussianPolicyTest(tf.test.TestCase):
              'raw-actions-mean',
              'raw-actions-std',
              'actions-mean',
-             'actions-std'))
+             'actions-std',
+             'actions-min',
+             'actions-max'))
 
         for value in diagnostics.values():
             self.assertTrue(np.isscalar(value))
