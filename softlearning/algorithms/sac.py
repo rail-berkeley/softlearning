@@ -40,7 +40,6 @@ class SAC(RLAlgorithm):
             target_update_interval=1,
             action_prior='uniform',
             reparameterize=False,
-            store_extra_policy_info=False,
 
             save_full_state=False,
             **kwargs,
@@ -94,7 +93,6 @@ class SAC(RLAlgorithm):
         self._action_prior = action_prior
 
         self._reparameterize = reparameterize
-        self._store_extra_policy_info = store_extra_policy_info
 
         self._save_full_state = save_full_state
 
@@ -159,18 +157,6 @@ class SAC(RLAlgorithm):
             shape=(None, 1),
             name='terminals',
         )
-
-        if self._store_extra_policy_info:
-            self._log_pis_ph = tf.placeholder(
-                tf.float32,
-                shape=(None, 1),
-                name='log_pis',
-            )
-            self._raw_actions_ph = tf.placeholder(
-                tf.float32,
-                shape=(None, *self._action_shape),
-                name='raw_actions',
-            )
 
     def _get_Q_target(self):
         next_actions = self._policy.actions([self._next_observations_ph])
@@ -353,10 +339,6 @@ class SAC(RLAlgorithm):
             self._rewards_ph: batch['rewards'],
             self._terminals_ph: batch['terminals'],
         }
-
-        if self._store_extra_policy_info:
-            feed_dict[self._log_pis_ph] = batch['log_pis']
-            feed_dict[self._raw_actions_ph] = batch['raw_actions']
 
         if iteration is not None:
             feed_dict[self._iteration_ph] = iteration
