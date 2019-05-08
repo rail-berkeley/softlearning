@@ -131,7 +131,7 @@ class SQL(RLAlgorithm):
         if use_saved_policy:
             saved_policy_weights = policy.get_weights()
 
-        self._session.run(tf.global_variables_initializer())
+        self._session.run(tf.compat.v1.global_variables_initializer())
 
         if use_saved_Q:
             for Q, Q_weights in zip(self._Qs, saved_Q_weights):
@@ -153,30 +153,30 @@ class SQL(RLAlgorithm):
     def _init_placeholders(self):
         """Create all necessary placeholders."""
         self._placeholders = {
-            'iteration': tf.placeholder(
+            'iteration': tf.compat.v1.placeholder(
                 tf.int64, shape=None, name='iteration',
             ),
-            'observations': tf.placeholder(
+            'observations': tf.compat.v1.placeholder(
                 tf.float32,
                 shape=(None, *self._observation_shape),
                 name='observation',
             ),
-            'next_observations': tf.placeholder(
+            'next_observations': tf.compat.v1.placeholder(
                 tf.float32,
                 shape=(None, *self._observation_shape),
                 name='next_observation',
             ),
-            'actions': tf.placeholder(
+            'actions': tf.compat.v1.placeholder(
                 tf.float32,
                 shape=(None, *self._action_shape),
                 name='actions',
             ),
-            'rewards': tf.placeholder(
+            'rewards': tf.compat.v1.placeholder(
                 tf.float32,
                 shape=(None, 1),
                 name='rewards',
             ),
-            'terminals': tf.placeholder(
+            'terminals': tf.compat.v1.placeholder(
                 tf.bool,
                 shape=(None, 1),
                 name='terminals',
@@ -244,13 +244,13 @@ class SQL(RLAlgorithm):
 
         # Equation 11:
         Q_losses = self._Q_losses = tuple(
-            tf.losses.mean_squared_error(
+            tf.compat.v1.losses.mean_squared_error(
                 labels=Q_target, predictions=Q_value, weights=0.5)
             for Q_value in Q_values)
 
         if self._train_Q:
             self._Q_optimizers = tuple(
-                tf.train.AdamOptimizer(
+                tf.compat.v1.train.AdamOptimizer(
                     learning_rate=self._Q_lr,
                     name='{}_{}_optimizer'.format(Q._name, i)
                 ) for i, Q in enumerate(self._Qs))
@@ -347,7 +347,7 @@ class SQL(RLAlgorithm):
             for w, g in zip(self._policy.trainable_variables, gradients)
         ])
 
-        self._policy_optimizer = tf.train.AdamOptimizer(
+        self._policy_optimizer = tf.compat.v1.train.AdamOptimizer(
             learning_rate=self._policy_lr,
             name='policy_optimizer'
         )

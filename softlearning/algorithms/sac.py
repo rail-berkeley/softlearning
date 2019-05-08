@@ -126,30 +126,30 @@ class SAC(RLAlgorithm):
             - terminals
         """
         self._placeholders = {
-            'iteration': tf.placeholder(
+            'iteration': tf.compat.v1.placeholder(
                 tf.int64, shape=None, name='iteration',
             ),
-            'observations': tf.placeholder(
+            'observations': tf.compat.v1.placeholder(
                 tf.float32,
                 shape=(None, *self._observation_shape),
                 name='observation',
             ),
-            'next_observations': tf.placeholder(
+            'next_observations': tf.compat.v1.placeholder(
                 tf.float32,
                 shape=(None, *self._observation_shape),
                 name='next_observation',
             ),
-            'actions': tf.placeholder(
+            'actions': tf.compat.v1.placeholder(
                 tf.float32,
                 shape=(None, *self._action_shape),
                 name='actions',
             ),
-            'rewards': tf.placeholder(
+            'rewards': tf.compat.v1.placeholder(
                 tf.float32,
                 shape=(None, 1),
                 name='rewards',
             ),
-            'terminals': tf.placeholder(
+            'terminals': tf.compat.v1.placeholder(
                 tf.bool,
                 shape=(None, 1),
                 name='terminals',
@@ -197,12 +197,12 @@ class SAC(RLAlgorithm):
             for Q in self._Qs)
 
         Q_losses = self._Q_losses = tuple(
-            tf.losses.mean_squared_error(
+            tf.compat.v1.losses.mean_squared_error(
                 labels=Q_target, predictions=Q_value, weights=0.5)
             for Q_value in Q_values)
 
         self._Q_optimizers = tuple(
-            tf.train.AdamOptimizer(
+            tf.compat.v1.train.AdamOptimizer(
                 learning_rate=self._Q_lr,
                 name='{}_{}_optimizer'.format(Q._name, i)
             ) for i, Q in enumerate(self._Qs))
@@ -231,7 +231,7 @@ class SAC(RLAlgorithm):
 
         assert log_pis.shape.as_list() == [None, 1]
 
-        log_alpha = self._log_alpha = tf.get_variable(
+        log_alpha = self._log_alpha = tf.compat.v1.get_variable(
             'log_alpha',
             dtype=tf.float32,
             initializer=0.0)
@@ -241,7 +241,7 @@ class SAC(RLAlgorithm):
             alpha_loss = -tf.reduce_mean(
                 log_alpha * tf.stop_gradient(log_pis + self._target_entropy))
 
-            self._alpha_optimizer = tf.train.AdamOptimizer(
+            self._alpha_optimizer = tf.compat.v1.train.AdamOptimizer(
                 self._policy_lr, name='alpha_optimizer')
             self._alpha_train_op = self._alpha_optimizer.minimize(
                 loss=alpha_loss, var_list=[log_alpha])
@@ -278,7 +278,7 @@ class SAC(RLAlgorithm):
         self._policy_losses = policy_kl_losses
         policy_loss = tf.reduce_mean(policy_kl_losses)
 
-        self._policy_optimizer = tf.train.AdamOptimizer(
+        self._policy_optimizer = tf.compat.v1.train.AdamOptimizer(
             learning_rate=self._policy_lr,
             name="policy_optimizer")
 

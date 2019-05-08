@@ -29,7 +29,7 @@ class UniformPolicyTest(tf.test.TestCase):
         self.assertEqual(actions.shape, (2, *self.env.action_space.shape))
         self.assertEqual(log_pis.shape, (2, 1))
 
-        self.evaluate(tf.global_variables_initializer())
+        self.evaluate(tf.compat.v1.global_variables_initializer())
 
         actions_np = self.evaluate(actions)
         log_pis_np = self.evaluate(log_pis)

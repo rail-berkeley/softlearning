@@ -22,7 +22,7 @@ class UniformPolicy(BasePolicy):
 
         actions = tf.keras.layers.Lambda(
             lambda x: tf.random.uniform(
-                (tf.shape(x)[0], output_shape[0]),
+                (tf.shape(input=x)[0], output_shape[0]),
                 *action_range)
         )(x)
 
@@ -31,9 +31,9 @@ class UniformPolicy(BasePolicy):
         self.actions_input = tf.keras.Input(shape=output_shape)
 
         log_pis = tf.keras.layers.Lambda(
-            lambda x: tf.tile(tf.log([
+            lambda x: tf.tile(tf.math.log([
                 (action_range[1] - action_range[0]) / 2.0
-            ])[None], (tf.shape(x)[0], 1))
+            ])[None], (tf.shape(input=x)[0], 1))
         )(self.actions_input)
 
         self.log_pis_model = tf.keras.Model(

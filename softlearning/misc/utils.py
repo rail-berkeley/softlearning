@@ -16,7 +16,7 @@ DEFAULT_SNAPSHOT_GAP = 1000
 
 
 def initialize_tf_variables(session, only_uninitialized=True):
-    variables = tf.global_variables() + tf.local_variables()
+    variables = tf.compat.v1.global_variables() + tf.compat.v1.local_variables()
 
     def is_initialized(variable):
         try:
@@ -33,14 +33,14 @@ def initialize_tf_variables(session, only_uninitialized=True):
             if not is_initialized(variable)
         ]
 
-    session.run(tf.variables_initializer(variables))
+    session.run(tf.compat.v1.variables_initializer(variables))
 
 
 def set_seed(seed):
     seed %= 4294967294
     random.seed(seed)
     np.random.seed(seed)
-    tf.set_random_seed(seed)
+    tf.compat.v1.set_random_seed(seed)
     print("Using seed {}".format(seed))
 
 

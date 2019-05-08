@@ -150,7 +150,7 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
         if _use_static_shape(x, event_ndims):
             event_shape = x.shape[x.shape.ndims - event_ndims:]
         else:
-            event_shape = tf.shape(x)[tf.rank(x) - event_ndims:]
+            event_shape = tf.shape(input=x)[tf.rank(x) - event_ndims:]
         for b in self.flow:
             fldj += b.forward_log_det_jacobian(
                 x, event_ndims=event_ndims, **conditions.get(b.name, {}))
@@ -159,7 +159,7 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
                 event_ndims = self._maybe_get_static_event_ndims(event_shape.ndims)
             else:
                 event_shape = b.forward_event_shape_tensor(event_shape)
-                event_ndims = tf.size(event_shape)
+                event_ndims = tf.size(input=event_shape)
                 event_ndims_ = self._maybe_get_static_event_ndims(event_ndims)
                 if event_ndims_ is not None:
                     event_ndims = event_ndims_
@@ -183,7 +183,7 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
         if _use_static_shape(y, event_ndims):
             event_shape = y.shape[y.shape.ndims - event_ndims:]
         else:
-            event_shape = tf.shape(y)[tf.rank(y) - event_ndims:]
+            event_shape = tf.shape(input=y)[tf.rank(y) - event_ndims:]
 
         for b in reversed(self.flow):
             ildj += b.inverse_log_det_jacobian(
@@ -195,7 +195,7 @@ class ConditionalRealNVPFlow(bijectors.ConditionalBijector):
                     event_shape.ndims)
             else:
                 event_shape = b.inverse_event_shape_tensor(event_shape)
-                event_ndims = tf.size(event_shape)
+                event_ndims = tf.size(input=event_shape)
                 event_ndims_ = self._maybe_get_static_event_ndims(event_ndims)
                 if event_ndims_ is not None:
                     event_ndims = event_ndims_
@@ -212,7 +212,7 @@ def conditioned_real_nvp_template(hidden_layers,
                                   *args,  # pylint: disable=keyword-arg-before-vararg
                                   **kwargs):
 
-    with tf.name_scope(name, "conditioned_real_nvp_template"):
+    with tf.compat.v1.name_scope(name, "conditioned_real_nvp_template"):
 
         def _fn(x, output_units, **condition_kwargs):
             """MLP which concatenates the condition kwargs to input."""
@@ -221,13 +221,13 @@ def conditioned_real_nvp_template(hidden_layers,
                 axis=-1)
 
             for units in hidden_layers:
-                x = tf.layers.dense(
+                x = tf.compat.v1.layers.dense(
                     inputs=x,
                     units=units,
                     activation=activation,
                     *args,  # pylint: disable=keyword-arg-before-vararg
                     **kwargs)
-            x = tf.layers.dense(
+            x = tf.compat.v1.layers.dense(
                 inputs=x,
                 units=(1 if shift_only else 2) * output_units,
                 activation=None,
@@ -240,4 +240,4 @@ def conditioned_real_nvp_template(hidden_layers,
             shift, log_scale = tf.split(x, 2, axis=-1)
             return shift, log_scale
 
-        return tf.make_template("conditioned_real_nvp_template", _fn)
+        return tf.compat.v1.make_template("conditioned_real_nvp_template", _fn)

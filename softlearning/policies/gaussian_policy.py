@@ -63,7 +63,7 @@ class GaussianPolicy(LatentSpacePolicy):
         )(log_scale_diag)
 
         batch_size = tf.keras.layers.Lambda(
-            lambda x: tf.shape(x)[0])(conditions)
+            lambda x: tf.shape(input=x)[0])(conditions)
 
         base_distribution = tfp.distributions.MultivariateNormalDiag(
             loc=tf.zeros(output_shape),

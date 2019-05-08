@@ -1,19 +1,27 @@
 import abc
 from collections import OrderedDict
+from distutils.version import LooseVersion
 from itertools import count
 import gtimer as gt
 import math
 import os
 
+import numpy as np
 import tensorflow as tf
 from tensorflow.python.training import training_util
-import numpy as np
 
 from softlearning.samplers import rollouts
 from softlearning.misc.utils import save_video
 
 
-class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
+if LooseVersion(tf.__version__) > LooseVersion("2.00"):
+    from tensorflow.python.training.tracking.tracking import (
+        AutoTrackable as Checkpointable)
+else:
+    from tensorflow.contrib.checkpoint import Checkpointable
+
+
+class RLAlgorithm(Checkpointable):
     """Abstract RLAlgorithm.
 
     Implements the _train and _evaluate methods to be used
