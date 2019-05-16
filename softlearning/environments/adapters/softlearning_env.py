@@ -5,6 +5,7 @@ from collections import defaultdict
 import copy
 
 import numpy as np
+import tensorflow as tf
 
 
 class SoftlearningEnv(metaclass=ABCMeta):
@@ -69,6 +70,17 @@ class SoftlearningEnv(metaclass=ABCMeta):
     @abstractmethod
     def action_space(self):
         raise NotImplementedError
+
+    @property
+    def action_shape(self, *args, **kwargs):
+        action_shape = tf.TensorShape(self.action_space.shape)
+
+        if len(action_shape) > 1:
+            raise NotImplementedError(
+                "Shape of the action space ({}) is not flat, make sure to"
+                " check the implemenation.".format(self.action_space))
+
+        return action_shape
 
     @abstractmethod
     def step(self, action):
