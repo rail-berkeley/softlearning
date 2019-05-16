@@ -1,5 +1,7 @@
 """Implements a GymAdapter that converts Gym envs into SoftlearningEnv."""
 
+from collections import defaultdict, OrderedDict
+
 import numpy as np
 import gym
 from gym import spaces, wrappers
@@ -8,7 +10,6 @@ from gym.envs.mujoco.mujoco_env import MujocoEnv
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym import register_environments
 from softlearning.environments.gym.wrappers import NormalizeActionWrapper
-from collections import defaultdict
 
 
 def parse_domain_task(gym_id):
@@ -37,6 +38,9 @@ for gym_id in GYM_ENVIRONMENT_IDS:
     GYM_ENVIRONMENTS[domain].append(task)
 
 GYM_ENVIRONMENTS = dict(GYM_ENVIRONMENTS)
+
+
+DEFAULT_OBSERVATION_KEY = 'observations'
 
 
 class GymAdapter(SoftlearningEnv):
@@ -75,45 +79,29 @@ class GymAdapter(SoftlearningEnv):
             # depends on time rather than state).
             env = env.env
 
-        if isinstance(env.observation_space, spaces.Dict):
-            observation_keys = (
-                observation_keys or tuple(env.observation_space.spaces.keys()))
-
-        self.observation_keys = observation_keys
-
         if normalize:
             env = NormalizeActionWrapper(env)
 
         self._env = env
 
+        if isinstance(self.observation_space, spaces.Dict):
+            observation_keys = (
+                observation_keys or tuple(self.observation_space.spaces.keys()))
+
+        self.observation_keys = observation_keys
+
     @property
     def observation_space(self):
-        observation_space = self._env.observation_space
-        return observation_space
+        if isinstance(self._env.observation_space, spaces.Dict):
+            dict_observation_space = self._env.observation_space
+        elif isinstance(self._env.observation_space, spaces.Box):
+            dict_observation_space = spaces.Dict(OrderedDict((
+                (DEFAULT_OBSERVATION_KEY, self._env.observation_space),
+            )))
+        else:
+            raise NotImplementedError(type(self._env.observation_space))
 
-    @property
-    def active_observation_shape(self):
-        """Shape for the active observation based on observation_keys."""
-        if not isinstance(self._env.observation_space, spaces.Dict):
-            return super(GymAdapter, self).active_observation_shape
-
-        active_size = sum(
-            np.prod(self._env.observation_space.spaces[key].shape)
-            for key in self.observation_keys)
-
-        active_observation_shape = (active_size, )
-
-        return active_observation_shape
-
-    def convert_to_active_observation(self, observation):
-        if not isinstance(self._env.observation_space, spaces.Dict):
-            return observation
-
-        observation = np.concatenate([
-            observation[key] for key in self.observation_keys
-        ], axis=-1)
-
-        return observation
+        return dict_observation_space
 
     @property
     def action_space(self, *args, **kwargs):
@@ -127,18 +115,21 @@ class GymAdapter(SoftlearningEnv):
         return action_space
 
     def step(self, action, *args, **kwargs):
-        # TODO(hartikainen): refactor this to always return an OrderedDict,
-        # such that the observations for all the envs is consistent. Right now
-        # some of the gym envs return np.array whereas others return dict.
-        #
-        # Something like:
-        # observation = OrderedDict()
-        # observation['observation'] = env.step(action, *args, **kwargs)
-        # return observation
-        return self._env.step(action, *args, **kwargs)
+        observation, reward, terminal, info = self._env.step(
+            action, *args, **kwargs)
+
+        if not isinstance(self._env.observation_space, spaces.Dict):
+            observation = {DEFAULT_OBSERVATION_KEY: observation}
+
+        return observation, reward, terminal, info
 
     def reset(self, *args, **kwargs):
-        return self._env.reset(*args, **kwargs)
+        observation = self._env.reset()
+
+        if not isinstance(self._env.observation_space, spaces.Dict):
+            observation = {DEFAULT_OBSERVATION_KEY: observation}
+
+        return observation
 
     def render(self, *args, width=100, height=100, **kwargs):
         if isinstance(self._env.unwrapped, MujocoEnv):

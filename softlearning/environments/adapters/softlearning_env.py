@@ -1,11 +1,12 @@
 """Implements the SoftlearningEnv that is usable in softlearning algorithms."""
 
 from abc import ABCMeta, abstractmethod
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import copy
 
 import numpy as np
 import tensorflow as tf
+from gym import spaces
 
 
 class SoftlearningEnv(metaclass=ABCMeta):
@@ -60,11 +61,14 @@ class SoftlearningEnv(metaclass=ABCMeta):
         raise NotImplementedError
 
     @property
-    def active_observation_shape(self):
-        return self.observation_space.shape
+    def observation_shape(self):
+        if not isinstance(self.observation_space, spaces.Dict):
+            raise NotImplementedError(type(self.observation_space))
 
-    def convert_to_active_observation(self, observation):
-        return observation
+        return OrderedDict((
+            (key, tf.TensorShape(space.shape))
+            for key, space in self.observation_space.spaces.items()
+        ))
 
     @property
     @abstractmethod

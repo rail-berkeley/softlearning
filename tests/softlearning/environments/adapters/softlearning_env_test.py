@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 import numpy as np
 from gym import spaces
 
@@ -15,13 +13,6 @@ class AdapterTestClass(object):
         # TODO(hartikainen): Test actual conversion of dimensions and types of
         # inside items; not just outside type.
 
-    def test_active_observation_shape(self):
-        env = self.create_adapter()
-        active_observation_shape = env.active_observation_shape
-        self.assertEqual(len(active_observation_shape), 1)
-        self.assertTrue(
-            np.issubdtype(type(active_observation_shape[0]), np.int))
-
     def test_action_space(self):
         env = self.create_adapter()
         action_space = env.action_space
@@ -36,23 +27,15 @@ class AdapterTestClass(object):
         self.assertEqual(len(step), 4)
 
         observation, reward, done, info = step
-        expected_observation_type = (
-            np.ndarray
-            if isinstance(env.observation_space, spaces.Box)
-            else OrderedDict)
-        self.assertIsInstance(observation, expected_observation_type)
+        self.assertIsInstance(observation, dict)
         self.assertIsInstance(reward, np.float)
         self.assertIsInstance(done, bool)
         self.assertIsInstance(info, dict)
 
     def test_reset(self):
         env = self.create_adapter()
-        expected_observation_type = (
-            np.ndarray
-            if isinstance(env.observation_space, spaces.Box)
-            else OrderedDict)
         observation = env.reset()
-        self.assertIsInstance(observation, expected_observation_type)
+        self.assertIsInstance(observation, dict)
 
     def test_render_rgb_array(self):
         env = self.create_adapter()

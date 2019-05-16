@@ -111,21 +111,6 @@ class DmControlAdapter(SoftlearningEnv):
         return observation_space
 
     @property
-    def active_observation_shape(self):
-        """Shape for the active observation based on observation_keys."""
-        observation_space = self.observation_space
-        active_size = sum(
-            np.prod(observation_space.spaces[key].shape)
-            for key in self.observation_keys)
-        active_shape = (int(active_size), )
-        return active_shape
-
-    def convert_to_active_observation(self, observation):
-        flattened_observation = np.concatenate([
-            observation[key] for key in self.observation_keys], axis=-1)
-        return flattened_observation
-
-    @property
     def action_space(self, *args, **kwargs):
         action_space = convert_dm_control_to_gym_space(self._env.action_spec())
 

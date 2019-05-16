@@ -87,26 +87,6 @@ class RobosuiteAdapter(SoftlearningEnv):
         return observation_space
 
     @property
-    def active_observation_shape(self):
-        """Shape for the active observation based on observation_keys."""
-        observation_space = self.observation_space
-
-        active_size = sum(
-            np.prod(observation_space.spaces[key].shape)
-            for key in self.observation_keys)
-
-        active_observation_shape = (active_size, )
-
-        return active_observation_shape
-
-    def convert_to_active_observation(self, observation):
-        observation = np.concatenate([
-            observation[key] for key in self.observation_keys
-        ], axis=-1)
-
-        return observation
-
-    @property
     def action_space(self, *args, **kwargs):
         action_space = convert_robosuite_to_gym_action_space(
             self._env.action_spec)
@@ -117,16 +97,6 @@ class RobosuiteAdapter(SoftlearningEnv):
         return action_space
 
     def step(self, action, *args, **kwargs):
-        # TODO(hartikainen): refactor this to always return an OrderedDict,
-        # such that the observations for all the envs is consistent. Right now
-        # some of the Robosuite envs return np.array whereas others return
-        # dict.
-        #
-        # Something like:
-        # observation = OrderedDict()
-        # observation['observation'] = env.step(action, *args, **kwargs)
-        # return observation
-
         return self._env.step(action, *args, **kwargs)
 
     def reset(self, *args, **kwargs):
