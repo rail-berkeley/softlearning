@@ -55,6 +55,10 @@ CONFIG = {
         },
         'type': 'GaussianPolicy'
     },
+    'exploration_policy_params': {
+        'kwargs': {},
+        'type': 'UniformPolicy'
+    },
     'replay_pool_params': {
         'kwargs': {
             'max_size': 1000

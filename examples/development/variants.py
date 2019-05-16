@@ -250,6 +250,10 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
             POLICY_PARAMS_BASE[policy],
             POLICY_PARAMS_FOR_DOMAIN[policy].get(domain, {})
         ),
+        'exploration_policy_params': {
+            'type': 'UniformPolicy',
+            'kwargs': {},
+        },
         'Q_params': {
             'type': 'double_feedforward_Q_function',
             'kwargs': {
