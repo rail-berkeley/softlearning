@@ -33,7 +33,10 @@ class RemoteSamplerTest(unittest.TestCase):
         self.remote_sampler.initialize(self.env, self.policy, self.pool)
 
         self.remote_sampler.sample()
+
         deserialized = pickle.loads(pickle.dumps(self.remote_sampler))
+        deserialized.initialize(self.env, self.policy, self.pool)
+
         self.assertEqual(self.pool.size, 10)
 
         self.remote_sampler.sample(timeout=10)
