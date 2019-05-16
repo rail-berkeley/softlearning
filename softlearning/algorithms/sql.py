@@ -7,6 +7,7 @@ import tensorflow_probability as tfp
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 
 from .rl_algorithm import RLAlgorithm
+from .sac import td_target
 
 EPS = 1e-6
 
@@ -182,9 +183,7 @@ class SQL(RLAlgorithm):
             ),
         }
 
-    def _init_td_update(self):
-        """Create a minimization operation for Q-function update."""
-
+    def _get_Q_target(self):
         next_observations = tf.tile(
             self._placeholders['next_observations'][:, tf.newaxis, :],
             (1, self._value_n_particles, 1))
@@ -222,13 +221,17 @@ class SQL(RLAlgorithm):
 
         terminals = tf.cast(self._placeholders['terminals'], next_values.dtype)
 
-        # \hat Q in Equation 11:
-        Q_target = tf.stop_gradient(
-            self._reward_scale
-            * self._placeholders['rewards']
-            + (1 - terminals)
-            * self._discount
-            * next_values)
+        # \hat Q in Equation 11 in [1]:
+        Q_target = td_target(
+            reward=self._reward_scale * self._placeholders['rewards'],
+            discount=self._discount,
+            next_value=(1 - terminals) * next_values)
+
+        return tf.stop_gradient(Q_target)
+
+    def _init_td_update(self):
+        """Create a minimization operation for Q-function update."""
+        Q_target = self._get_Q_target()
         assert_shape(Q_target, [None, 1])
 
         observations = self._placeholders['observations']

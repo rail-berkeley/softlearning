@@ -168,12 +168,13 @@ class SAC(RLAlgorithm):
         next_values = min_next_Q - self._alpha * next_log_pis
 
         terminals = tf.cast(self._placeholders['terminals'], next_values.dtype)
+
         Q_target = td_target(
             reward=self._reward_scale * self._placeholders['rewards'],
             discount=self._discount,
             next_value=(1 - terminals) * next_values)
 
-        return Q_target
+        return tf.stop_gradient(Q_target)
 
     def _init_critic_update(self):
         """Create minimization operation for critic Q-function.
@@ -185,8 +186,7 @@ class SAC(RLAlgorithm):
         See Equations (5, 6) in [1], for further information of the
         Q-function update rule.
         """
-        Q_target = tf.stop_gradient(self._get_Q_target())
-
+        Q_target = self._get_Q_target()
         assert Q_target.shape.as_list() == [None, 1]
 
         observations = self._placeholders['observations']
