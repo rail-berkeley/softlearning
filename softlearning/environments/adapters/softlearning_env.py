@@ -182,7 +182,7 @@ class SoftlearningEnv(metaclass=ABCMeta):
     @property
     @abstractmethod
     def unwrapped(self):
-        """Completely unwrap this env.
+        """Unwrap this env.
 
         Returns:
             gym.Env: The base non-wrapped gym.Env instance

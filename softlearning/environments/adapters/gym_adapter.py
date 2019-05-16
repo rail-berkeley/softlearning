@@ -118,10 +118,12 @@ class GymAdapter(SoftlearningEnv):
     @property
     def action_space(self, *args, **kwargs):
         action_space = self._env.action_space
+
         if len(action_space.shape) > 1:
             raise NotImplementedError(
-                "Action space ({}) is not flat, make sure to check the"
-                " implemenation.".format(action_space))
+                "Shape of the action space ({}) is not flat, make sure to"
+                " check the implemenation.".format(action_space))
+
         return action_space
 
     def step(self, action, *args, **kwargs):
@@ -153,9 +155,3 @@ class GymAdapter(SoftlearningEnv):
     @property
     def unwrapped(self):
         return self._env.unwrapped
-
-    def get_param_values(self, *args, **kwargs):
-        raise NotImplementedError
-
-    def set_param_values(self, *args, **kwargs):
-        raise NotImplementedError
