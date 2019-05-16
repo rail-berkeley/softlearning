@@ -1,18 +1,21 @@
 import pickle
 import unittest
 import numpy as np
+from flatten_dict import flatten, unflatten
 
-from softlearning.replay_pools.flexible_replay_pool import FlexibleReplayPool
+from softlearning.replay_pools.flexible_replay_pool import (
+    FlexibleReplayPool, Field)
 
 
 def create_pool(max_size=100, field_shapes=((1,), (1,))):
     return FlexibleReplayPool(
         max_size=max_size,
-        fields_attrs={
-            f'field{i}': {
-                'shape': shape,
-                'dtype': 'float32'
-            } for i, shape in enumerate(field_shapes, 1)
+        fields={
+            f'field{i}': Field(
+                name=f'field{i}',
+                shape=shape,
+                dtype='float32')
+            for i, shape in enumerate(field_shapes, 1)
         }
     )
 
@@ -27,8 +30,8 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         num_samples = pool._max_size // 2
         pool.add_samples({
             field_name: np.random.uniform(
-                0, 1, (num_samples, *field_attrs['shape']))
-            for field_name, field_attrs in pool.fields_attrs.items()
+                0, 1, (num_samples, *field_attrs.shape))
+            for field_name, field_attrs in pool.fields.items()
         })
 
         self.assertEqual(pool._size, num_samples)
@@ -36,7 +39,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         serialized = pickle.dumps(pool)
         deserialized = pickle.loads(serialized)
         for key in deserialized.__dict__:
-            if key == 'fields':
+            if key == 'data':
                 for field_name in pool.__dict__[key]:
                     np.testing.assert_array_equal(
                         pool.__dict__[key][field_name],
@@ -49,7 +52,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         self.assertNotEqual(id(pool), id(deserialized))
 
         self.assertEqual(deserialized._size, num_samples)
-        for field_name, field_attrs in pool.fields_attrs.items():
+        for field_name, field_attrs in pool.fields.items():
             np.testing.assert_array_equal(
                 pool.fields[field_name],
                 deserialized.fields[field_name])
@@ -60,8 +63,8 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         num_samples = self.pool._max_size // 2
         self.pool.add_samples({
             field_name: np.random.uniform(
-                0, 1, (num_samples, *field_attrs['shape']))
-            for field_name, field_attrs in self.pool.fields_attrs.items()
+                0, 1, (num_samples, *field_attrs.shape))
+            for field_name, field_attrs in self.pool.fields.items()
         })
 
         self.assertEqual(self.pool.size, self.pool._max_size // 2)
@@ -73,8 +76,8 @@ class FlexibleReplayPoolTest(unittest.TestCase):
 
         self.pool.add_samples({
             field_name: np.random.uniform(
-                0, 1, (num_samples, *field_attrs['shape']))
-            for field_name, field_attrs in self.pool.fields_attrs.items()
+                0, 1, (num_samples, *field_attrs.shape))
+            for field_name, field_attrs in self.pool.fields.items()
         })
 
         self.assertEqual(self.pool.size, self.pool._max_size)
@@ -85,8 +88,8 @@ class FlexibleReplayPoolTest(unittest.TestCase):
 
         self.pool.add_samples({
             field_name: np.random.uniform(
-                0, 1, (num_samples, *field_attrs['shape']))
-            for field_name, field_attrs in self.pool.fields_attrs.items()
+                0, 1, (num_samples, *field_attrs.shape))
+            for field_name, field_attrs in self.pool.fields.items()
         })
 
         self.assertEqual(self.pool.size, self.pool._max_size)
@@ -105,7 +108,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         pool.load_experience('./tmp/pool_3.pkl')
         self.assertEqual(pool.size, self.pool.size)
 
-        for field_name, field_attrs in pool.fields_attrs.items():
+        for field_name, field_attrs in pool.fields.items():
             np.testing.assert_array_equal(
                 pool.fields[field_name],
                 self.pool.fields[field_name])
@@ -136,27 +139,27 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         import gzip
         with gzip.open('./tmp/pool_1.pkl', 'rb') as f:
             latest_samples = pickle.load(f)
-            for field_name, data in latest_samples.items():
+            for field_name, data in flatten(latest_samples).items():
                 expected_shape = (
                     self.pool._max_size,
-                    *self.pool.fields_attrs[field_name]['shape'])
-                assert data.shape == expected_shape, data.shape
+                    *self.pool.fields_flat[field_name].shape)
+                self.assertEqual(data.shape, expected_shape)
 
         pool.load_experience('./tmp/pool_1.pkl')
         self.assertEqual(pool.size, self.pool._max_size)
 
-        for field_name, field_attrs in pool.fields_attrs.items():
+        for field_name in pool.fields_flat:
             np.testing.assert_array_equal(
-                pool.fields[field_name],
-                samples[field_name][-self.pool._max_size:])
+                pool.data[field_name],
+                samples[field_name[0]][-self.pool._max_size:])
 
     def test_field_initialization(self):
         # Fill fields with random data
-        for field_name, field_attrs in self.pool.fields_attrs.items():
-            field_values = self.pool.fields[field_name]
+        for field_name, field_attrs in self.pool.fields_flat.items():
+            field_values = self.pool.data[field_name]
             self.assertEqual(field_values.shape,
-                             (self.pool._max_size, *field_attrs['shape']))
-            self.assertEqual(field_values.dtype.name, field_attrs['dtype'])
+                             (self.pool._max_size, *field_attrs.shape))
+            self.assertEqual(field_values.dtype.name, field_attrs.dtype)
 
             np.testing.assert_array_equal(field_values, 0.0)
 
@@ -164,8 +167,8 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         # Fill fields with random data
         self.pool.add_samples({
             field_name: np.random.uniform(
-                0, 1, (self.pool._max_size, *field_attrs['shape']))
-            for field_name, field_attrs in self.pool.fields_attrs.items()
+                0, 1, (self.pool._max_size, *field_attrs.shape))
+            for field_name, field_attrs in self.pool.fields.items()
         })
 
         self.assertEqual(self.pool._size, self.pool._max_size)
@@ -174,7 +177,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         deserialized = pickle.loads(serialized)
 
         for key in deserialized.__dict__:
-            if key == 'fields':
+            if key == 'data':
                 for field_name in self.pool.__dict__[key]:
                     np.testing.assert_array_equal(
                         self.pool.__dict__[key][field_name],
@@ -187,7 +190,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         self.assertNotEqual(id(self.pool), id(deserialized))
 
         self.assertEqual(deserialized._size, deserialized._max_size)
-        for field_name, field_attrs in self.pool.fields_attrs.items():
+        for field_name, field_attrs in self.pool.fields.items():
             np.testing.assert_array_equal(
                 self.pool.fields[field_name],
                 deserialized.fields[field_name])
@@ -197,8 +200,8 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         num_samples = self.pool._max_size // 2
         self.pool.add_samples({
             field_name: np.random.uniform(
-                0, 1, (num_samples, *field_attrs['shape']))
-            for field_name, field_attrs in self.pool.fields_attrs.items()
+                0, 1, (num_samples, *field_attrs.shape))
+            for field_name, field_attrs in self.pool.fields.items()
         })
 
         self.assertEqual(self.pool._size, num_samples)
@@ -206,7 +209,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         serialized = pickle.dumps(self.pool)
         deserialized = pickle.loads(serialized)
         for key in deserialized.__dict__:
-            if key == 'fields':
+            if key == 'data':
                 for field_name in self.pool.__dict__[key]:
                     np.testing.assert_array_equal(
                         self.pool.__dict__[key][field_name],
@@ -219,7 +222,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         self.assertNotEqual(id(self.pool), id(deserialized))
 
         self.assertEqual(deserialized._size, num_samples)
-        for field_name, field_attrs in self.pool.fields_attrs.items():
+        for field_name, field_attrs in self.pool.fields.items():
             np.testing.assert_array_equal(
                 self.pool.fields[field_name],
                 deserialized.fields[field_name])
@@ -228,13 +231,13 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         # Fill fields with random data
 
         self.assertEqual(self.pool._size, 0)
-        for field_name in self.pool.field_names:
-            np.testing.assert_array_equal(self.pool.fields[field_name], 0.0)
+        for field_name in self.pool.fields_flat.keys():
+            np.testing.assert_array_equal(self.pool.data[field_name], 0.0)
 
         serialized = pickle.dumps(self.pool)
         deserialized = pickle.loads(serialized)
         for key in deserialized.__dict__:
-            if key == 'fields':
+            if key == 'data':
                 for field_name in self.pool.__dict__[key]:
                     np.testing.assert_array_equal(
                         self.pool.__dict__[key][field_name],
@@ -247,7 +250,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         self.assertNotEqual(id(self.pool), id(deserialized))
 
         self.assertEqual(deserialized._size, 0)
-        for field_name, field_attrs in self.pool.fields_attrs.items():
+        for field_name, field_attrs in self.pool.fields.items():
             np.testing.assert_array_equal(
                  self.pool.fields[field_name],
                  deserialized.fields[field_name])
@@ -261,10 +264,10 @@ class FlexibleReplayPoolTest(unittest.TestCase):
             self.pool.add_sample(sample)
 
         np.testing.assert_array_equal(
-            self.pool.fields['field1'],
+            self.pool.data[('field1', )],
             np.arange(self.pool._max_size)[:, None])
         np.testing.assert_array_equal(
-            self.pool.fields['field2'],
+            self.pool.data[('field2', )],
             -np.arange(self.pool._max_size)[:, None] * 2)
 
     def test_add_samples(self):
@@ -275,10 +278,10 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         self.pool.add_samples(samples)
 
         np.testing.assert_array_equal(
-            self.pool.fields['field1'],
+            self.pool.data[('field1', )],
             np.arange(self.pool._max_size)[:, None])
         np.testing.assert_array_equal(
-            self.pool.fields['field2'],
+            self.pool.data[('field2', )],
             -np.arange(self.pool._max_size)[:, None] * 2)
 
     def test_random_indices(self):

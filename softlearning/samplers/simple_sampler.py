@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import numpy as np
+from flatten_dict import flatten, unflatten
 
 from .base_sampler import BaseSampler
 
@@ -18,20 +19,20 @@ class SimpleSampler(BaseSampler):
         self._current_observation = None
         self._total_samples = 0
 
-    def _process_observations(self,
-                              observation,
-                              action,
-                              reward,
-                              terminal,
-                              next_observation,
-                              info):
+    def _process_sample(self,
+                        observation,
+                        action,
+                        reward,
+                        terminal,
+                        next_observation,
+                        info):
         processed_observation = {
             'observations': observation,
             'actions': action,
             'rewards': [reward],
             'terminals': [terminal],
             'next_observations': next_observation,
-            'infos': info,
+            # 'infos': info,
         }
 
         return processed_observation
@@ -50,7 +51,7 @@ class SimpleSampler(BaseSampler):
         self._path_return += reward
         self._total_samples += 1
 
-        processed_sample = self._process_observations(
+        processed_sample = self._process_sample(
             observation=self._current_observation,
             action=action,
             reward=reward,
@@ -59,15 +60,16 @@ class SimpleSampler(BaseSampler):
             info=info,
         )
 
-        for key, value in processed_sample.items():
+        for key, value in flatten(processed_sample).items():
             self._current_path[key].append(value)
 
         if terminal or self._path_length >= self._max_path_length:
-            last_path = {
+            last_path = unflatten({
                 field_name: np.array(values)
                 for field_name, values in self._current_path.items()
-            }
+            })
             self.pool.add_path(last_path)
+
             self._last_n_paths.appendleft(last_path)
 
             self._max_path_return = max(self._max_path_return,
@@ -75,6 +77,7 @@ class SimpleSampler(BaseSampler):
             self._last_path_return = self._path_return
 
             self.policy.reset()
+            self.pool.terminate_episode()
             self._current_observation = None
             self._path_length = 0
             self._path_return = 0

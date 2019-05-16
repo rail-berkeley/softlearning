@@ -1,22 +1,47 @@
+from typing import Union, Callable
+from numbers import Number
 import gzip
 import pickle
 
 import numpy as np
+import tensorflow as tf
 
+from flatten_dict import flatten, unflatten
 from .replay_pool import ReplayPool
 
 
+class Field(object):
+    def __init__(self,
+                 name: str,
+                 dtype: Union[str, np.dtype, tf.DType],
+                 shape: Union[tuple, tf.TensorShape],
+                 initializer: Callable = np.zeros,
+                 default_value: Number = 0.0):
+        self.name = name
+        self.dtype = dtype
+        self.shape = shape
+        self.initializer = initializer
+        self.default_value = default_value
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Field):
+            return NotImplemented
+
+        keys = ('name', 'dtype', 'shape', 'initializer', 'default_value')
+        return all(getattr(self, key) == getattr(other, key) for key in keys)
+
+
 class FlexibleReplayPool(ReplayPool):
-    def __init__(self, max_size, fields_attrs):
+    def __init__(self, max_size, fields):
         super(FlexibleReplayPool, self).__init__()
 
         max_size = int(max_size)
         self._max_size = max_size
 
-        self.fields = {}
-        self.fields_attrs = {}
-
-        self.add_fields(fields_attrs)
+        self.data = {}
+        self.fields = fields
+        self.fields_flat = flatten(fields)
+        self._initialize_data()
 
         self._pointer = 0
         self._size = 0
@@ -26,18 +51,18 @@ class FlexibleReplayPool(ReplayPool):
     def size(self):
         return self._size
 
-    @property
-    def field_names(self):
-        return list(self.fields.keys())
+    def _initialize_field(self, field):
+        field_shape = (self._max_size, *field.shape)
+        field_values = field.initializer(
+            field_shape, dtype=field.dtype)
 
-    def add_fields(self, fields_attrs):
-        self.fields_attrs.update(fields_attrs)
+        return field_values
 
-        for field_name, field_attrs in fields_attrs.items():
-            field_shape = (self._max_size, *field_attrs['shape'])
-            initializer = field_attrs.get('initializer', np.zeros)
-            self.fields[field_name] = initializer(
-                field_shape, dtype=field_attrs['dtype'])
+    def _initialize_data(self):
+        """Initialize data for the pool."""
+        fields = flatten(self.fields)
+        for field_name, field_attrs in fields.items():
+            self.data[field_name] = self._initialize_field(field_attrs)
 
     def _advance(self, count=1):
         self._pointer = (self._pointer + count) % self._max_size
@@ -45,25 +70,29 @@ class FlexibleReplayPool(ReplayPool):
         self._samples_since_save += count
 
     def add_sample(self, sample):
-        samples = {
-            key: value[None, ...]
-            for key, value in sample.items()
-        }
+        sample_flat = flatten(sample)
+        samples_flat = type(sample)([
+            (field_name_flat, np.array(sample_flat[field_name_flat])[None, ...])
+            for field_name_flat in sample_flat.keys()
+        ])
+        samples = unflatten(samples_flat)
+
         self.add_samples(samples)
 
     def add_samples(self, samples):
-        field_names = list(samples.keys())
+        samples = flatten(samples)
+
+        field_names = tuple(samples.keys())
         num_samples = samples[field_names[0]].shape[0]
 
         index = np.arange(
             self._pointer, self._pointer + num_samples) % self._max_size
 
-        for field_name in self.field_names:
-            default_value = (
-                self.fields_attrs[field_name].get('default_value', 0.0))
+        for field_name, values in samples.items():
+            default_value = self.fields_flat[field_name].default_value
             values = samples.get(field_name, default_value)
             assert values.shape[0] == num_samples
-            self.fields[field_name][index] = values
+            self.data[field_name][index] = values
 
         self._advance(num_samples)
 
@@ -109,15 +138,18 @@ class FlexibleReplayPool(ReplayPool):
                 "Tried to retrieve batch with indices greater than current"
                 " size")
 
-        field_names = self.field_names
+        field_names_flat = self.fields_flat.keys()
         if field_name_filter is not None:
-            field_names = self.filter_fields(
-                field_names, field_name_filter)
+            field_names_flat = self.filter_fields(
+                field_names_flat, field_name_filter)
 
-        return {
-            field_name: self.fields[field_name][indices]
-            for field_name in field_names
+        batch_flat = {
+            field_name: self.data[field_name][indices]
+            for field_name in field_names_flat
         }
+
+        batch = unflatten(batch_flat)
+        return batch
 
     def save_latest_experience(self, pickle_path):
         latest_samples = self.last_n_batch(self._samples_since_save)
@@ -131,31 +163,33 @@ class FlexibleReplayPool(ReplayPool):
         with gzip.open(experience_path, 'rb') as f:
             latest_samples = pickle.load(f)
 
-        key = list(latest_samples.keys())[0]
-        num_samples = latest_samples[key].shape[0]
-        for field_name, data in latest_samples.items():
+        latest_samples_flat = flatten(latest_samples)
+
+        key = list(latest_samples_flat.keys())[0]
+        num_samples = latest_samples_flat[key].shape[0]
+        for data in latest_samples_flat.values():
             assert data.shape[0] == num_samples, data.shape
 
         self.add_samples(latest_samples)
         self._samples_since_save = 0
 
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        state['fields'] = {
-            field_name: self.fields[field_name][:self.size]
-            for field_name in self.field_names
-        }
+    # def __getstate__(self):
+    #     state = self.__dict__.copy()
+    #     state['fields'] = {
+    #         field_name: self.data[field_name][:self.size]
+    #         for field_name in self.field_names
+    #     }
 
-        return state
+    #     return state
 
-    def __setstate__(self, state):
-        if state['_size'] < state['_max_size']:
-            pad_size = state['_max_size'] - state['_size']
-            for field_name in state['fields'].keys():
-                field_shape = state['fields_attrs'][field_name]['shape']
-                state['fields'][field_name] = np.concatenate((
-                    state['fields'][field_name],
-                    np.zeros((pad_size, *field_shape))
-                ), axis=0)
+    # def __setstate__(self, state):
+    #     if state['_size'] < state['_max_size']:
+    #         pad_size = state['_max_size'] - state['_size']
+    #         for field_name in state['data'].keys():
+    #             field_shape = state['fields'][field_name]['shape']
+    #             state['fields'][field_name] = np.concatenate((
+    #                 state['fields'][field_name],
+    #                 np.zeros((pad_size, *field_shape))
+    #             ), axis=0)
 
-        self.__dict__ = state
+    #     self.__dict__ = state

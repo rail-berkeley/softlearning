@@ -1,9 +1,10 @@
 from collections import defaultdict
+import copy
 
 import numpy as np
 from gym.spaces import Box, Dict, Discrete
 
-from .flexible_replay_pool import FlexibleReplayPool
+from .flexible_replay_pool import FlexibleReplayPool, Field
 
 
 def normalize_observation_fields(observation_space, name='observations'):
@@ -20,10 +21,10 @@ def normalize_observation_fields(observation_space, name='observations'):
         }
     elif isinstance(observation_space, (Box, Discrete)):
         fields = {
-            name: {
-                'shape': observation_space.shape,
-                'dtype': observation_space.dtype,
-            }
+            name: Field(
+                name=name,
+                dtype=observation_space.dtype,
+                shape=observation_space.shape)
         }
     else:
         raise NotImplementedError(
@@ -43,31 +44,31 @@ class SimpleReplayPool(FlexibleReplayPool):
         # but it makes the code *much* easier since you no longer have
         # to worry about termination conditions.
         observation_fields.update({
-            'next_' + key: value
+            'next_' + key: copy.deepcopy(value)
             for key, value in observation_fields.items()
         })
+        observation_fields['next_observations'].name = 'next_observations'
 
         fields = {
             **observation_fields,
             **{
-                'actions': {
-                    'shape': self._action_space.shape,
-                    'dtype': 'float32'
-                },
-                'rewards': {
-                    'shape': (1, ),
-                    'dtype': 'float32'
-                },
-                # self.terminals[i] = a terminal was received at time i
-                'terminals': {
-                    'shape': (1, ),
-                    'dtype': 'bool'
-                },
+                'actions': Field(
+                    name='actions',
+                    dtype=action_space.dtype,
+                    shape=action_space.shape),
+                'rewards': Field(
+                    name='rewards',
+                    dtype='float32',
+                    shape=(1, )),
+                'terminals': Field(
+                    name='terminals',
+                    dtype='bool',
+                    shape=(1, )),
             }
         }
 
         super(SimpleReplayPool, self).__init__(
-            *args, fields_attrs=fields, **kwargs)
+            *args, fields=fields, **kwargs)
 
     def add_samples(self, samples):
         if not isinstance(self._observation_space, Dict):
