@@ -91,7 +91,7 @@ def save_video(video_frames, filename):
 
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-    fps = 30.0
+    fps = 120.0
     (height, width, _) = video_frames[0].shape
     writer = cv2.VideoWriter(filename, fourcc, fps, (width, height))
     for video_frame in video_frames:

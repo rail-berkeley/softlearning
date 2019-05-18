@@ -64,7 +64,7 @@ def rollout(env,
 
         if render_mode is not None:
             if render_mode == 'rgb_array':
-                image = env.render(mode=render_mode)
+                image = env.render(mode=render_mode, width=100, height=100)
                 images.append(image)
             else:
                 env.render()
