@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from ray import tune
 import numpy as np
 
@@ -322,10 +324,17 @@ def get_variant_spec_image(universe,
                 'dense_hidden_layer_sizes': (),
             },
         }
+
+        variant_spec['policy_params']['kwargs']['hidden_layer_sizes'] = (M, M)
         variant_spec['policy_params']['kwargs']['preprocessor_params'] = (
-            preprocessor_params.copy())
-        variant_spec['Q_params']['kwargs']['preprocessor_params'] = (
-            preprocessor_params.copy())
+            deepcopy(preprocessor_params))
+
+        for key in ('hidden_layer_sizes', 'preprocessor_params'):
+            variant_spec['Q_params']['kwargs'][key] = (
+                tune.sample_from(lambda spec: (deepcopy(
+                    spec.get('config', spec)['policy_params']['kwargs'][key]
+                )))
+            )
 
     return variant_spec
 
