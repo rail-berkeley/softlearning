@@ -146,9 +146,6 @@ class GymAdapter(SoftlearningEnv):
 
         return self._env.render(*args, **kwargs)
 
-    def close(self, *args, **kwargs):
-        return self._env.close(*args, **kwargs)
-
     def seed(self, *args, **kwargs):
         return self._env.seed(*args, **kwargs)
 

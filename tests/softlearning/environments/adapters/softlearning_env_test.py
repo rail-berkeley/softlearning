@@ -58,11 +58,13 @@ class AdapterTestClass(object):
         env = self.create_adapter()
         result = env.render(mode='rgb_array')
         self.assertIsInstance(result, np.ndarray)
+        env.close()
 
     def test_render_human(self):
         env = self.create_adapter()
         result = env.render(mode='human')
         self.assertIsNone(result)
+        env.close()
 
     def test_close(self):
         env = self.create_adapter()

@@ -153,9 +153,6 @@ class RobosuiteAdapter(SoftlearningEnv):
 
         raise NotImplementedError(mode)
 
-    def close(self, *args, **kwargs):
-        return self._env.close(*args, **kwargs)
-
     def seed(self, *args, **kwargs):
         return self._env.seed(*args, **kwargs)
 

@@ -161,15 +161,6 @@ class SoftlearningEnv(metaclass=ABCMeta):
             return unwrapped_env.render_rollouts(paths)
 
     @abstractmethod
-    def close(self):
-        """Override _close in your subclass to perform any necessary cleanup.
-
-        Environments will automatically close() themselves when
-        garbage collected or when the program exits.
-        """
-        return
-
-    @abstractmethod
     def seed(self, seed=None):
         """Sets the seed for this env's random number generator(s).
 
