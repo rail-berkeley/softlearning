@@ -40,9 +40,9 @@ def simulate_policy(args):
     checkpoint_path = args.checkpoint_path.rstrip('/')
     experiment_path = os.path.dirname(checkpoint_path)
 
-    variant_path = os.path.join(experiment_path, 'params.json')
-    with open(variant_path, 'r') as f:
-        variant = json.load(f)
+    variant_path = os.path.join(experiment_path, 'params.pkl')
+    with open(variant_path, 'rb') as f:
+        variant = pickle.load(f)
 
     with session.as_default():
         pickle_path = os.path.join(checkpoint_path, 'checkpoint.pkl')
