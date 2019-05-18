@@ -9,7 +9,7 @@ from softlearning.policies.uniform_policy import UniformPolicy
 
 class RemoteSamplerTest(unittest.TestCase):
     def setUp(self):
-        self.env = get_environment('gym', 'Swimmer', 'Default', {})
+        self.env = get_environment('gym', 'Swimmer', 'v3', {})
         self.policy = UniformPolicy(
             input_shapes=(self.env.observation_space.shape, ),
             output_shape=self.env.action_space.shape)
@@ -41,6 +41,7 @@ class RemoteSamplerTest(unittest.TestCase):
         self.assertEqual(self.pool.size, 20)
 
         deserialized = pickle.loads(pickle.dumps(self.remote_sampler))
+        deserialized.initialize(self.env, self.policy, self.pool)
 
         self.assertTrue(isinstance(
             deserialized.env, type(self.remote_sampler.env)))
