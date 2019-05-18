@@ -1,4 +1,5 @@
 from collections import OrderedDict
+
 import numpy as np
 from gym import spaces
 
@@ -26,9 +27,6 @@ class AdapterTestClass(object):
         action_space = env.action_space
         self.assertTrue(
             isinstance(action_space, spaces.Box))
-
-    def test_dict_observation_concatenation(self):
-        raise NotImplementedError
 
     def test_step(self):
         env = self.create_adapter()

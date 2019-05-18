@@ -76,7 +76,6 @@ class DmControlAdapter(SoftlearningEnv):
         self.normalize = normalize
         self.unwrap_time_limit = unwrap_time_limit
 
-        self._Serializable__initialize(locals())
         super(DmControlAdapter, self).__init__(domain, task, *args, **kwargs)
         if env is None:
             assert (domain is not None and task is not None), (domain, task)
@@ -89,7 +88,9 @@ class DmControlAdapter(SoftlearningEnv):
                 # `visualize_reward` bool. Check the suite.load(.) in:
                 # https://github.com/deepmind/dm_control/blob/master/dm_control/suite/__init__.py
             )
+            self._env_kwargs = kwargs
         else:
+            assert not kwargs
             assert domain is None and task is None, (domain, task)
 
         assert isinstance(env.observation_spec(), OrderedDict)

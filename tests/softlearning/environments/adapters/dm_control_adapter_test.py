@@ -1,3 +1,4 @@
+import pickle
 import unittest
 
 from .softlearning_env_test import AdapterTestClass
@@ -37,6 +38,39 @@ class TestDmControlAdapter(unittest.TestCase, AdapterTestClass):
     def test_environment_kwargs(self):
         # TODO(hartikainen): Figure this out later.
         pass
+
+    def test_serialize_deserialize(self):
+        domain, task = 'hopper', 'hop'
+        env_kwargs = {
+            'environment_kwargs': {
+                'flat_observation': True,
+            }
+        }
+        env1 = self.create_adapter(domain=domain, task=task, **env_kwargs)
+        env1.reset()
+
+        env2 = pickle.loads(pickle.dumps(env1))
+
+        self.assertEqual(env1.observation_keys, env2.observation_keys)
+        for key, value in env_kwargs['environment_kwargs'].items():
+            self.assertEqual(getattr(env1.unwrapped, f'_{key}'), value)
+            self.assertEqual(getattr(env2.unwrapped, f'_{key}'), value)
+
+    def test_copy_environments(self):
+        domain, task = 'cartpole', 'swingup'
+        env_kwargs = {
+            'environment_kwargs': {
+                'flat_observation': False,
+            }
+        }
+        env1 = self.create_adapter(domain=domain, task=task, **env_kwargs)
+        env1.reset()
+        env2 = env1.copy()
+
+        self.assertEqual(env1.observation_keys, env2.observation_keys)
+        for key, value in env_kwargs['environment_kwargs'].items():
+            self.assertEqual(getattr(env1.unwrapped, f'_{key}'), value)
+            self.assertEqual(getattr(env2.unwrapped, f'_{key}'), value)
 
 
 if __name__ == '__main__':

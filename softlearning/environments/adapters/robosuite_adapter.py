@@ -1,6 +1,7 @@
 """Implements a RobosuiteAdapter that converts Robosuite envs into SoftlearningEnv."""
 
 from collections import OrderedDict
+import copy
 
 import numpy as np
 import robosuite as suite
@@ -47,8 +48,6 @@ class RobosuiteAdapter(SoftlearningEnv):
         assert not args, (
             "Robosuite environments don't support args. Use kwargs instead.")
 
-        self._Serializable__initialize(locals())
-
         self.normalize = normalize
 
         super(RobosuiteAdapter, self).__init__(domain, task, *args, **kwargs)
@@ -57,7 +56,9 @@ class RobosuiteAdapter(SoftlearningEnv):
             assert (domain is not None and task is not None), (domain, task)
             env_id = f"{domain}{task}"
             env = suite.make(env_id, **kwargs)
+            self._env_kwargs = kwargs
         else:
+            assert not kwargs, kwargs
             assert domain is None and task is None, (domain, task)
 
         # TODO(Alacarter): Check how robosuite handles max episode length
@@ -142,12 +143,36 @@ class RobosuiteAdapter(SoftlearningEnv):
     def seed(self, *args, **kwargs):
         return self._env.seed(*args, **kwargs)
 
+    def copy(self):
+        """Override default copy method to allow robosuite env serialization.
+
+        Robosuite environments are not serializable, and thus we cannot use the
+        default `copy.deepcopy(self)` from `SoftlearningEnv`. Instead, we first
+        create a copy of the self *without* robosuite environment (`self._env`)
+        and then instantiate a new robosuite environment and attach it to the
+        copied self.
+        """
+        env = self._env
+        self._env = None
+        result = copy.deepcopy(self)
+        result._env = suite.make(
+            f"{self._domain}{self._task}", **self._env_kwargs)
+        self._env = env
+
+        return result
+
     @property
     def unwrapped(self):
         return self._env
 
-    def get_param_values(self, *args, **kwargs):
-        raise NotImplementedError
+    def __getstate__(self):
+        state = {
+            key: value for key, value in self.__dict__.items()
+            if key != '_env'
+        }
+        return state
 
-    def set_param_values(self, *args, **kwargs):
-        raise NotImplementedError
+    def __setstate__(self, state):
+        self.__dict__ = state
+        self._env = suite.make(
+            f"{self._domain}{self._task}", **self._env_kwargs)

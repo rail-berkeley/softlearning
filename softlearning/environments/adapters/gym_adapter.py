@@ -53,8 +53,6 @@ class GymAdapter(SoftlearningEnv):
         assert not args, (
             "Gym environments don't support args. Use kwargs instead.")
 
-        self._Serializable__initialize(locals())
-
         self.normalize = normalize
         self.unwrap_time_limit = unwrap_time_limit
 
@@ -64,7 +62,9 @@ class GymAdapter(SoftlearningEnv):
             assert (domain is not None and task is not None), (domain, task)
             env_id = f"{domain}-{task}"
             env = gym.envs.make(env_id, **kwargs)
+            self._env_kwargs = kwargs
         else:
+            assert not kwargs
             assert domain is None and task is None, (domain, task)
 
         if isinstance(env, wrappers.TimeLimit) and unwrap_time_limit:

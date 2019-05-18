@@ -2,12 +2,12 @@
 
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
+import copy
 
 import numpy as np
-from serializable import Serializable
 
 
-class SoftlearningEnv(Serializable, metaclass=ABCMeta):
+class SoftlearningEnv(metaclass=ABCMeta):
     """The abstract Softlearning environment class.
 
     It's an abstract class defining the interface an adapter needs to implement
@@ -50,7 +50,6 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
         *args    --
         **kwargs --
         """
-        self._Serializable__initialize(locals())
         self._domain = domain
         self._task = task
 
@@ -177,12 +176,8 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
         pass
 
     def copy(self):
-        """Create a deep copy the environment.
-
-        TODO: Investigate if this can be done somehow else, especially for gym
-        envs.
-        """
-        return Serializable.clone(self)
+        """Create a deep copy the environment."""
+        return copy.deepcopy(self)
 
     @property
     @abstractmethod
@@ -200,14 +195,6 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
             domain=self._domain,
             task=self._task,
             env=self._env)
-
-    @abstractmethod
-    def get_param_values(self):
-        raise NotImplementedError
-
-    @abstractmethod
-    def set_param_values(self, params):
-        raise NotImplementedError
 
     def get_path_infos(self, paths, *args, **kwargs):
         """Log some general diagnostics from the env infos.
@@ -240,3 +227,9 @@ class SoftlearningEnv(Serializable, metaclass=ABCMeta):
             aggregated_results[key + '-mean'] = np.mean(value)
 
         return aggregated_results
+
+    def __getattr__(self, name):
+        if name == '_env':
+            return self.__getattribute__('_env')
+
+        return getattr(self._env, name)
