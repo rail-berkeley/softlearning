@@ -3,6 +3,7 @@
 import numpy as np
 import gym
 from gym import spaces, wrappers
+from gym.envs.mujoco.mujoco_env import MujocoEnv
 
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym import register_environments
@@ -132,13 +133,15 @@ class GymAdapter(SoftlearningEnv):
         # observation = OrderedDict()
         # observation['observation'] = env.step(action, *args, **kwargs)
         # return observation
-
         return self._env.step(action, *args, **kwargs)
 
     def reset(self, *args, **kwargs):
         return self._env.reset(*args, **kwargs)
 
-    def render(self, *args, **kwargs):
+    def render(self, *args, width=100, height=100, **kwargs):
+        if isinstance(self._env.unwrapped, MujocoEnv):
+            self._env.render(*args, width=width, height=height, **kwargs)
+
         return self._env.render(*args, **kwargs)
 
     def close(self, *args, **kwargs):
