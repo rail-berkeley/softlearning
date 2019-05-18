@@ -19,7 +19,7 @@ dask==1.0.0
 decorator==4.3.0
 docutils==0.14
 deepdiff==3.3.0
-git+https://github.com/deepmind/dm_control.git@0260f3effcfe2b0fdb25d9652dc27ba34b52d226
+git+https://github.com/deepmind/dm_control.git@e681949dda5ef1b05acf4fad99a134101469d8e7
 flatbuffers==1.10
 funcsigs==1.0.2
 future==0.17.1
@@ -37,6 +37,7 @@ gym==0.12.1
 h5py==2.8.0
 httplib2==0.12.0
 idna==2.7
+ipdb>=0.12
 imageio==2.4.1
 jmespath==0.9.3
 Keras-Applications==1.0.6
@@ -66,7 +67,7 @@ PyOpenGL-accelerate==3.1.0
 pyOpenSSL==18.0.0
 pyparsing==2.3.0
 PySocks==1.6.8
-pytest==4.0.1
+pytest==4.5.0
 python-dateutil==2.7.5
 pytz==2018.7
 PyWavelets==1.0.1
@@ -75,6 +76,7 @@ psutil==5.4.8
 ray[rllib,debug]==0.6.6
 redis==3.0.1
 requests==2.20.1
+robosuite==0.1.0
 rsa==3.4.2
 ruamel-yaml==0.15.46
 s3transfer==0.2.0
