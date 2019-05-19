@@ -21,6 +21,7 @@ docutils==0.14
 deepdiff==3.3.0
 git+https://github.com/deepmind/dm_control.git@e681949dda5ef1b05acf4fad99a134101469d8e7
 flatbuffers==1.10
+flatten-dict==0.0.3.post1
 funcsigs==1.0.2
 future==0.17.1
 gast==0.2.0

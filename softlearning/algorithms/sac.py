@@ -4,7 +4,9 @@ from numbers import Number
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
+from flatten_dict import flatten
 
+from softlearning.models.utils import flatten_input_structure
 from .rl_algorithm import RLAlgorithm
 
 
@@ -96,14 +98,6 @@ class SAC(RLAlgorithm):
 
         self._save_full_state = save_full_state
 
-        observation_shape = self._training_environment.active_observation_shape
-        action_shape = self._training_environment.action_shape
-
-        assert len(observation_shape) == 1, observation_shape
-        self._observation_shape = observation_shape
-        assert len(action_shape) == 1, action_shape
-        self._action_shape = action_shape
-
         self._build()
 
     def _build(self):
@@ -124,24 +118,32 @@ class SAC(RLAlgorithm):
             - action
             - reward
             - terminals
+
+        # TODO(hartikainen): Use dtypes defined by {observation,action}_space
         """
         self._placeholders = {
+            'observations': {
+                name: tf.compat.v1.placeholder(
+                    dtype=tf.float32,
+                    shape=(None, *observation_space.shape),
+                    name=name)
+                for name, observation_space
+                in self._training_environment.observation_space.spaces.items()
+            },
+            'next_observations': {
+                name: tf.compat.v1.placeholder(
+                    dtype=tf.float32,
+                    shape=(None, *observation_space.shape),
+                    name=name)
+                for name, observation_space
+                in self._training_environment.observation_space.spaces.items()
+            },
             'iteration': tf.compat.v1.placeholder(
-                tf.int64, shape=None, name='iteration',
-            ),
-            'observations': tf.compat.v1.placeholder(
-                tf.float32,
-                shape=(None, *self._observation_shape),
-                name='observation',
-            ),
-            'next_observations': tf.compat.v1.placeholder(
-                tf.float32,
-                shape=(None, *self._observation_shape),
-                name='next_observation',
+                tf.int64, shape=(), name='iteration',
             ),
             'actions': tf.compat.v1.placeholder(
-                tf.float32,
-                shape=(None, *self._action_shape),
+                dtype=tf.float32,
+                shape=(None, *self._training_environment.action_space.shape),
                 name='actions',
             ),
             'rewards': tf.compat.v1.placeholder(
@@ -157,12 +159,20 @@ class SAC(RLAlgorithm):
         }
 
     def _get_Q_target(self):
-        next_observations = self._placeholders['next_observations']
-        next_actions = self._policy.actions([next_observations])
-        next_log_pis = self._policy.log_pis([next_observations], next_actions)
+        policy_inputs = flatten_input_structure({
+            name: self._placeholders['next_observations'][name]
+            for name in self._policy.observation_keys
+        })
+        next_actions = self._policy.actions(policy_inputs)
+        next_log_pis = self._policy.log_pis(policy_inputs, next_actions)
 
-        next_Qs_values = tuple(
-            Q([next_observations, next_actions]) for Q in self._Q_targets)
+        next_Q_observations = {
+            name: self._placeholders['next_observations'][name]
+            for name in self._Qs[0].observation_keys
+        }
+        next_Q_inputs = flatten_input_structure(
+            {**next_Q_observations, 'actions': next_actions})
+        next_Qs_values = tuple(Q(next_Q_inputs) for Q in self._Q_targets)
 
         min_next_Q = tf.reduce_min(next_Qs_values, axis=0)
         next_values = min_next_Q - self._alpha * next_log_pis
@@ -189,12 +199,13 @@ class SAC(RLAlgorithm):
         Q_target = self._get_Q_target()
         assert Q_target.shape.as_list() == [None, 1]
 
-        observations = self._placeholders['observations']
-        actions = self._placeholders['actions']
-
-        Q_values = self._Q_values = tuple(
-            Q([observations, actions])
-            for Q in self._Qs)
+        Q_observations = {
+            name: self._placeholders['observations'][name]
+            for name in self._Qs[0].observation_keys
+        }
+        Q_inputs = flatten_input_structure({
+            **Q_observations, 'actions': self._placeholders['actions']})
+        Q_values = self._Q_values = tuple(Q(Q_inputs) for Q in self._Qs)
 
         Q_losses = self._Q_losses = tuple(
             tf.compat.v1.losses.mean_squared_error(
@@ -225,9 +236,12 @@ class SAC(RLAlgorithm):
         and Section 5 in [1] for further information of the entropy update.
         """
 
-        observations = self._placeholders['observations']
-        actions = self._policy.actions([observations])
-        log_pis = self._policy.log_pis([observations], actions)
+        policy_inputs = flatten_input_structure({
+            name: self._placeholders['observations'][name]
+            for name in self._policy.observation_keys
+        })
+        actions = self._policy.actions(policy_inputs)
+        log_pis = self._policy.log_pis(policy_inputs, actions)
 
         assert log_pis.shape.as_list() == [None, 1]
 
@@ -260,9 +274,13 @@ class SAC(RLAlgorithm):
         elif self._action_prior == 'uniform':
             policy_prior_log_probs = 0.0
 
-        Q_log_targets = tuple(
-            Q([observations, actions])
-            for Q in self._Qs)
+        Q_observations = {
+            name: self._placeholders['observations'][name]
+            for name in self._Qs[0].observation_keys
+        }
+        Q_inputs = flatten_input_structure({
+            **Q_observations, 'actions': actions})
+        Q_log_targets = tuple(Q(Q_inputs) for Q in self._Qs)
         min_Q_log_target = tf.reduce_min(Q_log_targets, axis=0)
 
         if self._reparameterize:
@@ -332,12 +350,15 @@ class SAC(RLAlgorithm):
             self._update_target()
 
     def _get_feed_dict(self, iteration, batch):
-        """Construct TensorFlow feed_dict from sample batch."""
+        """Construct a TensorFlow feed dictionary from a sample batch."""
+
+        batch_flat = flatten(batch)
+        placeholders_flat = flatten(self._placeholders)
 
         feed_dict = {
-            self._placeholders[key]: batch[key]
-            for key in self._placeholders.keys()
-            if key in batch
+            placeholders_flat[key]: batch_flat[key]
+            for key in placeholders_flat.keys()
+            if key in batch_flat.keys()
         }
 
         if iteration is not None:
@@ -352,10 +373,6 @@ class SAC(RLAlgorithm):
                         evaluation_paths):
         """Return diagnostic information as ordered dictionary.
 
-        Records mean and standard deviation of Q-function and state
-        value function, and TD-loss (mean squared Bellman error)
-        for the sample batch.
-
         Also calls the `draw` method of the plotter, if plotter defined.
         """
 
@@ -365,7 +382,10 @@ class SAC(RLAlgorithm):
         diagnostics.update(OrderedDict([
             (f'policy/{key}', value)
             for key, value in
-            self._policy.get_diagnostics(batch['observations']).items()
+            self._policy.get_diagnostics(flatten_input_structure({
+                name: batch['observations'][name]
+                for name in self._policy.observation_keys
+            })).items()
         ]))
 
         if self._plotter:

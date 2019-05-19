@@ -1,15 +1,13 @@
 from softlearning.models.feedforward import feedforward_model
 
 
-def create_feedforward_Q_function(observation_shape,
-                                  action_shape,
+def create_feedforward_Q_function(input_shapes,
                                   *args,
-                                  observation_preprocessor=None,
+                                  preprocessors=None,
+                                  observation_keys=None,
                                   name='feedforward_Q',
                                   **kwargs):
-    input_shapes = (observation_shape, action_shape)
-    preprocessors = (observation_preprocessor, None)
-    return feedforward_model(
+    Q_function = feedforward_model(
         input_shapes,
         *args,
         output_size=1,
@@ -17,17 +15,25 @@ def create_feedforward_Q_function(observation_shape,
         name=name,
         **kwargs)
 
+    Q_function.observation_keys = observation_keys
 
-def create_feedforward_V_function(observation_shape,
+    return Q_function
+
+
+def create_feedforward_V_function(input_shapes,
                                   *args,
-                                  observation_preprocessor=None,
+                                  preprocessors=None,
+                                  observation_keys=None,
                                   name='feedforward_V',
                                   **kwargs):
-    input_shapes = (observation_shape, )
-    preprocessors = (observation_preprocessor, None)
-    return feedforward_model(
+    V_function = feedforward_model(
         input_shapes,
         *args,
         output_size=1,
         preprocessors=preprocessors,
+        name=name,
         **kwargs)
+
+    V_function.observation_keys = observation_keys
+
+    return V_function
