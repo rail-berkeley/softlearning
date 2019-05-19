@@ -19,9 +19,11 @@ class ReplayPool(object):
     def size(self, **kwargs):
         pass
 
+    @property
+    @abc.abstractmethod
     def add_path(self, path):
         """Add a rollout to the replay pool."""
-        self.add_samples(path)
+        pass
 
     @abc.abstractmethod
     def random_batch(self, batch_size):

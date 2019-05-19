@@ -1,5 +1,3 @@
-from collections import defaultdict
-import pickle
 import unittest
 import numpy as np
 import gym
@@ -78,9 +76,16 @@ class SimpleReplayPoolTest(unittest.TestCase):
             samples['rewards'][i] = reward
             samples['terminals'][i] = terminal
 
-        pool.add_samples(samples)
+        pool.add_path(samples)
         last_n_batch = pool.last_n_batch(num_samples)
-        np.testing.assert_equal(last_n_batch, samples)
+        np.testing.assert_equal(
+            {
+                key: value
+                for key, value in last_n_batch.items()
+                if key not in
+                ('episode_index_backwards', 'episode_index_forwards')
+            },
+            samples)
 
 
 if __name__ == '__main__':

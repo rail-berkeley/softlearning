@@ -1,10 +1,10 @@
 import pickle
 import unittest
 import numpy as np
-from flatten_dict import flatten, unflatten
+from flatten_dict import flatten
 
 from softlearning.replay_pools.flexible_replay_pool import (
-    FlexibleReplayPool, Field)
+    FlexibleReplayPool, Field, INDEX_FIELDS)
 
 
 def create_pool(max_size=100, field_shapes=((1,), (1,))):
@@ -148,7 +148,11 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         pool.load_experience('./tmp/pool_1.pkl')
         self.assertEqual(pool.size, self.pool._max_size)
 
+        assert all(
+            index_field in pool.fields.keys()
+            for index_field in INDEX_FIELDS)
         for field_name in pool.fields_flat:
+            if field_name[0] in INDEX_FIELDS: continue
             np.testing.assert_array_equal(
                 pool.data[field_name],
                 samples[field_name[0]][-self.pool._max_size:])
@@ -333,7 +337,11 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         self.pool.add_samples(samples)
         full_pool_batch = self.pool.last_n_batch(4)
 
+        assert all(
+            index_field in full_pool_batch.keys()
+            for index_field in INDEX_FIELDS)
         for key, values in full_pool_batch.items():
+            if key in INDEX_FIELDS: continue
             np.testing.assert_array_equal(samples[key][-4:], values)
             self.assertEqual(values.shape, (4, 1))
 
@@ -345,7 +353,11 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         self.pool.add_samples(samples)
         full_pool_batch = self.pool.last_n_batch(20)
 
+        assert all(
+            index_field in full_pool_batch.keys()
+            for index_field in INDEX_FIELDS)
         for key, values in full_pool_batch.items():
+            if key in INDEX_FIELDS: continue
             np.testing.assert_array_equal(
                 samples[key][-20:], values)
             self.assertEqual(values.shape, (20, 1))
@@ -362,7 +374,10 @@ class FlexibleReplayPoolTest(unittest.TestCase):
 
         batch = self.pool.batch_by_indices(
             np.flip(np.arange(self.pool._max_size)))
+        assert all(
+            index_field in batch.keys() for index_field in INDEX_FIELDS)
         for key, values in batch.items():
+            if key in INDEX_FIELDS: continue
             np.testing.assert_array_equal(np.flip(samples[key]), values)
             self.assertEqual(values.shape, (self.pool._max_size, 1))
 

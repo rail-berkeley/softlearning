@@ -31,6 +31,20 @@ class Field(object):
         return all(getattr(self, key) == getattr(other, key) for key in keys)
 
 
+INDEX_FIELDS = {
+    'episode_index_forwards': Field(
+        name='episode_index_forwards',
+        dtype='uint64',
+        shape=(1, ),
+    ),
+    'episode_index_backwards': Field(
+        name='episode_index_backwards',
+        dtype='uint64',
+        shape=(1, ),
+    ),
+}
+
+
 class FlexibleReplayPool(ReplayPool):
     def __init__(self, max_size, fields):
         super(FlexibleReplayPool, self).__init__()
@@ -39,8 +53,8 @@ class FlexibleReplayPool(ReplayPool):
         self._max_size = max_size
 
         self.data = {}
-        self.fields = fields
-        self.fields_flat = flatten(fields)
+        self.fields = {**fields, **INDEX_FIELDS}
+        self.fields_flat = flatten(self.fields)
         self._initialize_data()
 
         self._pointer = 0
@@ -65,8 +79,27 @@ class FlexibleReplayPool(ReplayPool):
             self.data[field_name] = self._initialize_field(field_attrs)
 
     def _advance(self, count=1):
+        """Handles bookkeeping after adding samples to the pool.
+
+        * Moves the pointer (`self._pointer`)
+        * Updates the size (`self._size`)
+        * Fixes the `episode_index_backwards` field, which might have become
+          out of date when the pool is full and we start overriding old
+          samples.
+        """
         self._pointer = (self._pointer + count) % self._max_size
         self._size = min(self._size + count, self._max_size)
+
+        if self.data[('episode_index_forwards', )][self._pointer] != 0:
+            episode_tail_length = int(self.data[
+                ('episode_index_backwards', )
+            ][self._pointer, 0] + 1)
+            self.data[
+                ('episode_index_forwards', )
+            ][
+                self._pointer:self._pointer + episode_tail_length
+            ] = np.arange(episode_tail_length)[..., None]
+
         self._samples_since_save += count
 
     def add_sample(self, sample):
@@ -95,6 +128,24 @@ class FlexibleReplayPool(ReplayPool):
             self.data[field_name][index] = values
 
         self._advance(num_samples)
+
+    def add_path(self, path):
+        path = path.copy()
+
+        path_flat = flatten(path)
+        path_length = path_flat[next(iter(path_flat.keys()))].shape[0]
+        path.update({
+            'episode_index_forwards': np.arange(
+                path_length,
+                dtype=self.fields['episode_index_forwards'].dtype
+            )[..., None],
+            'episode_index_backwards': np.arange(
+                path_length,
+                dtype=self.fields['episode_index_backwards'].dtype
+            )[::-1, None],
+        })
+
+        return self.add_samples(path)
 
     def random_indices(self, batch_size):
         if self._size == 0: return np.arange(0, 0)
