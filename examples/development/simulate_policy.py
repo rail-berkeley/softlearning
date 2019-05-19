@@ -9,6 +9,7 @@ import tensorflow as tf
 from softlearning.environments.utils import get_environment_from_params
 from softlearning.policies.utils import get_policy_from_variant
 from softlearning.samplers import rollouts
+from softlearning.misc.utils import save_video
 
 
 def parse_args():
@@ -66,9 +67,11 @@ def simulate_policy(args):
                          path_length=args.max_path_length,
                          render_mode=args.render_mode)
 
-    if args.render_mode != 'human':
-        from pprint import pprint; import pdb; pdb.set_trace()
-        pass
+    if args.render_mode == 'rgb_array':
+        for i, path in enumerate(paths):
+            video_save_dir = os.path.expanduser('/tmp/simulate_policy/')
+            video_save_path = os.path.join(video_save_dir, f'episode_{i}.avi')
+            save_video(path['images'], video_save_path)
 
     return paths
 
