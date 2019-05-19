@@ -110,9 +110,36 @@ class ExperimentRunner(tune.Trainable):
             'evaluation_environment': self.evaluation_environment,
             'sampler': self.sampler,
             'algorithm': self.algorithm,
-            'Qs': self.Qs,
             'policy_weights': self.policy.get_weights(),
         }
+
+    def _save_value_functions(self, checkpoint_dir):
+        if isinstance(self.Qs, tf.keras.Model):
+            Qs = [self.Qs]
+        elif isinstance(self.Qs, (list, tuple)):
+            Qs = self.Qs
+        else:
+            raise TypeError(self.Qs)
+
+        for i, Q in enumerate(Qs):
+            checkpoint_path = os.path.join(
+                checkpoint_dir,
+                f'Qs_{i}')
+            Q.save_weights(checkpoint_path)
+
+    def _restore_value_functions(self, checkpoint_dir):
+        if isinstance(self.Qs, tf.keras.Model):
+            Qs = [self.Qs]
+        elif isinstance(self.Qs, (list, tuple)):
+            Qs = self.Qs
+        else:
+            raise TypeError(self.Qs)
+
+        for i, Q in enumerate(Qs):
+            checkpoint_path = os.path.join(
+                checkpoint_dir,
+                f'Qs_{i}')
+            Q.load_weights(checkpoint_path)
 
     def _save(self, checkpoint_dir):
         """Implements the checkpoint logic.
@@ -130,6 +157,8 @@ class ExperimentRunner(tune.Trainable):
         pickle_path = self._pickle_path(checkpoint_dir)
         with open(pickle_path, 'wb') as f:
             pickle.dump(self.picklables, f)
+
+        self._save_value_functions(checkpoint_dir)
 
         if self._variant['run_params'].get('checkpoint_replay_pool', False):
             self._save_replay_pool(checkpoint_dir)
@@ -181,13 +210,16 @@ class ExperimentRunner(tune.Trainable):
             self._restore_replay_pool(checkpoint_dir)
 
         sampler = self.sampler = picklable['sampler']
-        Qs = self.Qs = picklable['Qs']
-        # policy = self.policy = picklable['policy']
+        Qs = self.Qs = get_Q_function_from_variant(
+            self._variant, training_environment)
+        self._restore_value_functions(checkpoint_dir)
         policy = self.policy = (
-            get_policy_from_variant(self._variant, training_environment, Qs))
+            get_policy_from_variant(self._variant, training_environment))
         self.policy.set_weights(picklable['policy_weights'])
         initial_exploration_policy = self.initial_exploration_policy = (
-            get_policy('UniformPolicy', training_environment))
+            get_policy_from_params(
+                self._variant['exploration_policy_params'],
+                training_environment))
 
         self.algorithm = get_algorithm_from_variant(
             variant=self._variant,

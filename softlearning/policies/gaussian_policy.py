@@ -26,6 +26,7 @@ class GaussianPolicy(LatentSpacePolicy):
                  name=None,
                  **kwargs):
         self._Serializable__initialize(locals())
+
         self._input_shapes = input_shapes
         self._output_shape = output_shape
         self._squash = squash
