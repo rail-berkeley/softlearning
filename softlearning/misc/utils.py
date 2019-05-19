@@ -84,19 +84,9 @@ def _make_dir(filename):
 
 
 def save_video(video_frames, filename):
-    import cv2
+    import skvideo.io
     _make_dir(filename)
-
-    video_frames = np.flip(video_frames, axis=-1)
-
-    # Define the codec and create VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-    fps = 120.0
-    (height, width, _) = video_frames[0].shape
-    writer = cv2.VideoWriter(filename, fourcc, fps, (width, height))
-    for video_frame in video_frames:
-        writer.write(video_frame)
-    writer.release()
+    skvideo.io.vwrite(filename, video_frames, inputdict={'-r': "60"})
 
 
 def deep_update(d, *us):
