@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Union, Callable
 from numbers import Number
 import gzip
@@ -10,25 +11,13 @@ from flatten_dict import flatten, unflatten
 from .replay_pool import ReplayPool
 
 
-class Field(object):
-    def __init__(self,
-                 name: str,
-                 dtype: Union[str, np.dtype, tf.DType],
-                 shape: Union[tuple, tf.TensorShape],
-                 initializer: Callable = np.zeros,
-                 default_value: Number = 0.0):
-        self.name = name
-        self.dtype = dtype
-        self.shape = shape
-        self.initializer = initializer
-        self.default_value = default_value
-
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, Field):
-            return NotImplemented
-
-        keys = ('name', 'dtype', 'shape', 'initializer', 'default_value')
-        return all(getattr(self, key) == getattr(other, key) for key in keys)
+@dataclass
+class Field:
+    name: str
+    dtype: Union[str, np.dtype, tf.DType]
+    shape: Union[tuple, tf.TensorShape]
+    initializer: Callable = np.zeros
+    default_value: Number = 0.0
 
 
 INDEX_FIELDS = {
