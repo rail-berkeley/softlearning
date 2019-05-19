@@ -80,6 +80,7 @@ rsa==3.4.2
 ruamel-yaml==0.15.46
 s3transfer==0.2.0
 scikit-image==0.14.2
+scikit-video==1.1.11
 scikit-learn==0.20.1
 scipy==1.1.0
 git+https://github.com/hartikainen/serializable.git@76516385a3a716ed4a2a9ad877e2d5cbcf18d4e6
