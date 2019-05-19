@@ -184,7 +184,7 @@ If Softlearning helps you in your academic research, you are encouraged to cite 
 ```
 @techreport{haarnoja2018sacapps,
   title={Soft Actor-Critic Algorithms and Applications},
-  author={Tuomas Haarnoja and Aurick Zhou and Kristian Hartikainen and George Tucker and Sehoon Ha and Jie Tan, Vikash Kumar and Henry Zhu and Abhishek Gupta and Pieter Abbeel and Sergey Levine},
+  author={Tuomas Haarnoja and Aurick Zhou and Kristian Hartikainen and George Tucker and Sehoon Ha and Jie Tan and Vikash Kumar and Henry Zhu and Abhishek Gupta and Pieter Abbeel and Sergey Levine},
   journal={arXiv preprint arXiv:1812.05905},
   year={2018}
 }
