@@ -5,6 +5,7 @@ from collections import OrderedDict
 import numpy as np
 from dm_control import suite
 from dm_control.rl.specs import ArraySpec, BoundedArraySpec
+from dm_control.suite.wrappers import pixels
 from gym import spaces
 
 from .softlearning_env import SoftlearningEnv
@@ -69,6 +70,7 @@ class DmControlAdapter(SoftlearningEnv):
                  normalize=True,
                  observation_keys=None,
                  unwrap_time_limit=True,
+                 pixel_wrapper_kwargs=None,
                  **kwargs):
         assert not args, (
             "Gym environments don't support args. Use kwargs instead.")
@@ -93,14 +95,17 @@ class DmControlAdapter(SoftlearningEnv):
             assert not kwargs
             assert domain is None and task is None, (domain, task)
 
-        assert isinstance(env.observation_spec(), OrderedDict)
-        self.observation_keys = (
-            observation_keys or tuple(env.observation_spec().keys()))
-
         # Ensure action space is already normalized.
         if normalize:
             np.testing.assert_equal(env.action_spec().minimum, -1)
             np.testing.assert_equal(env.action_spec().maximum, 1)
+
+        if pixel_wrapper_kwargs is not None:
+            env = pixels.Wrapper(env, **pixel_wrapper_kwargs)
+
+        assert isinstance(env.observation_spec(), OrderedDict)
+        self.observation_keys = (
+            observation_keys or tuple(env.observation_spec().keys()))
 
         self._env = env
 
