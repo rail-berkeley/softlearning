@@ -2,14 +2,14 @@
 
 from collections import defaultdict, OrderedDict
 
-import numpy as np
 import gym
 from gym import spaces, wrappers
 from gym.envs.mujoco.mujoco_env import MujocoEnv
 
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym import register_environments
-from softlearning.environments.gym.wrappers import NormalizeActionWrapper
+from softlearning.environments.gym.wrappers import (
+    NormalizeActionWrapper, PixelObservationWrapper)
 
 
 def parse_domain_task(gym_id):
@@ -54,6 +54,7 @@ class GymAdapter(SoftlearningEnv):
                  normalize=True,
                  observation_keys=None,
                  unwrap_time_limit=True,
+                 pixel_wrapper_kwargs=None,
                  **kwargs):
         assert not args, (
             "Gym environments don't support args. Use kwargs instead.")
@@ -81,6 +82,9 @@ class GymAdapter(SoftlearningEnv):
 
         if normalize:
             env = NormalizeActionWrapper(env)
+
+        if pixel_wrapper_kwargs is not None:
+            env = PixelObservationWrapper(env, **pixel_wrapper_kwargs)
 
         self._env = env
 
