@@ -44,11 +44,24 @@ def get_policy_from_params(policy_params, env, *args, **kwargs):
         if key in observation_keys
     ))
 
-    observation_preprocessors = OrderedDict([
-        (name, get_preprocessor_from_params(
-            env, observation_preprocessors_params.get(name, None)))
-        for name in observation_shapes.keys()
-    ])
+    observation_preprocessors = OrderedDict()
+    for name, observation_shape in observation_shapes.items():
+        preprocessor_input_shapes  = [observation_shape]
+        preprocessor_params = observation_preprocessors_params.get(name, None)
+        if not preprocessor_params:
+            observation_preprocessors[name] = None
+            continue
+
+        image_shape = (
+            preprocessor_params
+            .get('kwargs', {})
+            .pop('image_shape', None))
+        if image_shape is not None:
+            assert observation_shape == image_shape
+        preprocessor_params['kwargs']['input_shapes'] = (
+            preprocessor_input_shapes)
+        observation_preprocessors[name] = get_preprocessor_from_params(
+            env, preprocessor_params)
 
     if policy_type == 'UniformPolicy':
         action_range = (env.action_space.low, env.action_space.high)

@@ -32,7 +32,9 @@ def flatten_input_structure(inputs):
     elif isinstance(inputs, list):
         inputs_flat = list(inputs)
     elif isinstance(inputs, tuple):
-        assert not any(isinstance(x, int) for x in inputs)
-        inputs_flat = list(inputs)
+        if all (isinstance(x, int) for x in inputs):
+            inputs_flat = [inputs]
+        else:
+            inputs_flat = list(inputs)
 
     return inputs_flat

@@ -298,6 +298,13 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
     return variant_spec
 
 
+def is_image_env(domain, task, variant_spec):
+    return ('image' in task.lower()
+            or 'image' in domain.lower()
+            or 'pixel_wrapper_kwargs' in (
+                variant_spec['environment_params']['training']['kwargs']))
+
+
 def get_variant_spec_image(universe,
                            domain,
                            task,
@@ -308,36 +315,51 @@ def get_variant_spec_image(universe,
     variant_spec = get_variant_spec_base(
         universe, domain, task, policy, algorithm, *args, **kwargs)
 
-    if 'image' in task.lower() or 'image' in domain.lower():
+    if is_image_env(domain, task, variant_spec):
+        if universe == 'dm_control':
+            render_kwargs = (
+                variant_spec
+                ['environment_params']
+                ['training']
+                ['kwargs']
+                ['pixel_wrapper_kwargs']
+                ['render_kwargs'])
+            image_shape = (render_kwargs['width'], render_kwargs['height'], 3)
+        elif universe == 'gym':
+            image_shape = (
+                variant_spec
+                ['environment_params']
+                ['training']
+                ['kwargs']
+                ['image_shape'])
+
         preprocessor_params = {
             'type': 'convnet_preprocessor',
             'kwargs': {
-                'image_shape': (
-                    variant_spec
-                    ['environment_params']
-                    ['training']
-                    ['kwargs']
-                    ['image_shape']),
-                'output_size': M,
-                'conv_filters': (4, 4),
-                'conv_kernel_sizes': ((3, 3), (3, 3)),
-                'pool_type': 'MaxPool2D',
-                'pool_sizes': ((2, 2), (2, 2)),
-                'pool_strides': (2, 2),
-                'dense_hidden_layer_sizes': (),
+                'image_shape': image_shape,
+                'conv_filters': (64, 64, 64, 64, 64),
+                'conv_kernel_sizes': (3, 3, 3, 3, 3),
+                'conv_strides': (2, 2, 2, 2, 2),
+                'downsampling_type': 'conv',
             },
         }
 
         variant_spec['policy_params']['kwargs']['hidden_layer_sizes'] = (M, M)
-        variant_spec['policy_params']['kwargs']['preprocessor_params'] = (
-            deepcopy(preprocessor_params))
+        variant_spec['policy_params']['kwargs']['observation_preprocessors_params'] = {
+            'images': deepcopy(preprocessor_params)
+        }
 
-        for key in ('hidden_layer_sizes', 'preprocessor_params'):
-            variant_spec['Q_params']['kwargs'][key] = (
-                tune.sample_from(lambda spec: (deepcopy(
-                    spec.get('config', spec)['policy_params']['kwargs'][key]
-                )))
-            )
+        # for key in ('hidden_layer_sizes', 'observation_preprocessors_params'):
+        variant_spec['Q_params']['kwargs']['hidden_layer_sizes'] = (
+            tune.sample_from(lambda spec: (deepcopy(
+                spec.get('config', spec)['policy_params']['kwargs']['hidden_layer_sizes']
+            )))
+        )
+        variant_spec['Q_params']['kwargs']['observation_preprocessors_params'] = (
+            tune.sample_from(lambda spec: (deepcopy(
+                spec.get('config', spec)['policy_params']['kwargs']['observation_preprocessors_params']
+            )))
+        )
 
     return variant_spec
 
@@ -345,14 +367,8 @@ def get_variant_spec_image(universe,
 def get_variant_spec(args):
     universe, domain, task = args.universe, args.domain, args.task
 
-    if ('image' in task.lower()
-        or 'blind' in task.lower()
-        or 'image' in domain.lower()):
-        variant_spec = get_variant_spec_image(
-            universe, domain, task, args.policy, args.algorithm)
-    else:
-        variant_spec = get_variant_spec_base(
-            universe, domain, task, args.policy, args.algorithm)
+    variant_spec = get_variant_spec_image(
+        universe, domain, task, args.policy, args.algorithm)
 
     if args.checkpoint_replay_pool is not None:
         variant_spec['run_params']['checkpoint_replay_pool'] = (

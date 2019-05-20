@@ -23,12 +23,12 @@ VALUE_FUNCTIONS = {
 
 
 def get_Q_function_from_variant(variant, env, *args, **kwargs):
-    Q_params = variant['Q_params']
-    Q_type = Q_params['type']
+    Q_params = deepcopy(variant['Q_params'])
+    Q_type = deepcopy(Q_params['type'])
     Q_kwargs = deepcopy(Q_params['kwargs'])
 
     observation_preprocessors_params = Q_kwargs.pop(
-        'observation_preprocessors_params', {})
+        'observation_preprocessors_params', {}).copy()
     observation_keys = Q_kwargs.pop(
         'observation_keys', None) or env.observation_keys
 
@@ -42,11 +42,25 @@ def get_Q_function_from_variant(variant, env, *args, **kwargs):
         'actions': action_shape,
     }
 
-    observation_preprocessors = OrderedDict([
-        (name, get_preprocessor_from_params(
-            env, observation_preprocessors_params.get(name, None)))
-        for name in observation_shapes.keys()
-    ])
+    observation_preprocessors = OrderedDict()
+    for name, observation_shape in observation_shapes.items():
+        preprocessor_input_shapes  = [observation_shape]
+        preprocessor_params = observation_preprocessors_params.get(name, None)
+        if not preprocessor_params:
+            observation_preprocessors[name] = None
+            continue
+
+        image_shape = (
+            preprocessor_params
+            .get('kwargs', {})
+            .pop('image_shape', None))
+        if image_shape is not None:
+            assert observation_shape == image_shape
+        preprocessor_params['kwargs']['input_shapes'] = (
+            preprocessor_input_shapes)
+        observation_preprocessors[name] = get_preprocessor_from_params(
+            env, preprocessor_params)
+
     action_preprocessor = None
     preprocessors = {
         'observations': observation_preprocessors,

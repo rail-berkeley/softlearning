@@ -1,11 +1,10 @@
-from collections import OrderedDict
 from copy import deepcopy
 
 
 def get_convnet_preprocessor(name='convnet_preprocessor', **kwargs):
-    from .convnet import convnet_preprocessor
+    from softlearning.models.convnet import convnet_model
 
-    preprocessor = convnet_preprocessor(name=name, **kwargs)
+    preprocessor = convnet_model(name=name, **kwargs)
 
     return preprocessor
 
@@ -37,7 +36,6 @@ def get_preprocessor_from_params(env, preprocessor_params, *args, **kwargs):
 
     preprocessor = PREPROCESSOR_FUNCTIONS[
         preprocessor_type](
-            env.observation_shape,
             *args,
             **preprocessor_kwargs,
             **kwargs)
