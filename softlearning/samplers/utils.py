@@ -1,4 +1,5 @@
 from copy import deepcopy
+from collections import defaultdict
 
 import numpy as np
 
@@ -49,12 +50,13 @@ def rollout(env,
     sampler.initialize(env, policy, pool)
 
     images = []
-    infos = []
+    infos = defaultdict(list)
 
     t = 0
     for t in range(path_length):
         observation, reward, terminal, info = sampler.sample()
-        infos.append(info)
+        for key, value in info.items():
+            infos[key].append(value)
 
         if callback is not None:
             callback(observation)

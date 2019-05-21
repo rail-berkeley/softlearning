@@ -210,23 +210,15 @@ class SoftlearningEnv(metaclass=ABCMeta):
             env=self._env)
 
     def get_path_infos(self, paths, *args, **kwargs):
-        """Log some general diagnostics from the env infos.
+        """Aggregate diagnostics from the environment infos.
 
-        TODO(hartikainen): These logs don't make much sense right now. Need to
-        figure out better format for logging general env infos.
+        TODO(hartikainen): Figure out better format for logging general
+        environment infos.
         """
-        keys = list(paths[0].get('infos', [{}])[0].keys())
-
         results = defaultdict(list)
 
         for path in paths:
-            path_results = {
-                k: [
-                    info[k]
-                    for info in path['infos']
-                ] for k in keys
-            }
-            for info_key, info_values in path_results.items():
+            for info_key, info_values in path['infos'].items():
                 info_values = np.array(info_values)
                 results[info_key + '-first'].append(info_values[0])
                 results[info_key + '-last'].append(info_values[-1])

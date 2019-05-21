@@ -33,7 +33,7 @@ class SimpleSampler(BaseSampler):
             'rewards': [reward],
             'terminals': [terminal],
             'next_observations': next_observation,
-            # 'infos': info,
+            'infos': info,
         }
 
         return processed_observation
@@ -70,7 +70,12 @@ class SimpleSampler(BaseSampler):
                 field_name: np.array(values)
                 for field_name, values in self._current_path.items()
             })
-            self.pool.add_path(last_path)
+
+            self.pool.add_path({
+                key: value
+                for key, value in last_path.items()
+                if key != 'infos'
+            })
 
             self._last_n_paths.appendleft(last_path)
 
