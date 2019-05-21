@@ -20,15 +20,24 @@ def convnet_model(
         **kwargs):
     input_shapes_flat = flatten_input_structure(input_shapes)
     inputs_flat = tuple(
-        tf.keras.layers.Input(shape=shape) for shape in input_shapes_flat)
+        layers.Input(shape=shape, dtype=tf.uint8)
+        for shape in input_shapes_flat)
+
+    def convert_to_float(x):
+        output = (tf.image.convert_image_dtype(x, tf.float32) - 0.5) * 2.0
+        return output
 
     # Concatenate images along the channel-axis. We assume that the data is
     # in the form channels_last.
-    concatenated = tf.keras.layers.Lambda(
-        lambda x: tf.concat(x, axis=-1)
+    concatenated = layers.Lambda(
+        lambda x: tf.concat(x, axis=-1),
     )(inputs_flat)
 
-    x = concatenated
+    float_concatenated = layers.Lambda(
+        convert_to_float, name='convert_to_float',
+    )(concatenated)
+
+    x = float_concatenated
     for (conv_filter, conv_kernel_size, conv_stride) in zip(
             conv_filters, conv_kernel_sizes, conv_strides):
         x = layers.Conv2D(
@@ -62,11 +71,11 @@ def convnet_model(
              else activation()(x))
 
         if downsampling_type == 'pool' and conv_stride > 1:
-            x = getattr(tf.keras.layers, 'AvgPool2D')(
+            x = getattr(layers, 'AvgPool2D')(
                 pool_size=conv_stride, strides=conv_stride
             )(x)
 
-    flattened = tf.keras.layers.Flatten()(x)
+    flattened = layers.Flatten()(x)
 
     model = PicklableKerasModel(inputs_flat, flattened, name=name)
 
