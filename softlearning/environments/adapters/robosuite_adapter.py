@@ -117,6 +117,7 @@ class RobosuiteAdapter(SoftlearningEnv):
     def render(self,
                *args,
                mode="human",
+               camera_id=None,
                camera_name=None,
                width=None,
                height=None,
@@ -127,11 +128,20 @@ class RobosuiteAdapter(SoftlearningEnv):
                 "TODO(hartikainen): Implement rendering so that"
                 " self._env.viewer.render() works with human mode.")
         elif mode == "rgb_array":
-            return self._env.sim.render(
+            if camera_id is not None and camera_name is not None:
+                raise ValueError("Both `camera_id` and `camera_name` cannot be"
+                                 " specified at the same time.")
+
+            if camera_id is not None:
+                camera_name = self.sim.model.camera_id2name(camera_id)
+
+            pixels = self._env.sim.render(
                 camera_name=camera_name or self._env.camera_name,
                 width=width or self._env.camera_width,
                 height=height or self._env.camera_height,
-                depth=depth or self._env.camera_depth)
+                depth=depth or self._env.camera_depth
+            )[::-1]
+            return pixels
 
         raise NotImplementedError(mode)
 
