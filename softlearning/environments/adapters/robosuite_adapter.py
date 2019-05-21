@@ -100,10 +100,19 @@ class RobosuiteAdapter(SoftlearningEnv):
         self._action_space = action_space
 
     def step(self, action, *args, **kwargs):
-        return self._env.step(action, *args, **kwargs)
+        observation, reward, terminal, info = self._env.step(
+            action, *args, **kwargs)
+
+        observation = self._filter_observation(observation)
+
+        return observation, reward, terminal, info
 
     def reset(self, *args, **kwargs):
-        return self._env.reset(*args, **kwargs)
+        observation = self._env.reset(*args, **kwargs)
+
+        observation = self._filter_observation(observation)
+
+        return observation
 
     def render(self,
                *args,
