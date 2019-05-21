@@ -8,7 +8,7 @@ import tensorflow_probability as tfp
 
 from softlearning.distributions.squash_bijector import SquashBijector
 from softlearning.models.feedforward import feedforward_model
-from softlearning.models.utils import flatten_input_structure
+from softlearning.models.utils import flatten_input_structure, create_inputs
 
 from .base_policy import LatentSpacePolicy
 
@@ -34,9 +34,7 @@ class GaussianPolicy(LatentSpacePolicy):
 
         super(GaussianPolicy, self).__init__(*args, **kwargs)
 
-        input_shapes_flat = flatten_input_structure(input_shapes)
-        inputs_flat = tuple(
-            tf.keras.layers.Input(shape=shape) for shape in input_shapes_flat)
+        inputs_flat = create_inputs(input_shapes)
         preprocessors_flat = (
             flatten_input_structure(preprocessors)
             if preprocessors is not None

@@ -29,12 +29,10 @@ def convnet_model(
 
     # Concatenate images along the channel-axis. We assume that the data is
     # in the form channels_last.
-    concatenated = layers.Lambda(
-        lambda x: tf.concat(x, axis=-1),
-    )(inputs_flat)
-
+    concatenated = layers.Lambda(lambda x: tf.concat(x, axis=-1))(inputs_flat)
     float_concatenated = layers.Lambda(
-        convert_to_float, name='convert_to_float',
+        convert_to_float,
+        name='convert_to_float'
     )(concatenated)
 
     x = float_concatenated

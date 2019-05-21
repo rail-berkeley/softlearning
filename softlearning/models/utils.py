@@ -38,3 +38,36 @@ def flatten_input_structure(inputs):
             inputs_flat = list(inputs)
 
     return inputs_flat
+
+
+def create_inputs(input_shapes):
+    """Creates `tf.keras.layers.Input`s based on input shapes.
+
+    Args:
+        input_shapes: (possibly nested) list/array/dict structure of
+        inputs shapes.
+
+    Returns:
+        inputs_flat: a tuple of `tf.keras.layers.Input`s.
+    """
+    if isinstance(input_shapes, dict):
+        inputs_flat_dict = flatten(input_shapes)
+        inputs_flat = [
+            tf.keras.layers.Input(shape=inputs_flat_dict[key], name=key[-1])
+            for key in sorted(inputs_flat_dict.keys())
+        ]
+    elif isinstance(input_shapes, list):
+        inputs_flat = [
+            tf.keras.layers.Input(shape=shape)
+            for shape in input_shapes
+        ]
+    elif isinstance(input_shapes, tuple):
+        if all (isinstance(x, int) for x in input_shapes):
+            inputs_flat = [tf.keras.layers.Input(shape=input_shapes)]
+        else:
+            inputs_flat = [
+                tf.keras.layers.Input(shape=shape)
+                for shape in input_shapes
+            ]
+
+    return inputs_flat

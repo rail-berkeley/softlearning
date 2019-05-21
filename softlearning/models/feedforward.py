@@ -2,7 +2,7 @@ import tensorflow as tf
 
 
 from softlearning.utils.keras import PicklableKerasModel
-from softlearning.models.utils import flatten_input_structure
+from softlearning.models.utils import flatten_input_structure, create_inputs
 
 
 def feedforward_model(input_shapes,
@@ -14,10 +14,7 @@ def feedforward_model(input_shapes,
                       name='feedforward_model',
                       *args,
                       **kwargs):
-
-    input_shapes_flat = flatten_input_structure(input_shapes)
-    inputs_flat = tuple(
-        tf.keras.layers.Input(shape=shape) for shape in input_shapes_flat)
+    inputs_flat = create_inputs(input_shapes)
     preprocessors_flat = (
         flatten_input_structure(preprocessors)
         if preprocessors is not None

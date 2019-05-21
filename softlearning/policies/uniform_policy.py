@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 
 from .base_policy import BasePolicy
-from softlearning.models.utils import flatten_input_structure
+from softlearning.models.utils import create_inputs
 
 
 class UniformPolicy(BasePolicy):
@@ -19,9 +19,7 @@ class UniformPolicy(BasePolicy):
 
         super(UniformPolicy, self).__init__(*args, **kwargs)
 
-        input_shapes_flat = flatten_input_structure(input_shapes)
-        inputs_flat = tuple(
-            tf.keras.layers.Input(shape=shape) for shape in input_shapes_flat)
+        inputs_flat = create_inputs(input_shapes)
 
         self.inputs = inputs_flat
 
