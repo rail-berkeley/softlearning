@@ -1,6 +1,7 @@
 """Implements a GymAdapter that converts Gym envs into SoftlearningEnv."""
 
 from collections import defaultdict, OrderedDict
+import copy
 
 import gym
 from gym import spaces, wrappers
@@ -88,35 +89,28 @@ class GymAdapter(SoftlearningEnv):
 
         self._env = env
 
-        if isinstance(self.observation_space, spaces.Dict):
-            observation_keys = (
-                observation_keys or tuple(self.observation_space.spaces.keys()))
-
-        self.observation_keys = observation_keys
-
-    @property
-    def observation_space(self):
         if isinstance(self._env.observation_space, spaces.Dict):
             dict_observation_space = self._env.observation_space
+            self.observation_keys = (
+                observation_keys or (*self.observation_space.spaces.keys(), ))
         elif isinstance(self._env.observation_space, spaces.Box):
             dict_observation_space = spaces.Dict(OrderedDict((
                 (DEFAULT_OBSERVATION_KEY, self._env.observation_space),
             )))
-        else:
-            raise NotImplementedError(type(self._env.observation_space))
+            self.observation_keys = (DEFAULT_OBSERVATION_KEY, )
 
-        return dict_observation_space
+        self._observation_space = type(dict_observation_space)([
+            (name, copy.deepcopy(space))
+            for name, space in dict_observation_space.spaces.items()
+            if name in self.observation_keys
+        ])
 
-    @property
-    def action_space(self, *args, **kwargs):
-        action_space = self._env.action_space
-
-        if len(action_space.shape) > 1:
+        if len(self._env.action_space.shape) > 1:
             raise NotImplementedError(
                 "Shape of the action space ({}) is not flat, make sure to"
-                " check the implemenation.".format(action_space))
+                " check the implemenation.".format(self._env.action_space))
 
-        return action_space
+        self._action_space = self._env.action_space
 
     def step(self, action, *args, **kwargs):
         observation, reward, terminal, info = self._env.step(
@@ -125,6 +119,7 @@ class GymAdapter(SoftlearningEnv):
         if not isinstance(self._env.observation_space, spaces.Dict):
             observation = {DEFAULT_OBSERVATION_KEY: observation}
 
+        observation = self._filter_observation(observation)
         return observation, reward, terminal, info
 
     def reset(self, *args, **kwargs):
@@ -133,6 +128,7 @@ class GymAdapter(SoftlearningEnv):
         if not isinstance(self._env.observation_space, spaces.Dict):
             observation = {DEFAULT_OBSERVATION_KEY: observation}
 
+        observation = self._filter_observation(observation)
         return observation
 
     def render(self, *args, width=100, height=100, **kwargs):

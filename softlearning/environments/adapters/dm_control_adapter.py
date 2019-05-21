@@ -1,6 +1,7 @@
 """Implements an adapter for DeepMind Control Suite environments."""
 
 from collections import OrderedDict
+import copy
 
 import numpy as np
 from dm_control import suite
@@ -103,42 +104,48 @@ class DmControlAdapter(SoftlearningEnv):
         if pixel_wrapper_kwargs is not None:
             env = pixels.Wrapper(env, **pixel_wrapper_kwargs)
 
+        self._env = env
+
         assert isinstance(env.observation_spec(), OrderedDict)
         self.observation_keys = (
             observation_keys or tuple(env.observation_spec().keys()))
 
-        self._env = env
-
-    @property
-    def observation_space(self):
         observation_space = convert_dm_control_to_gym_space(
-            self._env.observation_spec())
-        return observation_space
+            env.observation_spec())
 
-    @property
-    def action_space(self, *args, **kwargs):
+        self._observation_space = type(observation_space)([
+            (name, copy.deepcopy(space))
+            for name, space in observation_space.spaces.items()
+            if name in self.observation_keys
+        ])
+
         action_space = convert_dm_control_to_gym_space(self._env.action_spec())
 
         if len(action_space.shape) > 1:
             raise NotImplementedError(
-                "Action space ({}) is not flat, make sure to check the"
-                " implemenation.".format(action_space))
+                "Shape of the action space ({}) is not flat, make sure to"
+                " check the implemenation.".format(action_space))
 
-        return action_space
+        self._action_space = action_space
 
     def step(self, action, *args, **kwargs):
-        timestep = self._env.step(action, *args, **kwargs)
-        observation = timestep.observation
-        reward = timestep.reward
-        terminal = timestep.last()
-        info = {}
-        # TODO(Alacarter): See if there's a way to pull info from the
-        # environment.
+        time_step = self._env.step(action, *args, **kwargs)
+        reward = time_step.reward
+        terminal = time_step.last()
+        info = {
+            key: value
+            for key, value in time_step.observation.items()
+            if key not in self.observation_keys
+        }
+        observation = self._filter_observation(time_step.observation)
+        time_step._replace(observation=observation)
         return observation, reward, terminal, info
 
     def reset(self, *args, **kwargs):
-        timestep = self._env.reset(*args, **kwargs)
-        return timestep.observation
+        time_step = self._env.reset(*args, **kwargs)
+        observation = self._filter_observation(time_step.observation)
+        time_step._replace(observation=observation)
+        return time_step.observation
 
     def render(self, *args, mode="human", camera_id=0, **kwargs):
         if mode == "human":

@@ -56,9 +56,8 @@ class SoftlearningEnv(metaclass=ABCMeta):
         self._task = task
 
     @property
-    @abstractmethod
     def observation_space(self):
-        raise NotImplementedError
+        return self._observation_space
 
     @property
     def observation_shape(self):
@@ -71,9 +70,8 @@ class SoftlearningEnv(metaclass=ABCMeta):
         ))
 
     @property
-    @abstractmethod
-    def action_space(self):
-        raise NotImplementedError
+    def action_space(self, *args, **kwargs):
+        return self._action_space
 
     @property
     def action_shape(self, *args, **kwargs):
@@ -113,6 +111,14 @@ class SoftlearningEnv(metaclass=ABCMeta):
             space.
         """
         raise NotImplementedError
+
+    def _filter_observation(self, observation):
+        observation = type(observation)([
+            (name, value)
+            for name, value in observation.items()
+            if name in self.observation_keys
+        ])
+        return observation
 
     @abstractmethod
     def render(self, mode='human'):

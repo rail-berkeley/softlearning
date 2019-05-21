@@ -80,21 +80,24 @@ class RobosuiteAdapter(SoftlearningEnv):
 
         self._env = env
 
-    @property
-    def observation_space(self):
         observation_space = convert_robosuite_to_gym_obs_space(
             self._env.observation_spec())
-        return observation_space
 
-    @property
-    def action_space(self, *args, **kwargs):
+        self._observation_space = type(observation_space)([
+            (name, copy.deepcopy(space))
+            for name, space in observation_space.spaces.items()
+            if name in self.observation_keys
+        ])
+
         action_space = convert_robosuite_to_gym_action_space(
             self._env.action_spec)
+
         if len(action_space.shape) > 1:
             raise NotImplementedError(
-                "Action space ({}) is not flat, make sure to check the"
-                " implemenation.".format(action_space))
-        return action_space
+                "Shape of the action space ({}) is not flat, make sure to"
+                " check the implemenation.".format(action_space))
+
+        self._action_space = action_space
 
     def step(self, action, *args, **kwargs):
         return self._env.step(action, *args, **kwargs)
