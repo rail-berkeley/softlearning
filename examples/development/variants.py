@@ -122,6 +122,9 @@ NUM_EPOCHS_PER_DOMAIN = {
     'Reacher': int(200),
     'Pendulum': 10,
     'Sawyer': int(1e4),
+    'ball_in_cup': int(2e4),
+    'cheetah': int(2e4),
+    'finger': int(2e4),
 }
 
 ALGORITHM_PARAMS_PER_DOMAIN = {
@@ -217,7 +220,47 @@ ENVIRONMENT_PARAMS = {
                 'PickPlaceSingle',
                 'Stack',
         )
-    }
+    },
+    'ball_in_cup': {
+        'catch': {
+            'pixel_wrapper_kwargs': {
+                'observation_key': 'pixels',
+                'pixels_only': True,
+                'render_kwargs': {
+                    'width': 84,
+                    'height': 84,
+                    'camera_id': 0,
+                },
+            },
+        },
+    },
+    'cheetah': {
+        'run': {
+            'pixel_wrapper_kwargs': {
+                'observation_key': 'pixels',
+                'pixels_only': True,
+                'render_kwargs': {
+                    'width': 84,
+                    'height': 84,
+                    'camera_id': 0,
+                },
+            },
+        },
+    },
+    'finger': {
+        'spin': {
+            'pixel_wrapper_kwargs': {
+                'observation_key': 'pixels',
+                'pixels_only': True,
+                'render_kwargs': {
+                    'width': 84,
+                    'height': 84,
+                    'camera_id': 0,
+                },
+            },
+        },
+    },
+
 }
 
 NUM_CHECKPOINTS = 10
