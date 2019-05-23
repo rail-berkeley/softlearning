@@ -1,5 +1,5 @@
 import tensorflow as tf
-
+from tensorflow.python.keras.engine import training_utils
 
 from softlearning.utils.keras import PicklableKerasModel
 
@@ -20,10 +20,14 @@ def feedforward_model(inputs,
         preprocessor(x) if preprocessor is not None else x
         for preprocessor, x in zip(preprocessors, inputs)
     ]
-    concatenated = tf.keras.layers.Lambda(
-        lambda inputs: tf.concat(
-            [tf.cast(x, tf.float32) for x in inputs], axis=-1)
+
+    float_inputs = tf.keras.layers.Lambda(
+        lambda inputs: training_utils.cast_if_floating_dtype(inputs)
     )(preprocessed_inputs)
+
+    concatenated = tf.keras.layers.Lambda(
+        lambda inputs: tf.concat(inputs, axis=-1)
+    )(float_inputs)
 
     out = concatenated
     for units in hidden_layer_sizes:

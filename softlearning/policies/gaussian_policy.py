@@ -5,6 +5,7 @@ from collections import OrderedDict
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
+from tensorflow.python.keras.engine import training_utils
 
 from softlearning.distributions.squash_bijector import SquashBijector
 
@@ -34,15 +35,19 @@ class GaussianPolicy(LatentSpacePolicy):
         if preprocessors is None:
             preprocessors = [None] * len(inputs)
         assert len(inputs) == len(preprocessors)
+
         preprocessed_inputs = [
             preprocessor(x) if preprocessor is not None else x
             for preprocessor, x in zip(preprocessors, inputs)
         ]
 
-        conditions = tf.keras.layers.Lambda(
-            lambda inputs: tf.concat(
-                [tf.cast(x, tf.float32) for x in inputs], axis=-1)
+        float_inputs = tf.keras.layers.Lambda(
+            lambda inputs: training_utils.cast_if_floating_dtype(inputs)
         )(preprocessed_inputs)
+
+        conditions = tf.keras.layers.Lambda(
+            lambda inputs: tf.concat(inputs, axis=-1)
+        )(float_inputs)
 
         self.condition_inputs = inputs
 
