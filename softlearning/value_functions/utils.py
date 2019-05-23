@@ -14,8 +14,6 @@ def create_double_value_function(value_fn, *args, **kwargs):
 
 
 VALUE_FUNCTIONS = {
-    'feedforward_V_function': (
-        vanilla.create_feedforward_V_function),
     'double_feedforward_Q_function': lambda *args, **kwargs: (
         create_double_value_function(
             vanilla.create_feedforward_Q_function, *args, **kwargs)),
@@ -76,32 +74,3 @@ def get_Q_function_from_variant(variant, env, *args, **kwargs):
         **kwargs)
 
     return Q_function
-
-
-def get_V_function_from_variant(variant, env, *args, **kwargs):
-    V_params = variant['V_params']
-    V_type = V_params['type']
-    V_kwargs = deepcopy(V_params['kwargs'])
-
-    preprocessor_params = V_kwargs.pop('preprocessor_params', {})
-    observation_keys = V_kwargs.pop('observation_keys')
-
-    observation_shapes = OrderedDict((
-        (key, value) for key, value in env.observation_shape.items()
-        if key in observation_keys
-    ))
-
-    preprocessors = OrderedDict([
-        (key, get_preprocessor_from_params(env, preprocessor_params))
-        for key, preprocessor_params in preprocessor_params.items()
-    ])
-
-    V_function = VALUE_FUNCTIONS[V_type](
-        input_shapes=observation_shapes,
-        observation_keys=observation_keys,
-        *args,
-        preprocessors=preprocessors,
-        **V_kwargs,
-        **kwargs)
-
-    return V_function

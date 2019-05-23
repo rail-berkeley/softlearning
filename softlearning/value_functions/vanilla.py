@@ -18,22 +18,3 @@ def create_feedforward_Q_function(input_shapes,
     Q_function.observation_keys = observation_keys
 
     return Q_function
-
-
-def create_feedforward_V_function(input_shapes,
-                                  *args,
-                                  preprocessors=None,
-                                  observation_keys=None,
-                                  name='feedforward_V',
-                                  **kwargs):
-    V_function = feedforward_model(
-        input_shapes,
-        *args,
-        output_size=1,
-        preprocessors=preprocessors,
-        name=name,
-        **kwargs)
-
-    V_function.observation_keys = observation_keys
-
-    return V_function
