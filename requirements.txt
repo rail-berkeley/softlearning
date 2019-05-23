@@ -34,7 +34,8 @@ google-auth-httplib2==0.0.3
 google-compute-engine==2.8.13
 grpcio==1.16.1
 gtimer==1.0.0b5
-gym==0.12.1
+# gym==0.12.1
+git+https://github.com/hartikainen/gym.git@25fdf4055561e06077326a2ba1483efa52cfdafc
 h5py==2.8.0
 httplib2==0.12.0
 idna==2.7
