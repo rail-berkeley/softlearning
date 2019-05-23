@@ -79,3 +79,28 @@ def create_inputs(input_shapes):
             ]
 
     return inputs_flat
+
+
+def get_input_for_gym_space(space, name=None):
+    from gym import spaces
+
+    if isinstance(space, spaces.Box):
+        return tf.keras.layers.Input(
+            shape=space.shape, dtype=space.dtype, name=name)
+    elif isinstance(space, spaces.Dict):
+        return type(space.spaces)((
+            (name, get_input_for_gym_space(space, name=name))
+            for name, space in space.spaces.items()
+        ))
+    else:
+        raise NotImplementedError(space)
+
+
+def get_inputs_for_environment(environment):
+    observation_space = environment.observation_space
+    action_space = environment.action_space
+
+    observation_inputs = get_input_for_gym_space(observation_space)
+    action_inputs = get_input_for_gym_space(action_space)
+
+    return observation_inputs, action_inputs

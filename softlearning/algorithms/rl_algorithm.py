@@ -111,11 +111,7 @@ class RLAlgorithm(Checkpointable):
         self._placeholders = {
             'observations': {
                 name: tf.compat.v1.placeholder(
-                    dtype=(
-                        np.float32
-                        if np.issubdtype(observation_space.dtype, np.floating)
-                        else observation_space.dtype
-                    ),
+                    dtype=observation_space.dtype,
                     shape=(None, *observation_space.shape),
                     name=name)
                 for name, observation_space
@@ -123,11 +119,7 @@ class RLAlgorithm(Checkpointable):
             },
             'next_observations': {
                 name: tf.compat.v1.placeholder(
-                    dtype=(
-                        np.float32
-                        if np.issubdtype(observation_space.dtype, np.floating)
-                        else observation_space.dtype
-                    ),
+                    dtype=observation_space.dtype,
                     shape=(None, *observation_space.shape),
                     name=name)
                 for name, observation_space

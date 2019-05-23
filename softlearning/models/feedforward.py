@@ -2,35 +2,27 @@ import tensorflow as tf
 
 
 from softlearning.utils.keras import PicklableKerasModel
-from softlearning.models.utils import flatten_input_structure, create_inputs
 
 
-def feedforward_model(input_shapes,
+def feedforward_model(inputs,
                       output_size,
                       hidden_layer_sizes,
+                      preprocessors=None,
                       activation='relu',
                       output_activation='linear',
-                      preprocessors=None,
                       name='feedforward_model',
                       *args,
                       **kwargs):
-    inputs_flat = create_inputs(input_shapes)
-    preprocessors_flat = (
-        flatten_input_structure(preprocessors)
-        if preprocessors is not None
-        else tuple(None for _ in inputs_flat))
-
-    assert len(inputs_flat) == len(preprocessors_flat), (
-        inputs_flat, preprocessors_flat)
-
+    if preprocessors is None:
+        preprocessors = [None] * len(inputs)
+    assert len(inputs) == len(preprocessors)
     preprocessed_inputs = [
-        preprocessor(input_) if preprocessor is not None else input_
-        for preprocessor, input_
-        in zip(preprocessors_flat, inputs_flat)
+        preprocessor(x) if preprocessor is not None else x
+        for preprocessor, x in zip(preprocessors, inputs)
     ]
-
     concatenated = tf.keras.layers.Lambda(
-        lambda x: tf.concat(x, axis=-1)
+        lambda inputs: tf.concat(
+            [tf.cast(x, tf.float32) for x in inputs], axis=-1)
     )(preprocessed_inputs)
 
     out = concatenated
@@ -43,6 +35,6 @@ def feedforward_model(input_shapes,
         output_size, *args, activation=output_activation, **kwargs
     )(out)
 
-    model = PicklableKerasModel(inputs_flat, out, name=name)
+    model = PicklableKerasModel(inputs, out, name=name)
 
     return model

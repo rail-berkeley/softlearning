@@ -2,6 +2,7 @@ from collections import OrderedDict
 from copy import deepcopy
 
 from softlearning.preprocessors.utils import get_preprocessor_from_params
+from softlearning.models.utils import get_inputs_for_environment
 from . import vanilla
 
 
@@ -26,50 +27,33 @@ def get_Q_function_from_variant(variant, env, *args, **kwargs):
     Q_kwargs = deepcopy(Q_params['kwargs'])
 
     observation_preprocessors_params = Q_kwargs.pop(
-        'observation_preprocessors_params', {}).copy()
+        'observation_preprocessors_params', {})
     observation_keys = Q_kwargs.pop(
         'observation_keys', None) or env.observation_keys
 
-    observation_shapes = OrderedDict((
-        (key, value) for key, value in env.observation_shape.items()
-        if key in observation_keys
-    ))
-    action_shape = env.action_shape
-    input_shapes = {
-        'observations': observation_shapes,
-        'actions': action_shape,
-    }
+    assert 'actions' not in observation_keys, observation_keys
 
-    observation_preprocessors = OrderedDict()
-    for name, observation_shape in observation_shapes.items():
-        preprocessor_input_shapes  = [observation_shape]
+    observation_inputs, action_input = get_inputs_for_environment(env)
+    inputs = {**observation_inputs, 'actions': action_input}
+    preprocessors = {key: None for key in inputs}
+
+    for name, observation_input in observation_inputs.items():
         preprocessor_params = observation_preprocessors_params.get(name, None)
         if not preprocessor_params:
-            observation_preprocessors[name] = None
             continue
+        preprocessor_params['kwargs']['inputs'] = observation_input
+        preprocessor = get_preprocessor_from_params(env, preprocessor_params)
+        preprocessors[name] = preprocessor
 
-        image_shape = (
-            preprocessor_params
-            .get('kwargs', {})
-            .pop('image_shape', None))
-        if image_shape is not None:
-            assert observation_shape == image_shape
-        preprocessor_params['kwargs']['input_shapes'] = (
-            preprocessor_input_shapes)
-        observation_preprocessors[name] = get_preprocessor_from_params(
-            env, preprocessor_params)
-
-    action_preprocessor = None
-    preprocessors = {
-        'observations': observation_preprocessors,
-        'actions': action_preprocessor,
-    }
+    inputs = [inputs[key] for key in sorted(inputs.keys())]
+    preprocessors = [
+        preprocessors[key] for key in sorted(preprocessors.keys())]
 
     Q_function = VALUE_FUNCTIONS[Q_type](
-        input_shapes=input_shapes,
+        inputs=inputs,
+        preprocessors=preprocessors,
         observation_keys=observation_keys,
         *args,
-        preprocessors=preprocessors,
         **Q_kwargs,
         **kwargs)
 

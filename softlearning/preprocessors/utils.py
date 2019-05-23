@@ -1,6 +1,3 @@
-from copy import deepcopy
-
-
 def get_convnet_preprocessor(name='convnet_preprocessor', **kwargs):
     from softlearning.models.convnet import convnet_model
 
@@ -29,7 +26,7 @@ def get_preprocessor_from_params(env, preprocessor_params, *args, **kwargs):
         return None
 
     preprocessor_type = preprocessor_params.get('type', None)
-    preprocessor_kwargs = deepcopy(preprocessor_params.get('kwargs', {}))
+    preprocessor_kwargs = preprocessor_params.get('kwargs', {})
 
     if preprocessor_type is None:
         return None

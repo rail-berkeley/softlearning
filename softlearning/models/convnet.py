@@ -2,11 +2,10 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 from softlearning.utils.keras import PicklableKerasModel
-from softlearning.models.utils import flatten_input_structure
 
 
 def convnet_model(
-        input_shapes,
+        inputs,
         conv_filters=(64, 64, 64),
         conv_kernel_sizes=(3, 3, 3),
         conv_strides=(2, 2, 2),
@@ -18,10 +17,6 @@ def convnet_model(
         name="convnet",
         *args,
         **kwargs):
-    input_shapes_flat = flatten_input_structure(input_shapes)
-    inputs_flat = tuple(
-        layers.Input(shape=shape, dtype=tf.uint8)
-        for shape in input_shapes_flat)
 
     def convert_to_float(x):
         output = (tf.image.convert_image_dtype(x, tf.float32) - 0.5) * 2.0
@@ -29,7 +24,7 @@ def convnet_model(
 
     # Concatenate images along the channel-axis. We assume that the data is
     # in the form channels_last.
-    concatenated = layers.Lambda(lambda x: tf.concat(x, axis=-1))(inputs_flat)
+    concatenated = layers.Lambda(lambda x: tf.concat(x, axis=-1))(inputs)
     float_concatenated = layers.Lambda(
         convert_to_float,
         name='convert_to_float'
@@ -75,6 +70,6 @@ def convnet_model(
 
     flattened = layers.Flatten()(x)
 
-    model = PicklableKerasModel(inputs_flat, flattened, name=name)
+    model = PicklableKerasModel(inputs, flattened, name=name)
 
     return model
