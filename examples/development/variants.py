@@ -15,6 +15,10 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
     'kwargs': {
         'hidden_layer_sizes': (M, M),
         'squash': True,
+        'observation_keys': None,
+        'observation_preprocessors_params': {
+            'observations': None,
+        }
     }
 }
 
@@ -251,12 +255,23 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
         ),
         'exploration_policy_params': {
             'type': 'UniformPolicy',
-            'kwargs': {},
+            'kwargs': {
+                'observation_keys': tune.sample_from(lambda spec: (
+                    spec.get('config', spec)
+                    ['policy_params']
+                    ['kwargs']
+                    .get('observation_keys')
+                ))
+            },
         },
         'Q_params': {
             'type': 'double_feedforward_Q_function',
             'kwargs': {
                 'hidden_layer_sizes': (M, M),
+                'observation_keys': None,
+                'observation_preprocessors_params': {
+                    'observations': None,
+                }
             }
         },
         'algorithm_params': algorithm_params,
@@ -316,37 +331,20 @@ def get_variant_spec_image(universe,
         universe, domain, task, policy, algorithm, *args, **kwargs)
 
     if is_image_env(domain, task, variant_spec):
-        if universe == 'dm_control':
-            render_kwargs = (
-                variant_spec
-                ['environment_params']
-                ['training']
-                ['kwargs']
-                ['pixel_wrapper_kwargs']
-                ['render_kwargs'])
-            image_shape = (render_kwargs['width'], render_kwargs['height'], 3)
-        elif universe == 'gym':
-            image_shape = (
-                variant_spec
-                ['environment_params']
-                ['training']
-                ['kwargs']
-                ['image_shape'])
-
         preprocessor_params = {
             'type': 'convnet_preprocessor',
             'kwargs': {
-                'image_shape': image_shape,
-                'conv_filters': (64, 64, 64, 64, 64),
-                'conv_kernel_sizes': (3, 3, 3, 3, 3),
-                'conv_strides': (2, 2, 2, 2, 2),
+                'conv_filters': (64, ) * 3,
+                'conv_kernel_sizes': (3, ) * 3,
+                'conv_strides': (2, ) * 3,
+                'normalization_type': 'layer',
                 'downsampling_type': 'conv',
             },
         }
 
         variant_spec['policy_params']['kwargs']['hidden_layer_sizes'] = (M, M)
         variant_spec['policy_params']['kwargs']['observation_preprocessors_params'] = {
-            'images': deepcopy(preprocessor_params)
+            'pixels': deepcopy(preprocessor_params)
         }
 
         # for key in ('hidden_layer_sizes', 'observation_preprocessors_params'):
