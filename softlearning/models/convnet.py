@@ -2,6 +2,10 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 from softlearning.utils.keras import PicklableKerasModel
+from softlearning.models.normalization import (
+    LayerNormalization,
+    GroupNormalization,
+    InstanceNormalization)
 
 
 def convnet_model(
@@ -43,21 +47,18 @@ def convnet_model(
             **kwargs
         )(x)
 
-        if normalization_type is not None:
+        if normalization_type == 'batch':
+            x = layers.BatchNormalization(**normalization_kwargs)(x)
+        elif normalization_type == 'layer':
+            x = LayerNormalization(**normalization_kwargs)(x)
+        elif normalization_type == 'group':
+            x = GroupNormalization(**normalization_kwargs)(x)
+        elif normalization_type == 'instance':
+            x = InstanceNormalization(**normalization_kwargs)(x)
+        elif normalization_type == 'weight':
             raise NotImplementedError(normalization_type)
-
-        # if normalization_type == 'batch':
-        #     x = layers.BatchNormalization(**normalization_kwargs)(x)
-        # elif normalization_type == 'layer':
-        #     x = LayerNormalization(**normalization_kwargs)(x)
-        # elif normalization_type == 'group':
-        #     x = GroupNormalization(**normalization_kwargs)(x)
-        # elif normalization_type == 'instance':
-        #     x = InstanceNormalization(**normalization_kwargs)(x)
-        # elif normalization_type == 'weight':
-        #     raise NotImplementedError(normalization_type)
-        # else:
-        #     assert normalization_type is None, normalization_type
+        else:
+            assert normalization_type is None, normalization_type
 
         x = (layers.Activation(activation)(x)
              if isinstance(activation, str)
