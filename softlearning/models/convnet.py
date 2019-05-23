@@ -8,6 +8,12 @@ from softlearning.models.normalization import (
     GroupNormalization,
     InstanceNormalization)
 
+from distutils.version import LooseVersion
+if LooseVersion(tf.__version__) > LooseVersion("2.00"):
+    from tensorflow import nest
+else:
+    from tensorflow.contrib.framework import nest
+
 
 def convnet_model(
         inputs,
@@ -23,8 +29,13 @@ def convnet_model(
         *args,
         **kwargs):
 
-    float_inputs = tf.keras.layers.Lambda(
-        lambda inputs: tf.cast(inputs, tf.float32)
+    def convert_to_float(x):
+        output = (tf.image.convert_image_dtype(x, tf.float32) - 0.5) * 2.0
+        return output
+
+    float_inputs = layers.Lambda(
+        lambda x: nest.map_structure(convert_to_float, x),
+        name='convert_to_float'
     )(inputs)
 
     concatenated = tf.keras.layers.Lambda(
