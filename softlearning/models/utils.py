@@ -49,11 +49,19 @@ def create_inputs(input_shapes):
 
     Returns:
         inputs_flat: a tuple of `tf.keras.layers.Input`s.
+
+    TODO(hartikainen): Need to figure out a better way for handling the dtypes.
     """
     if isinstance(input_shapes, dict):
         inputs_flat_dict = flatten(input_shapes)
         inputs_flat = [
-            tf.keras.layers.Input(shape=inputs_flat_dict[key], name=key[-1])
+            tf.keras.layers.Input(
+                shape=inputs_flat_dict[key],
+                name=key[-1],
+                dtype=(tf.uint8 # Image observation
+                       if len(inputs_flat_dict[key]) == 3
+                       else tf.float32) # Non-image
+            )
             for key in sorted(inputs_flat_dict.keys())
         ]
     elif isinstance(input_shapes, list):

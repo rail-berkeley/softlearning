@@ -118,13 +118,15 @@ class SAC(RLAlgorithm):
             - action
             - reward
             - terminals
-
-        # TODO(hartikainen): Use dtypes defined by {observation,action}_space
         """
         self._placeholders = {
             'observations': {
                 name: tf.compat.v1.placeholder(
-                    dtype=tf.float32,
+                    dtype=(
+                        np.float32
+                        if np.issubdtype(observation_space.dtype, np.floating)
+                        else observation_space.dtype
+                    ),
                     shape=(None, *observation_space.shape),
                     name=name)
                 for name, observation_space
@@ -132,15 +134,16 @@ class SAC(RLAlgorithm):
             },
             'next_observations': {
                 name: tf.compat.v1.placeholder(
-                    dtype=tf.float32,
+                    dtype=(
+                        np.float32
+                        if np.issubdtype(observation_space.dtype, np.floating)
+                        else observation_space.dtype
+                    ),
                     shape=(None, *observation_space.shape),
                     name=name)
                 for name, observation_space
                 in self._training_environment.observation_space.spaces.items()
             },
-            'iteration': tf.compat.v1.placeholder(
-                tf.int64, shape=(), name='iteration',
-            ),
             'actions': tf.compat.v1.placeholder(
                 dtype=tf.float32,
                 shape=(None, *self._training_environment.action_space.shape),
@@ -155,6 +158,9 @@ class SAC(RLAlgorithm):
                 tf.bool,
                 shape=(None, 1),
                 name='terminals',
+            ),
+            'iteration': tf.compat.v1.placeholder(
+                tf.int64, shape=(), name='iteration',
             ),
         }
 
