@@ -31,11 +31,24 @@ def get_sampler_from_variant(variant, *args, **kwargs):
     return sampler
 
 
+DEFAULT_PIXEL_RENDER_KWARGS = {
+    'mode': 'rgb_array',
+    'width': 100,
+    'height': 100,
+}
+
+DEFAULT_HUMAN_RENDER_KWARGS = {
+    'mode': 'human',
+    'width': 500,
+    'height': 500,
+}
+
+
 def rollout(env,
             policy,
             path_length,
             callback=None,
-            render_mode=None,
+            render_kwargs=None,
             break_on_terminal=True):
     observation_space = env.observation_space
     action_space = env.action_space
@@ -49,6 +62,20 @@ def rollout(env,
 
     sampler.initialize(env, policy, pool)
 
+    render_mode = (render_kwargs or {}).get('mode', None)
+    if render_mode == 'rgb_array':
+        render_kwargs = {
+            **DEFAULT_PIXEL_RENDER_KWARGS,
+            **render_kwargs
+        }
+    elif render_mode == 'human':
+        render_kwargs = {
+            **DEFAULT_HUMAN_RENDER_KWARGS,
+            **render_kwargs
+        }
+    else:
+        render_kwargs = None
+
     images = []
     infos = defaultdict(list)
 
@@ -61,12 +88,9 @@ def rollout(env,
         if callback is not None:
             callback(observation)
 
-        if render_mode is not None:
-            if render_mode == 'rgb_array':
-                image = env.render(mode=render_mode, width=100, height=100)
-                images.append(image)
-            else:
-                env.render()
+        if render_kwargs:
+            image = env.render(**render_kwargs)
+            images.append(image)
 
         if terminal:
             policy.reset()

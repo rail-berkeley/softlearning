@@ -40,7 +40,7 @@ class RLAlgorithm(Checkpointable):
             epoch_length=1000,
             eval_n_episodes=10,
             eval_deterministic=True,
-            eval_render_mode=None,
+            eval_render_kwargs=None,
             video_save_frequency=0,
             session=None,
     ):
@@ -55,8 +55,8 @@ class RLAlgorithm(Checkpointable):
             eval_n_episodes (`int`): Number of rollouts to evaluate.
             eval_deterministic (`int`): Whether or not to run the policy in
                 deterministic mode when evaluating policy.
-            eval_render_mode (`str`): Mode to render evaluation rollouts in.
-                None to disable rendering.
+            eval_render_kwargs (`None`, `dict`): Arguments to be passed for
+                rendering evaluation rollouts. `None` to disable rendering.
         """
         self.sampler = sampler
 
@@ -73,12 +73,13 @@ class RLAlgorithm(Checkpointable):
         self._eval_deterministic = eval_deterministic
         self._video_save_frequency = video_save_frequency
 
+        self._eval_render_kwargs = eval_render_kwargs or {}
+
         if self._video_save_frequency > 0:
-            assert eval_render_mode != 'human', (
+            render_mode = self._eval_render_kwargs.pop('mode')
+            assert render_mode != 'human', (
                 "RlAlgorithm cannot render and save videos at the same time")
-            self._eval_render_mode = 'rgb_array'
-        else:
-            self._eval_render_mode = eval_render_mode
+            self._eval_render_kwargs['mode'] = 'rgb_array'
 
         self._session = session or tf.keras.backend.get_session()
 
@@ -308,7 +309,7 @@ class RLAlgorithm(Checkpointable):
                 ('train-steps', self._num_train_steps),
             )))
 
-            if self._eval_render_mode is not None and hasattr(
+            if self._eval_render_kwargs and hasattr(
                     evaluation_environment, 'render_rollouts'):
                 # TODO(hartikainen): Make this consistent such that there's no
                 # need for the hasattr check.
@@ -331,7 +332,7 @@ class RLAlgorithm(Checkpointable):
                 evaluation_env,
                 policy,
                 self.sampler._max_path_length,
-                render_mode=self._eval_render_mode)
+                render_kwargs=self._eval_render_kwargs)
 
         should_save_video = (
             self._video_save_frequency > 0
