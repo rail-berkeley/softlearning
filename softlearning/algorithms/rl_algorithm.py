@@ -76,10 +76,10 @@ class RLAlgorithm(Checkpointable):
         self._eval_render_kwargs = eval_render_kwargs or {}
 
         if self._video_save_frequency > 0:
-            render_mode = self._eval_render_kwargs.pop('mode')
+            render_mode = self._eval_render_kwargs.pop('mode', 'rgb_array')
             assert render_mode != 'human', (
                 "RlAlgorithm cannot render and save videos at the same time")
-            self._eval_render_kwargs['mode'] = 'rgb_array'
+            self._eval_render_kwargs['mode'] = render_mode
 
         self._session = session or tf.keras.backend.get_session()
 
