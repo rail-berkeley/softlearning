@@ -85,9 +85,9 @@ class FlexibleReplayPool(ReplayPool):
             ][self._pointer, 0] + 1)
             self.data[
                 ('episode_index_forwards', )
-            ][
-                self._pointer:self._pointer + episode_tail_length
-            ] = np.arange(episode_tail_length)[..., None]
+            ][np.arange(
+                self._pointer, self._pointer + episode_tail_length
+            ) % self._max_size] = np.arange(episode_tail_length)[..., None]
 
         self._samples_since_save += count
 

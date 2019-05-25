@@ -57,6 +57,84 @@ class FlexibleReplayPoolTest(unittest.TestCase):
                 pool.fields[field_name],
                 deserialized.fields[field_name])
 
+    def test_advance(self):
+        # Fill fields with random data
+        pool = create_pool(10, field_shapes=((1, 3), (1, )))
+        num_samples = pool._max_size - 2
+        pool.add_path({
+            field_name: np.random.uniform(
+                0, 1, (num_samples, *field_attrs.shape))
+            for field_name, field_attrs in pool.fields.items()
+        })
+
+        self.assertEqual(pool._size, num_samples)
+        self.assertEqual(pool._pointer, num_samples)
+
+        np.testing.assert_equal(
+            pool.data[('episode_index_forwards', )],
+            np.concatenate((
+                np.arange(num_samples)[..., None],
+                np.zeros((pool._max_size-num_samples, 1)),
+            ), axis=0))
+
+        np.testing.assert_equal(
+            pool.data[('episode_index_backwards', )],
+            np.concatenate((
+                np.arange(num_samples-1, -1, -1)[..., None],
+                np.zeros((pool._max_size-num_samples, 1)),
+            ), axis=0))
+
+        pool.add_path({
+            field_name: np.random.uniform(
+                0, 1, (pool._max_size - 2, *field_attrs.shape))
+            for field_name, field_attrs in pool.fields.items()
+        })
+
+        self.assertEqual(pool._size, pool._max_size)
+        self.assertEqual(pool._pointer, num_samples - 2)
+
+        np.testing.assert_equal(
+            pool.data[('episode_index_forwards', )],
+            np.concatenate((
+                np.arange(2, pool._max_size-2)[..., None],
+                np.arange(2)[..., None],
+                np.arange(2)[..., None],
+            ), axis=0))
+
+        np.testing.assert_equal(
+            pool.data[('episode_index_backwards', )],
+            np.concatenate((
+                np.arange(5, -1, -1)[..., None],
+                np.arange(1, -1, -1)[..., None],
+                np.arange(7, 5, -1)[..., None],
+            ), axis=0))
+
+        # Make sure that overflowing episode index gets correctly fixed.
+        pool.add_path({
+            field_name: np.random.uniform(
+                0, 1, (3, *field_attrs.shape))
+            for field_name, field_attrs in pool.fields.items()
+        })
+
+        self.assertEqual(pool._size, pool._max_size)
+        self.assertEqual(pool._pointer, num_samples+1)
+
+        np.testing.assert_equal(
+            pool.data[('episode_index_forwards', )],
+            np.concatenate((
+                np.arange(1, num_samples-1)[..., None],
+                np.arange(3)[..., None],
+                np.arange(1)[..., None],
+            ), axis=0))
+
+        np.testing.assert_equal(
+            pool.data[('episode_index_backwards', )],
+            np.concatenate((
+                np.arange(5, -1, -1)[..., None],
+                np.arange(2, -1, -1)[..., None],
+                np.arange(6, 5, -1)[..., None],
+            ), axis=0))
+
     def test_save_load_latest_experience(self):
         self.assertEqual(self.pool._samples_since_save, 0)
 
