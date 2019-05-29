@@ -46,20 +46,11 @@ def get_policy_from_params(policy_params, env, *args, **kwargs):
 
     observation_preprocessors = OrderedDict()
     for name, observation_shape in observation_shapes.items():
-        preprocessor_input_shapes  = [observation_shape]
         preprocessor_params = observation_preprocessors_params.get(name, None)
         if not preprocessor_params:
             observation_preprocessors[name] = None
             continue
 
-        image_shape = (
-            preprocessor_params
-            .get('kwargs', {})
-            .pop('image_shape', None))
-        if image_shape is not None:
-            assert observation_shape == image_shape
-        preprocessor_params['kwargs']['input_shapes'] = (
-            preprocessor_input_shapes)
         observation_preprocessors[name] = get_preprocessor_from_params(
             env, preprocessor_params)
 

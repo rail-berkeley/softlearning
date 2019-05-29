@@ -61,7 +61,6 @@ class GaussianPolicy(LatentSpacePolicy):
         self.condition_inputs = inputs_flat
 
         shift_and_log_scale_diag = self._shift_and_log_scale_diag_net(
-            input_shapes=(conditions.shape[1:], ),
             output_size=output_shape[0] * 2,
         )(conditions)
 
@@ -181,11 +180,6 @@ class GaussianPolicy(LatentSpacePolicy):
     def trainable_variables(self):
         return self.actions_model.trainable_variables
 
-    @property
-    def non_trainable_weights(self):
-        """Due to our nested model structure, we need to filter duplicates."""
-        return list(set(super(GaussianPolicy, self).non_trainable_weights))
-
     def get_diagnostics(self, inputs):
         """Return diagnostic information of the policy.
 
@@ -223,7 +217,8 @@ class FeedforwardGaussianPolicy(GaussianPolicy):
                  hidden_layer_sizes,
                  activation='relu',
                  output_activation='linear',
-                 *args, **kwargs):
+                 *args,
+                 **kwargs):
         self._hidden_layer_sizes = hidden_layer_sizes
         self._activation = activation
         self._output_activation = output_activation
@@ -231,9 +226,8 @@ class FeedforwardGaussianPolicy(GaussianPolicy):
         self._Serializable__initialize(locals())
         super(FeedforwardGaussianPolicy, self).__init__(*args, **kwargs)
 
-    def _shift_and_log_scale_diag_net(self, input_shapes, output_size):
+    def _shift_and_log_scale_diag_net(self, output_size):
         shift_and_log_scale_diag_net = feedforward_model(
-            input_shapes=input_shapes,
             hidden_layer_sizes=self._hidden_layer_sizes,
             output_size=output_size,
             activation=self._activation,
