@@ -1,44 +1,42 @@
 import tensorflow as tf
+import tensorflow_probability as tfp
 from tensorflow.python.keras.engine import training_utils
 
-from softlearning.utils.keras import PicklableKerasModel
+from softlearning.utils.keras import PicklableSequential
+
+from distutils.version import LooseVersion
+if LooseVersion(tf.__version__) > LooseVersion("2.00"):
+    from tensorflow import nest
+else:
+    from tensorflow.contrib.framework import nest
 
 
-def feedforward_model(inputs,
+tfk = tf.keras
+tfkl = tf.keras.layers
+tfpl = tfp.layers
+tfd = tfp.distributions
+tfb = tfp.bijectors
+
+
+def feedforward_model(hidden_layer_sizes,
                       output_size,
-                      hidden_layer_sizes,
-                      preprocessors=None,
                       activation='relu',
                       output_activation='linear',
                       name='feedforward_model',
                       *args,
                       **kwargs):
-    if preprocessors is None:
-        preprocessors = [None] * len(inputs)
-    assert len(inputs) == len(preprocessors)
-    preprocessed_inputs = [
-        preprocessor(x) if preprocessor is not None else x
-        for preprocessor, x in zip(preprocessors, inputs)
-    ]
-
-    float_inputs = tf.keras.layers.Lambda(
-        lambda inputs: training_utils.cast_if_floating_dtype(inputs)
-    )(preprocessed_inputs)
-
-    concatenated = tf.keras.layers.Lambda(
-        lambda inputs: tf.concat(inputs, axis=-1)
-    )(float_inputs)
-
-    out = concatenated
-    for units in hidden_layer_sizes:
-        out = tf.keras.layers.Dense(
-            units, *args, activation=activation, **kwargs
-        )(out)
-
-    out = tf.keras.layers.Dense(
-        output_size, *args, activation=output_activation, **kwargs
-    )(out)
-
-    model = PicklableKerasModel(inputs, out, name=name)
+    model = PicklableSequential((
+        tfkl.Lambda(lambda x: tf.concat(
+            nest.flatten(nest.map_structure(
+                training_utils.cast_if_floating_dtype, x)),
+            axis=-1)),
+        *[
+            tf.keras.layers.Dense(
+                hidden_layer_size, *args, activation=activation, **kwargs)
+            for hidden_layer_size in hidden_layer_sizes
+        ],
+        tf.keras.layers.Dense(
+            output_size, *args, activation=output_activation, **kwargs)
+    ), name=name)
 
     return model
