@@ -1,8 +1,8 @@
 import tensorflow as tf
+import tensorflow_probability as tfp
 from tensorflow.keras import layers
-from tensorflow.python.keras.engine import training_utils
 
-from softlearning.utils.keras import PicklableKerasModel
+from softlearning.utils.keras import PicklableSequential
 from softlearning.models.normalization import (
     LayerNormalization,
     GroupNormalization,
@@ -15,8 +15,14 @@ else:
     from tensorflow.contrib.framework import nest
 
 
+tfk = tf.keras
+tfkl = tf.keras.layers
+tfpl = tfp.layers
+tfd = tfp.distributions
+tfb = tfp.bijectors
+
+
 def convnet_model(
-        inputs,
         conv_filters=(64, 64, 64),
         conv_kernel_sizes=(3, 3, 3),
         conv_strides=(2, 2, 2),
@@ -29,56 +35,54 @@ def convnet_model(
         *args,
         **kwargs):
 
+    normalization_layer = {
+        'batch': layers.BatchNormalization(**normalization_kwargs),
+        'layer': LayerNormalization(**normalization_kwargs),
+        'group': GroupNormalization(**normalization_kwargs),
+        'instance': InstanceNormalization(**normalization_kwargs),
+        None: None,
+    }[normalization_type]
+
     def convert_to_float(x):
         output = (tf.image.convert_image_dtype(x, tf.float32) - 0.5) * 2.0
         return output
 
-    float_inputs = layers.Lambda(
-        lambda x: nest.map_structure(convert_to_float, x),
-        name='convert_to_float'
-    )(inputs)
+    def conv_block(conv_filter, conv_kernel_size, conv_stride):
+        block_parts = [
+            layers.Conv2D(
+                filters=conv_filter,
+                kernel_size=conv_kernel_size,
+                strides=(conv_stride if downsampling_type == 'conv' else 1),
+                padding=padding,
+                activation='linear',
+                *args,
+                **kwargs),
+        ]
 
-    concatenated = tf.keras.layers.Lambda(
-        lambda inputs: tf.concat(inputs, axis=-1)
-    )(float_inputs)
+        if normalization_layer is not None:
+            block_parts += [normalization_layer(**normalization_kwargs)]
 
-    x = concatenated
-    for (conv_filter, conv_kernel_size, conv_stride) in zip(
-            conv_filters, conv_kernel_sizes, conv_strides):
-        x = layers.Conv2D(
-            filters=conv_filter,
-            kernel_size=conv_kernel_size,
-            strides=(conv_stride if downsampling_type == 'conv' else 1),
-            padding=padding,
-            activation='linear',
-            *args,
-            **kwargs
-        )(x)
-
-        if normalization_type == 'batch':
-            x = layers.BatchNormalization(**normalization_kwargs)(x)
-        elif normalization_type == 'layer':
-            x = LayerNormalization(**normalization_kwargs)(x)
-        elif normalization_type == 'group':
-            x = GroupNormalization(**normalization_kwargs)(x)
-        elif normalization_type == 'instance':
-            x = InstanceNormalization(**normalization_kwargs)(x)
-        elif normalization_type == 'weight':
-            raise NotImplementedError(normalization_type)
-        else:
-            assert normalization_type is None, normalization_type
-
-        x = (layers.Activation(activation)(x)
-             if isinstance(activation, str)
-             else activation()(x))
+        block_parts += [(layers.Activation(activation)
+                         if isinstance(activation, str)
+                         else activation())]
 
         if downsampling_type == 'pool' and conv_stride > 1:
-            x = getattr(layers, 'AvgPool2D')(
-                pool_size=conv_stride, strides=conv_stride
-            )(x)
+            block_parts += [getattr(layers, 'AvgPool2D')(
+                pool_size=conv_stride, strides=conv_stride)]
 
-    flattened = layers.Flatten()(x)
+        block = tfk.Sequential(block_parts)
+        return block
 
-    model = PicklableKerasModel(inputs, flattened, name=name)
+    model = PicklableSequential((
+        tfkl.Lambda(lambda x: nest.map_structure(convert_to_float, x)),
+        tfkl.Lambda(lambda x: tf.concat(nest.flatten(x), axis=-1)),
+        *[
+            conv_block(conv_filter, conv_kernel_size, conv_stride)
+            for (conv_filter, conv_kernel_size, conv_stride) in
+            zip(conv_filters, conv_kernel_sizes, conv_strides)
+        ],
+        tfkl.Flatten(),
+
+    ), name=name)
 
     return model
