@@ -19,7 +19,7 @@ CONFIG = {
             'epoch_length': 20,
             'eval_deterministic': True,
             'eval_n_episodes': 1,
-            'eval_render_mode': None,
+            'eval_render_kwargs': {},
             'lr': 0.0003,
             'n_epochs': 301,
             'n_initial_exploration_steps': 10,
