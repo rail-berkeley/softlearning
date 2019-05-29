@@ -8,6 +8,8 @@ import tensorflow_probability as tfp
 from tensorflow.python.keras.engine import training_utils
 
 from softlearning.distributions.squash_bijector import SquashBijector
+from softlearning.models.feedforward import feedforward_model
+from softlearning.models.utils import flatten_input_structure, create_inputs
 
 from .base_policy import LatentSpacePolicy
 
@@ -17,7 +19,7 @@ SCALE_DIAG_MIN_MAX = (-20, 2)
 
 class GaussianPolicy(LatentSpacePolicy):
     def __init__(self,
-                 inputs,
+                 input_shapes,
                  output_shape,
                  *args,
                  squash=True,
@@ -26,19 +28,26 @@ class GaussianPolicy(LatentSpacePolicy):
                  **kwargs):
         self._Serializable__initialize(locals())
 
+        self._input_shapes = input_shapes
         self._output_shape = output_shape
         self._squash = squash
         self._name = name
 
         super(GaussianPolicy, self).__init__(*args, **kwargs)
 
-        if preprocessors is None:
-            preprocessors = [None] * len(inputs)
-        assert len(inputs) == len(preprocessors)
+        inputs_flat = create_inputs(input_shapes)
+        preprocessors_flat = (
+            flatten_input_structure(preprocessors)
+            if preprocessors is not None
+            else tuple(None for _ in inputs_flat))
+
+        assert len(inputs_flat) == len(preprocessors_flat), (
+            inputs_flat, preprocessors_flat)
 
         preprocessed_inputs = [
-            preprocessor(x) if preprocessor is not None else x
-            for preprocessor, x in zip(preprocessors, inputs)
+            preprocessor(input_) if preprocessor is not None else input_
+            for preprocessor, input_
+            in zip(preprocessors_flat, inputs_flat)
         ]
 
         float_inputs = tf.keras.layers.Lambda(
@@ -49,7 +58,7 @@ class GaussianPolicy(LatentSpacePolicy):
             lambda inputs: tf.concat(inputs, axis=-1)
         )(float_inputs)
 
-        self.condition_inputs = inputs
+        self.condition_inputs = inputs_flat
 
         shift_and_log_scale_diag = self._shift_and_log_scale_diag_net(
             input_shapes=(conditions.shape[1:], ),
@@ -223,15 +232,11 @@ class FeedforwardGaussianPolicy(GaussianPolicy):
         super(FeedforwardGaussianPolicy, self).__init__(*args, **kwargs)
 
     def _shift_and_log_scale_diag_net(self, input_shapes, output_size):
-        shift_and_log_scale_diag_net = tf.keras.Sequential(
-            [
-                tf.keras.layers.Dense(
-                    hidden_layer_size, activation=self._activation)
-                for hidden_layer_size in self._hidden_layer_sizes
-            ] + [
-                tf.keras.layers.Dense(
-                    output_size, activation=self._output_activation)
-            ]
-        )
+        shift_and_log_scale_diag_net = feedforward_model(
+            input_shapes=input_shapes,
+            hidden_layer_sizes=self._hidden_layer_sizes,
+            output_size=output_size,
+            activation=self._activation,
+            output_activation=self._output_activation)
 
         return shift_and_log_scale_diag_net

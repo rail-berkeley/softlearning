@@ -22,6 +22,7 @@ def feedforward_model(hidden_layer_sizes,
                       output_size,
                       activation='relu',
                       output_activation='linear',
+                      preprocessors=None,
                       name='feedforward_model',
                       *args,
                       **kwargs):

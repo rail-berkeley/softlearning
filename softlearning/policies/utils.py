@@ -2,7 +2,6 @@ from collections import OrderedDict
 from copy import deepcopy
 
 from softlearning.preprocessors.utils import get_preprocessor_from_params
-from softlearning.models.utils import get_inputs_for_environment
 
 
 def get_gaussian_policy(*args, **kwargs):
@@ -40,33 +39,40 @@ def get_policy_from_params(policy_params, env, *args, **kwargs):
     observation_keys = policy_kwargs.pop(
         'observation_keys', None) or env.observation_keys
 
-    assert 'actions' not in observation_keys, observation_keys
+    observation_shapes = OrderedDict((
+        (key, value) for key, value in env.observation_shape.items()
+        if key in observation_keys
+    ))
 
-    inputs, _ = get_inputs_for_environment(env)
-    preprocessors = {key: None for key in inputs}
-
-    for name, observation_input in inputs.items():
+    observation_preprocessors = OrderedDict()
+    for name, observation_shape in observation_shapes.items():
+        preprocessor_input_shapes  = [observation_shape]
         preprocessor_params = observation_preprocessors_params.get(name, None)
         if not preprocessor_params:
+            observation_preprocessors[name] = None
             continue
-        preprocessor_params['kwargs']['inputs'] = observation_input
-        preprocessor = get_preprocessor_from_params(env, preprocessor_params)
-        preprocessors[name] = preprocessor
+
+        image_shape = (
+            preprocessor_params
+            .get('kwargs', {})
+            .pop('image_shape', None))
+        if image_shape is not None:
+            assert observation_shape == image_shape
+        preprocessor_params['kwargs']['input_shapes'] = (
+            preprocessor_input_shapes)
+        observation_preprocessors[name] = get_preprocessor_from_params(
+            env, preprocessor_params)
 
     if policy_type == 'UniformPolicy':
         action_range = (env.action_space.low, env.action_space.high)
         policy_kwargs['action_range'] = action_range
 
-    inputs = [inputs[key] for key in sorted(inputs.keys())]
-    preprocessors = [
-        preprocessors[key] for key in sorted(preprocessors.keys())]
-
     policy = POLICY_FUNCTIONS[policy_type](
-        inputs=inputs,
+        input_shapes=observation_shapes,
         output_shape=env.action_space.shape,
         observation_keys=observation_keys,
         *args,
-        preprocessors=preprocessors,
+        preprocessors=observation_preprocessors,
         **policy_kwargs,
         **kwargs)
 

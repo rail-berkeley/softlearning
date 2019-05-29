@@ -34,7 +34,6 @@ def convnet_model(
         name="convnet",
         *args,
         **kwargs):
-
     normalization_layer = {
         'batch': layers.BatchNormalization(**normalization_kwargs),
         'layer': LayerNormalization(**normalization_kwargs),

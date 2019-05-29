@@ -4,11 +4,12 @@ import numpy as np
 import tensorflow as tf
 
 from .base_policy import BasePolicy
+from softlearning.models.utils import create_inputs
 
 
 class UniformPolicy(BasePolicy):
     def __init__(self,
-                 inputs,
+                 input_shapes,
                  output_shape,
                  *args,
                  action_range=np.array(((-1.0, ), (1.0, ))),
@@ -18,7 +19,9 @@ class UniformPolicy(BasePolicy):
 
         super(UniformPolicy, self).__init__(*args, **kwargs)
 
-        self.inputs = inputs
+        inputs_flat = create_inputs(input_shapes)
+
+        self.inputs = inputs_flat
 
         self._action_range = action_range
 
@@ -26,7 +29,7 @@ class UniformPolicy(BasePolicy):
 
         batch_size = tf.keras.layers.Lambda(
             lambda x: tf.shape(x)[0]
-        )(self.inputs[0])
+        )(inputs_flat[0])
 
         actions = tf.keras.layers.Lambda(
             lambda batch_size: tf.random.uniform(
