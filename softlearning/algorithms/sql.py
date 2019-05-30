@@ -400,7 +400,9 @@ class SQL(RLAlgorithm):
         """
 
         feed_dict = self._get_feed_dict(iteration, batch)
-        diagnostics = self._session.run(self._diagnostics_ops, feed_dict)
+        # TODO(hartikainen): We need to unwrap self._diagnostics_ops from its
+        # tensorflow `_DictWrapper`.
+        diagnostics = self._session.run({**self._diagnostics_ops}, feed_dict)
 
         diagnostics.update(OrderedDict([
             (f'policy/{key}', value)
