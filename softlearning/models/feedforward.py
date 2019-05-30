@@ -26,11 +26,14 @@ def feedforward_model(hidden_layer_sizes,
                       name='feedforward_model',
                       *args,
                       **kwargs):
+    def cast_and_concat(x):
+        x = nest.map_structure(training_utils.cast_if_floating_dtype, x)
+        x = nest.flatten(x)
+        x = tf.concat(x, axis=-1)
+        return x
+
     model = PicklableSequential((
-        tfkl.Lambda(lambda x: tf.concat(
-            nest.flatten(nest.map_structure(
-                training_utils.cast_if_floating_dtype, x)),
-            axis=-1)),
+        tfkl.Lambda(cast_and_concat),
         *[
             tf.keras.layers.Dense(
                 hidden_layer_size, *args, activation=activation, **kwargs)

@@ -42,10 +42,6 @@ def convnet_model(
         None: None,
     }[normalization_type]
 
-    def convert_to_float(x):
-        output = (tf.image.convert_image_dtype(x, tf.float32) - 0.5) * 2.0
-        return output
-
     def conv_block(conv_filter, conv_kernel_size, conv_stride):
         block_parts = [
             layers.Conv2D(
@@ -69,12 +65,20 @@ def convnet_model(
             block_parts += [getattr(layers, 'AvgPool2D')(
                 pool_size=conv_stride, strides=conv_stride)]
 
-        block = tfk.Sequential(block_parts)
+        block = tfk.Sequential(block_parts, name='conv_block')
         return block
 
+    def preprocess(x):
+        """Cast to float, normalize, and concatenate images along last axis."""
+        x = nest.map_structure(
+            lambda image: tf.image.convert_image_dtype(image, tf.float32), x)
+        x = nest.flatten(x)
+        x = tf.concat(x, axis=-1)
+        x = (tf.image.convert_image_dtype(x, tf.float32) - 0.5) * 2.0
+        return x
+
     model = PicklableSequential((
-        tfkl.Lambda(lambda x: nest.map_structure(convert_to_float, x)),
-        tfkl.Lambda(lambda x: tf.concat(nest.flatten(x), axis=-1)),
+        tfkl.Lambda(preprocess),
         *[
             conv_block(conv_filter, conv_kernel_size, conv_stride)
             for (conv_filter, conv_kernel_size, conv_stride) in
