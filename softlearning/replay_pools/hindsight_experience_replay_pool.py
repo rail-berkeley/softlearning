@@ -14,6 +14,7 @@ class HindsightExperienceReplayPool(SimpleReplayPool):
                  *args,
                  resample_fields=None,
                  her_strategy=None,
+                 reward_function=None,
                  terminal_epsilon=0,
                  **kwargs):
         self._resample_fields = resample_fields
@@ -21,6 +22,89 @@ class HindsightExperienceReplayPool(SimpleReplayPool):
         self._her_strategy = her_strategy
         self._terminal_epsilon = terminal_epsilon
         super(HindsightExperienceReplayPool, self).__init__(*args, **kwargs)
+
+    def _resample_indices(self,
+                          indices,
+                          episode_first_distances,
+                          episode_last_distances,
+                          resampling_strategy):
+        """Compute resampling indices for HER.
+
+        Given indices of non-labeled batch (`indices`), and distances to the
+          extremes of the corresponding episodes
+          (`episode_{first,last}_distances`) compute new indices for
+          resampling, using the given `resampling_strategy`.
+
+        Args:
+          indices: absolute indices of the samples we wish to resample
+            batch for.
+          episode_first_distances: distance (non-positive integer) corresponding
+            to the distance to the first episode observation present in the pool
+            for each resample index.
+          episode_last_distances: distance (positive integer) corresponding
+            to the distance to the last episode observation present in the pool
+            for each resample index.
+          resampling_strategy: HER strategy, one of:
+            random: Sample randomly from the whole pool.
+            final: For each index, sample the last observation from the
+              corresponding episode.
+            episode: For each index, sample any observation from the
+              corresponding episode (could be from the past or the future).
+            future: For each index, sample any observation from the
+              corresponding episode's future.
+
+        Returns:
+          resample_indices: indices that can be used to fetch the resampled
+            data using `self.batch_by_indices`.
+          resample_distances: distances between the given indices and the
+            resampled indices.
+              If 0: the resampled index is the same as the original.
+              If positive integer: the resampled index is from the future of
+                the same episode as the original.
+              If negative integer: the resample index is from the past of the
+                same episode as the original.
+              If inf: the resampled index is from other episode than the
+                original.
+        """
+        num_resamples = indices.size
+        episode_first_indices = (
+            indices + episode_first_distances[..., 0]).astype(int)
+        episode_last_indices = (
+            indices + episode_last_distances[..., 0]).astype(int)
+
+        if resampling_strategy == 'random':
+            resample_indices = self.random_indices(num_resamples)
+            resample_distances = np.full(
+                (num_resamples, 1), np.float('inf'))
+
+            in_same_episodes = np.logical_and(
+                episode_first_indices <= resample_indices,
+                resample_indices < episode_last_indices)
+            where_same_episode = np.where(in_same_episodes)
+            resample_distances[
+                where_same_episode
+            ] = (
+                resample_indices[where_same_episode]
+                - resample_indices[where_same_episode]
+            )[..., None]
+        else:
+            if resampling_strategy == 'final':
+                resample_indices = episode_last_indices
+                resample_distances = episode_last_distances
+            elif resampling_strategy == 'episode':
+                resample_distances = random_int_with_variable_range(
+                    episode_first_distances, episode_last_distances)
+                resample_indices = (
+                    indices + resample_distances[..., 0])
+            elif resampling_strategy == 'future':
+                resample_distances = random_int_with_variable_range(
+                    0, episode_last_distances)
+                resample_indices = (
+                    indices + resample_distances[..., 0])
+
+        resample_indices %= self._size
+
+        return resample_indices, resample_distances
 
     def _relabel_batch(self, batch, indices, her_strategy):
         batch_size = indices.size
@@ -33,67 +117,37 @@ class HindsightExperienceReplayPool(SimpleReplayPool):
             goal_resampling_probability = self._her_strategy[
                 'resampling_probability']
 
-            resample_mask = (
+            to_resample_mask = (
                 np.random.rand(batch_size) < goal_resampling_probability)
-            where_resampled = np.where(resample_mask)
-            resample_indices = indices[where_resampled]
-            num_resamples = np.sum(resample_mask)
+            where_resampled = np.where(to_resample_mask)
+            to_resample_indices = indices[where_resampled]
 
             # Everything here is relative to the original goal
             episode_first_distances = -1 * batch['episode_index_forwards'][
                 where_resampled]
             episode_last_distances = batch['episode_index_backwards'][
                 where_resampled]
-            episode_first_indices = (
-                resample_indices + episode_first_distances[..., 0]).astype(int)
-            episode_last_indices = (
-                resample_indices + episode_last_distances[..., 0]).astype(int)
 
-            if her_strategy_type == 'random':
-                goal_resample_indices = self.random_indices(num_resamples)
-                goal_resample_distances = np.full(
-                    (num_resamples, 1), np.float('inf'))
+            resampled_indices, resampled_distances = self._resample_indices(
+                to_resample_indices,
+                episode_first_distances,
+                episode_last_distances,
+                her_strategy_type)
 
-                in_same_episodes = np.logical_and(
-                    episode_first_indices <= goal_resample_indices,
-                    goal_resample_indices < episode_last_indices)
-                where_same_episode = np.where(in_same_episodes)
-                goal_resample_distances[
-                    where_same_episode
-                ] = (
-                    goal_resample_indices[where_same_episode]
-                    - resample_indices[where_same_episode]
-                )[..., None]
-            else:
-                if her_strategy_type == 'final':
-                    goal_resample_indices = episode_last_indices
-                    goal_resample_distances = episode_last_distances
-                elif her_strategy_type == 'episode':
-                    goal_resample_distances = random_int_with_variable_range(
-                        episode_first_distances, episode_last_distances)
-                    goal_resample_indices = (
-                        resample_indices + goal_resample_distances[..., 0])
-                elif her_strategy_type == 'future':
-                    goal_resample_distances = random_int_with_variable_range(
-                        0, episode_last_distances)
-                    goal_resample_indices = (
-                        resample_indices + goal_resample_distances[..., 0])
-
-            goal_resample_indices %= self._max_size
-            goals_batch_flat = flatten(
+            resampled_batch_flat = flatten(
                 super(HindsightExperienceReplayPool, self)
                 .batch_by_indices(
-                    indices=goal_resample_indices,
+                    indices=resampled_indices,
                     field_name_filter=None))
 
             batch_flat = flatten(batch)
-            for key in goals_batch_flat.keys():
+            for key in resampled_batch_flat.keys():
                 if key not in self._resample_fields: continue
-                batch_flat[key][where_resampled] = goals_batch_flat[key]
-
+                batch_flat[key][where_resampled] = resampled_batch_flat[key]
             batch = unflatten(batch_flat)
+
             batch['goal_resample_distances'][where_resampled] = (
-                goal_resample_distances)
+                resampled_distances)
             batch['resampled'][where_resampled] = True
 
         return batch
