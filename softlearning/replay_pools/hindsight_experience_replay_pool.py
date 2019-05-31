@@ -9,42 +9,27 @@ def random_int_with_variable_range(mins, maxs):
     return result
 
 
-class HindsightExperienceReplayPool(SimpleReplayPool):
-    def __init__(self,
-                 *args,
-                 resample_fields=None,
-                 her_strategy=None,
-                 reward_function=None,
-                 terminal_epsilon=0,
-                 **kwargs):
-        self._resample_fields = resample_fields
-        # self._resample_fields_flat = flatten(resample_fields_flat)
-        self._her_strategy = her_strategy
-        self._terminal_epsilon = terminal_epsilon
-        super(HindsightExperienceReplayPool, self).__init__(*args, **kwargs)
-
+class ResamplingReplayPool(SimpleReplayPool):
     def _resample_indices(self,
                           indices,
                           episode_first_distances,
                           episode_last_distances,
                           resampling_strategy):
-        """Compute resampling indices for HER.
+        """Compute resampled indices for given indices.
 
-        Given indices of non-labeled batch (`indices`), and distances to the
+        Given indices of a batch (`indices`), and distances to the
           extremes of the corresponding episodes
-          (`episode_{first,last}_distances`) compute new indices for
-          resampling, using the given `resampling_strategy`.
+          (`episode_{first,last}_distances`) compute new resampled indices
+          using the given `resampling_strategy`.
 
         Args:
-          indices: absolute indices of the samples we wish to resample
-            batch for.
-          episode_first_distances: distance (non-positive integer) corresponding
-            to the distance to the first episode observation present in the pool
-            for each resample index.
-          episode_last_distances: distance (positive integer) corresponding
-            to the distance to the last episode observation present in the pool
-            for each resample index.
-          resampling_strategy: HER strategy, one of:
+          indices: absolute indices of the samples we wish to resample batch
+            for.
+          episode_first_distances: distance (non-positive integer) to the
+            first episode observation present in the pool for each index.
+          episode_last_distances: distance (positive integer) to the last
+            episode observation present in the pool for each index.
+          resampling_strategy: One of:
             random: Sample randomly from the whole pool.
             final: For each index, sample the last observation from the
               corresponding episode.
@@ -106,6 +91,22 @@ class HindsightExperienceReplayPool(SimpleReplayPool):
 
         return resample_indices, resample_distances
 
+
+class HindsightExperienceReplayPool(ResamplingReplayPool):
+    def __init__(self,
+                 *args,
+                 resample_fields=None,
+                 her_strategy=None,
+                 reward_function=None,
+                 terminal_function=None,
+                 **kwargs):
+        self._resample_fields = resample_fields
+        # self._resample_fields_flat = flatten(resample_fields_flat)
+        self._her_strategy = her_strategy
+        self._reward_function = reward_function
+        self._terminal_function = terminal_function
+        super(HindsightExperienceReplayPool, self).__init__(*args, **kwargs)
+
     def _relabel_batch(self, batch, indices, her_strategy):
         batch_size = indices.size
         batch['goal_resample_distances'] = np.full(
@@ -122,7 +123,6 @@ class HindsightExperienceReplayPool(SimpleReplayPool):
             where_resampled = np.where(to_resample_mask)
             to_resample_indices = indices[where_resampled]
 
-            # Everything here is relative to the original goal
             episode_first_distances = -1 * batch['episode_index_forwards'][
                 where_resampled]
             episode_last_distances = batch['episode_index_backwards'][

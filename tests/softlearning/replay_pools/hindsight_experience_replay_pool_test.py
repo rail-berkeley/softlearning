@@ -98,7 +98,7 @@ class FutureStrategyValidator(StrategyValidator):
         super(FutureStrategyValidator, self).verify_batch(batch)
 
 
-class TestHindsightExperienceReplayPoolTest:
+class TestHindsightExperienceReplayPool(object):
     @pytest.mark.parametrize("strategy_type", HER_STRATEGY_TYPES)
     @pytest.mark.parametrize("resampling_probability",
                              HER_RESAMPLING_PROBABILITIES)
