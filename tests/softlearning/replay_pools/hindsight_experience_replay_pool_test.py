@@ -25,7 +25,7 @@ HER_RESAMPLING_PROBABILITIES = [0, 0.3, 0.5, 0.8, 1.0]
 
 
 class StrategyValidator(object):
-    def __init__(self, her_strategy, resample_fields):
+    def __init__(self, her_strategy, resample_field_map):
         self._her_strategy = her_strategy
         self._statistics = defaultdict(list)
 
@@ -109,7 +109,10 @@ class TestHindsightExperienceReplayPool(object):
         max_size = 1000
         episode_length = 50
 
-        resample_fields = (('observations', 'desired_goal', ), )
+        resample_field_map = (
+            (('observations', 'achieved_goal', ),
+             ('observations', 'desired_goal', )),
+        )
         her_strategy = {
             'type': strategy_type,
             'resampling_probability': resampling_probability,
@@ -118,7 +121,7 @@ class TestHindsightExperienceReplayPool(object):
         pool = create_pool(
             env=env,
             max_size=max_size,
-            resample_fields=resample_fields,
+            resample_field_map=resample_field_map,
             her_strategy=her_strategy,
         )
 
@@ -129,7 +132,7 @@ class TestHindsightExperienceReplayPool(object):
             'future': FutureStrategyValidator,
         }[strategy_type](
             her_strategy=her_strategy,
-            resample_fields=resample_fields,
+            resample_field_map=resample_field_map,
         )
 
         episode_lengths = []
