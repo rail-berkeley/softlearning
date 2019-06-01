@@ -33,16 +33,16 @@ def adaptive_isotropic_gaussian_kernel(xs, ys, h_min=1e-3):
     Ky, D2 = ys.get_shape().as_list()[-2:]
     assert D == D2
 
-    leading_shape = tf.shape(xs)[:-2]
+    leading_shape = tf.shape(input=xs)[:-2]
 
     # Compute the pairwise distances of left and right particles.
     diff = tf.expand_dims(xs, -2) - tf.expand_dims(ys, -3)
     # ... x Kx x Ky x D
 
     if LooseVersion(tf.__version__) <= LooseVersion('1.5.0'):
-        dist_sq = tf.reduce_sum(diff**2, axis=-1, keep_dims=False)
+        dist_sq = tf.reduce_sum(input_tensor=diff**2, axis=-1, keepdims=False)
     else:
-        dist_sq = tf.reduce_sum(diff**2, axis=-1, keepdims=False)
+        dist_sq = tf.reduce_sum(input_tensor=diff**2, axis=-1, keepdims=False)
     # ... x Kx x Ky
 
     # Get median.

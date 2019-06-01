@@ -1,10 +1,12 @@
 """Implements an adapter for DeepMind Control Suite environments."""
 
 from collections import OrderedDict
+import copy
 
 import numpy as np
 from dm_control import suite
 from dm_control.rl.specs import ArraySpec, BoundedArraySpec
+from dm_control.suite.wrappers import pixels
 from gym import spaces
 
 from .softlearning_env import SoftlearningEnv
@@ -67,8 +69,10 @@ class DmControlAdapter(SoftlearningEnv):
                  *args,
                  env=None,
                  normalize=True,
-                 observation_keys=None,
+                 observation_keys=(),
+                 goal_keys=(),
                  unwrap_time_limit=True,
+                 pixel_wrapper_kwargs=None,
                  **kwargs):
         assert not args, (
             "Gym environments don't support args. Use kwargs instead.")
@@ -76,7 +80,9 @@ class DmControlAdapter(SoftlearningEnv):
         self.normalize = normalize
         self.unwrap_time_limit = unwrap_time_limit
 
-        super(DmControlAdapter, self).__init__(domain, task, *args, **kwargs)
+        super(DmControlAdapter, self).__init__(
+            domain,  task, *args, goal_keys=goal_keys, **kwargs)
+
         if env is None:
             assert (domain is not None and task is not None), (domain, task)
             env = suite.load(
@@ -93,62 +99,56 @@ class DmControlAdapter(SoftlearningEnv):
             assert not kwargs
             assert domain is None and task is None, (domain, task)
 
-        assert isinstance(env.observation_spec(), OrderedDict)
-        self.observation_keys = (
-            observation_keys or tuple(env.observation_spec().keys()))
-
         # Ensure action space is already normalized.
         if normalize:
             np.testing.assert_equal(env.action_spec().minimum, -1)
             np.testing.assert_equal(env.action_spec().maximum, 1)
 
+        if pixel_wrapper_kwargs is not None:
+            env = pixels.Wrapper(env, **pixel_wrapper_kwargs)
+
         self._env = env
 
-    @property
-    def observation_space(self):
+        assert isinstance(env.observation_spec(), OrderedDict)
+        self.observation_keys = (
+            observation_keys or tuple(env.observation_spec().keys()))
+
         observation_space = convert_dm_control_to_gym_space(
-            self._env.observation_spec())
-        return observation_space
+            env.observation_spec())
 
-    @property
-    def active_observation_shape(self):
-        """Shape for the active observation based on observation_keys."""
-        observation_space = self.observation_space
-        active_size = sum(
-            np.prod(observation_space.spaces[key].shape)
-            for key in self.observation_keys)
-        active_shape = (int(active_size), )
-        return active_shape
+        self._observation_space = type(observation_space)([
+            (name, copy.deepcopy(space))
+            for name, space in observation_space.spaces.items()
+            if name in self.observation_keys
+        ])
 
-    def convert_to_active_observation(self, observation):
-        flattened_observation = np.concatenate([
-            observation[key] for key in self.observation_keys], axis=-1)
-        return flattened_observation
-
-    @property
-    def action_space(self, *args, **kwargs):
         action_space = convert_dm_control_to_gym_space(self._env.action_spec())
 
         if len(action_space.shape) > 1:
             raise NotImplementedError(
-                "Action space ({}) is not flat, make sure to check the"
-                " implemenation.".format(action_space))
+                "Shape of the action space ({}) is not flat, make sure to"
+                " check the implemenation.".format(action_space))
 
-        return action_space
+        self._action_space = action_space
 
     def step(self, action, *args, **kwargs):
-        timestep = self._env.step(action, *args, **kwargs)
-        observation = timestep.observation
-        reward = timestep.reward
-        terminal = timestep.last()
-        info = {}
-        # TODO(Alacarter): See if there's a way to pull info from the
-        # environment.
+        time_step = self._env.step(action, *args, **kwargs)
+        reward = time_step.reward
+        terminal = time_step.last()
+        info = {
+            key: value
+            for key, value in time_step.observation.items()
+            if key not in self.observation_keys
+        }
+        observation = self._filter_observation(time_step.observation)
+        time_step._replace(observation=observation)
         return observation, reward, terminal, info
 
     def reset(self, *args, **kwargs):
-        timestep = self._env.reset(*args, **kwargs)
-        return timestep.observation
+        time_step = self._env.reset(*args, **kwargs)
+        observation = self._filter_observation(time_step.observation)
+        time_step._replace(observation=observation)
+        return time_step.observation
 
     def render(self, *args, mode="human", camera_id=0, **kwargs):
         if mode == "human":

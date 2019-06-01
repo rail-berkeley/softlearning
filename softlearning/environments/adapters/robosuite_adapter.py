@@ -43,14 +43,16 @@ class RobosuiteAdapter(SoftlearningEnv):
                  *args,
                  env=None,
                  normalize=True,
-                 observation_keys=None,
+                 observation_keys=(),
+                 goal_keys=(),
                  **kwargs):
         assert not args, (
             "Robosuite environments don't support args. Use kwargs instead.")
 
         self.normalize = normalize
 
-        super(RobosuiteAdapter, self).__init__(domain, task, *args, **kwargs)
+        super(RobosuiteAdapter, self).__init__(
+            domain, task, *args, goal_keys=goal_keys, **kwargs)
 
         if env is None:
             assert (domain is not None and task is not None), (domain, task)
@@ -80,61 +82,44 @@ class RobosuiteAdapter(SoftlearningEnv):
 
         self._env = env
 
-    @property
-    def observation_space(self):
         observation_space = convert_robosuite_to_gym_obs_space(
             self._env.observation_spec())
-        return observation_space
 
-    @property
-    def active_observation_shape(self):
-        """Shape for the active observation based on observation_keys."""
-        observation_space = self.observation_space
+        self._observation_space = type(observation_space)([
+            (name, copy.deepcopy(space))
+            for name, space in observation_space.spaces.items()
+            if name in self.observation_keys
+        ])
 
-        active_size = sum(
-            np.prod(observation_space.spaces[key].shape)
-            for key in self.observation_keys)
-
-        active_observation_shape = (active_size, )
-
-        return active_observation_shape
-
-    def convert_to_active_observation(self, observation):
-        observation = np.concatenate([
-            observation[key] for key in self.observation_keys
-        ], axis=-1)
-
-        return observation
-
-    @property
-    def action_space(self, *args, **kwargs):
         action_space = convert_robosuite_to_gym_action_space(
             self._env.action_spec)
+
         if len(action_space.shape) > 1:
             raise NotImplementedError(
-                "Action space ({}) is not flat, make sure to check the"
-                " implemenation.".format(action_space))
-        return action_space
+                "Shape of the action space ({}) is not flat, make sure to"
+                " check the implemenation.".format(action_space))
+
+        self._action_space = action_space
 
     def step(self, action, *args, **kwargs):
-        # TODO(hartikainen): refactor this to always return an OrderedDict,
-        # such that the observations for all the envs is consistent. Right now
-        # some of the Robosuite envs return np.array whereas others return
-        # dict.
-        #
-        # Something like:
-        # observation = OrderedDict()
-        # observation['observation'] = env.step(action, *args, **kwargs)
-        # return observation
+        observation, reward, terminal, info = self._env.step(
+            action, *args, **kwargs)
 
-        return self._env.step(action, *args, **kwargs)
+        observation = self._filter_observation(observation)
+
+        return observation, reward, terminal, info
 
     def reset(self, *args, **kwargs):
-        return self._env.reset(*args, **kwargs)
+        observation = self._env.reset(*args, **kwargs)
+
+        observation = self._filter_observation(observation)
+
+        return observation
 
     def render(self,
                *args,
                mode="human",
+               camera_id=None,
                camera_name=None,
                width=None,
                height=None,
@@ -145,11 +130,20 @@ class RobosuiteAdapter(SoftlearningEnv):
                 "TODO(hartikainen): Implement rendering so that"
                 " self._env.viewer.render() works with human mode.")
         elif mode == "rgb_array":
-            return self._env.sim.render(
+            if camera_id is not None and camera_name is not None:
+                raise ValueError("Both `camera_id` and `camera_name` cannot be"
+                                 " specified at the same time.")
+
+            if camera_id is not None:
+                camera_name = self.sim.model.camera_id2name(camera_id)
+
+            pixels = self._env.sim.render(
                 camera_name=camera_name or self._env.camera_name,
                 width=width or self._env.camera_width,
                 height=height or self._env.camera_height,
-                depth=depth or self._env.camera_depth)
+                depth=depth or self._env.camera_depth
+            )[::-1]
+            return pixels
 
         raise NotImplementedError(mode)
 

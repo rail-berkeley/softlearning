@@ -21,6 +21,7 @@ docutils==0.14
 deepdiff==3.3.0
 git+https://github.com/deepmind/dm_control.git@e681949dda5ef1b05acf4fad99a134101469d8e7
 flatbuffers==1.10
+flatten-dict==0.0.3.post1
 funcsigs==1.0.2
 future==0.17.1
 gast==0.2.0
@@ -33,7 +34,8 @@ google-auth-httplib2==0.0.3
 google-compute-engine==2.8.13
 grpcio==1.16.1
 gtimer==1.0.0b5
-gym==0.12.1
+# gym==0.12.1
+git+https://github.com/hartikainen/gym.git@ddef8a1418724354e93f82a5109ee9b7006521a5
 h5py==2.8.0
 httplib2==0.12.0
 idna==2.7
@@ -47,7 +49,7 @@ lockfile==0.12.2
 Markdown==3.0.1
 matplotlib==3.0.2
 more-itertools==4.3.0
-git+https://github.com/hartikainen/mujoco-py.git@29fcd26290c9417aef0f82d0628d29fa0dbf0fab
+git+https://github.com/hartikainen/mujoco-py.git@435d2143abe04fe4648c6c0c1b848bf1fc06b73b
 git+https://github.com/vitchyr/multiworld.git@d76b3dae2e8cbca02924f93d6cc0239c552f6408
 networkx==2.2
 numpy==1.15.4
@@ -72,7 +74,7 @@ pytz==2018.7
 PyWavelets==1.0.1
 PyYAML==5.1
 psutil==5.4.8
-ray[rllib,debug]==0.6.6
+ray[rllib,debug]==0.7.0
 redis==3.0.1
 requests==2.20.1
 robosuite==0.1.0
@@ -88,9 +90,8 @@ setproctitle==1.1.10
 six==1.11.0
 smmap2==2.0.5
 tensorboard==1.13.1
-tensorflow==1.13.1
-tensorflow-estimator==1.13.0
-tensorflow-probability==0.6.0
+tensorflow==1.14.0rc0
+tensorflow-probability==0.7.0rc0
 termcolor==1.1.0
 toolz==0.9.0
 uritemplate==3.0.0

@@ -19,7 +19,7 @@ CONFIG = {
             'epoch_length': 20,
             'eval_deterministic': True,
             'eval_n_episodes': 1,
-            'eval_render_mode': None,
+            'eval_render_kwargs': {},
             'lr': 0.0003,
             'n_epochs': 301,
             'n_initial_exploration_steps': 10,
@@ -88,9 +88,9 @@ def assert_weights_not_equal(weights1, weights2):
 class TestExperimentRunner(tf.test.TestCase):
 
     def test_checkpoint_dict(self):
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
         tf.keras.backend.clear_session()
-        self.assertFalse(tf.trainable_variables())
+        self.assertFalse(tf.compat.v1.trainable_variables())
 
         config = copy.deepcopy(CONFIG)
 
@@ -173,9 +173,9 @@ class TestExperimentRunner(tf.test.TestCase):
 
         checkpoint = experiment_runner.save()
 
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
         tf.keras.backend.clear_session()
-        self.assertFalse(tf.trainable_variables())
+        self.assertFalse(tf.compat.v1.trainable_variables())
 
         experiment_runner_2 = ExperimentRunner(config=config)
         session = experiment_runner_2._session
@@ -275,9 +275,9 @@ class TestExperimentRunner(tf.test.TestCase):
         self.assertTrue(experiment_runner_2.algorithm._training_started)
 
     def test_checkpoint_pool_reconstruction(self):
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
         tf.keras.backend.clear_session()
-        self.assertFalse(tf.trainable_variables())
+        self.assertFalse(tf.compat.v1.trainable_variables())
 
         config = copy.deepcopy(CONFIG)
 
@@ -302,9 +302,9 @@ class TestExperimentRunner(tf.test.TestCase):
                 experiment_runner.train()
             checkpoints.append(experiment_runner.save())
 
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
         tf.keras.backend.clear_session()
-        self.assertFalse(tf.trainable_variables())
+        self.assertFalse(tf.compat.v1.trainable_variables())
 
         experiment_runner_2 = ExperimentRunner(config=config)
         session = experiment_runner_2._session
@@ -328,9 +328,9 @@ class TestExperimentRunner(tf.test.TestCase):
                 replay_pool_2.fields[field_name])
 
     def test_training_env_evaluation_env(self):
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
         tf.keras.backend.clear_session()
-        self.assertFalse(tf.trainable_variables())
+        self.assertFalse(tf.compat.v1.trainable_variables())
 
         config = copy.deepcopy(CONFIG)
         config['environment_params']['evaluation'] = (
@@ -357,9 +357,9 @@ class TestExperimentRunner(tf.test.TestCase):
             experiment_runner.train()
 
     def test_uses_training_env_as_evaluation_env(self):
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
         tf.keras.backend.clear_session()
-        self.assertFalse(tf.trainable_variables())
+        self.assertFalse(tf.compat.v1.trainable_variables())
 
         config = copy.deepcopy(CONFIG)
 

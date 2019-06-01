@@ -1,19 +1,27 @@
 import abc
 from collections import OrderedDict
+from distutils.version import LooseVersion
 from itertools import count
 import gtimer as gt
 import math
 import os
 
+import numpy as np
 import tensorflow as tf
 from tensorflow.python.training import training_util
-import numpy as np
 
 from softlearning.samplers import rollouts
 from softlearning.misc.utils import save_video
 
 
-class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
+if LooseVersion(tf.__version__) > LooseVersion("2.00"):
+    from tensorflow.python.training.tracking.tracking import (
+        AutoTrackable as Checkpointable)
+else:
+    from tensorflow.contrib.checkpoint import Checkpointable
+
+
+class RLAlgorithm(Checkpointable):
     """Abstract RLAlgorithm.
 
     Implements the _train and _evaluate methods to be used
@@ -32,7 +40,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             epoch_length=1000,
             eval_n_episodes=10,
             eval_deterministic=True,
-            eval_render_mode=None,
+            eval_render_kwargs=None,
             video_save_frequency=0,
             session=None,
     ):
@@ -47,8 +55,8 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             eval_n_episodes (`int`): Number of rollouts to evaluate.
             eval_deterministic (`int`): Whether or not to run the policy in
                 deterministic mode when evaluating policy.
-            eval_render_mode (`str`): Mode to render evaluation rollouts in.
-                None to disable rendering.
+            eval_render_kwargs (`None`, `dict`): Arguments to be passed for
+                rendering evaluation rollouts. `None` to disable rendering.
         """
         self.sampler = sampler
 
@@ -65,12 +73,13 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         self._eval_deterministic = eval_deterministic
         self._video_save_frequency = video_save_frequency
 
+        self._eval_render_kwargs = eval_render_kwargs or {}
+
         if self._video_save_frequency > 0:
-            assert eval_render_mode != 'human', (
+            render_mode = self._eval_render_kwargs.pop('mode', 'rgb_array')
+            assert render_mode != 'human', (
                 "RlAlgorithm cannot render and save videos at the same time")
-            self._eval_render_mode = 'rgb_array'
-        else:
-            self._eval_render_mode = eval_render_mode
+            self._eval_render_kwargs['mode'] = render_mode
 
         self._session = session or tf.keras.backend.get_session()
 
@@ -78,11 +87,72 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         self._timestep = 0
         self._num_train_steps = 0
 
+    def _build(self):
+        self._training_ops = {}
+
+        self._init_global_step()
+        self._init_placeholders()
+
     def _init_global_step(self):
         self.global_step = training_util.get_or_create_global_step()
         self._training_ops.update({
             'increment_global_step': training_util._increment_global_step(1)
         })
+
+    def _init_placeholders(self):
+        """Create input placeholders for the SAC algorithm.
+
+        Creates `tf.placeholder`s for:
+            - observation
+            - next observation
+            - action
+            - reward
+            - terminals
+        """
+        self._placeholders = {
+            'observations': {
+                name: tf.compat.v1.placeholder(
+                    dtype=(
+                        np.float32
+                        if np.issubdtype(observation_space.dtype, np.floating)
+                        else observation_space.dtype
+                    ),
+                    shape=(None, *observation_space.shape),
+                    name=name)
+                for name, observation_space
+                in self._training_environment.observation_space.spaces.items()
+            },
+            'next_observations': {
+                name: tf.compat.v1.placeholder(
+                    dtype=(
+                        np.float32
+                        if np.issubdtype(observation_space.dtype, np.floating)
+                        else observation_space.dtype
+                    ),
+                    shape=(None, *observation_space.shape),
+                    name=name)
+                for name, observation_space
+                in self._training_environment.observation_space.spaces.items()
+            },
+            'actions': tf.compat.v1.placeholder(
+                dtype=tf.float32,
+                shape=(None, *self._training_environment.action_space.shape),
+                name='actions',
+            ),
+            'rewards': tf.compat.v1.placeholder(
+                tf.float32,
+                shape=(None, 1),
+                name='rewards',
+            ),
+            'terminals': tf.compat.v1.placeholder(
+                tf.bool,
+                shape=(None, 1),
+                name='terminals',
+            ),
+            'iteration': tf.compat.v1.placeholder(
+                tf.int64, shape=(), name='iteration',
+            ),
+        }
 
     def _initial_exploration_hook(self, env, initial_exploration_policy, pool):
         if self._n_initial_exploration_steps < 1: return
@@ -247,7 +317,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 ('train-steps', self._num_train_steps),
             )))
 
-            if self._eval_render_mode is not None and hasattr(
+            if self._eval_render_kwargs and hasattr(
                     evaluation_environment, 'render_rollouts'):
                 # TODO(hartikainen): Make this consistent such that there's no
                 # need for the hasattr check.
@@ -270,7 +340,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 evaluation_env,
                 policy,
                 self.sampler._max_path_length,
-                render_mode=self._eval_render_mode)
+                render_kwargs=self._eval_render_kwargs)
 
         should_save_video = (
             self._video_save_frequency > 0

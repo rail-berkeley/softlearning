@@ -93,6 +93,7 @@ RUN apt-get update -y \
         gnupg2 \
         make \
         cmake \
+        ffmpeg \
         swig \
         libz-dev \
         unzip \

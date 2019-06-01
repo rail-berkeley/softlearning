@@ -12,10 +12,7 @@ class RemoteSamplerTest(unittest.TestCase):
         self.env = get_environment('gym', 'Swimmer', 'v3', {})
         self.policy = get_policy_from_params(
             {'type': 'UniformPolicy'}, env=self.env)
-        self.pool = SimpleReplayPool(
-            max_size=100,
-            observation_space=self.env.observation_space,
-            action_space=self.env.action_space)
+        self.pool = SimpleReplayPool(max_size=100, environment=self.env)
         self.remote_sampler = RemoteSampler(
             max_path_length=10,
             min_pool_size=10,

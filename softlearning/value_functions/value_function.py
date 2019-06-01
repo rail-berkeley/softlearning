@@ -18,9 +18,9 @@ class SumQFunction(Serializable):
         assert len(action_shape) == 1, action_shape
         self._Da = action_shape[0]
 
-        self._observations_ph = tf.placeholder(
+        self._observations_ph = tf.compat.v1.placeholder(
             tf.float32, shape=(None, self._Do), name='observations')
-        self._actions_ph = tf.placeholder(
+        self._actions_ph = tf.compat.v1.placeholder(
             tf.float32, shape=(None, self._Da), name='actions')
 
         self._output = self.output_for(
@@ -40,7 +40,7 @@ class SumQFunction(Serializable):
             self._actions_ph: actions
         }
 
-        return tf.keras.backend.get_session().run(self._output, feeds)
+        return tf.compat.v1.keras.backend.get_session().run(self._output, feeds)
 
     def get_param_values(self):
         all_values_list = [qf.get_param_values() for qf in self.q_functions]

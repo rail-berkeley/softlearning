@@ -1,3 +1,4 @@
+import abc
 from contextlib import contextmanager
 from collections import OrderedDict
 
@@ -6,26 +7,39 @@ from serializable import Serializable
 
 
 class BasePolicy(Serializable):
-    def __init__(self):
+    def __init__(self, observation_keys):
+        self._observation_keys = observation_keys
         self._deterministic = False
+
+    @property
+    def observation_keys(self):
+        return self._observation_keys
+
+    @property
+    def input_names(self):
+        return self.actions_model.input_names
 
     def reset(self):
         """Reset and clean the policy."""
         raise NotImplementedError
 
-    def actions(self, conditions):
-        """Compute (symbolic) actions given conditions (observations)"""
+    @abc.abstractmethod
+    def actions(self, observations):
+        """Compute (symbolic) actions given observations (observations)"""
         raise NotImplementedError
 
-    def log_pis(self, conditions, actions):
+    @abc.abstractmethod
+    def log_pis(self, observations, actions):
         """Compute (symbolic) log probs for given observations and actions."""
         raise NotImplementedError
 
-    def actions_np(self, conditions):
-        """Compute (numeric) actions given conditions (observations)"""
+    @abc.abstractmethod
+    def actions_np(self, observations):
+        """Compute (numeric) actions given observations (observations)"""
         raise NotImplementedError
 
-    def log_pis_np(self, conditions, actions):
+    @abc.abstractmethod
+    def log_pis_np(self, observations, actions):
         """Compute (numeric) log probs for given observations and actions."""
         raise NotImplementedError
 
@@ -79,20 +93,33 @@ class LatentSpacePolicy(BasePolicy):
     def _reset_smoothing_x(self):
         self._smoothing_x = np.zeros((1, *self._output_shape))
 
-    def actions_np(self, conditions):
+    def actions(self, observations):
         if self._deterministic:
-            return self.deterministic_actions_model.predict(conditions)
+            return self.deterministic_actions_model(observations)
+        return self.actions_model(observations)
+
+    def log_pis(self, observations, actions):
+        assert not self._deterministic, self._deterministic
+        return self.log_pis_model([*observations, actions])
+
+    def actions_np(self, observations):
+        if self._deterministic:
+            return self.deterministic_actions_model.predict(observations)
         elif self._smoothing_alpha == 0:
-            return self.actions_model.predict(conditions)
+            return self.actions_model.predict(observations)
         else:
             alpha, beta = self._smoothing_alpha, self._smoothing_beta
-            raw_latents = self.latents_model.predict(conditions)
+            raw_latents = self.latents_model.predict(observations)
             self._smoothing_x = (
                 alpha * self._smoothing_x + (1.0 - alpha) * raw_latents)
             latents = beta * self._smoothing_x
 
             return self.actions_model_for_fixed_latents.predict(
-                [*conditions, latents])
+                [*observations, latents])
+
+    def log_pis_np(self, observations, actions):
+        assert not self._deterministic, self._deterministic
+        return self.log_pis_model.predict([*observations, actions])
 
     def reset(self):
         self._reset_smoothing_x()

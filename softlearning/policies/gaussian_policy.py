@@ -5,8 +5,11 @@ from collections import OrderedDict
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
+from tensorflow.python.keras.engine import training_utils
+
 from softlearning.distributions.squash_bijector import SquashBijector
 from softlearning.models.feedforward import feedforward_model
+from softlearning.models.utils import flatten_input_structure, create_inputs
 
 from .base_policy import LatentSpacePolicy
 
@@ -18,10 +21,10 @@ class GaussianPolicy(LatentSpacePolicy):
     def __init__(self,
                  input_shapes,
                  output_shape,
-                 squash=True,
-                 preprocessor=None,
-                 name=None,
                  *args,
+                 squash=True,
+                 preprocessors=None,
+                 name=None,
                  **kwargs):
         self._Serializable__initialize(locals())
 
@@ -29,24 +32,35 @@ class GaussianPolicy(LatentSpacePolicy):
         self._output_shape = output_shape
         self._squash = squash
         self._name = name
-        self._preprocessor = preprocessor
 
         super(GaussianPolicy, self).__init__(*args, **kwargs)
 
-        self.condition_inputs = [
-            tf.keras.layers.Input(shape=input_shape)
-            for input_shape in input_shapes
+        inputs_flat = create_inputs(input_shapes)
+        preprocessors_flat = (
+            flatten_input_structure(preprocessors)
+            if preprocessors is not None
+            else tuple(None for _ in inputs_flat))
+
+        assert len(inputs_flat) == len(preprocessors_flat), (
+            inputs_flat, preprocessors_flat)
+
+        preprocessed_inputs = [
+            preprocessor(input_) if preprocessor is not None else input_
+            for preprocessor, input_
+            in zip(preprocessors_flat, inputs_flat)
         ]
 
-        conditions = tf.keras.layers.Lambda(
-            lambda x: tf.concat(x, axis=-1)
-        )(self.condition_inputs)
+        float_inputs = tf.keras.layers.Lambda(
+            lambda inputs: training_utils.cast_if_floating_dtype(inputs)
+        )(preprocessed_inputs)
 
-        if preprocessor is not None:
-            conditions = preprocessor(conditions)
+        conditions = tf.keras.layers.Lambda(
+            lambda inputs: tf.concat(inputs, axis=-1)
+        )(float_inputs)
+
+        self.condition_inputs = inputs_flat
 
         shift_and_log_scale_diag = self._shift_and_log_scale_diag_net(
-            input_shapes=(conditions.shape[1:], ),
             output_size=output_shape[0] * 2,
         )(conditions)
 
@@ -63,7 +77,7 @@ class GaussianPolicy(LatentSpacePolicy):
         )(log_scale_diag)
 
         batch_size = tf.keras.layers.Lambda(
-            lambda x: tf.shape(x)[0])(conditions)
+            lambda x: tf.shape(input=x)[0])(conditions)
 
         base_distribution = tfp.distributions.MultivariateNormalDiag(
             loc=tf.zeros(output_shape),
@@ -74,7 +88,8 @@ class GaussianPolicy(LatentSpacePolicy):
         )(batch_size)
 
         self.latents_model = tf.keras.Model(self.condition_inputs, latents)
-        self.latents_input = tf.keras.layers.Input(shape=output_shape)
+        self.latents_input = tf.keras.layers.Input(
+            shape=output_shape, name='latents')
 
         def raw_actions_fn(inputs):
             shift, log_scale_diag, latents = inputs
@@ -135,7 +150,8 @@ class GaussianPolicy(LatentSpacePolicy):
             log_pis = distribution.log_prob(actions)[:, None]
             return log_pis
 
-        self.actions_input = tf.keras.layers.Input(shape=output_shape)
+        self.actions_input = tf.keras.layers.Input(
+            shape=output_shape, name='actions')
 
         log_pis = tf.keras.layers.Lambda(
             log_pis_fn)([shift, log_scale_diag, actions])
@@ -164,29 +180,7 @@ class GaussianPolicy(LatentSpacePolicy):
     def trainable_variables(self):
         return self.actions_model.trainable_variables
 
-    @property
-    def non_trainable_weights(self):
-        """Due to our nested model structure, we need to filter duplicates."""
-        return list(set(super(GaussianPolicy, self).non_trainable_weights))
-
-    def actions(self, conditions):
-        if self._deterministic:
-            return self.deterministic_actions_model(conditions)
-
-        return self.actions_model(conditions)
-
-    def log_pis(self, conditions, actions):
-        assert not self._deterministic, self._deterministic
-        return self.log_pis_model([*conditions, actions])
-
-    def actions_np(self, conditions):
-        return super(GaussianPolicy, self).actions_np(conditions)
-
-    def log_pis_np(self, conditions, actions):
-        assert not self._deterministic, self._deterministic
-        return self.log_pis_model.predict([*conditions, actions])
-
-    def get_diagnostics(self, conditions):
+    def get_diagnostics(self, inputs):
         """Return diagnostic information of the policy.
 
         Returns the mean, min, max, and standard deviation of means and
@@ -196,7 +190,7 @@ class GaussianPolicy(LatentSpacePolicy):
          log_scale_diags_np,
          log_pis_np,
          raw_actions_np,
-         actions_np) = self.diagnostics_model.predict(conditions)
+         actions_np) = self.diagnostics_model.predict(inputs)
 
         return OrderedDict((
             ('shifts-mean', np.mean(shifts_np)),
@@ -223,7 +217,8 @@ class FeedforwardGaussianPolicy(GaussianPolicy):
                  hidden_layer_sizes,
                  activation='relu',
                  output_activation='linear',
-                 *args, **kwargs):
+                 *args,
+                 **kwargs):
         self._hidden_layer_sizes = hidden_layer_sizes
         self._activation = activation
         self._output_activation = output_activation
@@ -231,9 +226,8 @@ class FeedforwardGaussianPolicy(GaussianPolicy):
         self._Serializable__initialize(locals())
         super(FeedforwardGaussianPolicy, self).__init__(*args, **kwargs)
 
-    def _shift_and_log_scale_diag_net(self, input_shapes, output_size):
+    def _shift_and_log_scale_diag_net(self, output_size):
         shift_and_log_scale_diag_net = feedforward_model(
-            input_shapes=input_shapes,
             hidden_layer_sizes=self._hidden_layer_sizes,
             output_size=output_size,
             activation=self._activation,

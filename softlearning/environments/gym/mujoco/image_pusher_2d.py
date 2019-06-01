@@ -112,7 +112,7 @@ class ImageForkReacher2dEnv(ImagePusher2dEnv):
         puck_position = (
             np.sign(puck_position)
             * np.maximum(np.abs(puck_position), 1/2))
-        puck_position[np.where(puck_position == 0)] = 1.0
+        puck_position[np.flatnonzero(puck_position == 0)] = 1.0
         # puck_position[1] += 1.0
         # puck_position = np.random.uniform(
         #     low=[0.3, -1.0], high=[1.0, -0.4]),

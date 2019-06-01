@@ -1,14 +1,16 @@
 """Implements a GymAdapter that converts Gym envs into SoftlearningEnv."""
 
-import numpy as np
+from collections import defaultdict, OrderedDict
+import copy
+
 import gym
 from gym import spaces, wrappers
 from gym.envs.mujoco.mujoco_env import MujocoEnv
 
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym import register_environments
-from softlearning.environments.gym.wrappers import NormalizeActionWrapper
-from collections import defaultdict
+from softlearning.environments.gym.wrappers import (
+    NormalizeActionWrapper, PixelObservationWrapper)
 
 
 def parse_domain_task(gym_id):
@@ -39,6 +41,9 @@ for gym_id in GYM_ENVIRONMENT_IDS:
 GYM_ENVIRONMENTS = dict(GYM_ENVIRONMENTS)
 
 
+DEFAULT_OBSERVATION_KEY = 'observations'
+
+
 class GymAdapter(SoftlearningEnv):
     """Adapter that implements the SoftlearningEnv for Gym envs."""
 
@@ -48,8 +53,10 @@ class GymAdapter(SoftlearningEnv):
                  *args,
                  env=None,
                  normalize=True,
-                 observation_keys=None,
+                 observation_keys=(),
+                 goal_keys=(),
                  unwrap_time_limit=True,
+                 pixel_wrapper_kwargs=None,
                  **kwargs):
         assert not args, (
             "Gym environments don't support args. Use kwargs instead.")
@@ -57,7 +64,8 @@ class GymAdapter(SoftlearningEnv):
         self.normalize = normalize
         self.unwrap_time_limit = unwrap_time_limit
 
-        super(GymAdapter, self).__init__(domain, task, *args, **kwargs)
+        super(GymAdapter, self).__init__(
+            domain, task, *args, goal_keys=goal_keys, **kwargs)
 
         if env is None:
             assert (domain is not None and task is not None), (domain, task)
@@ -75,70 +83,55 @@ class GymAdapter(SoftlearningEnv):
             # depends on time rather than state).
             env = env.env
 
-        if isinstance(env.observation_space, spaces.Dict):
-            observation_keys = (
-                observation_keys or tuple(env.observation_space.spaces.keys()))
-
-        self.observation_keys = observation_keys
-
         if normalize:
             env = NormalizeActionWrapper(env)
 
+        if pixel_wrapper_kwargs is not None:
+            env = PixelObservationWrapper(env, **pixel_wrapper_kwargs)
+
         self._env = env
 
-    @property
-    def observation_space(self):
-        observation_space = self._env.observation_space
-        return observation_space
+        if isinstance(self._env.observation_space, spaces.Dict):
+            dict_observation_space = self._env.observation_space
+            self.observation_keys = (
+                observation_keys or (*self.observation_space.spaces.keys(), ))
+        elif isinstance(self._env.observation_space, spaces.Box):
+            dict_observation_space = spaces.Dict(OrderedDict((
+                (DEFAULT_OBSERVATION_KEY, self._env.observation_space),
+            )))
+            self.observation_keys = (DEFAULT_OBSERVATION_KEY, )
 
-    @property
-    def active_observation_shape(self):
-        """Shape for the active observation based on observation_keys."""
-        if not isinstance(self._env.observation_space, spaces.Dict):
-            return super(GymAdapter, self).active_observation_shape
+        self._observation_space = type(dict_observation_space)([
+            (name, copy.deepcopy(space))
+            for name, space in dict_observation_space.spaces.items()
+            if name in self.observation_keys
+        ])
 
-        active_size = sum(
-            np.prod(self._env.observation_space.spaces[key].shape)
-            for key in self.observation_keys)
-
-        active_observation_shape = (active_size, )
-
-        return active_observation_shape
-
-    def convert_to_active_observation(self, observation):
-        if not isinstance(self._env.observation_space, spaces.Dict):
-            return observation
-
-        observation = np.concatenate([
-            observation[key] for key in self.observation_keys
-        ], axis=-1)
-
-        return observation
-
-    @property
-    def action_space(self, *args, **kwargs):
-        action_space = self._env.action_space
-
-        if len(action_space.shape) > 1:
+        if len(self._env.action_space.shape) > 1:
             raise NotImplementedError(
                 "Shape of the action space ({}) is not flat, make sure to"
-                " check the implemenation.".format(action_space))
+                " check the implemenation.".format(self._env.action_space))
 
-        return action_space
+        self._action_space = self._env.action_space
 
     def step(self, action, *args, **kwargs):
-        # TODO(hartikainen): refactor this to always return an OrderedDict,
-        # such that the observations for all the envs is consistent. Right now
-        # some of the gym envs return np.array whereas others return dict.
-        #
-        # Something like:
-        # observation = OrderedDict()
-        # observation['observation'] = env.step(action, *args, **kwargs)
-        # return observation
-        return self._env.step(action, *args, **kwargs)
+        observation, reward, terminal, info = self._env.step(
+            action, *args, **kwargs)
+
+        if not isinstance(self._env.observation_space, spaces.Dict):
+            observation = {DEFAULT_OBSERVATION_KEY: observation}
+
+        observation = self._filter_observation(observation)
+        return observation, reward, terminal, info
 
     def reset(self, *args, **kwargs):
-        return self._env.reset(*args, **kwargs)
+        observation = self._env.reset()
+
+        if not isinstance(self._env.observation_space, spaces.Dict):
+            observation = {DEFAULT_OBSERVATION_KEY: observation}
+
+        observation = self._filter_observation(observation)
+        return observation
 
     def render(self, *args, width=100, height=100, **kwargs):
         if isinstance(self._env.unwrapped, MujocoEnv):
