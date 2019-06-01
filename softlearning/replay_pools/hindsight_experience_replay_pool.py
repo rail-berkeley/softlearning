@@ -70,7 +70,7 @@ class ResamplingReplayPool(GoalReplayPool):
                 where_same_episode
             ] = (
                 resample_indices[where_same_episode]
-                - resample_indices[where_same_episode]
+                - indices[where_same_episode]
             )[..., None]
         else:
             if resampling_strategy == 'final':
