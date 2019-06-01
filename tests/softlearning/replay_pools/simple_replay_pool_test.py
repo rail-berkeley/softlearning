@@ -8,11 +8,7 @@ from softlearning.environments.utils import get_environment
 
 
 def create_pool(env, max_size=100):
-    return SimpleReplayPool(
-        observation_space=env.observation_space,
-        action_space=env.action_space,
-        max_size=max_size,
-    )
+    return SimpleReplayPool(environment=env, max_size=max_size)
 
 
 class SimpleReplayPoolTest(unittest.TestCase):
