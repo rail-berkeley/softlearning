@@ -29,7 +29,7 @@ class StrategyValidator(object):
 
     @abc.abstractmethod
     def verify_batch(self, batch):
-        where_not_resampled = np.where(~batch['resampled'])
+        where_not_resampled = np.flatnonzero(~batch['resampled'])
         np.testing.assert_equal(
             batch['resampled_distances'][where_not_resampled],
             float('inf'))
@@ -61,7 +61,7 @@ class RandomStrategyValidator(StrategyValidator):
 class FinalStrategyValidator(StrategyValidator):
     def verify_batch(self, batch):
         if np.sum(batch['resampled']) > 0:
-            where_resampled = np.where(batch['resampled'])
+            where_resampled = np.flatnonzero(batch['resampled'])
             np.testing.assert_equal(
                 batch['resampled_distances'][where_resampled],
                 batch['episode_index_backwards'][where_resampled])
@@ -71,7 +71,7 @@ class FinalStrategyValidator(StrategyValidator):
 class EpisodeStrategyValidator(StrategyValidator):
     def verify_batch(self, batch):
         if np.sum(batch['resampled']) > 0:
-            where_resampled = np.where(batch['resampled'])
+            where_resampled = np.flatnonzero(batch['resampled'])
 
             gt_first_index = (
                 -1 * batch['episode_index_forwards'][where_resampled]
@@ -88,7 +88,7 @@ class EpisodeStrategyValidator(StrategyValidator):
 class FutureStrategyValidator(StrategyValidator):
     def verify_batch(self, batch):
         if np.sum(batch['resampled']) > 0:
-            where_resampled = np.where(batch['resampled'])
+            where_resampled = np.flatnonzero(batch['resampled'])
             assert np.all(batch['resampled_distances'][where_resampled] >= 0)
             assert np.all(
                 batch['resampled_distances'][where_resampled]

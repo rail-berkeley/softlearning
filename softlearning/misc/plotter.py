@@ -11,7 +11,7 @@ class QFPolicyPlotter:
         self._default_action = np.array(default_action)
         self._n_samples = n_samples
 
-        self._var_inds = np.where(np.isnan(default_action))[0]
+        self._var_inds = np.flatnonzero(np.isnan(default_action))[0]
         assert len(self._var_inds) == 2
 
         n_plots = len(obs_lst)

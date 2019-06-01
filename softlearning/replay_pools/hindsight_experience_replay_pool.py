@@ -65,7 +65,7 @@ class ResamplingReplayPool(GoalReplayPool):
             in_same_episodes = np.logical_and(
                 episode_first_indices <= resample_indices,
                 resample_indices < episode_last_indices)
-            where_same_episode = np.where(in_same_episodes)
+            where_same_episode = np.flatnonzero(in_same_episodes)
             resample_distances[
                 where_same_episode
             ] = (
@@ -119,7 +119,7 @@ class HindsightExperienceReplayPool(ResamplingReplayPool):
 
             to_resample_mask = (
                 np.random.rand(batch_size) < goal_resampling_probability)
-            where_resampled = np.where(to_resample_mask)
+            where_resampled = np.flatnonzero(to_resample_mask)
             to_resample_indices = indices[where_resampled]
 
             episode_first_distances = -1 * batch['episode_index_forwards'][
