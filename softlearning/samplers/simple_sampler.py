@@ -20,6 +20,15 @@ class SimpleSampler(BaseSampler):
         self._current_observation = None
         self._total_samples = 0
 
+    @property
+    def _policy_input(self):
+        observation = flatten_input_structure({
+            key: self._current_observation[key][None, ...]
+            for key in self.policy.observation_keys
+        })
+
+        return observation
+
     def _process_sample(self,
                         observation,
                         action,
@@ -42,11 +51,7 @@ class SimpleSampler(BaseSampler):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
 
-        policy_input = flatten_input_structure({
-            key: self._current_observation[key][None, ...]
-            for key in self.policy.observation_keys
-        })
-        action = self.policy.actions_np(policy_input)[0]
+        action = self.policy.actions_np(self._policy_input)[0]
 
         next_observation, reward, terminal, info = self.env.step(action)
         self._path_length += 1

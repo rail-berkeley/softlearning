@@ -8,7 +8,8 @@ from . import (
     dummy_sampler,
     remote_sampler,
     base_sampler,
-    simple_sampler)
+    simple_sampler,
+    goal_sampler)
 
 
 def get_sampler_from_variant(variant, *args, **kwargs):
@@ -17,13 +18,14 @@ def get_sampler_from_variant(variant, *args, **kwargs):
         'RemoteSampler': remote_sampler.RemoteSampler,
         'Sampler': base_sampler.BaseSampler,
         'SimpleSampler': simple_sampler.SimpleSampler,
+        'GoalSampler': goal_sampler.GoalSampler,
     }
 
     sampler_params = variant['sampler_params']
     sampler_type = sampler_params['type']
 
-    sampler_args = deepcopy(sampler_params.get('args', ()))
-    sampler_kwargs = deepcopy(sampler_params.get('kwargs', {}))
+    sampler_args = sampler_params.get('args', ())
+    sampler_kwargs = sampler_params.get('kwargs', {}).copy()
 
     sampler = SAMPLERS[sampler_type](
         *sampler_args, *args, **sampler_kwargs, **kwargs)
@@ -47,6 +49,7 @@ DEFAULT_HUMAN_RENDER_KWARGS = {
 def rollout(env,
             policy,
             path_length,
+            sampler_class=simple_sampler.SimpleSampler,
             callback=None,
             render_kwargs=None,
             break_on_terminal=True):
@@ -55,7 +58,7 @@ def rollout(env,
 
     pool = replay_pools.SimpleReplayPool(
         observation_space, action_space, max_size=path_length)
-    sampler = simple_sampler.SimpleSampler(
+    sampler = sampler_class(
         max_path_length=path_length,
         min_pool_size=None,
         batch_size=None)
