@@ -43,14 +43,16 @@ class RobosuiteAdapter(SoftlearningEnv):
                  *args,
                  env=None,
                  normalize=True,
-                 observation_keys=None,
+                 observation_keys=(),
+                 goal_keys=(),
                  **kwargs):
         assert not args, (
             "Robosuite environments don't support args. Use kwargs instead.")
 
         self.normalize = normalize
 
-        super(RobosuiteAdapter, self).__init__(domain, task, *args, **kwargs)
+        super(RobosuiteAdapter, self).__init__(
+            domain, task, *args, goal_keys=goal_keys, **kwargs)
 
         if env is None:
             assert (domain is not None and task is not None), (domain, task)

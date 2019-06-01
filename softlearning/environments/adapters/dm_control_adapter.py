@@ -69,7 +69,8 @@ class DmControlAdapter(SoftlearningEnv):
                  *args,
                  env=None,
                  normalize=True,
-                 observation_keys=None,
+                 observation_keys=(),
+                 goal_keys=(),
                  unwrap_time_limit=True,
                  pixel_wrapper_kwargs=None,
                  **kwargs):
@@ -79,7 +80,9 @@ class DmControlAdapter(SoftlearningEnv):
         self.normalize = normalize
         self.unwrap_time_limit = unwrap_time_limit
 
-        super(DmControlAdapter, self).__init__(domain, task, *args, **kwargs)
+        super(DmControlAdapter, self).__init__(
+            domain,  task, *args, goal_keys=goal_keys, **kwargs)
+
         if env is None:
             assert (domain is not None and task is not None), (domain, task)
             env = suite.load(

@@ -53,7 +53,8 @@ class GymAdapter(SoftlearningEnv):
                  *args,
                  env=None,
                  normalize=True,
-                 observation_keys=None,
+                 observation_keys=(),
+                 goal_keys=(),
                  unwrap_time_limit=True,
                  pixel_wrapper_kwargs=None,
                  **kwargs):
@@ -63,7 +64,8 @@ class GymAdapter(SoftlearningEnv):
         self.normalize = normalize
         self.unwrap_time_limit = unwrap_time_limit
 
-        super(GymAdapter, self).__init__(domain, task, *args, **kwargs)
+        super(GymAdapter, self).__init__(
+            domain, task, *args, goal_keys=goal_keys, **kwargs)
 
         if env is None:
             assert (domain is not None and task is not None), (domain, task)
