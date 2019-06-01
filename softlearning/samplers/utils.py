@@ -1,4 +1,3 @@
-from copy import deepcopy
 from collections import defaultdict
 
 import numpy as np
@@ -53,11 +52,7 @@ def rollout(env,
             callback=None,
             render_kwargs=None,
             break_on_terminal=True):
-    observation_space = env.observation_space
-    action_space = env.action_space
-
-    pool = replay_pools.SimpleReplayPool(
-        observation_space, action_space, max_size=path_length)
+    pool = replay_pools.SimpleReplayPool(env, max_size=path_length)
     sampler = sampler_class(
         max_path_length=path_length,
         min_pool_size=None,
