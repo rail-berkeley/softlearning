@@ -108,7 +108,7 @@ class HindsightExperienceReplayPool(ResamplingReplayPool):
 
     def _relabel_batch(self, batch, indices, her_strategy):
         batch_size = indices.size
-        batch['goal_resample_distances'] = np.full(
+        batch['resampled_distances'] = np.full(
             (batch_size, 1), np.float('inf'))
         batch['resampled'] = np.zeros((batch_size, 1), dtype='bool')
 
@@ -159,7 +159,7 @@ class HindsightExperienceReplayPool(ResamplingReplayPool):
 
             batch = unflatten(batch_flat)
 
-            batch['goal_resample_distances'][where_resampled] = (
+            batch['resampled_distances'][where_resampled] = (
                 resampled_distances)
             batch['resampled'][where_resampled] = True
 

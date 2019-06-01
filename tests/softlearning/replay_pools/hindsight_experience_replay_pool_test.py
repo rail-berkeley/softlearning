@@ -31,7 +31,7 @@ class StrategyValidator(object):
     def verify_batch(self, batch):
         where_not_resampled = np.where(~batch['resampled'])
         np.testing.assert_equal(
-            batch['goal_resample_distances'][where_not_resampled],
+            batch['resampled_distances'][where_not_resampled],
             float('inf'))
 
         self._statistics['num_resampled'] = batch['resampled']
@@ -63,7 +63,7 @@ class FinalStrategyValidator(StrategyValidator):
         if np.sum(batch['resampled']) > 0:
             where_resampled = np.where(batch['resampled'])
             np.testing.assert_equal(
-                batch['goal_resample_distances'][where_resampled],
+                batch['resampled_distances'][where_resampled],
                 batch['episode_index_backwards'][where_resampled])
         super(FinalStrategyValidator, self).verify_batch(batch)
 
@@ -75,9 +75,9 @@ class EpisodeStrategyValidator(StrategyValidator):
 
             gt_first_index = (
                 -1 * batch['episode_index_forwards'][where_resampled]
-                <= batch['goal_resample_distances'][where_resampled])
+                <= batch['resampled_distances'][where_resampled])
             lt_final_index = (
-                batch['goal_resample_distances'][where_resampled]
+                batch['resampled_distances'][where_resampled]
                 < batch['episode_index_backwards'][where_resampled])
             within_episode = np.logical_and(
                 gt_first_index, lt_final_index)
@@ -89,9 +89,9 @@ class FutureStrategyValidator(StrategyValidator):
     def verify_batch(self, batch):
         if np.sum(batch['resampled']) > 0:
             where_resampled = np.where(batch['resampled'])
-            assert np.all(batch['goal_resample_distances'][where_resampled] >= 0)
+            assert np.all(batch['resampled_distances'][where_resampled] >= 0)
             assert np.all(
-                batch['goal_resample_distances'][where_resampled]
+                batch['resampled_distances'][where_resampled]
                 <= batch['episode_index_backwards'][where_resampled])
         super(FutureStrategyValidator, self).verify_batch(batch)
 
