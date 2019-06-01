@@ -1,3 +1,4 @@
+import pickle
 import unittest
 
 import numpy as np
@@ -8,18 +9,17 @@ from softlearning.environments.adapters.robosuite_adapter import (
 
 
 class TestRobosuiteAdapter(unittest.TestCase, AdapterTestClass):
-    # TODO(hartikainen): This is a terrible way of testing the envs.
-    # All the envs should be tested independently.
-
     def create_adapter(self, domain='Sawyer', task='Lift', *args, **kwargs):
         return RobosuiteAdapter(
             domain,
             task,
             *args,
-            **kwargs,
-            has_renderer=False,
-            has_offscreen_renderer=False,
-            use_camera_obs=False)
+            **{
+                'has_renderer': False,
+                'has_offscreen_renderer': False,
+                'use_camera_obs': False,
+                **kwargs
+            })
 
     def test_environments(self):
         # Make sure that all the environments are creatable
@@ -37,6 +37,24 @@ class TestRobosuiteAdapter(unittest.TestCase, AdapterTestClass):
 
         for domain, task in TEST_ENVIRONMENTS:
             verify_reset_and_step(domain, task)
+
+    def test_serialize_deserialize(self):
+        domain, task = 'Sawyer', 'Lift'
+        env_kwargs = {
+            'has_renderer': False,
+            'has_offscreen_renderer': False,
+            'use_camera_obs': False,
+            'reward_shaping': True,
+        }
+        env1 = self.create_adapter(domain=domain, task=task, **env_kwargs)
+        env1.reset()
+
+        env2 = pickle.loads(pickle.dumps(env1))
+
+        self.assertEqual(env1.observation_keys, env2.observation_keys)
+        for key, value in env_kwargs.items():
+            self.assertEqual(getattr(env1.unwrapped, f'{key}'), value)
+            self.assertEqual(getattr(env2.unwrapped, f'{key}'), value)
 
     def test_copy_environments(self):
         domain, task = 'Sawyer', 'Lift'

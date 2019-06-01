@@ -4,15 +4,14 @@ import unittest
 from softlearning.environments.utils import get_environment
 from softlearning.samplers.remote_sampler import RemoteSampler
 from softlearning.replay_pools.simple_replay_pool import SimpleReplayPool
-from softlearning.policies.uniform_policy import UniformPolicy
+from softlearning.policies.utils import get_policy_from_params
 
 
 class RemoteSamplerTest(unittest.TestCase):
     def setUp(self):
-        self.env = get_environment('gym', 'Swimmer', 'Default', {})
-        self.policy = UniformPolicy(
-            input_shapes=(self.env.observation_space.shape, ),
-            output_shape=self.env.action_space.shape)
+        self.env = get_environment('gym', 'Swimmer', 'v3', {})
+        self.policy = get_policy_from_params(
+            {'type': 'UniformPolicy'}, env=self.env)
         self.pool = SimpleReplayPool(
             max_size=100,
             observation_space=self.env.observation_space,
@@ -34,13 +33,17 @@ class RemoteSamplerTest(unittest.TestCase):
         self.remote_sampler.initialize(self.env, self.policy, self.pool)
 
         self.remote_sampler.sample()
+
         deserialized = pickle.loads(pickle.dumps(self.remote_sampler))
+        deserialized.initialize(self.env, self.policy, self.pool)
+
         self.assertEqual(self.pool.size, 10)
 
         self.remote_sampler.sample(timeout=10)
         self.assertEqual(self.pool.size, 20)
 
         deserialized = pickle.loads(pickle.dumps(self.remote_sampler))
+        deserialized.initialize(self.env, self.policy, self.pool)
 
         self.assertTrue(isinstance(
             deserialized.env, type(self.remote_sampler.env)))

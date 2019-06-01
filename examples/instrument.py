@@ -115,6 +115,7 @@ def generate_experiment_kwargs(variant_spec, command_line_args):
             variant_spec['run_params']['checkpoint_frequency']),
         'checkpoint_at_end': (
             variant_spec['run_params']['checkpoint_at_end']),
+        'max_failures': command_line_args.max_failures,
         'trial_name_creator': create_trial_name_creator(
             command_line_args.trial_name_template),
         'restore': command_line_args.restore,  # Defaults to None

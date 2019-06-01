@@ -5,7 +5,6 @@ import numpy as np
 from softlearning import replay_pools
 from . import (
     dummy_sampler,
-    extra_policy_info_sampler,
     remote_sampler,
     base_sampler,
     simple_sampler)
@@ -14,8 +13,6 @@ from . import (
 def get_sampler_from_variant(variant, *args, **kwargs):
     SAMPLERS = {
         'DummySampler': dummy_sampler.DummySampler,
-        'ExtraPolicyInfoSampler': (
-            extra_policy_info_sampler.ExtraPolicyInfoSampler),
         'RemoteSampler': remote_sampler.RemoteSampler,
         'Sampler': base_sampler.BaseSampler,
         'SimpleSampler': simple_sampler.SimpleSampler,
@@ -64,7 +61,7 @@ def rollout(env,
 
         if render_mode is not None:
             if render_mode == 'rgb_array':
-                image = env.render(mode=render_mode)
+                image = env.render(mode=render_mode, width=100, height=100)
                 images.append(image)
             else:
                 env.render()

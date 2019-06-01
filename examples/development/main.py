@@ -9,7 +9,8 @@ from ray import tune
 
 from softlearning.environments.utils import get_environment_from_params
 from softlearning.algorithms.utils import get_algorithm_from_variant
-from softlearning.policies.utils import get_policy_from_variant, get_policy
+from softlearning.policies.utils import (
+    get_policy_from_variant, get_policy_from_params)
 from softlearning.replay_pools.utils import get_replay_pool_from_variant
 from softlearning.samplers.utils import get_sampler_from_variant
 from softlearning.value_functions.utils import get_Q_function_from_variant
@@ -53,9 +54,11 @@ class ExperimentRunner(tune.Trainable):
         Qs = self.Qs = get_Q_function_from_variant(
             variant, training_environment)
         policy = self.policy = get_policy_from_variant(
-            variant, training_environment, Qs)
+            variant, training_environment)
+
         initial_exploration_policy = self.initial_exploration_policy = (
-            get_policy('UniformPolicy', training_environment))
+            get_policy_from_params(
+                variant['exploration_policy_params'], training_environment))
 
         self.algorithm = get_algorithm_from_variant(
             variant=self._variant,

@@ -3,6 +3,7 @@
 import numpy as np
 import gym
 from gym import spaces, wrappers
+from gym.envs.mujoco.mujoco_env import MujocoEnv
 
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym import register_environments
@@ -53,8 +54,6 @@ class GymAdapter(SoftlearningEnv):
         assert not args, (
             "Gym environments don't support args. Use kwargs instead.")
 
-        self._Serializable__initialize(locals())
-
         self.normalize = normalize
         self.unwrap_time_limit = unwrap_time_limit
 
@@ -64,7 +63,9 @@ class GymAdapter(SoftlearningEnv):
             assert (domain is not None and task is not None), (domain, task)
             env_id = f"{domain}-{task}"
             env = gym.envs.make(env_id, **kwargs)
+            self._env_kwargs = kwargs
         else:
+            assert not kwargs
             assert domain is None and task is None, (domain, task)
 
         if isinstance(env, wrappers.TimeLimit) and unwrap_time_limit:
@@ -117,10 +118,12 @@ class GymAdapter(SoftlearningEnv):
     @property
     def action_space(self, *args, **kwargs):
         action_space = self._env.action_space
+
         if len(action_space.shape) > 1:
             raise NotImplementedError(
-                "Action space ({}) is not flat, make sure to check the"
-                " implemenation.".format(action_space))
+                "Shape of the action space ({}) is not flat, make sure to"
+                " check the implemenation.".format(action_space))
+
         return action_space
 
     def step(self, action, *args, **kwargs):
@@ -132,17 +135,16 @@ class GymAdapter(SoftlearningEnv):
         # observation = OrderedDict()
         # observation['observation'] = env.step(action, *args, **kwargs)
         # return observation
-
         return self._env.step(action, *args, **kwargs)
 
     def reset(self, *args, **kwargs):
         return self._env.reset(*args, **kwargs)
 
-    def render(self, *args, **kwargs):
-        return self._env.render(*args, **kwargs)
+    def render(self, *args, width=100, height=100, **kwargs):
+        if isinstance(self._env.unwrapped, MujocoEnv):
+            self._env.render(*args, width=width, height=height, **kwargs)
 
-    def close(self, *args, **kwargs):
-        return self._env.close(*args, **kwargs)
+        return self._env.render(*args, **kwargs)
 
     def seed(self, *args, **kwargs):
         return self._env.seed(*args, **kwargs)
@@ -150,9 +152,3 @@ class GymAdapter(SoftlearningEnv):
     @property
     def unwrapped(self):
         return self._env.unwrapped
-
-    def get_param_values(self, *args, **kwargs):
-        raise NotImplementedError
-
-    def set_param_values(self, *args, **kwargs):
-        raise NotImplementedError

@@ -27,7 +27,6 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'lr': 3e-4,
             'reward_scale': 0.1,
             'target_entropy': 'auto',
-            'store_extra_policy_info': False,
             'action_prior': 'uniform',
             'initial_exploration_policy': None
         }

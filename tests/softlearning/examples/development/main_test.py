@@ -27,7 +27,6 @@ CONFIG = {
             'reparameterize': True,
             'reward_scale': 1.0,
             'save_full_state': False,
-            'store_extra_policy_info': False,
             'target_entropy': 'auto',
             'target_update_interval': 1,
             'tau': 0.005,
@@ -54,6 +53,10 @@ CONFIG = {
             'squash': True
         },
         'type': 'GaussianPolicy'
+    },
+    'exploration_policy_params': {
+        'kwargs': {},
+        'type': 'UniformPolicy'
     },
     'replay_pool_params': {
         'kwargs': {

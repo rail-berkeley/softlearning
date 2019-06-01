@@ -88,15 +88,16 @@ class RemoteSampler(BaseSampler):
 
     def __setstate__(self, state):
         super(RemoteSampler, self).__setstate__(state)
-        self._create_remote_environment(self.env, self.policy)
         self._remote_path = None
 
 
 @ray.remote
 class _RemoteEnv(object):
     def __init__(self, env_pkl, policy_pkl):
-        self._session = tf.keras.backend.get_session()
-        self._session.run(tf.global_variables_initializer())
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        self._session = tf.Session(
+            config=tf.ConfigProto(gpu_options=gpu_options))
+        tf.keras.backend.set_session(self._session)
 
         self._env = pickle.loads(env_pkl)
         self._policy = pickle.loads(policy_pkl)

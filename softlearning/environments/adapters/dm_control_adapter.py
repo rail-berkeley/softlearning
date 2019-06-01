@@ -76,7 +76,6 @@ class DmControlAdapter(SoftlearningEnv):
         self.normalize = normalize
         self.unwrap_time_limit = unwrap_time_limit
 
-        self._Serializable__initialize(locals())
         super(DmControlAdapter, self).__init__(domain, task, *args, **kwargs)
         if env is None:
             assert (domain is not None and task is not None), (domain, task)
@@ -89,7 +88,9 @@ class DmControlAdapter(SoftlearningEnv):
                 # `visualize_reward` bool. Check the suite.load(.) in:
                 # https://github.com/deepmind/dm_control/blob/master/dm_control/suite/__init__.py
             )
+            self._env_kwargs = kwargs
         else:
+            assert not kwargs
             assert domain is None and task is None, (domain, task)
 
         assert isinstance(env.observation_spec(), OrderedDict)
@@ -127,10 +128,12 @@ class DmControlAdapter(SoftlearningEnv):
     @property
     def action_space(self, *args, **kwargs):
         action_space = convert_dm_control_to_gym_space(self._env.action_spec())
+
         if len(action_space.shape) > 1:
             raise NotImplementedError(
                 "Action space ({}) is not flat, make sure to check the"
                 " implemenation.".format(action_space))
+
         return action_space
 
     def step(self, action, *args, **kwargs):
@@ -156,11 +159,8 @@ class DmControlAdapter(SoftlearningEnv):
         elif mode == "rgb_array":
             return self._env.physics.render(
                 *args, camera_id=camera_id, **kwargs)
-        else:
-            raise NotImplementedError(mode)
 
-    def close(self, *args, **kwargs):
-        return self._env.close(*args, **kwargs)
+        raise NotImplementedError(mode)
 
     def seed(self, *args, **kwargs):
         return self._env.seed(*args, **kwargs)
@@ -168,9 +168,3 @@ class DmControlAdapter(SoftlearningEnv):
     @property
     def unwrapped(self):
         return self._env
-
-    def get_param_values(self, *args, **kwargs):
-        raise NotImplementedError
-
-    def set_param_values(self, *args, **kwargs):
-        raise NotImplementedError

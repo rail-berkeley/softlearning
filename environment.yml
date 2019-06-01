@@ -3,9 +3,10 @@ channels:
 - defaults
 - conda-forge
 dependencies:
-- python=3.6.5
-- pip>=19.0
+- python=3.7.3
+- pip>=19.1
 - conda>=4.6
 - patchelf=0.9  # only works on Linux; comment this line out on Mac
+- pyopengl-accelerate==3.1.3b1
 - pip:
     - -r ./requirements.txt

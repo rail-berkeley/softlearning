@@ -286,24 +286,26 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
         return paths
 
-    def _evaluate_rollouts(self, paths, env):
+    def _evaluate_rollouts(self, episodes, env):
         """Compute evaluation metrics for the given rollouts."""
 
-        total_returns = [path['rewards'].sum() for path in paths]
-        episode_lengths = [len(p['rewards']) for p in paths]
+        episodes_rewards = [episode['rewards'] for episode in episodes]
+        episodes_reward = np.sum(episodes_rewards, axis=1)
+        episodes_length = [episode_rewards.shape[0]
+                           for episode_rewards in episodes_rewards]
 
         diagnostics = OrderedDict((
-            ('return-average', np.mean(total_returns)),
-            ('return-min', np.min(total_returns)),
-            ('return-max', np.max(total_returns)),
-            ('return-std', np.std(total_returns)),
-            ('episode-length-avg', np.mean(episode_lengths)),
-            ('episode-length-min', np.min(episode_lengths)),
-            ('episode-length-max', np.max(episode_lengths)),
-            ('episode-length-std', np.std(episode_lengths)),
+            ('episode-reward-mean', np.mean(episodes_reward)),
+            ('episode-reward-min', np.min(episodes_reward)),
+            ('episode-reward-max', np.max(episodes_reward)),
+            ('episode-reward-std', np.std(episodes_reward)),
+            ('episode-length-mean', np.mean(episodes_length)),
+            ('episode-length-min', np.min(episodes_length)),
+            ('episode-length-max', np.max(episodes_length)),
+            ('episode-length-std', np.std(episodes_length)),
         ))
 
-        env_infos = env.get_path_infos(paths)
+        env_infos = env.get_path_infos(episodes)
         for key, value in env_infos.items():
             diagnostics[f'env_infos/{key}'] = value
 

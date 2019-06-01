@@ -7,6 +7,7 @@ import tensorflow_probability as tfp
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 
 from .rl_algorithm import RLAlgorithm
+from .sac import td_target
 
 EPS = 1e-6
 
@@ -118,7 +119,7 @@ class SQL(RLAlgorithm):
         self._train_policy = train_policy
 
         observation_shape = training_environment.active_observation_shape
-        action_shape = training_environment.action_space.shape
+        action_shape = training_environment.action_shape
 
         assert len(observation_shape) == 1, observation_shape
         self._observation_shape = observation_shape
@@ -151,45 +152,40 @@ class SQL(RLAlgorithm):
 
     def _init_placeholders(self):
         """Create all necessary placeholders."""
+        self._placeholders = {
+            'iteration': tf.placeholder(
+                tf.int64, shape=None, name='iteration',
+            ),
+            'observations': tf.placeholder(
+                tf.float32,
+                shape=(None, *self._observation_shape),
+                name='observation',
+            ),
+            'next_observations': tf.placeholder(
+                tf.float32,
+                shape=(None, *self._observation_shape),
+                name='next_observation',
+            ),
+            'actions': tf.placeholder(
+                tf.float32,
+                shape=(None, *self._action_shape),
+                name='actions',
+            ),
+            'rewards': tf.placeholder(
+                tf.float32,
+                shape=(None, 1),
+                name='rewards',
+            ),
+            'terminals': tf.placeholder(
+                tf.bool,
+                shape=(None, 1),
+                name='terminals',
+            ),
+        }
 
-        self._iteration_ph = tf.placeholder(
-            tf.int64, shape=None, name='iteration')
-
-        self._observations_ph = tf.placeholder(
-            tf.float32,
-            shape=(None, *self._observation_shape),
-            name='observations')
-
-        self._next_observations_ph = tf.placeholder(
-            tf.float32,
-            shape=(None, *self._observation_shape),
-            name='next_observations')
-
-        self._actions_ph = tf.placeholder(
-            tf.float32,
-            shape=(None, *self._action_shape),
-            name='actions')
-
-        self._next_actions_ph = tf.placeholder(
-            tf.float32,
-            shape=(None, *self._action_shape),
-            name='next_actions')
-
-        self._rewards_ph = tf.placeholder(
-            tf.float32,
-            shape=(None, 1),
-            name='rewards')
-
-        self._terminals_ph = tf.placeholder(
-            tf.float32,
-            shape=(None, 1),
-            name='terminals')
-
-    def _init_td_update(self):
-        """Create a minimization operation for Q-function update."""
-
+    def _get_Q_target(self):
         next_observations = tf.tile(
-            self._next_observations_ph[:, tf.newaxis, :],
+            self._placeholders['next_observations'][:, tf.newaxis, :],
             (1, self._value_n_particles, 1))
         next_observations = tf.reshape(
             next_observations, (-1, *self._observation_shape))
@@ -197,7 +193,8 @@ class SQL(RLAlgorithm):
         target_actions = tf.random_uniform(
             (1, self._value_n_particles, *self._action_shape), -1, 1)
         target_actions = tf.tile(
-            target_actions, (tf.shape(self._next_observations_ph)[0], 1, 1))
+            target_actions,
+            (tf.shape(self._placeholders['next_observations'])[0], 1, 1))
         target_actions = tf.reshape(target_actions, (-1, *self._action_shape))
 
         Q_next_targets = tuple(
@@ -214,26 +211,33 @@ class SQL(RLAlgorithm):
         assert_shape(min_Q_next_target, (None, self._value_n_particles))
 
         # Equation 10:
-        next_value = tf.reduce_logsumexp(
+        next_values = tf.reduce_logsumexp(
             min_Q_next_target, keepdims=True, axis=1)
-        assert_shape(next_value, [None, 1])
+        assert_shape(next_values, [None, 1])
 
         # Importance weights add just a constant to the value.
-        next_value -= tf.log(tf.cast(self._value_n_particles, tf.float32))
-        next_value += np.prod(self._action_shape) * np.log(2)
+        next_values -= tf.log(tf.cast(self._value_n_particles, tf.float32))
+        next_values += np.prod(self._action_shape) * np.log(2)
 
-        # \hat Q in Equation 11:
-        Q_target = tf.stop_gradient(
-            self._reward_scale
-            * self._rewards_ph
-            + (1 - self._terminals_ph)
-            * self._discount
-            * next_value)
+        terminals = tf.cast(self._placeholders['terminals'], next_values.dtype)
+
+        # \hat Q in Equation 11 in [1]:
+        Q_target = td_target(
+            reward=self._reward_scale * self._placeholders['rewards'],
+            discount=self._discount,
+            next_value=(1 - terminals) * next_values)
+
+        return tf.stop_gradient(Q_target)
+
+    def _init_td_update(self):
+        """Create a minimization operation for Q-function update."""
+        Q_target = self._get_Q_target()
         assert_shape(Q_target, [None, 1])
 
+        observations = self._placeholders['observations']
+        actions = self._placeholders['actions']
         Q_values = self._Q_values = tuple(
-            Q([self._observations_ph, self._actions_ph])
-            for Q in self._Qs)
+            Q([observations, actions]) for Q in self._Qs)
 
         for Q_value in self._Q_values:
             assert_shape(Q_value, [None, 1])
@@ -251,7 +255,8 @@ class SQL(RLAlgorithm):
                     name='{}_{}_optimizer'.format(Q._name, i)
                 ) for i, Q in enumerate(self._Qs))
             Q_training_ops = tuple(
-                Q_optimizer.minimize(loss=Q_loss, var_list=Q.trainable_variables)
+                Q_optimizer.minimize(
+                    loss=Q_loss, var_list=Q.trainable_variables)
                 for i, (Q, Q_loss, Q_optimizer)
                 in enumerate(zip(self._Qs, Q_losses, self._Q_optimizers)))
 
@@ -260,10 +265,11 @@ class SQL(RLAlgorithm):
     def _init_svgd_update(self):
         """Create a minimization operation for policy update (SVGD)."""
 
+        observations = self._placeholders['observations']
         actions = self._policy.actions([
             tf.reshape(
                 tf.tile(
-                    self._observations_ph[:, None, :],
+                    observations[:, None, :],
                     (1, self._kernel_n_particles, 1)),
                 (-1, *self._observation_shape))
         ])
@@ -295,7 +301,7 @@ class SQL(RLAlgorithm):
             Q([
                 tf.reshape(
                     tf.tile(
-                        self._observations_ph[:, None, :],
+                        observations[:, None, :],
                         (1, n_fixed_actions, 1)),
                     (-1, *self._observation_shape)),
                 tf.reshape(fixed_actions, (-1, *self._action_shape))
@@ -398,15 +404,13 @@ class SQL(RLAlgorithm):
         """Construct a TensorFlow feed dictionary from a sample batch."""
 
         feed_dict = {
-            self._observations_ph: batch['observations'],
-            self._actions_ph: batch['actions'],
-            self._next_observations_ph: batch['next_observations'],
-            self._rewards_ph: batch['rewards'],
-            self._terminals_ph: batch['terminals'],
+            self._placeholders[key]: batch[key]
+            for key in self._placeholders.keys()
+            if key in batch
         }
 
         if iteration is not None:
-            feed_dict[self._iteration_ph] = iteration
+            feed_dict[self._placeholders['iteration']] = iteration
 
         return feed_dict
 

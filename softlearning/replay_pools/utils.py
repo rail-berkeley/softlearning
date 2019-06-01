@@ -2,7 +2,6 @@ from copy import deepcopy
 
 from . import (
     simple_replay_pool,
-    extra_policy_info_replay_pool,
     union_pool,
     trajectory_replay_pool)
 
@@ -10,8 +9,6 @@ from . import (
 POOL_CLASSES = {
     'SimpleReplayPool': simple_replay_pool.SimpleReplayPool,
     'TrajectoryReplayPool': trajectory_replay_pool.TrajectoryReplayPool,
-    'ExtraPolicyInfoReplayPool': (
-        extra_policy_info_replay_pool.ExtraPolicyInfoReplayPool),
     'UnionPool': union_pool.UnionPool,
 }
 

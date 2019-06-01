@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from ray import tune
 import numpy as np
 
@@ -67,7 +69,6 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_update_interval': 1,
             'tau': 5e-3,
             'target_entropy': 'auto',
-            'store_extra_policy_info': False,
             'action_prior': 'uniform',
             'n_initial_exploration_steps': int(1e3),
         }
@@ -248,6 +249,10 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
             POLICY_PARAMS_BASE[policy],
             POLICY_PARAMS_FOR_DOMAIN[policy].get(domain, {})
         ),
+        'exploration_policy_params': {
+            'type': 'UniformPolicy',
+            'kwargs': {},
+        },
         'Q_params': {
             'type': 'double_feedforward_Q_function',
             'kwargs': {
@@ -322,10 +327,17 @@ def get_variant_spec_image(universe,
                 'dense_hidden_layer_sizes': (),
             },
         }
+
+        variant_spec['policy_params']['kwargs']['hidden_layer_sizes'] = (M, M)
         variant_spec['policy_params']['kwargs']['preprocessor_params'] = (
-            preprocessor_params.copy())
-        variant_spec['Q_params']['kwargs']['preprocessor_params'] = (
-            preprocessor_params.copy())
+            deepcopy(preprocessor_params))
+
+        for key in ('hidden_layer_sizes', 'preprocessor_params'):
+            variant_spec['Q_params']['kwargs'][key] = (
+                tune.sample_from(lambda spec: (deepcopy(
+                    spec.get('config', spec)['policy_params']['kwargs'][key]
+                )))
+            )
 
     return variant_spec
 
