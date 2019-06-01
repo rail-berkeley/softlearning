@@ -390,7 +390,6 @@ def get_variant_spec_image(universe,
             'pixels': deepcopy(preprocessor_params)
         }
 
-        # for key in ('hidden_layer_sizes', 'observation_preprocessors_params'):
         variant_spec['Q_params']['kwargs']['hidden_layer_sizes'] = (
             tune.sample_from(lambda spec: (deepcopy(
                 spec.get('config', spec)['policy_params']['kwargs']['hidden_layer_sizes']
