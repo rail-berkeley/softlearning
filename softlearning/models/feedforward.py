@@ -3,12 +3,7 @@ import tensorflow_probability as tfp
 from tensorflow.python.keras.engine import training_utils
 
 from softlearning.utils.keras import PicklableSequential
-
-from distutils.version import LooseVersion
-if LooseVersion(tf.__version__) > LooseVersion("2.00"):
-    from tensorflow import nest
-else:
-    from tensorflow.contrib.framework import nest
+from softlearning.utils.tensorflow import nest
 
 
 tfk = tf.keras
