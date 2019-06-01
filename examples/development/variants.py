@@ -16,9 +16,7 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
         'hidden_layer_sizes': (M, M),
         'squash': True,
         'observation_keys': None,
-        'observation_preprocessors_params': {
-            'observations': None,
-        }
+        'observation_preprocessors_params': {}
     }
 }
 
@@ -312,9 +310,7 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
             'kwargs': {
                 'hidden_layer_sizes': (M, M),
                 'observation_keys': None,
-                'observation_preprocessors_params': {
-                    'observations': None,
-                }
+                'observation_preprocessors_params': {}
             }
         },
         'algorithm_params': algorithm_params,
@@ -386,20 +382,28 @@ def get_variant_spec_image(universe,
         }
 
         variant_spec['policy_params']['kwargs']['hidden_layer_sizes'] = (M, M)
-        variant_spec['policy_params']['kwargs']['observation_preprocessors_params'] = {
-            'pixels': deepcopy(preprocessor_params)
-        }
+        variant_spec['policy_params']['kwargs'][
+            'observation_preprocessors_params'] = {
+                'pixels': deepcopy(preprocessor_params)
+            }
 
         variant_spec['Q_params']['kwargs']['hidden_layer_sizes'] = (
             tune.sample_from(lambda spec: (deepcopy(
-                spec.get('config', spec)['policy_params']['kwargs']['hidden_layer_sizes']
+                spec.get('config', spec)
+                ['policy_params']
+                ['kwargs']
+                ['hidden_layer_sizes']
             )))
         )
-        variant_spec['Q_params']['kwargs']['observation_preprocessors_params'] = (
-            tune.sample_from(lambda spec: (deepcopy(
-                spec.get('config', spec)['policy_params']['kwargs']['observation_preprocessors_params']
-            )))
-        )
+        variant_spec['Q_params']['kwargs'][
+            'observation_preprocessors_params'] = (
+                tune.sample_from(lambda spec: (deepcopy(
+                    spec.get('config', spec)
+                    ['policy_params']
+                    ['kwargs']
+                    ['observation_preprocessors_params']
+                )))
+            )
 
     return variant_spec
 
