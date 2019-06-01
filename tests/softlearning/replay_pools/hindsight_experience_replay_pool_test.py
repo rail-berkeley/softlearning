@@ -13,19 +13,17 @@ from softlearning.environments.utils import get_environment
 
 def create_pool(env, max_size=100, **kwargs):
     return HindsightExperienceReplayPool(
-        observation_space=env.observation_space,
-        action_space=env.action_space,
-        max_size=max_size,
-        **kwargs,
-    )
+        environment=env, max_size=max_size, **kwargs)
 
 
 HER_STRATEGY_TYPES = ['random', 'final', 'episode', 'future']
 HER_RESAMPLING_PROBABILITIES = [0, 0.3, 0.5, 0.8, 1.0]
+REWARD_FUNCTIONS = ()
+TERMINAL_FUNCTIONS = ()
 
 
 class StrategyValidator(object):
-    def __init__(self, her_strategy, resample_field_map):
+    def __init__(self, her_strategy):
         self._her_strategy = her_strategy
         self._statistics = defaultdict(list)
 
@@ -98,21 +96,19 @@ class FutureStrategyValidator(StrategyValidator):
         super(FutureStrategyValidator, self).verify_batch(batch)
 
 
-class TestHindsightExperienceReplayPool(object):
+class TestHindsightExperienceReplayPool():
     @pytest.mark.parametrize("strategy_type", HER_STRATEGY_TYPES)
     @pytest.mark.parametrize("resampling_probability",
                              HER_RESAMPLING_PROBABILITIES)
     def test_resampling(self, strategy_type, resampling_probability):
-        env = get_environment('gym', 'HandReach', 'v0', {})
+        env = get_environment('gym', 'HandReach', 'v0', {
+            'goal_keys': ('achieved_goal', )
+        })
         assert isinstance(env.observation_space, gym.spaces.Dict)
 
         max_size = 1000
         episode_length = 50
 
-        resample_field_map = (
-            (('observations', 'achieved_goal', ),
-             ('observations', 'desired_goal', )),
-        )
         her_strategy = {
             'type': strategy_type,
             'resampling_probability': resampling_probability,
@@ -121,7 +117,6 @@ class TestHindsightExperienceReplayPool(object):
         pool = create_pool(
             env=env,
             max_size=max_size,
-            resample_field_map=resample_field_map,
             her_strategy=her_strategy,
         )
 
@@ -130,10 +125,7 @@ class TestHindsightExperienceReplayPool(object):
             'final': FinalStrategyValidator,
             'episode': EpisodeStrategyValidator,
             'future': FutureStrategyValidator,
-        }[strategy_type](
-            her_strategy=her_strategy,
-            resample_field_map=resample_field_map,
-        )
+        }[strategy_type](her_strategy=her_strategy)
 
         episode_lengths = []
         while pool.size < pool._max_size:
@@ -175,6 +167,14 @@ class TestHindsightExperienceReplayPool(object):
             strategy_validator.verify_batch(random_batch)
 
         assert strategy_validator.statistics_match()
+
+    @pytest.mark.parametrize("reward_function", REWARD_FUNCTIONS)
+    def test_custom_reward_function(self, reward_function):
+        return
+
+    @pytest.mark.parametrize("terminal_function", TERMINAL_FUNCTIONS)
+    def test_custom_terminal_function(self, terminal_function):
+        return
 
 
 if __name__ == '__main__':

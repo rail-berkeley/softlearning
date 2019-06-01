@@ -1,6 +1,6 @@
 import numpy as np
 
-from .simple_replay_pool import SimpleReplayPool
+from .goal_replay_pool import GoalReplayPool
 from flatten_dict import flatten, unflatten
 
 
@@ -9,7 +9,7 @@ def random_int_with_variable_range(mins, maxs):
     return result
 
 
-class ResamplingReplayPool(SimpleReplayPool):
+class ResamplingReplayPool(GoalReplayPool):
     def _resample_indices(self,
                           indices,
                           episode_first_distances,
@@ -95,16 +95,15 @@ class ResamplingReplayPool(SimpleReplayPool):
 class HindsightExperienceReplayPool(ResamplingReplayPool):
     def __init__(self,
                  *args,
-                 resample_field_map=None,
                  her_strategy=None,
                  reward_function=None,
                  terminal_function=None,
                  **kwargs):
-        self._resample_field_map = resample_field_map
-        # self._resample_field_map_flat = flatten(resample_fields_flat)
         self._her_strategy = her_strategy
-        self._reward_function = reward_function
-        self._terminal_function = terminal_function
+        self._reward_function = reward_function or (
+            lambda x: x[('rewards', )])
+        self._terminal_function = terminal_function or (
+            lambda x: x[('terminals', )])
         super(HindsightExperienceReplayPool, self).__init__(*args, **kwargs)
 
     def _relabel_batch(self, batch, indices, her_strategy):
@@ -141,9 +140,23 @@ class HindsightExperienceReplayPool(ResamplingReplayPool):
                     field_name_filter=None))
 
             batch_flat = flatten(batch)
-            for from_key, to_key in self._resample_field_map:
-                batch_flat[to_key][where_resampled] = resampled_batch_flat[
-                    from_key]
+            goal_keys = [
+                key for key in batch_flat.keys()
+                if key[0] == 'goals'
+            ]
+            for key in goal_keys:
+                assert (batch_flat[key][where_resampled].shape
+                        == resampled_batch_flat[key].shape)
+                batch_flat[key][where_resampled] = (
+                    resampled_batch_flat[key])
+
+            if self._reward_function:
+                batch_flat[('rewards', )][where_resampled] = (
+                    self._reward_function(resampled_batch_flat))
+            if self._terminal_function:
+                batch_flat[('terminals', )][where_resampled] = (
+                    self._terminal_function(resampled_batch_flat))
+
             batch = unflatten(batch_flat)
 
             batch['goal_resample_distances'][where_resampled] = (
