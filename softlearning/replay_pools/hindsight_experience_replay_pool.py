@@ -70,7 +70,7 @@ class ResamplingReplayPool(GoalReplayPool):
                 where_same_episode
             ] = (
                 resample_indices[where_same_episode]
-                - resample_indices[where_same_episode]
+                - indices[where_same_episode]
             )[..., None]
         else:
             if resampling_strategy == 'final':
@@ -92,18 +92,39 @@ class ResamplingReplayPool(GoalReplayPool):
         return resample_indices, resample_distances
 
 
+def REPLACE_FULL_OBSERVATION(original_batch,
+                             resampled_batch,
+                             where_resampled,
+                             environment):
+    batch_flat = flatten(original_batch)
+    resampled_batch_flat = flatten(original_batch)
+    goal_keys = [
+        key for key in batch_flat.keys()
+        if key[0] == 'goals'
+    ]
+    for key in goal_keys:
+        assert (batch_flat[key][where_resampled].shape
+                == resampled_batch_flat[key].shape)
+        batch_flat[key][where_resampled] = (
+            resampled_batch_flat[key])
+
+    return unflatten(batch_flat)
+
+
 class HindsightExperienceReplayPool(ResamplingReplayPool):
     def __init__(self,
                  *args,
                  her_strategy=None,
-                 reward_function=None,
-                 terminal_function=None,
+                 update_batch_fn=REPLACE_FULL_OBSERVATION,
+                 reward_fn=None,
+                 terminal_fn=None,
                  **kwargs):
         self._her_strategy = her_strategy
-        self._reward_function = reward_function or (
-            lambda x: x[('rewards', )])
-        self._terminal_function = terminal_function or (
-            lambda x: x[('terminals', )])
+        self._update_batch_fn = update_batch_fn
+        self._reward_fn = reward_fn or (
+            lambda original_batch, *args: original_batch[('rewards', )])
+        self._terminal_fn = terminal_fn or (
+            lambda original_batch, *args: original_batch[('terminals', )])
         super(HindsightExperienceReplayPool, self).__init__(*args, **kwargs)
 
     def _relabel_batch(self, batch, indices, her_strategy):
@@ -133,35 +154,25 @@ class HindsightExperienceReplayPool(ResamplingReplayPool):
                 episode_last_distances,
                 her_strategy_type)
 
-            resampled_batch_flat = flatten(
-                super(HindsightExperienceReplayPool, self)
-                .batch_by_indices(
-                    indices=resampled_indices,
-                    field_name_filter=None))
-
-            batch_flat = flatten(batch)
-            goal_keys = [
-                key for key in batch_flat.keys()
-                if key[0] == 'goals'
-            ]
-            for key in goal_keys:
-                assert (batch_flat[key][where_resampled].shape
-                        == resampled_batch_flat[key].shape)
-                batch_flat[key][where_resampled] = (
-                    resampled_batch_flat[key])
-
-            if self._reward_function:
-                batch_flat[('rewards', )][where_resampled] = (
-                    self._reward_function(resampled_batch_flat))
-            if self._terminal_function:
-                batch_flat[('terminals', )][where_resampled] = (
-                    self._terminal_function(resampled_batch_flat))
-
-            batch = unflatten(batch_flat)
+            resampled_batch = super(
+                HindsightExperienceReplayPool, self
+            ).batch_by_indices(
+                indices=resampled_indices,
+                field_name_filter=None)
 
             batch['resampled_distances'][where_resampled] = (
                 resampled_distances)
             batch['resampled'][where_resampled] = True
+
+            batch = self._update_batch_fn(
+                batch, resampled_batch, where_resampled, self._environment)
+
+            if self._reward_fn:
+                self._reward_fn(
+                    batch, resampled_batch, where_resampled, self._environment)
+            if self._terminal_fn:
+                self._terminal_fn(
+                    batch, resampled_batch, where_resampled, self._environment)
 
         return batch
 
@@ -172,3 +183,7 @@ class HindsightExperienceReplayPool(ResamplingReplayPool):
             batch = self._relabel_batch(
                 batch, indices, her_strategy=self._her_strategy)
         return batch
+
+    def last_n_batch(self, *args, relabel=False, **kwargs):
+        return super(HindsightExperienceReplayPool, self).last_n_batch(
+            *args, relabel=False, **kwargs)
