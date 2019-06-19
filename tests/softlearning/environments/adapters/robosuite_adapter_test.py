@@ -29,8 +29,8 @@ class TestRobosuiteAdapter(unittest.TestCase, AdapterTestClass):
             env = RobosuiteAdapter(
                 domain=domain,
                 task=task,
-                has_renderer=False,
-                has_offscreen_renderer=False,
+                has_renderer=True,
+                has_offscreen_renderer=True,
                 use_camera_obs=False)
             env.reset()
             env.step(env.action_space.sample())
@@ -122,14 +122,16 @@ class TestRobosuiteAdapter(unittest.TestCase, AdapterTestClass):
             self.assertEqual(actual_value, expected_value)
 
     def test_render_rgb_array(self):
-        env = self.create_adapter()
-        with self.assertRaises(NotImplementedError):
-            env.render()
+        env = self.create_adapter(
+            has_renderer=False,
+            has_offscreen_renderer=True)
+        env.render(mode='rgb_array', camera_id=0, width=32, height=32)
 
     def test_render_human(self):
-        env = self.create_adapter()
-        with self.assertRaises(NotImplementedError):
-            env.render()
+        env = self.create_adapter(
+            has_renderer=True,
+            has_offscreen_renderer=False)
+        env.render(mode='human')
 
     def test_fails_with_unnormalized_action_spec(self):
         from robosuite.environments.sawyer_lift import SawyerLift
