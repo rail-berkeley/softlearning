@@ -28,7 +28,7 @@ class GoalReplayPool(FlexibleReplayPool):
                     shape=observation_space.shape)
                 for name, observation_space
                 in observation_space.spaces.items()
-                if name not in environment.goal_key_map.keys()
+                if name in environment.observation_keys
             },
             'next_observations': {
                 name: Field(
@@ -37,7 +37,7 @@ class GoalReplayPool(FlexibleReplayPool):
                     shape=observation_space.shape)
                 for name, observation_space
                 in observation_space.spaces.items()
-                if name not in environment.goal_key_map.keys()
+                if name in environment.observation_keys
             },
             'goals': {
                 name: Field(
@@ -46,7 +46,7 @@ class GoalReplayPool(FlexibleReplayPool):
                     shape=observation_space.shape)
                 for name, observation_space
                 in observation_space.spaces.items()
-                if name in environment.goal_key_map.values()
+                if name in environment.goal_keys
             },
             'actions': Field(
                 name='actions',
@@ -67,21 +67,20 @@ class GoalReplayPool(FlexibleReplayPool):
         super(GoalReplayPool, self).__init__(*args, fields=fields, **kwargs)
 
     def add_samples(self, samples, *args, **kwargs):
-        full_observations = samples['observations']
-        observations = type(full_observations)(
+        observations = type(samples['observations'])(
             (key, values)
-            for key, values in full_observations.items()
-            if key not in self._environment.goal_key_map.keys()
+            for key, values in samples['observations'].items()
+            if key in self._environment.observation_keys
         )
         next_observations = type(samples['next_observations'])(
             (key, values)
             for key, values in samples['next_observations'].items()
-            if key not in self._environment.goal_key_map.keys()
+            if key in self._environment.observation_keys
         )
-        goals = type(full_observations)(
-            (goal_key, full_observations[observation_key])
-            for observation_key, goal_key
-            in self._environment.goal_key_map.items()
+        goals = type(samples['observations'])(
+            (key, values)
+            for key, values in samples['observations'].items()
+            if key in self._environment.goal_keys
         )
 
         samples.update({

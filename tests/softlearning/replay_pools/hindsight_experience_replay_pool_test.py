@@ -102,7 +102,8 @@ class TestHindsightExperienceReplayPool():
                              HER_RESAMPLING_PROBABILITIES)
     def test_resampling(self, strategy_type, resampling_probability):
         env = get_environment('gym', 'HandReach', 'v0', {
-            'goal_keys': ('achieved_goal', )
+            'observation_keys': ('observation', ),
+            'goal_keys': ('desired_goal', ),
         })
         assert isinstance(env.observation_space, gym.spaces.Dict)
 

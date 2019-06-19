@@ -97,7 +97,7 @@ def REPLACE_FULL_OBSERVATION(original_batch,
                              where_resampled,
                              environment):
     batch_flat = flatten(original_batch)
-    resampled_batch_flat = flatten(original_batch)
+    resampled_batch_flat = flatten(resampled_batch)
     goal_keys = [
         key for key in batch_flat.keys()
         if key[0] == 'goals'
@@ -122,9 +122,9 @@ class HindsightExperienceReplayPool(ResamplingReplayPool):
         self._her_strategy = her_strategy
         self._update_batch_fn = update_batch_fn
         self._reward_fn = reward_fn or (
-            lambda original_batch, *args: original_batch[('rewards', )])
+            lambda original_batch, *args: original_batch['rewards'])
         self._terminal_fn = terminal_fn or (
-            lambda original_batch, *args: original_batch[('terminals', )])
+            lambda original_batch, *args: original_batch['terminals'])
         super(HindsightExperienceReplayPool, self).__init__(*args, **kwargs)
 
     def _relabel_batch(self, batch, indices, her_strategy):
