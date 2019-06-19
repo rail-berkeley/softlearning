@@ -117,7 +117,7 @@ class SoftlearningEnv(metaclass=ABCMeta):
         observation = type(observation)([
             (name, value)
             for name, value in observation.items()
-            if name in self.observation_keys
+            if name in (*self.observation_keys, *self.goal_keys)
         ])
         return observation
 

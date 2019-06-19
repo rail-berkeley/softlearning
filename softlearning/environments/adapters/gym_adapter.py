@@ -104,7 +104,7 @@ class GymAdapter(SoftlearningEnv):
         self._observation_space = type(dict_observation_space)([
             (name, copy.deepcopy(space))
             for name, space in dict_observation_space.spaces.items()
-            if name in self.observation_keys
+            if name in self.observation_keys + self.goal_keys
         ])
 
         if len(self._env.action_space.shape) > 1:
