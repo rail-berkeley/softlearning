@@ -428,7 +428,7 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
     return variant_spec
 
 
-def is_image_env(domain, task, variant_spec):
+def is_image_env(universe, domain, task, variant_spec):
     return ('image' in task.lower()
             or 'image' in domain.lower()
             or 'pixel_wrapper_kwargs' in (
@@ -445,7 +445,7 @@ def get_variant_spec_image(universe,
     variant_spec = get_variant_spec_base(
         universe, domain, task, policy, algorithm, *args, **kwargs)
 
-    if is_image_env(domain, task, variant_spec):
+    if is_image_env(universe, domain, task, variant_spec):
         preprocessor_params = {
             'type': 'ConvnetPreprocessor',
             'kwargs': {
