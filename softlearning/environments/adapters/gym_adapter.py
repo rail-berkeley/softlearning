@@ -69,8 +69,12 @@ class GymAdapter(SoftlearningEnv):
 
         if env is None:
             assert (domain is not None and task is not None), (domain, task)
-            env_id = f"{domain}-{task}"
-            env = gym.envs.make(env_id, **kwargs)
+            try:
+                env_id = f"{domain}-{task}"
+                env = gym.envs.make(env_id, **kwargs)
+            except gym.error.UnregisteredEnv:
+                env_id = f"{domain}{task}"
+                env = gym.envs.make(env_id, **kwargs)
             self._env_kwargs = kwargs
         else:
             assert not kwargs
