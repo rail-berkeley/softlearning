@@ -106,6 +106,12 @@ class PixelObservationWrapper(ObservationWrapper):
             observation[STATE_KEY] = observation
 
         pixels = self.env.get_pixels(**self._render_kwargs)
+
+        try:
+            pixels = self.env.get_pixels(**self._render_kwargs)
+        except AttributeError:
+            pixels = self.env.render(**self._render_kwargs)
+
         observation[self._observation_key] = pixels
 
         return observation
