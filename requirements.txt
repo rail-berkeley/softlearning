@@ -74,7 +74,7 @@ pytz==2018.7
 PyWavelets==1.0.1
 PyYAML==5.1
 psutil==5.4.8
-ray[rllib,debug]==0.7.0
+ray[rllib,debug]==0.7.1
 redis==3.0.1
 requests==2.20.1
 robosuite==0.1.0
