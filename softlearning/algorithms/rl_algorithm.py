@@ -350,7 +350,7 @@ class RLAlgorithm(Checkpointable):
             fps = 1 // getattr(self._training_environment, 'dt', 1/30)
             for i, path in enumerate(paths):
                 video_frames = path.pop('images')
-                video_file_name = f'evaluation_path_{self._epoch}_{i}.avi'
+                video_file_name = f'evaluation_path_{self._epoch}_{i}.mp4'
                 video_file_path = os.path.join(
                     os.getcwd(), 'videos', video_file_name)
                 save_video(video_frames, video_file_path, fps=fps)
