@@ -444,7 +444,7 @@ def get_variant_spec_image(universe,
 
     if is_image_env(universe, domain, task, variant_spec):
         preprocessor_params = {
-            'type': 'ConvnetPreprocessor',
+            'type': 'convnet_preprocessor',
             'kwargs': {
                 'conv_filters': (64, ) * 3,
                 'conv_kernel_sizes': (3, ) * 3,
