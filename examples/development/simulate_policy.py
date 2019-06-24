@@ -74,10 +74,11 @@ def simulate_policy(args):
                          render_kwargs=render_kwargs)
 
     if args.render_kwargs.get('mode') == 'rgb_array':
+        fps = 1 // getattr(evaluation_environment, 'dt', 1/30)
         for i, path in enumerate(paths):
             video_save_dir = os.path.expanduser('/tmp/simulate_policy/')
-            video_save_path = os.path.join(video_save_dir, f'episode_{i}.avi')
-            save_video(path['images'], video_save_path)
+            video_save_path = os.path.join(video_save_dir, f'episode_{i}.mp4')
+            save_video(path['images'], video_save_path, fps=fps)
 
     return paths
 

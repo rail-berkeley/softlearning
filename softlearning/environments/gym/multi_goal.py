@@ -129,7 +129,7 @@ class MultiGoalEnv(MujocoEnv, EzPickle):
         self._env_lines = []
 
         for path in paths:
-            positions = np.stack([info['pos'] for info in path['infos']])
+            positions = np.stack(path['infos']['pos'])
             xx = positions[:, 0]
             yy = positions[:, 1]
             self._env_lines += self._ax.plot(xx, yy, 'b')
@@ -137,7 +137,7 @@ class MultiGoalEnv(MujocoEnv, EzPickle):
         plt.draw()
         plt.pause(0.01)
 
-    def render(self, mode='human'):
+    def render(self, mode='human', *args, **kwargs):
         """Render for rendering the current state of the environment."""
         pass
 

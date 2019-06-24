@@ -69,8 +69,12 @@ class GymAdapter(SoftlearningEnv):
 
         if env is None:
             assert (domain is not None and task is not None), (domain, task)
-            env_id = f"{domain}-{task}"
-            env = gym.envs.make(env_id, **kwargs)
+            try:
+                env_id = f"{domain}-{task}"
+                env = gym.envs.make(env_id, **kwargs)
+            except gym.error.UnregisteredEnv:
+                env_id = f"{domain}{task}"
+                env = gym.envs.make(env_id, **kwargs)
             self._env_kwargs = kwargs
         else:
             assert not kwargs
@@ -104,7 +108,7 @@ class GymAdapter(SoftlearningEnv):
         self._observation_space = type(dict_observation_space)([
             (name, copy.deepcopy(space))
             for name, space in dict_observation_space.spaces.items()
-            if name in self.observation_keys
+            if name in self.observation_keys + self.goal_keys
         ])
 
         if len(self._env.action_space.shape) > 1:

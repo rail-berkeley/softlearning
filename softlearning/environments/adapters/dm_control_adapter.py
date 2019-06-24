@@ -119,7 +119,7 @@ class DmControlAdapter(SoftlearningEnv):
         self._observation_space = type(observation_space)([
             (name, copy.deepcopy(space))
             for name, space in observation_space.spaces.items()
-            if name in self.observation_keys
+            if name in self.observation_keys + self.goal_keys
         ])
 
         action_space = convert_dm_control_to_gym_space(self._env.action_spec())

@@ -7,7 +7,9 @@ ALGORITHM_PARAMS_BASE = {
         'epoch_length': 100,
         'n_epochs': 1000,
         'n_train_repeat': 1,
-        'eval_render_mode': 'human',
+        'eval_render_kwargs': {
+            'mode': 'human',
+        },
         'eval_n_episodes': 10,
         'eval_deterministic': True,
 
@@ -49,8 +51,6 @@ def get_variant_spec(args):
 
     layer_size = 128
     variant_spec = {
-        'seed': 1,
-
         'layer_size': layer_size,
         'policy_params': {
             'type': 'GaussianPolicy',
@@ -67,9 +67,11 @@ def get_variant_spec(args):
             'type': 'double_feedforward_Q_function',
             'kwargs': {
                 'hidden_layer_sizes': (layer_size, layer_size),
-            }
+            },
         },
-        'run_params': {}
+        'run_params': {
+            'seed': 1,
+        },
     }
 
     return variant_spec

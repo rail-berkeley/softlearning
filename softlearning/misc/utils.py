@@ -83,10 +83,11 @@ def _make_dir(filename):
         os.makedirs(folder)
 
 
-def save_video(video_frames, filename):
+def save_video(video_frames, filename, fps=60):
+    assert fps == int(fps), fps
     import skvideo.io
     _make_dir(filename)
-    skvideo.io.vwrite(filename, video_frames, inputdict={'-r': "60"})
+    skvideo.io.vwrite(filename, video_frames, inputdict={'-r': str(int(fps))})
 
 
 def deep_update(d, *us):
