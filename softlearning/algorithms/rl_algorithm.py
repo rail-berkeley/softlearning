@@ -344,7 +344,8 @@ class RLAlgorithm(Checkpointable):
 
         should_save_video = (
             self._video_save_frequency > 0
-            and self._epoch % self._video_save_frequency == 0)
+            and (self._epoch == 0
+                 or (self._epoch + 1) % self._video_save_frequency == 0))
 
         if should_save_video:
             fps = 1 // getattr(self._training_environment, 'dt', 1/30)
