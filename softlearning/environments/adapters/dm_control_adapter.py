@@ -5,7 +5,7 @@ import copy
 
 import numpy as np
 from dm_control import suite
-from dm_control.rl.specs import ArraySpec, BoundedArraySpec
+from dm_env import specs
 from dm_control.suite.wrappers import pixels
 from gym import spaces
 
@@ -32,7 +32,7 @@ def convert_dm_control_to_gym_space(dm_control_space):
     To handle dm_control observation_specs as inputs, we check the following
     input types in order to enable recursive calling on each nested item.
     """
-    if isinstance(dm_control_space, BoundedArraySpec):
+    if isinstance(dm_control_space, specs.BoundedArray):
         gym_box = spaces.Box(
             low=dm_control_space.minimum,
             high=dm_control_space.maximum,
@@ -44,8 +44,8 @@ def convert_dm_control_to_gym_space(dm_control_space):
         assert gym_box.shape == dm_control_space.shape, (
             (gym_box.shape, dm_control_space.shape))
         return gym_box
-    elif isinstance(dm_control_space, ArraySpec):
-        if isinstance(dm_control_space, BoundedArraySpec):
+    elif isinstance(dm_control_space, specs.Array):
+        if isinstance(dm_control_space, specs.BoundedArray):
             raise ValueError("The order of the if-statements matters.")
         return spaces.Box(
             low=-float("inf"),

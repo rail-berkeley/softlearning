@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-from dm_control.rl import environment
+import dm_env
 
 
 _BOUNDS_MUST_BE_FINITE = (
@@ -18,7 +18,7 @@ _MUST_BE_BROADCASTABLE = (
 )
 
 
-class Wrapper(environment.Base):
+class Wrapper(dm_env.Environment):
     """Wraps a control environment and adds Gaussian noise to actions."""
 
     def __init__(self, env, minimum, maximum):
