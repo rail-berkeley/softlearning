@@ -50,7 +50,13 @@ def convert_dm_control_to_gym_space(dm_control_space):
         return spaces.Box(
             low=-float("inf"),
             high=float("inf"),
-            shape=dm_control_space.shape,
+            shape=(
+                dm_control_space.shape
+                if (len(dm_control_space.shape) == 1
+                    or (len(dm_control_space.shape) == 3
+                        and np.issubdtype(dm_control_space.dtype, np.integer)))
+                else (int(np.prod(dm_control_space.shape)), )
+            ),
             dtype=dm_control_space.dtype)
     elif isinstance(dm_control_space, OrderedDict):
         return spaces.Dict(OrderedDict([
@@ -142,14 +148,13 @@ class DmControlAdapter(SoftlearningEnv):
             if key not in self.observation_keys
         }
         observation = self._filter_observation(time_step.observation)
-        time_step._replace(observation=observation)
+        time_step = time_step._replace(observation=observation)
         return observation, reward, terminal, info
 
     def reset(self, *args, **kwargs):
         time_step = self._env.reset(*args, **kwargs)
         observation = self._filter_observation(time_step.observation)
-        time_step._replace(observation=observation)
-        return time_step.observation
+        return observation
 
     def render(self, *args, mode="human", camera_id=0, **kwargs):
         if mode == "human":
