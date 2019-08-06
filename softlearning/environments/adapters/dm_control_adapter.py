@@ -140,7 +140,7 @@ class DmControlAdapter(SoftlearningEnv):
 
     def step(self, action, *args, **kwargs):
         time_step = self._env.step(action, *args, **kwargs)
-        reward = time_step.reward
+        reward = time_step.reward or 0.0
         terminal = time_step.last()
         info = {
             key: value
