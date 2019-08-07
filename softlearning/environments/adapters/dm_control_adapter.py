@@ -107,7 +107,9 @@ class DmControlAdapter(SoftlearningEnv):
             assert domain is None and task is None, (domain, task)
 
         if normalize:
-            env = action_scale.Wrapper(env, minimum=-1.0, maximum=1.0)
+            if (np.any(env.action_spec().minimum != -1)
+                or np.any(env.action_spec().maximum != 1)):
+                env = action_scale.Wrapper(env, minimum=-1.0, maximum=1.0)
             np.testing.assert_equal(env.action_spec().minimum, -1)
             np.testing.assert_equal(env.action_spec().maximum, 1)
 
