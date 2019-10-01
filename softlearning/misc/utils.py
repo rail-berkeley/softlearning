@@ -77,19 +77,6 @@ def split_aug_obs(aug_obs, num_skills):
     return (obs, z)
 
 
-def _make_dir(filename):
-    folder = os.path.dirname(filename)
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-
-
-def save_video(video_frames, filename, fps=60):
-    assert fps == int(fps), fps
-    import skvideo.io
-    _make_dir(filename)
-    skvideo.io.vwrite(filename, video_frames, inputdict={'-r': str(int(fps))})
-
-
 def deep_update(d, *us):
     d = d.copy()
 
