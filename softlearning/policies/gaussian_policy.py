@@ -14,9 +14,6 @@ from softlearning.models.utils import flatten_input_structure, create_inputs
 from .base_policy import LatentSpacePolicy
 
 
-SCALE_DIAG_MIN_MAX = (-20, 2)
-
-
 class GaussianPolicy(LatentSpacePolicy):
     def __init__(self,
                  input_shapes,
@@ -70,11 +67,6 @@ class GaussianPolicy(LatentSpacePolicy):
                 num_or_size_splits=2,
                 axis=-1)
         )(shift_and_log_scale_diag)
-
-        log_scale_diag = tf.keras.layers.Lambda(
-            lambda log_scale_diag: tf.clip_by_value(
-                log_scale_diag, *SCALE_DIAG_MIN_MAX)
-        )(log_scale_diag)
 
         batch_size = tf.keras.layers.Lambda(
             lambda x: tf.shape(input=x)[0])(conditions)
