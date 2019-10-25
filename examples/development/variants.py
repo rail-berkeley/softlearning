@@ -8,7 +8,6 @@ from softlearning.misc.utils import get_git_rev, deep_update
 DEFAULT_KEY = "__DEFAULT_KEY__"
 
 M = 256
-REPARAMETERIZE = True
 NUM_CHECKPOINTS = 10
 NUM_COUPLING_LAYERS = 2
 
@@ -45,7 +44,6 @@ ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
         'type': 'SAC',
         'kwargs': {
-            'reparameterize': REPARAMETERIZE,
             'lr': 3e-4,
             'target_update_interval': 1,
             'tau': 5e-3,

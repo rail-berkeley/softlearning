@@ -41,7 +41,6 @@ class SAC(RLAlgorithm):
             tau=5e-3,
             target_update_interval=1,
             action_prior='uniform',
-            reparameterize=False,
 
             save_full_state=False,
             **kwargs,
@@ -63,9 +62,6 @@ class SAC(RLAlgorithm):
             tau (`float`): Soft value function target update weight.
             target_update_interval ('int'): Frequency at which target network
                 updates occur in iterations.
-            reparameterize ('bool'): If True, we use a gradient estimator for
-                the policy derived using the reparameterization trick. We use
-                a likelihood ratio based estimator otherwise.
         """
 
         super(SAC, self).__init__(**kwargs)
@@ -93,8 +89,6 @@ class SAC(RLAlgorithm):
         self._tau = tau
         self._target_update_interval = target_update_interval
         self._action_prior = action_prior
-
-        self._reparameterize = reparameterize
 
         self._save_full_state = save_full_state
 
@@ -232,13 +226,10 @@ class SAC(RLAlgorithm):
         Q_log_targets = tuple(Q(Q_inputs) for Q in self._Qs)
         min_Q_log_target = tf.reduce_min(Q_log_targets, axis=0)
 
-        if self._reparameterize:
-            policy_kl_losses = (
-                alpha * log_pis
-                - min_Q_log_target
-                - policy_prior_log_probs)
-        else:
-            raise NotImplementedError
+        policy_kl_losses = (
+            alpha * log_pis
+            - min_Q_log_target
+            - policy_prior_log_probs)
 
         assert policy_kl_losses.shape.as_list() == [None, 1]
 

@@ -25,7 +25,6 @@ ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
         'type': 'SAC',
         'kwargs': {
-            'reparameterize': True,
             'lr': 3e-4,
             'reward_scale': 0.1,
             'target_entropy': 'auto',
