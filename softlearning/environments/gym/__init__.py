@@ -61,6 +61,10 @@ MUJOCO_ENVIRONMENT_SPECS = (
         'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
                         '.image_pusher_2d:BlindForkReacher2dEnv'),
     },
+    {
+        'id': 'PointGather',
+        'entry_point': (f'sandbox.safe_learning.envs.point_gather:PointGather')
+    },
 )
 
 GENERAL_ENVIRONMENT_SPECS = (

@@ -34,7 +34,7 @@ ALGORITHM_PARAMS_BASE = {
         'eval_n_episodes': 1,
         'eval_deterministic': True,
 
-        'discount': 0.99,
+        'discount': 0.995,
         'tau': 5e-3,
         'reward_scale': 1.0,
     }
@@ -141,6 +141,9 @@ NUM_EPOCHS_PER_UNIVERSE_DOMAIN_TASK = {
         'Pendulum': {
             DEFAULT_KEY: 10,
         },
+        'PointGather': {
+            DEFAULT_KEY: 7500  # cpo uses 7.5e6 steps and this has 1000 steps per epoch
+        }
     },
     'dm_control': {
         DEFAULT_KEY: 200,
