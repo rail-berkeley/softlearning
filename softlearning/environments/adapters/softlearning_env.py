@@ -232,6 +232,12 @@ class SoftlearningEnv(metaclass=ABCMeta):
         for key, value in results.items():
             aggregated_results[key + '-mean'] = np.mean(value)
 
+        if hasattr(self.unwrapped, 'get_path_infos'):
+            env_path_infos = self.unwrapped.get_path_infos(
+                paths, *args, **kwargs)
+
+            aggregated_results.update(env_path_infos)
+
         return aggregated_results
 
     def __getattr__(self, name):
