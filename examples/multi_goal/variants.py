@@ -1,4 +1,4 @@
-from softlearning.utils.misc import deep_update
+from softlearning.utils.dict import deep_update
 
 ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
