@@ -226,68 +226,8 @@ MAX_PATH_LENGTH_PER_UNIVERSE_DOMAIN_TASK = {
     },
 }
 
-NUM_EPOCHS_PER_UNIVERSE_DOMAIN_TASK = {
-    DEFAULT_KEY: 200,
-    'gym': {
-        DEFAULT_KEY: 200,
-        'Swimmer': {
-            DEFAULT_KEY: int(3e2),
-        },
-        'Hopper': {
-            DEFAULT_KEY: int(1e3),
-        },
-        'HalfCheetah': {
-            DEFAULT_KEY: int(3e3),
-        },
-        'Walker2d': {
-            DEFAULT_KEY: int(3e3),
-        },
-        'Ant': {
-            DEFAULT_KEY: int(3e3),
-        },
-        'Humanoid': {
-            DEFAULT_KEY: int(1e4),
-        },
-        'Pusher2d': {
-            DEFAULT_KEY: int(2e3),
-        },
-        'HandManipulatePen': {
-            DEFAULT_KEY: int(1e4),
-        },
-        'HandManipulateEgg': {
-            DEFAULT_KEY: int(1e4),
-        },
-        'HandManipulateBlock': {
-            DEFAULT_KEY: int(1e4),
-        },
-        'HandReach': {
-            DEFAULT_KEY: int(1e4),
-        },
-        'Point2DEnv': {
-            DEFAULT_KEY: int(50),
-        },
-        'Reacher': {
-            DEFAULT_KEY: int(200),
-        },
-        'Pendulum': {
-            DEFAULT_KEY: 10,
-        },
-    },
-    'dm_control': {
-        DEFAULT_KEY: 200,
-        'ball_in_cup': {
-            DEFAULT_KEY: int(2e4),
-        },
-        'cheetah': {
-            DEFAULT_KEY: int(2e4),
-        },
-        'finger': {
-            DEFAULT_KEY: int(2e4),
-        },
-    },
-    'robosuite': {
-        DEFAULT_KEY: 200,
-    }
+EPOCH_LENGTH_PER_UNIVERSE_DOMAIN_TASK = {
+    DEFAULT_KEY: 1000,
 }
 
 
@@ -419,8 +359,8 @@ ENVIRONMENT_PARAMS_PER_UNIVERSE_DOMAIN_TASK = {
 }
 
 
-def get_num_epochs(universe, domain, task):
-    level_result = NUM_EPOCHS_PER_UNIVERSE_DOMAIN_TASK.copy()
+def get_epoch_length(universe, domain, task):
+    level_result = EPOCH_LENGTH_PER_UNIVERSE_DOMAIN_TASK.copy()
     for level_key in (universe, domain, task):
         if isinstance(level_result, int):
             return level_result
@@ -487,16 +427,16 @@ def get_total_timesteps(universe, domain, task):
 
 
 def get_algorithm_params(universe, domain, task):
-    n_epochs = get_num_epochs(universe, domain, task)
+    total_timesteps = get_total_timesteps(universe, domain, task)
+    epoch_length = get_epoch_length(universe, domain, task)
+    n_epochs = total_timesteps / epoch_length
+    assert n_epochs == int(n_epochs)
     algorithm_params = {
         'kwargs': {
-            'n_epochs': n_epochs,
+            'n_epochs': int(n_epochs),
             'n_initial_exploration_steps': tune.sample_from(
                 get_initial_exploration_steps),
-            'epoch_length': (
-                get_total_timesteps(universe, domain, task)
-                // n_epochs
-            ),
+            'epoch_length': epoch_length,
         }
     }
 
