@@ -7,7 +7,7 @@ from ray.tune import sample_from
 
 import softlearning.algorithms.utils as alg_utils
 import softlearning.environments.utils as env_utils
-from softlearning.misc.utils import datetimestamp
+from softlearning.utils.misc import datetimestamp
 
 
 DEFAULT_UNIVERSE = 'gym'

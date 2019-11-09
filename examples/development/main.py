@@ -15,7 +15,7 @@ from softlearning.replay_pools.utils import get_replay_pool_from_variant
 from softlearning.samplers.utils import get_sampler_from_variant
 from softlearning.value_functions.utils import get_Q_function_from_variant
 
-from softlearning.misc.utils import set_seed
+from softlearning.utils.misc import set_seed
 from softlearning.utils.tensorflow import initialize_tf_variables
 from examples.instrument import run_example_local
 

@@ -23,7 +23,7 @@ import ray
 from ray import tune
 from ray.autoscaler.commands import exec_cluster
 
-from softlearning.misc.utils import datetimestamp, PROJECT_PATH
+from softlearning.utils.misc import datetimestamp, PROJECT_PATH
 
 
 AUTOSCALER_DEFAULT_CONFIG_FILE_GCE = os.path.join(
