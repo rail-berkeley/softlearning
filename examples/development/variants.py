@@ -9,7 +9,6 @@ from softlearning.misc.utils import get_git_rev, deep_update
 DEFAULT_KEY = "__DEFAULT_KEY__"
 
 M = 256
-NUM_CHECKPOINTS = 10
 NUM_COUPLING_LAYERS = 2
 
 
@@ -456,13 +455,14 @@ def get_initial_exploration_steps(spec):
 
 
 def get_checkpoint_frequency(spec):
+    num_checkpoints = 10
     config = spec.get('config', spec)
     checkpoint_frequency = (
         config
         ['algorithm_params']
         ['kwargs']
         ['n_epochs']
-    ) // NUM_CHECKPOINTS
+    ) // num_checkpoints
 
     return checkpoint_frequency
 
