@@ -135,7 +135,7 @@ class GaussianPolicy(LatentSpacePolicy):
                     scale_diag=tf.exp(log_scale_diag)),
             ))
             distribution = (
-                tfp.distributions.ConditionalTransformedDistribution(
+                tfp.distributions.TransformedDistribution(
                     distribution=base_distribution,
                     bijector=bijector))
 
