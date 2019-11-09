@@ -4,7 +4,8 @@ from copy import deepcopy
 from ray import tune
 import numpy as np
 
-from softlearning.utils.misc import get_git_rev, deep_update
+from softlearning.utils.git import get_git_rev
+from softlearning.utils.misc import deep_update
 
 DEFAULT_KEY = "__DEFAULT_KEY__"
 
