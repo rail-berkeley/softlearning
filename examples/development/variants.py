@@ -245,12 +245,13 @@ ENVIRONMENT_PARAMS_PER_UNIVERSE_DOMAIN_TASK = {
         'ball_in_cup': {
             'catch': {
                 'pixel_wrapper_kwargs': {
-                    'observation_key': 'pixels',
                     'pixels_only': True,
                     'render_kwargs': {
-                        'width': 84,
-                        'height': 84,
-                        'camera_id': 0,
+                        'pixels': {
+                            'width': 84,
+                            'height': 84,
+                            'camera_id': 0,
+                        },
                     },
                 },
             },
@@ -258,12 +259,13 @@ ENVIRONMENT_PARAMS_PER_UNIVERSE_DOMAIN_TASK = {
         'cheetah': {
             'run': {
                 'pixel_wrapper_kwargs': {
-                    'observation_key': 'pixels',
                     'pixels_only': True,
                     'render_kwargs': {
-                        'width': 84,
-                        'height': 84,
-                        'camera_id': 0,
+                        'pixels': {
+                            'width': 84,
+                            'height': 84,
+                            'camera_id': 0,
+                        },
                     },
                 },
             },
@@ -271,12 +273,13 @@ ENVIRONMENT_PARAMS_PER_UNIVERSE_DOMAIN_TASK = {
         'finger': {
             'spin': {
                 'pixel_wrapper_kwargs': {
-                    'observation_key': 'pixels',
                     'pixels_only': True,
                     'render_kwargs': {
-                        'width': 84,
-                        'height': 84,
-                        'camera_id': 0,
+                        'pixels': {
+                            'width': 84,
+                            'height': 84,
+                            'camera_id': 0,
+                        },
                     },
                 },
             },
