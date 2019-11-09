@@ -54,7 +54,7 @@ git+https://github.com/vitchyr/multiworld.git@d76b3dae2e8cbca02924f93d6cc0239c55
 networkx==2.2
 numpy==1.15.4
 pandas==0.23.4
-Pillow==5.3.0
+Pillow==6.2.0
 plotly==1.9.6
 pluggy==0.8.0
 protobuf==3.6.1
