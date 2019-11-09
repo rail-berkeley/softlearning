@@ -62,21 +62,6 @@ def timestamp(divider='-'):
         '%H{d}%M{d}%S'.format(d=divider))
 
 
-def concat_obs_z(obs, z, num_skills):
-    """Concatenates the observation to a one-hot encoding of Z."""
-    assert np.isscalar(z)
-    z_one_hot = np.zeros(num_skills)
-    z_one_hot[z] = 1
-    return np.hstack([obs, z_one_hot])
-
-
-def split_aug_obs(aug_obs, num_skills):
-    """Splits an augmented observation into the observation and Z."""
-    (obs, z_one_hot) = (aug_obs[:-num_skills], aug_obs[-num_skills:])
-    z = np.where(z_one_hot == 1)[0][0]
-    return (obs, z)
-
-
 def deep_update(d, *us):
     d = d.copy()
 
