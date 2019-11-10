@@ -29,8 +29,8 @@ gast==0.2.2
 gitdb2==2.0.5
 GitPython==2.1.11
 glfw==1.7.0
-google-api-python-client==1.7.5
-google-auth==1.6.1
+google-api-python-client==1.7.11
+google-auth==1.7.0
 google-auth-httplib2==0.0.3
 google-compute-engine==2.8.13
 grpcio==1.16.1
