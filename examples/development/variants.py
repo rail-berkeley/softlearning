@@ -587,6 +587,4 @@ def get_variant_spec(args):
         variant_spec['run_params']['checkpoint_replay_pool'] = (
             args.checkpoint_replay_pool)
 
-    from pprint import pprint; import ipdb; ipdb.set_trace(context=30)
-
     return variant_spec
