@@ -5,6 +5,7 @@ from ray import tune
 import numpy as np
 
 from softlearning.utils.git import get_git_rev
+from softlearning.utils.misc import get_host_name
 from softlearning.utils.dict import deep_update
 
 DEFAULT_KEY = "__DEFAULT_KEY__"
@@ -510,6 +511,7 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
             }
         },
         'run_params': {
+            'host_name': get_host_name(),
             'seed': tune.sample_from(
                 lambda spec: np.random.randint(0, 10000)),
             'checkpoint_at_end': True,
@@ -584,5 +586,7 @@ def get_variant_spec(args):
     if args.checkpoint_replay_pool is not None:
         variant_spec['run_params']['checkpoint_replay_pool'] = (
             args.checkpoint_replay_pool)
+
+    from pprint import pprint; import ipdb; ipdb.set_trace(context=30)
 
     return variant_spec
