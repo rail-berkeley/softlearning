@@ -117,5 +117,9 @@ def simulate_policy(checkpoint_path,
 
 
 if __name__ == '__main__':
+    gpu_options = tf.GPUOptions(allow_growth=True)
+    session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+    tf.keras.backend.set_session(session)
+
     args = parse_args()
     simulate_policy(**vars(args))
