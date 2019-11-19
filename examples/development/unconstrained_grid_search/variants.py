@@ -5,5 +5,5 @@ from examples.development import (
 
 def get_variant_spec(args):
     variant_spec = get_development_variant_spec(args)
-    variant_spec['algorithm_params']['kwargs']['lr'] = tune.grid_search([1e-4, 3e-4, 5e-4, 1e-3])
+    variant_spec['algorithm_params']['kwargs']['lr'] = tune.grid_search([1e-4, 3e-4, 5e-4])
     return variant_spec
