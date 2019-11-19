@@ -4,7 +4,6 @@ from collections import defaultdict, OrderedDict
 import copy
 
 import gym
-import rllab
 from gym import spaces, wrappers
 from gym.envs.mujoco.mujoco_env import MujocoEnv
 
@@ -100,8 +99,7 @@ class GymAdapter(SoftlearningEnv):
             dict_observation_space = self._env.observation_space
             self.observation_keys = (
                 observation_keys or (*self.observation_space.spaces.keys(), ))
-        elif isinstance(self._env.observation_space, spaces.Box) or \
-                isinstance(self._env.observation_space, rllab.spaces.Box):
+        elif isinstance(self._env.observation_space, spaces.Box):
             dict_observation_space = spaces.Dict(OrderedDict((
                 (DEFAULT_OBSERVATION_KEY, self._env.observation_space),
             )))
