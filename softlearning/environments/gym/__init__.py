@@ -65,6 +65,15 @@ MUJOCO_ENVIRONMENT_SPECS = (
         'id': 'PointGather-v0',
         'entry_point': (f'sandbox.safe_learning.envs.point_gather:PointGather')
     },
+    {
+        'id': 'PointGatherNoPenalization-v0',
+        'entry_point': (f'sandbox.safe_learning.envs.point_gather:PointGatherNoPenalization')
+    },
+    {
+        'id': 'PointCircle-v0',
+        'entry_point': (f'sandbox.safe_learning.envs.point_gather:PointCircle')
+    },
+
 )
 
 GENERAL_ENVIRONMENT_SPECS = (

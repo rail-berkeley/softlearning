@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 source activate softlearning
 cd ~/softlearning/
-# TODO put in directory and .out file named by date
+
+name=sac_point_gather_no_penalization_unconstrained_search
+out_file="${name}_`date +"%d-%b-%Y"`.out"
+
 nohup softlearning run_example_local examples.development.unconstrained_hyper_param_search \
     --universe=gym \
-    --domain=PointCircle \
+    --domain=PointGatherNoPenalization \
     --task=v0 \
-    --exp-name=sac_point_circle_unconstrained_hyper_param_search \
+    --exp-name=${name} \
     --num-samples=1 \
     --trial-cpus=1  \
-    --checkpoint-frequency=1000 > sac_point_circle_unconstrained_search.out
+    --checkpoint-frequency=1000 > ${out_file}
