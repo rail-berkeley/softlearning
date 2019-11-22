@@ -143,7 +143,13 @@ NUM_EPOCHS_PER_UNIVERSE_DOMAIN_TASK = {
         },
         'PointGather': {
             DEFAULT_KEY: 7500  # cpo uses 7.5e6 steps and this has 1000 steps per epoch
-        }
+        },
+        'PointGatherNoPenalization':{
+            DEFAULT_KEY: 7500  # cpo uses 7.5e6 steps and this has 1000 steps per epoch
+        },
+        'PointCircle': {
+            DEFAULT_KEY: 7500  # cpo uses 7.5e6 steps and this has 1000 steps per epoch
+        },
     },
     'dm_control': {
         DEFAULT_KEY: 200,
