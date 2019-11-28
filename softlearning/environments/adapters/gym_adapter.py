@@ -9,6 +9,7 @@ from gym.envs.mujoco.mujoco_env import MujocoEnv
 
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym import register_environments
+from softlearning.utils.gym import is_continuous_space
 
 
 def parse_domain_task(gym_id):
@@ -85,7 +86,7 @@ class GymAdapter(SoftlearningEnv):
             # depends on time rather than state).
             env = env.env
 
-        if normalize:
+        if normalize and is_continuous_space(env.action_space):
             env = wrappers.RescaleAction(env, -1.0, 1.0)
 
         if pixel_wrapper_kwargs is not None:
