@@ -144,7 +144,7 @@ class TestHindsightExperienceReplayPool():
                         (episode_length, *space.shape), dtype=space.dtype)
                     for name, space in env.observation_space.spaces.items()
                 },
-                'actions': np.empty((episode_length, *env.action_space.shape)),
+                'actions': np.empty((episode_length, *env.action_shape)),
                 'rewards': np.empty((episode_length, 1), dtype=np.float32),
                 'terminals': np.empty((episode_length, 1), dtype=bool),
             }
