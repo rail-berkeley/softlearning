@@ -9,8 +9,6 @@ from gym.envs.mujoco.mujoco_env import MujocoEnv
 
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym import register_environments
-from softlearning.environments.gym.wrappers import (
-    NormalizeActionWrapper, PixelObservationWrapper)
 
 
 def parse_domain_task(gym_id):
@@ -88,10 +86,10 @@ class GymAdapter(SoftlearningEnv):
             env = env.env
 
         if normalize:
-            env = NormalizeActionWrapper(env)
+            env = wrappers.RescaleAction(env, -1.0, 1.0)
 
         if pixel_wrapper_kwargs is not None:
-            env = PixelObservationWrapper(env, **pixel_wrapper_kwargs)
+            env = wrappers.PixelObservationWrapper(env, **pixel_wrapper_kwargs)
 
         self._env = env
 
