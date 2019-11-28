@@ -13,9 +13,9 @@ def get_gaussian_policy(*args, **kwargs):
 
 
 def get_uniform_policy(*args, **kwargs):
-    from .uniform_policy import UniformPolicy
+    from .uniform_policy import ContinuousUniformPolicy
 
-    policy = UniformPolicy(*args, **kwargs)
+    policy = ContinuousUniformPolicy(*args, **kwargs)
 
     return policy
 
