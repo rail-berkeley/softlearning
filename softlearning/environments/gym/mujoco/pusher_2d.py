@@ -5,7 +5,7 @@ from gym.envs.mujoco.mujoco_env import MujocoEnv
 
 from serializable import Serializable
 
-from softlearning.misc.utils import PROJECT_PATH
+from softlearning.utils.misc import PROJECT_PATH
 from softlearning.environments.helpers import random_point_in_circle
 
 

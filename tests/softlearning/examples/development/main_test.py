@@ -24,7 +24,6 @@ CONFIG = {
             'n_epochs': 301,
             'n_initial_exploration_steps': 10,
             'n_train_repeat': 1,
-            'reparameterize': True,
             'reward_scale': 1.0,
             'save_full_state': False,
             'target_entropy': 'auto',
