@@ -10,6 +10,7 @@ from tensorflow.python.keras.engine import training_utils
 from softlearning.distributions.squash_bijector import SquashBijector
 from softlearning.models.feedforward import feedforward_model
 from softlearning.models.utils import flatten_input_structure, create_inputs
+from softlearning.utils.tensorflow import nest
 
 from .base_policy import LatentSpacePolicy
 
@@ -47,13 +48,16 @@ class GaussianPolicy(LatentSpacePolicy):
             in zip(preprocessors_flat, inputs_flat)
         ]
 
-        float_inputs = tf.keras.layers.Lambda(
-            lambda inputs: training_utils.cast_if_floating_dtype(inputs)
-        )(preprocessed_inputs)
+        def cast_and_concat(x):
+            x = nest.map_structure(
+                lambda element: tf.cast(element, tf.float32), x)
+            x = nest.flatten(x)
+            x = tf.concat(x, axis=-1)
+            return x
 
         conditions = tf.keras.layers.Lambda(
-            lambda inputs: tf.concat(inputs, axis=-1)
-        )(float_inputs)
+            cast_and_concat
+        )(preprocessed_inputs)
 
         self.condition_inputs = inputs_flat
 
