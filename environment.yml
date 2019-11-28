@@ -6,7 +6,6 @@ dependencies:
 - python>=3.7,<3.8
 - pip>=19.3
 - conda>=4.7
-- patchelf=0.9  # only works on Linux; comment this line out on Mac
 - pyopengl-accelerate==3.1.3b1
 - pip:
     - -r ./requirements.txt
