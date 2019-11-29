@@ -5,16 +5,16 @@ import numpy as np
 import tensorflow as tf
 
 from softlearning.models.utils import flatten_input_structure
-from softlearning.policies.uniform_policy import UniformPolicy
+from softlearning.policies.uniform_policy import ContinuousUniformPolicy
 from softlearning.environments.utils import get_environment
 
 
-class UniformPolicyTest(tf.test.TestCase):
+class ContinuousUniformPolicyTest(tf.test.TestCase):
     def setUp(self):
         self.env = get_environment('gym', 'Swimmer', 'v3', {})
-        self.policy = UniformPolicy(
+        self.policy = ContinuousUniformPolicy(
             input_shapes=self.env.observation_shape,
-            output_shape=self.env.action_space.shape,
+            output_shape=self.env.action_shape,
             observation_keys=self.env.observation_keys)
 
     def test_actions_and_log_pis_symbolic(self):
@@ -35,13 +35,13 @@ class UniformPolicyTest(tf.test.TestCase):
         with self.assertRaises(NotImplementedError):
             log_pis = self.policy.log_pis(observations_tf, actions)
 
-        self.assertEqual(actions.shape, (2, *self.env.action_space.shape))
+        self.assertEqual(actions.shape, (2, *self.env.action_shape))
 
         self.evaluate(tf.compat.v1.global_variables_initializer())
 
         actions_np = self.evaluate(actions)
 
-        self.assertEqual(actions_np.shape, (2, *self.env.action_space.shape))
+        self.assertEqual(actions_np.shape, (2, *self.env.action_shape))
 
     def test_actions_and_log_pis_numeric(self):
         observation1_np = self.env.reset()
@@ -58,7 +58,7 @@ class UniformPolicyTest(tf.test.TestCase):
         with self.assertRaises(NotImplementedError):
             log_pis_np = self.policy.log_pis_np(observations_np, actions_np)
 
-        self.assertEqual(actions_np.shape, (2, *self.env.action_space.shape))
+        self.assertEqual(actions_np.shape, (2, *self.env.action_shape))
 
     def test_env_step_with_actions(self):
         observation1_np = self.env.reset()
