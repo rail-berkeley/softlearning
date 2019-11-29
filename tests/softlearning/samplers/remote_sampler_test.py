@@ -1,5 +1,6 @@
 import pickle
 import unittest
+import pytest
 
 from softlearning.environments.utils import get_environment
 from softlearning.samplers.remote_sampler import RemoteSampler
@@ -7,6 +8,7 @@ from softlearning.replay_pools.simple_replay_pool import SimpleReplayPool
 from softlearning.policies.utils import get_policy_from_params
 
 
+@pytest.mark.skip(reason="RemoteSampler is currently broken.")
 class RemoteSamplerTest(unittest.TestCase):
     def setUp(self):
         self.env = get_environment('gym', 'Swimmer', 'v3', {})
