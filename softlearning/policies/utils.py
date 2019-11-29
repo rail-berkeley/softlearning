@@ -54,13 +54,12 @@ def get_policy_from_params(policy_params, env, *args, **kwargs):
         observation_preprocessors[name] = get_preprocessor_from_params(
             env, preprocessor_params)
 
-    if policy_type == 'UniformPolicy':
-        action_range = (env.action_space.low, env.action_space.high)
-        policy_kwargs['action_range'] = action_range
+    action_range = (env.action_space.low, env.action_space.high)
 
     policy = POLICY_FUNCTIONS[policy_type](
         input_shapes=observation_shapes,
         output_shape=env.action_shape,
+        action_range=action_range,
         observation_keys=observation_keys,
         *args,
         preprocessors=observation_preprocessors,
