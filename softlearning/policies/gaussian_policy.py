@@ -19,13 +19,20 @@ class GaussianPolicy(LatentSpacePolicy):
     def __init__(self,
                  input_shapes,
                  output_shape,
+                 action_range,
                  *args,
                  squash=True,
                  preprocessors=None,
                  name=None,
                  **kwargs):
+
+        assert (np.all(action_range == np.array([[-1], [1]]))), (
+            "The action space should be scaled to (-1, 1)."
+            " TODO(hartikainen): We should support non-scaled actions spaces.")
+
         self._Serializable__initialize(locals())
 
+        self._action_range = action_range
         self._input_shapes = input_shapes
         self._output_shape = output_shape
         self._squash = squash
@@ -62,7 +69,7 @@ class GaussianPolicy(LatentSpacePolicy):
         self.condition_inputs = inputs_flat
 
         shift_and_log_scale_diag = self._shift_and_log_scale_diag_net(
-            output_size=output_shape[0] * 2,
+            output_size=np.prod(output_shape) * 2,
         )(conditions)
 
         shift, log_scale_diag = tf.keras.layers.Lambda(

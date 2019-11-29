@@ -21,7 +21,6 @@ class BasePolicy(Serializable):
 
     def reset(self):
         """Reset and clean the policy."""
-        raise NotImplementedError
 
     @abc.abstractmethod
     def actions(self, observations):
