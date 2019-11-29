@@ -22,8 +22,11 @@ class RealNVPFlowTest(tf.test.TestCase):
 
         flow = RealNVPFlow(
             num_coupling_layers=num_coupling_layers,
-            hidden_layer_sizes=hidden_layer_sizes,
-            event_dims=x_.shape[1:])
+            hidden_layer_sizes=hidden_layer_sizes)
+
+        self.assertFalse(flow._built)
+        flow.forward(x_)
+        self.assertTrue(flow._built)
 
         real_nvp_layers = [
             layer for layer in flow.flow.bijectors
@@ -52,9 +55,7 @@ class RealNVPFlowTest(tf.test.TestCase):
 
         flow = RealNVPFlow(
             num_coupling_layers=2,
-            hidden_layer_sizes=(64,),
-            event_dims=x_.shape[1:],
-        )
+            hidden_layer_sizes=(64,))
 
         x = tf.constant(x_)
         forward_x = flow.forward(x)
@@ -83,9 +84,7 @@ class RealNVPFlowTest(tf.test.TestCase):
 
         flow = RealNVPFlow(
             num_coupling_layers=2,
-            hidden_layer_sizes=(64,),
-            event_dims=x_.shape[1:],
-        )
+            hidden_layer_sizes=(64,))
 
         x = tf.constant(x_)
 
@@ -112,9 +111,7 @@ class RealNVPFlowTest(tf.test.TestCase):
         flow = RealNVPFlow(
             num_coupling_layers=2,
             hidden_layer_sizes=(64,),
-            event_dims=x_.shape[-1:],
-            use_batch_normalization=False,
-        )
+            use_batch_normalization=False)
         x = tf.constant(x_)
         forward_x = flow.forward(x)
         # Use identity to invalidate cache.
@@ -149,9 +146,7 @@ class RealNVPFlowTest(tf.test.TestCase):
             flow = RealNVPFlow(
                 num_coupling_layers=2,
                 hidden_layer_sizes=(64,),
-                event_dims=x_.shape[1:],
-                use_batch_normalization=True,
-            )
+                use_batch_normalization=True)
 
 
 if __name__ == '__main__':

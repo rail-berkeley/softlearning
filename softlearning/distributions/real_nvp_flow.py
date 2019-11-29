@@ -6,8 +6,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 from tensorflow_probability import bijectors
-
-import numpy as np
+from tensorflow_probability.python.internal import tensorshape_util
 
 __all__ = [
     "RealNVPFlow",
@@ -25,10 +24,9 @@ class RealNVPFlow(bijectors.Bijector):
                  num_coupling_layers=2,
                  hidden_layer_sizes=(64,),
                  use_batch_normalization=False,
-                 event_dims=None,
                  is_constant_jacobian=False,
                  validate_args=False,
-                 name="_real_nvp_flow"):
+                 name=None):
         """Instantiates the `RealNVPFlow` normalizing flow.
 
         Args:
@@ -40,12 +38,8 @@ class RealNVPFlow(bijectors.Bijector):
             validate_args: Python `bool` indicating whether arguments should be
                 checked for correctness.
             name: Python `str`, name given to ops managed by this object.
-
-        Raises:
-            ValueError: if TODO happens
         """
-        self._graph_parents = []
-        self._name = name
+        name = name or 'real_nvp_flow'
 
         self._num_coupling_layers = num_coupling_layers
         self._hidden_layer_sizes = tuple(hidden_layer_sizes)
@@ -55,20 +49,19 @@ class RealNVPFlow(bijectors.Bijector):
                 " for RealNVPFlow.")
         self._use_batch_normalization = use_batch_normalization
 
-        assert event_dims is not None, event_dims
-        self._event_dims = event_dims
-
-        self.build()
+        self._built = False
 
         super(RealNVPFlow, self).__init__(
             forward_min_event_ndims=1,
-            inverse_min_event_ndims=1,
             is_constant_jacobian=is_constant_jacobian,
             validate_args=validate_args,
             name=name)
 
-    def build(self):
-        D = np.prod(self._event_dims)
+    def _build(self, input_shape):
+        input_depth = tf.compat.dimension_value(
+            tensorshape_util.with_rank_at_least(input_shape, 1)[-1])
+
+        self._input_depth = input_depth
 
         flow_parts = []
         for i in range(self._num_coupling_layers):
@@ -77,7 +70,7 @@ class RealNVPFlow(bijectors.Bijector):
                 flow_parts += [batch_normalization_bijector]
 
             real_nvp_bijector = bijectors.RealNVP(
-                num_masked=D // 2,
+                num_masked=input_depth // 2,
                 shift_and_log_scale_fn=conditioned_real_nvp_template(
                     hidden_layers=self._hidden_layer_sizes,
                     # TODO: test tf.nn.relu
@@ -87,28 +80,41 @@ class RealNVPFlow(bijectors.Bijector):
 
             if i < self._num_coupling_layers - 1:
                 permute_bijector = bijectors.Permute(
-                    permutation=list(reversed(range(D))),
+                    permutation=list(reversed(range(input_depth))),
                     name='permute_{}'.format(i))
                 flow_parts += [permute_bijector]
 
         # bijectors.Chain applies the list of bijectors in the
         # _reverse_ order of what they are inputted, thus [::-1].
         self.flow = bijectors.Chain(flow_parts[::-1])
+        self._built = True
 
     def _forward(self, x, **condition_kwargs):
+        if not self._built:
+            self._build(x.shape)
+
         x = self.flow.forward(x, **condition_kwargs)
         return x
 
     def _inverse(self, y, **condition_kwargs):
+        if not self._built:
+            self._build(y.shape)
+
         y = self.flow.inverse(y, **condition_kwargs)
         return y
 
     def _forward_log_det_jacobian(self, x, **condition_kwargs):
+        if not self._built:
+            self._build(x.shape)
+
         fldj = self.flow.forward_log_det_jacobian(
             x, event_ndims=1, **condition_kwargs)
         return fldj
 
     def _inverse_log_det_jacobian(self, y, **condition_kwargs):
+        if not self._built:
+            self._build(y.shape)
+
         ildj = self.flow.inverse_log_det_jacobian(
             y, event_ndims=1, **condition_kwargs)
         return ildj
