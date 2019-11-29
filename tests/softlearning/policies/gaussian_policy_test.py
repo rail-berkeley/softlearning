@@ -17,6 +17,10 @@ class GaussianPolicyTest(tf.test.TestCase):
         self.policy = FeedforwardGaussianPolicy(
             input_shapes=self.env.observation_shape,
             output_shape=self.env.action_space.shape,
+            action_range=(
+                self.env.action_space.low,
+                self.env.action_space.high,
+            ),
             hidden_layer_sizes=self.hidden_layer_sizes,
             observation_keys=self.env.observation_keys)
 
@@ -143,6 +147,10 @@ class GaussianPolicyTest(tf.test.TestCase):
         smoothed_policy = FeedforwardGaussianPolicy(
             input_shapes=self.env.observation_shape,
             output_shape=self.env.action_space.shape,
+            action_range=(
+                self.env.action_space.low,
+                self.env.action_space.high,
+            ),
             hidden_layer_sizes=self.hidden_layer_sizes,
             smoothing_coefficient=0.5,
             observation_keys=self.env.observation_keys)
