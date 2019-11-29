@@ -7,7 +7,6 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from tensorflow.python.keras.engine import training_utils
 
-from softlearning.distributions.squash_bijector import SquashBijector
 from softlearning.models.feedforward import feedforward_model
 from softlearning.models.utils import flatten_input_structure, create_inputs
 from softlearning.utils.tensorflow import nest
@@ -111,7 +110,7 @@ class GaussianPolicy(LatentSpacePolicy):
         )((shift, log_scale_diag, self.latents_input))
 
         squash_bijector = (
-            SquashBijector()
+            tfp.bijectors.Tanh()
             if self._squash
             else tfp.bijectors.Identity())
 
