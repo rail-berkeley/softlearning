@@ -89,6 +89,13 @@ class GymAdapter(SoftlearningEnv):
         if normalize and is_continuous_space(env.action_space):
             env = wrappers.RescaleAction(env, -1.0, 1.0)
 
+        # TODO(hartikainen): We need the clip action wrapper because sometimes
+        # the tfp.bijectors.Tanh() produces values strictly greater than 1 or
+        # strictly less than -1, which causes the env fail without clipping.
+        # The error is in the order of 1e-7, which should not cause issues.
+        # See https://github.com/tensorflow/probability/issues/664.
+        env = wrappers.ClipAction(env)
+
         if pixel_wrapper_kwargs is not None:
             env = wrappers.PixelObservationWrapper(env, **pixel_wrapper_kwargs)
 
