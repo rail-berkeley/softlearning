@@ -82,6 +82,18 @@ class RealNVPPolicyTest(tf.test.TestCase):
 
     def test_trainable_variables(self):
         self.assertEqual(
+            tuple(self.policy.trainable_variables),
+            tuple(self.policy.actions_model.trainable_variables))
+
+        self.assertEqual(
+            tuple(self.policy.trainable_variables),
+            tuple(self.policy.log_pis_model.trainable_variables))
+
+        self.assertEqual(
+            tuple(self.policy.trainable_variables),
+            tuple(self.policy.deterministic_actions_model.trainable_variables))
+
+        self.assertEqual(
             len(self.policy.trainable_variables),
             self.num_coupling_layers * 2 * (len(self.hidden_layer_sizes) + 1))
 
