@@ -12,7 +12,7 @@ from softlearning.environments.utils import get_environment
 class GaussianPolicyTest(tf.test.TestCase):
     def setUp(self):
         self.env = get_environment('gym', 'Swimmer', 'v3', {})
-        self.hidden_layer_sizes = (128, 128)
+        self.hidden_layer_sizes = (16, 16)
 
         self.policy = FeedforwardGaussianPolicy(
             input_shapes=self.env.observation_shape,

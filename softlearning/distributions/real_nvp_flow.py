@@ -8,7 +8,6 @@ import tensorflow as tf
 from tensorflow_probability import bijectors
 from tensorflow_probability.python.internal import tensorshape_util
 
-# from softlearning.utils.tensorflow import nest
 from softlearning.models.feedforward import feedforward_model
 
 
