@@ -8,17 +8,17 @@ import tensorflow as tf
 from tensorflow_probability import bijectors
 from tensorflow_probability.python.internal import tensorshape_util
 
+# from softlearning.utils.tensorflow import nest
+from softlearning.models.feedforward import feedforward_model
+
+
 __all__ = [
     "RealNVPFlow",
 ]
 
 
-def _use_static_shape(input_tensor, ndims):
-    return input_tensor.shape.is_fully_defined() and isinstance(ndims, int)
-
-
 class RealNVPFlow(bijectors.Bijector):
-    """TODO"""
+    """A flow of RealNVP bijectors."""
 
     def __init__(self,
                  num_coupling_layers=2,
@@ -71,10 +71,9 @@ class RealNVPFlow(bijectors.Bijector):
 
             real_nvp_bijector = bijectors.RealNVP(
                 num_masked=input_depth // 2,
-                shift_and_log_scale_fn=conditioned_real_nvp_template(
-                    hidden_layers=self._hidden_layer_sizes,
-                    # TODO: test tf.nn.relu
-                    activation=tf.nn.tanh),
+                shift_and_log_scale_fn=feedforward_scale_and_log_diag_fn(
+                    hidden_layer_sizes=self._hidden_layer_sizes,
+                    activation=tf.nn.relu),
                 name='real_nvp_{}'.format(i))
             flow_parts += [real_nvp_bijector]
 
@@ -120,39 +119,33 @@ class RealNVPFlow(bijectors.Bijector):
         return ildj
 
 
-def conditioned_real_nvp_template(hidden_layers,
-                                  shift_only=False,
-                                  activation=tf.nn.relu,
-                                  name=None,
-                                  *args,  # pylint: disable=keyword-arg-before-vararg
-                                  **kwargs):
+def feedforward_scale_and_log_diag_fn(
+        hidden_layer_sizes,
+        shift_only=False,
+        activation=tf.nn.relu,
+        output_activation="linear",
+        name=None,
+        *args,  # pylint: disable=keyword-arg-before-vararg
+        **kwargs):
 
-    with tf.compat.v1.name_scope(name, "conditioned_real_nvp_template"):
+    def _fn(x, output_units, **condition_kwargs):
+        """MLP which concatenates the condition kwargs to input."""
 
-        def _fn(x, output_units, **condition_kwargs):
-            """MLP which concatenates the condition kwargs to input."""
-            x = tf.concat(
-                (x, *[condition_kwargs[k] for k in sorted(condition_kwargs)]),
-                axis=-1)
+        shift_and_log_scale = feedforward_model(
+            hidden_layer_sizes=hidden_layer_sizes,
+            output_size=(1 if shift_only else 2) * output_units,
+            activation=activation,
+            output_activation=output_activation,
+            name=name,
+        )([x, condition_kwargs])
 
-            for units in hidden_layers:
-                x = tf.compat.v1.layers.dense(
-                    inputs=x,
-                    units=units,
-                    activation=activation,
-                    *args,  # pylint: disable=keyword-arg-before-vararg
-                    **kwargs)
-            x = tf.compat.v1.layers.dense(
-                inputs=x,
-                units=(1 if shift_only else 2) * output_units,
-                activation=None,
-                *args,  # pylint: disable=keyword-arg-before-vararg
-                **kwargs)
+        if shift_only:
+            return shift_and_log_scale, None
 
-            if shift_only:
-                return x, None
+        shift, log_scale = tf.keras.layers.Lambda(
+            lambda shift_and_scale: tf.split(shift_and_scale, 2, axis=-1)
+        )(shift_and_log_scale)
 
-            shift, log_scale = tf.split(x, 2, axis=-1)
-            return shift, log_scale
+        return shift, log_scale
 
-        return tf.compat.v1.make_template("conditioned_real_nvp_template", _fn)
+    return _fn
