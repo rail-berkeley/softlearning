@@ -27,6 +27,10 @@ class RealNVPPolicy(LatentSpacePolicy):
                  name=None,
                  **kwargs):
 
+        raise NotImplementedError(
+            "TODO(hartikainen): RealNVPPolicy is currently broken. The keras"
+            " models together with the tfp distributions somehow count the"
+            "variables multiple times. This needs to be fixed before usage.")
         assert (np.all(action_range == np.array([[-1], [1]]))), (
             "The action space should be scaled to (-1, 1)."
             " TODO(hartikainen): We should support non-scaled actions spaces.")

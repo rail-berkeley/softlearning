@@ -1,6 +1,7 @@
 import pickle
 from collections import OrderedDict
 
+import pytest
 import numpy as np
 import tensorflow as tf
 
@@ -9,6 +10,7 @@ from softlearning.policies.real_nvp_policy import RealNVPPolicy
 from softlearning.environments.utils import get_environment
 
 
+@pytest.mark.skip(reason="RealNVPPolicy is currently broken.")
 class RealNVPPolicyTest(tf.test.TestCase):
     def setUp(self):
         self.env = get_environment('gym', 'Swimmer', 'v3', {})
