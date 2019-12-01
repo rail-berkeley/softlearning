@@ -37,6 +37,8 @@ def test_scale_action():
     timestep_unwrapped = unwrapped_env.step(
         unwrapped_env.action_spec().maximum)
 
+    assert np.any(
+        wrapped_env.action_spec().maximum < unwrapped_env.action_spec().maximum)
     with pytest.raises(AssertionError):
         wrapped_env.step(unwrapped_env.action_spec().maximum)
 

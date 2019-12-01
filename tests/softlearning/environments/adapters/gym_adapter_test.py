@@ -116,8 +116,7 @@ class TestGymAdapter(unittest.TestCase, AdapterTestClass):
             'reset_noise_scale': 0.0,
         }
 
-        env = GymAdapter(
-            domain='Swimmer', task='Parameterizable-v3', **env_kwargs)
+        env = GymAdapter(domain='Swimmer', task='v3', **env_kwargs)
 
         observation1, reward, done, info = env.step(env.action_space.sample())
 
@@ -129,10 +128,8 @@ class TestGymAdapter(unittest.TestCase, AdapterTestClass):
 
     def test_render_rgb_array(self):
         env = self.create_adapter()
-        with self.assertRaisesRegex(
-                RuntimeError, "Failed to initialize OpenGL"):
-            result = env.render(mode='rgb_array')
-            self.assertIsInstance(result, np.ndarray)
+        result = env.render(mode='rgb_array')
+        self.assertIsInstance(result, np.ndarray)
 
 
 if __name__ == '__main__':

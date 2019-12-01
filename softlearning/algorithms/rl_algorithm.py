@@ -136,7 +136,7 @@ class RLAlgorithm(Checkpointable):
             },
             'actions': tf.compat.v1.placeholder(
                 dtype=tf.float32,
-                shape=(None, *self._training_environment.action_space.shape),
+                shape=(None, *self._training_environment.action_shape),
                 name='actions',
             ),
             'rewards': tf.compat.v1.placeholder(

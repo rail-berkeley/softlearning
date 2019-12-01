@@ -12,6 +12,9 @@ from .utils import rollout
 
 class RemoteSampler(BaseSampler):
     def __init__(self, **kwargs):
+        raise NotImplementedError(
+            "TODO(hartikainen): There's a bug here that causes tf to end up in"
+            " a RecursionError. This should be fixed/refactored before usage.")
         super(RemoteSampler, self).__init__(**kwargs)
 
         self._remote_environment = None

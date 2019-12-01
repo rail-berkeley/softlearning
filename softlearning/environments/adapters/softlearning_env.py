@@ -76,7 +76,11 @@ class SoftlearningEnv(metaclass=ABCMeta):
 
     @property
     def action_shape(self, *args, **kwargs):
-        action_shape = tf.TensorShape(self.action_space.shape)
+        if self.action_space.shape == ():
+            assert isinstance(self.action_space, spaces.Discrete)
+            action_shape = tf.TensorShape((1, ))
+        else:
+            action_shape = tf.TensorShape(self.action_space.shape)
 
         if len(action_shape) > 1:
             raise NotImplementedError(
