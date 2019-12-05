@@ -1,28 +1,33 @@
 import pickle
 from collections import OrderedDict
 
+import pytest
 import numpy as np
 import tensorflow as tf
 
 from softlearning.models.utils import flatten_input_structure
-from softlearning.policies.gaussian_policy import FeedforwardGaussianPolicy
+from softlearning.policies.real_nvp_policy import RealNVPPolicy
 from softlearning.environments.utils import get_environment
 
 
-class GaussianPolicyTest(tf.test.TestCase):
+@pytest.mark.skip(reason="RealNVPPolicy is currently broken.")
+class RealNVPPolicyTest(tf.test.TestCase):
     def setUp(self):
         self.env = get_environment('gym', 'Swimmer', 'v3', {})
         self.hidden_layer_sizes = (16, 16)
+        self.num_coupling_layers = 2
 
-        self.policy = FeedforwardGaussianPolicy(
+        self.policy = RealNVPPolicy(
             input_shapes=self.env.observation_shape,
-            output_shape=self.env.action_space.shape,
+            output_shape=self.env.action_shape,
             action_range=(
                 self.env.action_space.low,
                 self.env.action_space.high,
             ),
             hidden_layer_sizes=self.hidden_layer_sizes,
-            observation_keys=self.env.observation_keys)
+            num_coupling_layers=self.num_coupling_layers,
+            observation_keys=self.env.observation_keys,
+        )
 
     def test_actions_and_log_pis_symbolic(self):
         observation1_np = self.env.reset()
@@ -41,7 +46,7 @@ class GaussianPolicyTest(tf.test.TestCase):
         actions = self.policy.actions(observations_tf)
         log_pis = self.policy.log_pis(observations_tf, actions)
 
-        self.assertEqual(actions.shape, (2, *self.env.action_space.shape))
+        self.assertEqual(actions.shape, (2, *self.env.action_shape))
         self.assertEqual(log_pis.shape, (2, 1))
 
         self.evaluate(tf.compat.v1.global_variables_initializer())
@@ -49,7 +54,7 @@ class GaussianPolicyTest(tf.test.TestCase):
         actions_np = self.evaluate(actions)
         log_pis_np = self.evaluate(log_pis)
 
-        self.assertEqual(actions_np.shape, (2, *self.env.action_space.shape))
+        self.assertEqual(actions_np.shape, (2, *self.env.action_shape))
         self.assertEqual(log_pis_np.shape, (2, 1))
 
     def test_actions_and_log_pis_numeric(self):
@@ -66,7 +71,7 @@ class GaussianPolicyTest(tf.test.TestCase):
         actions_np = self.policy.actions_np(observations_np)
         log_pis_np = self.policy.log_pis_np(observations_np, actions_np)
 
-        self.assertEqual(actions_np.shape, (2, *self.env.action_space.shape))
+        self.assertEqual(actions_np.shape, (2, *self.env.action_shape))
         self.assertEqual(log_pis_np.shape, (2, 1))
 
     def test_env_step_with_actions(self):
@@ -92,7 +97,7 @@ class GaussianPolicyTest(tf.test.TestCase):
 
         self.assertEqual(
             len(self.policy.trainable_variables),
-            2 * (len(self.hidden_layer_sizes) + 1))
+            self.num_coupling_layers * 2 * (len(self.hidden_layer_sizes) + 1))
 
     def test_get_diagnostics(self):
         observation1_np = self.env.reset()
@@ -110,11 +115,7 @@ class GaussianPolicyTest(tf.test.TestCase):
         self.assertTrue(isinstance(diagnostics, OrderedDict))
         self.assertEqual(
             tuple(diagnostics.keys()),
-            ('shifts-mean',
-             'shifts-std',
-             'log_scale_diags-mean',
-             'log_scale_diags-std',
-             '-log-pis-mean',
+            ('-log-pis-mean',
              '-log-pis-std',
              'raw-actions-mean',
              'raw-actions-std',
@@ -156,16 +157,17 @@ class GaussianPolicyTest(tf.test.TestCase):
 
     def test_latent_smoothing(self):
         observation_np = self.env.reset()
-        smoothed_policy = FeedforwardGaussianPolicy(
+        smoothed_policy = RealNVPPolicy(
             input_shapes=self.env.observation_shape,
-            output_shape=self.env.action_space.shape,
+            output_shape=self.env.action_shape,
             action_range=(
                 self.env.action_space.low,
                 self.env.action_space.high,
             ),
             hidden_layer_sizes=self.hidden_layer_sizes,
             smoothing_coefficient=0.5,
-            observation_keys=self.env.observation_keys)
+            observation_keys=self.env.observation_keys,
+        )
 
         np.testing.assert_equal(smoothed_policy._smoothing_x, 0.0)
         self.assertEqual(smoothed_policy._smoothing_alpha, 0.5)

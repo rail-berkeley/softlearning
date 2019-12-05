@@ -1,6 +1,7 @@
 import pickle
 import unittest
 import numpy as np
+import os
 from flatten_dict import flatten
 
 from softlearning.replay_pools.flexible_replay_pool import (
@@ -23,6 +24,7 @@ def create_pool(max_size=100, field_shapes=((1,), (1,))):
 class FlexibleReplayPoolTest(unittest.TestCase):
     def setUp(self):
         self.pool = create_pool(100)
+        os.makedirs('./tmp', exist_ok=True)
 
     def test_multi_dimensional_field(self):
         # Fill fields with random data

@@ -11,7 +11,7 @@ import tensorflow as tf
 from tensorflow.python.training import training_util
 
 from softlearning.samplers import rollouts
-from softlearning.misc.utils import save_video
+from softlearning.utils.video import save_video
 
 
 if LooseVersion(tf.__version__) > LooseVersion("2.00"):
@@ -136,7 +136,7 @@ class RLAlgorithm(Checkpointable):
             },
             'actions': tf.compat.v1.placeholder(
                 dtype=tf.float32,
-                shape=(None, *self._training_environment.action_space.shape),
+                shape=(None, *self._training_environment.action_shape),
                 name='actions',
             ),
             'rewards': tf.compat.v1.placeholder(

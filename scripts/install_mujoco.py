@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
-
 import argparse
 from distutils.version import LooseVersion
 import os
+import subprocess
 import sys
-from pprint import pprint
 
 
 KNOWN_PLATFORMS = ('linux', 'darwin')
@@ -18,7 +17,7 @@ def get_parser():
     parser.add_argument('--versions',
                         type=str,
                         nargs='+',
-                        default=('1.50', '2.00'))
+                        default=('2.00', ))
     return parser
 
 
@@ -42,11 +41,48 @@ def install_mujoco(platform, version, mujoco_path):
     print(f"Installing MuJoCo version {version} to {mujoco_path}")
 
     mujoco_zip_name = get_mujoco_zip_name(platform, version)
+    mujoco_dir_name = os.path.splitext(mujoco_zip_name)[0]
+    if os.path.exists(os.path.join(mujoco_path, mujoco_dir_name)):
+        print(f"MuJoCo {platform}, {version} already installed.")
+        return
 
     mujoco_zip_url = f"https://www.roboti.us/download/{mujoco_zip_name}"
-    os.system(f"wget -N -P {mujoco_path} {mujoco_zip_url}")
-    os.system(f"unzip -n {mujoco_path}/{mujoco_zip_name} -d {mujoco_path}")
-    os.system(f"rm {mujoco_path}/{mujoco_zip_name}")
+
+    if subprocess.call(["command", "-v", "wget"]) == 0:
+        subprocess.check_call([
+            "wget",
+            "--progress=bar:force",
+            "--show-progress",
+            "--timestamping",
+            "--directory-prefix",
+            mujoco_path,
+            mujoco_zip_url])
+    elif subprocess.call(["command", "-v", "curl"]) == 0:
+        subprocess.check_call([
+            "curl",
+            "--location",
+            "--show-error",
+            "--output",
+            os.path.join(mujoco_path, mujoco_zip_name),
+            mujoco_zip_url])
+    else:
+        raise ValueError("Need either `wget` or `curl` to download mujoco.")
+
+    subprocess.call([
+        "unzip",
+        "-n",
+        os.path.join(mujoco_path, mujoco_zip_name),
+        "-d",
+        mujoco_path])
+    subprocess.call(["rm", os.path.join(mujoco_path, mujoco_zip_name)])
+
+    if LooseVersion(version) == LooseVersion('2.0'):
+        subprocess.call([
+            "ln",
+            "-s",
+            os.path.join(mujoco_path, mujoco_dir_name),
+            os.path.join(mujoco_path, "mujoco200"),
+        ])
 
 
 def main():

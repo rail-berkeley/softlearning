@@ -22,7 +22,8 @@ def feedforward_model(hidden_layer_sizes,
                       *args,
                       **kwargs):
     def cast_and_concat(x):
-        x = nest.map_structure(training_utils.cast_if_floating_dtype, x)
+        x = nest.map_structure(
+            lambda element: tf.cast(element, tf.float32), x)
         x = nest.flatten(x)
         x = tf.concat(x, axis=-1)
         return x

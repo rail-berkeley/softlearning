@@ -23,7 +23,8 @@ import ray
 from ray import tune
 from ray.autoscaler.commands import exec_cluster
 
-from softlearning.misc.utils import datetimestamp, PROJECT_PATH
+from softlearning.utils.times import datetimestamp
+from softlearning.utils.misc import PROJECT_PATH
 
 
 AUTOSCALER_DEFAULT_CONFIG_FILE_GCE = os.path.join(
@@ -83,6 +84,14 @@ def generate_experiment_kwargs(variant_spec, command_line_args):
         command_line_args.trial_gpus,
         command_line_args.trial_extra_cpus,
         command_line_args.trial_extra_gpus)
+    upload_dir = (
+        os.path.join(
+            command_line_args.upload_dir,
+            command_line_args.universe,
+            command_line_args.domain,
+            command_line_args.task)
+        if command_line_args.upload_dir
+        else None)
 
     datetime_prefix = datetimestamp()
     experiment_id = '-'.join((datetime_prefix, command_line_args.exp_name))
@@ -110,7 +119,7 @@ def generate_experiment_kwargs(variant_spec, command_line_args):
         'config': variant_spec,
         'local_dir': local_dir,
         'num_samples': command_line_args.num_samples,
-        'upload_dir': command_line_args.upload_dir,
+        'upload_dir': upload_dir,
         'checkpoint_freq': (
             variant_spec['run_params']['checkpoint_frequency']),
         'checkpoint_at_end': (

@@ -76,7 +76,11 @@ class SoftlearningEnv(metaclass=ABCMeta):
 
     @property
     def action_shape(self, *args, **kwargs):
-        action_shape = tf.TensorShape(self.action_space.shape)
+        if self.action_space.shape == ():
+            assert isinstance(self.action_space, spaces.Discrete)
+            action_shape = tf.TensorShape((1, ))
+        else:
+            action_shape = tf.TensorShape(self.action_space.shape)
 
         if len(action_shape) > 1:
             raise NotImplementedError(
@@ -115,7 +119,7 @@ class SoftlearningEnv(metaclass=ABCMeta):
 
     def _filter_observation(self, observation):
         observation = type(observation)([
-            (name, value)
+            (name, np.reshape(value, self.observation_space.spaces[name].shape))
             for name, value in observation.items()
             if name in (*self.observation_keys, *self.goal_keys)
         ])
@@ -231,6 +235,12 @@ class SoftlearningEnv(metaclass=ABCMeta):
         aggregated_results = {}
         for key, value in results.items():
             aggregated_results[key + '-mean'] = np.mean(value)
+
+        if hasattr(self.unwrapped, 'get_path_infos'):
+            env_path_infos = self.unwrapped.get_path_infos(
+                paths, *args, **kwargs)
+
+            aggregated_results.update(env_path_infos)
 
         return aggregated_results
 

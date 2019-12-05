@@ -9,7 +9,7 @@ from softlearning.samplers import SimpleSampler
 from softlearning.policies.utils import get_policy_from_variant
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions.utils import get_Q_function_from_variant
-from softlearning.misc.utils import initialize_tf_variables
+from softlearning.utils.tensorflow import initialize_tf_variables
 from examples.instrument import run_example_local
 
 
