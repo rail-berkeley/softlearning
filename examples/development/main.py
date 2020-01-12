@@ -31,14 +31,14 @@ class ExperimentRunner(tune.Trainable):
         gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
         self._session = tf.compat.v1.Session(
             config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
-        tf.keras.backend.set_session(self._session)
+        tf.compat.v1.keras.backend.set_session(self._session)
 
         self.train_generator = None
         self._built = False
 
     def _stop(self):
         tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
+        tf.compat.v1.keras.backend.clear_session()
 
     def _build(self):
         variant = copy.deepcopy(self._variant)
@@ -99,7 +99,7 @@ class ExperimentRunner(tune.Trainable):
         return os.path.join(checkpoint_dir, 'checkpoint')
 
     def _get_tf_checkpoint(self):
-        tf_checkpoint = tf.train.Checkpoint(**self.algorithm.tf_saveables)
+        tf_checkpoint = tf.compat.v1.train.Checkpoint(**self.algorithm.tf_saveables)
 
         return tf_checkpoint
 
@@ -235,7 +235,7 @@ class ExperimentRunner(tune.Trainable):
         self.algorithm.__setstate__(picklable['algorithm'].__getstate__())
 
         tf_checkpoint = self._get_tf_checkpoint()
-        status = tf_checkpoint.restore(tf.train.latest_checkpoint(
+        status = tf_checkpoint.restore(tf.compat.v1.train.latest_checkpoint(
             os.path.split(self._tf_checkpoint_prefix(checkpoint_dir))[0]))
 
         status.assert_consumed().run_restore_ops(self._session)

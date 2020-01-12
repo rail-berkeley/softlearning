@@ -11,22 +11,22 @@ class FeedforwardTest(tf.test.TestCase):
         x1 = tf.random_uniform((3, 2))
         x2 = tf.random_uniform((3, 13))
 
-        self.assertFalse(tf.trainable_variables())
+        self.assertFalse(tf.compat.v1.trainable_variables())
 
         fn = feedforward_model(
             output_size=output_size,
             hidden_layer_sizes=(6, 4, 2),
             name='feedforward_function')
 
-        self.assertEqual(len(tf.trainable_variables()), 0)
+        self.assertEqual(len(tf.compat.v1.trainable_variables()), 0)
 
         _ = fn([x1, x2])
-        num_trainable_variables_1 = len(tf.trainable_variables())
+        num_trainable_variables_1 = len(tf.compat.v1.trainable_variables())
 
         self.assertGreater(num_trainable_variables_1, 0)
 
         _ = fn([x2, x1])
-        num_trainable_variables_2 = len(tf.trainable_variables())
+        num_trainable_variables_2 = len(tf.compat.v1.trainable_variables())
 
         self.assertEqual(num_trainable_variables_1, num_trainable_variables_2)
 
@@ -34,7 +34,7 @@ class FeedforwardTest(tf.test.TestCase):
         output_size = 5
         x = tf.random_uniform((1, 13))
 
-        self.assertFalse(tf.trainable_variables())
+        self.assertFalse(tf.compat.v1.trainable_variables())
 
         fn1 = feedforward_model(
             output_size=output_size,
@@ -42,7 +42,7 @@ class FeedforwardTest(tf.test.TestCase):
             name='feedforward_function_1')
         _ = fn1([x])
 
-        num_trainable_variables_1 = len(tf.trainable_variables())
+        num_trainable_variables_1 = len(tf.compat.v1.trainable_variables())
 
         fn2 = feedforward_model(
             output_size=output_size,
@@ -50,13 +50,13 @@ class FeedforwardTest(tf.test.TestCase):
             name='feedforward_function_2')
         _ = fn2([x])
 
-        num_trainable_variables_2 = len(tf.trainable_variables())
+        num_trainable_variables_2 = len(tf.compat.v1.trainable_variables())
 
         self.assertGreater(num_trainable_variables_1, 0)
         self.assertEqual(
             num_trainable_variables_1 * 2, num_trainable_variables_2)
 
-        num_trainable_variables_3 = len(tf.trainable_variables())
+        num_trainable_variables_3 = len(tf.compat.v1.trainable_variables())
         self.assertEqual(
             num_trainable_variables_2, num_trainable_variables_3)
 

@@ -132,8 +132,8 @@ class TestExperimentRunner(tf.test.TestCase):
 
         expected_alpha_value = 5.0
         session.run(
-            tf.assign(experiment_runner.algorithm._log_alpha,
-                      np.log(expected_alpha_value)))
+            tf.compat.v1.assign(experiment_runner.algorithm._log_alpha,
+                                np.log(expected_alpha_value)))
         self.assertEqual(
             session.run(experiment_runner.algorithm._alpha),
             expected_alpha_value)
@@ -155,7 +155,7 @@ class TestExperimentRunner(tf.test.TestCase):
             for _, variables in trainable_variables_1.items()
             for variable in variables
         ) == set(
-            variable for variable in tf.trainable_variables()
+            variable for variable in tf.compat.v1.trainable_variables()
             if 'save_counter' not in variable.name)
 
         optimizer_variables_1 = {
@@ -201,7 +201,7 @@ class TestExperimentRunner(tf.test.TestCase):
             for _, variables in trainable_variables_2.items()
             for variable in variables
         ) == set(
-            variable for variable in tf.trainable_variables()
+            variable for variable in tf.compat.v1.trainable_variables()
             if 'save_counter' not in variable.name)
 
         optimizer_variables_2 = {
