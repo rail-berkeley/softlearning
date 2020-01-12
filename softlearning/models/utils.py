@@ -23,11 +23,6 @@ def get_inputs_for_nested_shapes(input_shapes, name=None):
     raise NotImplementedError(input_shapes)
 
 
-def flatten_input_structure(inputs):
-    inputs_flat = nest.flatten(inputs)
-    return inputs_flat
-
-
 def create_input(name, input_shape):
     input_ = tf.keras.layers.Input(
         shape=input_shape,
@@ -53,6 +48,4 @@ def create_inputs(input_shapes):
     TODO(hartikainen): Need to figure out a better way for handling the dtypes.
     """
     inputs = nest.map_structure_with_paths(create_input, input_shapes)
-    inputs_flat = flatten_input_structure(inputs)
-
-    return inputs_flat
+    return inputs

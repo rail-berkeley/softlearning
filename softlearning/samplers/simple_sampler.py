@@ -3,7 +3,6 @@ from collections import defaultdict
 import numpy as np
 from flatten_dict import flatten, unflatten
 
-from softlearning.models.utils import flatten_input_structure
 from .base_sampler import BaseSampler
 
 
@@ -22,10 +21,10 @@ class SimpleSampler(BaseSampler):
 
     @property
     def _policy_input(self):
-        observation = flatten_input_structure({
+        observation = {
             key: self._current_observation[key][None, ...]
             for key in self.policy.observation_keys
-        })
+        }
 
         return observation
 

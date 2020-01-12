@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 
 from .base_policy import BasePolicy
-from softlearning.models.utils import create_inputs
+from softlearning.models.utils import create_inputs, nest
 
 
 class UniformPolicy(BasePolicy):
@@ -22,15 +22,13 @@ class UniformPolicy(BasePolicy):
 
         super(UniformPolicy, self).__init__(*args, **kwargs)
 
-        inputs_flat = create_inputs(input_shapes)
-
-        self.inputs = inputs_flat
+        self.inputs = create_inputs(input_shapes)
 
         x = self.inputs
 
         batch_size = tf.keras.layers.Lambda(
             lambda x: tf.shape(x)[0]
-        )(inputs_flat[0])
+        )(nest.flatten(self.inputs)[0])
 
         actions = tf.keras.layers.Lambda(
             self._actions_fn
@@ -45,7 +43,7 @@ class UniformPolicy(BasePolicy):
         )(self.actions_input)
 
         self.log_pis_model = tf.keras.Model(
-            (*self.inputs, self.actions_input), log_pis)
+            (self.inputs, self.actions_input), log_pis)
 
     def get_weights(self):
         return []
