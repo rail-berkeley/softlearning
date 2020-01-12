@@ -12,3 +12,21 @@ else:
     from tensorflow.contrib.framework import nest
 
 
+def apply_preprocessors(preprocessors, inputs):
+    nest.assert_same_structure(inputs, preprocessors)
+    preprocessed_inputs = nest.map_structure(
+        lambda preprocessor, input_: (
+            preprocessor(input_) if preprocessor is not None else input_),
+        preprocessors,
+        inputs,
+    )
+
+    return preprocessed_inputs
+
+
+def cast_and_concat(x):
+    x = nest.map_structure(
+        lambda element: tf.cast(element, tf.float32), x)
+    x = nest.flatten(x)
+    x = tf.concat(x, axis=-1)
+    return x
