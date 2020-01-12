@@ -59,7 +59,7 @@ class QFPolicyPlotter:
             observations = np.tile(
                 obs[None].astype(np.float32), (actions.shape[0], 1))
 
-            Q_np = self._Q.predict((observations, actions))
+            Q_np = self._Q((observations, actions)).numpy()
             Q_np = np.reshape(Q_np, xgrid.shape)
 
             cs = ax.contour(xgrid, ygrid, Q_np, 20)
