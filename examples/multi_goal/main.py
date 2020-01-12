@@ -9,7 +9,6 @@ from softlearning.samplers import SimpleSampler
 from softlearning.policies.utils import get_policy_from_variant
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions.utils import get_Q_function_from_variant
-from softlearning.utils.tensorflow import initialize_tf_variables
 from examples.instrument import run_example_local
 
 
@@ -52,8 +51,6 @@ def run_experiment(variant, reporter):
         sampler=sampler,
         plotter=plotter
     )
-
-    initialize_tf_variables(algorithm._session, only_uninitialized=True)
 
     for train_result in algorithm.train():
         reporter(**train_result)

@@ -20,23 +20,16 @@ from softlearning.utils.tensorflow import (
     set_gpu_memory_growth)
 from examples.instrument import run_example_local
 
-tf.compat.v1.disable_eager_execution()
-
 
 class ExperimentRunner(tune.Trainable):
     def _setup(self, variant):
         set_seed(variant['run_params']['seed'])
-        self._session = tf.compat.v1.keras.backend.get_session()
         self._variant = variant
 
         set_gpu_memory_growth(True)
 
         self.train_generator = None
         self._built = False
-
-    def _stop(self):
-        tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
 
     def _build(self):
         variant = copy.deepcopy(self._variant)
@@ -69,10 +62,7 @@ class ExperimentRunner(tune.Trainable):
             initial_exploration_policy=initial_exploration_policy,
             Qs=Qs,
             pool=replay_pool,
-            sampler=sampler,
-            session=self._session)
-
-        initialize_tf_variables(self._session, only_uninitialized=True)
+            sampler=sampler)
 
         self._built = True
 
@@ -165,8 +155,7 @@ class ExperimentRunner(tune.Trainable):
         tf_checkpoint = self._get_tf_checkpoint()
 
         tf_checkpoint.save(
-            file_prefix=self._tf_checkpoint_prefix(checkpoint_dir),
-            session=self._session)
+            file_prefix=self._tf_checkpoint_prefix(checkpoint_dir))
 
         return os.path.join(checkpoint_dir, '')
 
@@ -192,10 +181,9 @@ class ExperimentRunner(tune.Trainable):
 
         checkpoint_dir = checkpoint_dir.rstrip('/')
 
-        with self._session.as_default():
-            pickle_path = self._pickle_path(checkpoint_dir)
-            with open(pickle_path, 'rb') as f:
-                picklable = pickle.load(f)
+        pickle_path = self._pickle_path(checkpoint_dir)
+        with open(pickle_path, 'rb') as f:
+            picklable = pickle.load(f)
 
         training_environment = self.training_environment = picklable[
             'training_environment']
@@ -228,16 +216,14 @@ class ExperimentRunner(tune.Trainable):
             initial_exploration_policy=initial_exploration_policy,
             Qs=Qs,
             pool=replay_pool,
-            sampler=sampler,
-            session=self._session)
+            sampler=sampler)
         self.algorithm.__setstate__(picklable['algorithm'].__getstate__())
 
         tf_checkpoint = self._get_tf_checkpoint()
         status = tf_checkpoint.restore(tf.train.latest_checkpoint(
             os.path.split(self._tf_checkpoint_prefix(checkpoint_dir))[0]))
 
-        status.assert_consumed().run_restore_ops(self._session)
-        initialize_tf_variables(self._session, only_uninitialized=True)
+        status.assert_consumed().run_restore_ops()
 
         # TODO(hartikainen): target Qs should either be checkpointed or pickled.
         for Q, Q_target in zip(self.algorithm._Qs, self.algorithm._Q_targets):
