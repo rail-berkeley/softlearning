@@ -222,30 +222,21 @@ class RLAlgorithm(Checkpointable):
                 training_paths=training_paths,
                 evaluation_paths=evaluation_paths)
 
-            time_diagnostics = gt.get_times().stamps.itrs
+            time_diagnostics = {
+                key: times[-1]
+                for key, times in gt.get_times().stamps.itrs.items()
+            }
 
-            diagnostics.update(OrderedDict((
-                *(
-                    (f'evaluation/{key}', evaluation_metrics[key])
-                    for key in sorted(evaluation_metrics.keys())
-                ),
-                *(
-                    (f'training/{key}', training_metrics[key])
-                    for key in sorted(training_metrics.keys())
-                ),
-                *(
-                    (f'times/{key}', time_diagnostics[key][-1])
-                    for key in sorted(time_diagnostics.keys())
-                ),
-                *(
-                    (f'sampler/{key}', sampler_diagnostics[key])
-                    for key in sorted(sampler_diagnostics.keys())
-                ),
+            diagnostics.update((
+                ('evaluation', evaluation_metrics),
+                ('training', training_metrics),
+                ('times', time_diagnostics),
+                ('sampler', sampler_diagnostics),
                 ('epoch', self._epoch),
                 ('timestep', self._timestep),
-                ('timesteps_total', self._total_timestep),
-                ('train-steps', self._num_train_steps),
-            )))
+                ('total_timestep', self._total_timestep),
+                ('num_train_steps', self._num_train_steps),
+            ))
 
             if self._eval_render_kwargs and hasattr(
                     evaluation_environment, 'render_rollouts'):
@@ -309,8 +300,7 @@ class RLAlgorithm(Checkpointable):
         ))
 
         env_infos = env.get_path_infos(episodes)
-        for key, value in env_infos.items():
-            diagnostics[f'env_infos/{key}'] = value
+        diagnostics['env_infos'] = env_infos
 
         return diagnostics
 
