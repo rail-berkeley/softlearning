@@ -26,6 +26,8 @@ from ray.autoscaler.commands import exec_cluster
 from softlearning.utils.times import datetimestamp
 from softlearning.utils.misc import PROJECT_PATH
 
+import tensorflow as tf
+
 
 AUTOSCALER_DEFAULT_CONFIG_FILE_GCE = os.path.join(
     PROJECT_PATH, 'config', 'ray-autoscaler-gce.yaml')
@@ -255,6 +257,8 @@ def run_example_debug(example_module_name, example_argv):
             continue
         else:
             debug_example_argv.append(option)
+
+    tf.config.experimental_run_functions_eagerly(True)
 
     run_example_local(example_module_name, debug_example_argv, local_mode=True)
 
