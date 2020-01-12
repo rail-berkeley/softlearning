@@ -12,6 +12,21 @@ else:
     from tensorflow.contrib.framework import nest
 
 
+def set_gpu_memory_growth(growth):
+    physical_gpus = tf.config.experimental.list_physical_devices('GPU')
+    logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+    print(f"{len(physical_gpus)} Physical GPUs, "
+          f"{len(logical_gpus)} Logical GPUs.")
+
+    for physical_gpu in physical_gpus:
+        print(f"GPU: {physical_gpu}")
+        try:
+            tf.config.experimental.set_memory_growth(gpu, growth)
+        except RuntimeError as e:
+            # Memory growth must be set before GPUs have been initialized
+            print(e)
+
+
 def apply_preprocessors(preprocessors, inputs):
     nest.assert_same_structure(inputs, preprocessors)
     preprocessed_inputs = nest.map_structure(

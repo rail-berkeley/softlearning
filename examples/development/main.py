@@ -16,7 +16,8 @@ from softlearning.samplers.utils import get_sampler_from_variant
 from softlearning.value_functions.utils import get_Q_function_from_variant
 
 from softlearning.utils.misc import set_seed
-from softlearning.utils.tensorflow import initialize_tf_variables
+from softlearning.utils.tensorflow import (
+    set_gpu_memory_growth)
 from examples.instrument import run_example_local
 
 tf.compat.v1.disable_eager_execution()
@@ -25,13 +26,10 @@ tf.compat.v1.disable_eager_execution()
 class ExperimentRunner(tune.Trainable):
     def _setup(self, variant):
         set_seed(variant['run_params']['seed'])
-
+        self._session = tf.compat.v1.keras.backend.get_session()
         self._variant = variant
 
-        gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
-        self._session = tf.compat.v1.Session(
-            config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
-        tf.keras.backend.set_session(self._session)
+        set_gpu_memory_growth(True)
 
         self.train_generator = None
         self._built = False
