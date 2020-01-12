@@ -45,7 +45,6 @@ class RLAlgorithm(Checkpointable):
             eval_deterministic=True,
             eval_render_kwargs=None,
             video_save_frequency=0,
-            session=None,
     ):
         """
         Args:
@@ -88,78 +87,9 @@ class RLAlgorithm(Checkpointable):
                 "RlAlgorithm cannot render and save videos at the same time")
             self._eval_render_kwargs['mode'] = render_mode
 
-        self._session = session or tf.compat.v1.keras.backend.get_session()
-
         self._epoch = 0
         self._timestep = 0
         self._num_train_steps = 0
-
-    def _build(self):
-        self._training_ops = {}
-
-        self._init_global_step()
-        self._init_placeholders()
-
-    def _init_global_step(self):
-        self.global_step = training_util.get_or_create_global_step()
-        self._training_ops.update({
-            'increment_global_step': training_util._increment_global_step(1)
-        })
-
-    def _init_placeholders(self):
-        """Create input placeholders for the SAC algorithm.
-
-        Creates `tf.placeholder`s for:
-            - observation
-            - next observation
-            - action
-            - reward
-            - terminals
-        """
-        self._placeholders = {
-            'observations': {
-                name: tf.compat.v1.placeholder(
-                    dtype=(
-                        np.float32
-                        if np.issubdtype(observation_space.dtype, np.floating)
-                        else observation_space.dtype
-                    ),
-                    shape=(None, *observation_space.shape),
-                    name=name)
-                for name, observation_space
-                in self._training_environment.observation_space.spaces.items()
-            },
-            'next_observations': {
-                name: tf.compat.v1.placeholder(
-                    dtype=(
-                        np.float32
-                        if np.issubdtype(observation_space.dtype, np.floating)
-                        else observation_space.dtype
-                    ),
-                    shape=(None, *observation_space.shape),
-                    name=name)
-                for name, observation_space
-                in self._training_environment.observation_space.spaces.items()
-            },
-            'actions': tf.compat.v1.placeholder(
-                dtype=tf.float32,
-                shape=(None, *self._training_environment.action_shape),
-                name='actions',
-            ),
-            'rewards': tf.compat.v1.placeholder(
-                tf.float32,
-                shape=(None, 1),
-                name='rewards',
-            ),
-            'terminals': tf.compat.v1.placeholder(
-                tf.bool,
-                shape=(None, 1),
-                name='terminals',
-            ),
-            'iteration': tf.compat.v1.placeholder(
-                tf.int64, shape=(), name='iteration',
-            ),
-        }
 
     def _initial_exploration_hook(self, env, initial_exploration_policy, pool):
         if self._n_initial_exploration_steps < 1: return

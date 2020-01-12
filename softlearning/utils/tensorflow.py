@@ -2,27 +2,6 @@ import tensorflow as tf
 import tree
 
 
-def initialize_tf_variables(session, only_uninitialized=True):
-    variables = tf.compat.v1.global_variables() + tf.compat.v1.local_variables()
-
-    def is_initialized(variable):
-        try:
-            session.run(variable)
-            return True
-        except tf.errors.FailedPreconditionError:
-            return False
-
-        return False
-
-    if only_uninitialized:
-        variables = [
-            variable for variable in variables
-            if not is_initialized(variable)
-        ]
-
-    session.run(tf.compat.v1.variables_initializer(variables))
-
-
 def set_gpu_memory_growth(growth):
     physical_gpus = tf.config.experimental.list_physical_devices('GPU')
     logical_gpus = tf.config.experimental.list_logical_devices('GPU')
