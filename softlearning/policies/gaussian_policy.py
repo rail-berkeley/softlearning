@@ -178,7 +178,7 @@ class GaussianPolicy(LatentSpacePolicy):
          log_scale_diags_np,
          log_pis_np,
          raw_actions_np,
-         actions_np) = self.diagnostics_model.predict(inputs)
+         actions_np) = self.diagnostics_model(inputs)
 
         return OrderedDict((
             ('shifts-mean', np.mean(shifts_np)),

@@ -103,12 +103,12 @@ class LatentSpacePolicy(BasePolicy):
 
     def actions_np(self, observations):
         if self._deterministic:
-            return self.deterministic_actions_model.predict(observations)
+            return self.deterministic_actions_model(observations).numpy()
         elif self._smoothing_alpha == 0:
-            return self.actions_model.predict(observations)
+            return self.actions_model(observations).numpy()
         else:
             alpha, beta = self._smoothing_alpha, self._smoothing_beta
-            raw_latents = self.latents_model.predict(observations)
+            raw_latents = self.latents_model(observations).numpy()
             self._smoothing_x = (
                 alpha * self._smoothing_x + (1.0 - alpha) * raw_latents)
             latents = beta * self._smoothing_x

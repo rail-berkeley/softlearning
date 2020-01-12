@@ -136,7 +136,7 @@ class RealNVPPolicy(LatentSpacePolicy):
         """
         (log_pis_np,
          raw_actions_np,
-         actions_np) = self.diagnostics_model.predict(inputs)
+         actions_np) = self.diagnostics_model(inputs)
 
         return OrderedDict((
             ('-log-pis-mean', np.mean(-log_pis_np)),

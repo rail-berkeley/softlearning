@@ -65,7 +65,7 @@ class UniformPolicy(BasePolicy):
         return self.actions_model(observations)
 
     def actions_np(self, observations):
-        return self.actions_model.predict(observations)
+        return self.actions_model(observations).numpy()
 
 
 class ContinuousUniformPolicy(UniformPolicy):
