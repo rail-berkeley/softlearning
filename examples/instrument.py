@@ -116,7 +116,7 @@ def generate_experiment_kwargs(variant_spec, command_line_args):
         def trial_name_creator(trial):
             return trial_name_template.format(trial=trial)
 
-        return tune.function(trial_name_creator)
+        return trial_name_creator
 
     experiment_kwargs = {
         'name': experiment_id,
