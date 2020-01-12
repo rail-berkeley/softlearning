@@ -5,7 +5,6 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from flatten_dict import flatten
 
-from softlearning.models.utils import flatten_input_structure
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 
 from .rl_algorithm import RLAlgorithm
@@ -160,8 +159,8 @@ class SQL(RLAlgorithm):
             (tf.shape(self._placeholders['actions'])[0], 1, 1))
         target_actions = tf.reshape(target_actions, (-1, *action_shape))
 
-        next_Q_inputs = flatten_input_structure(
-            {**next_Q_observations, 'actions': target_actions})
+        next_Q_inputs = {
+            'observations': next_Q_observations, 'actions': target_actions}
         next_Qs_values = tuple(Q(next_Q_inputs) for Q in self._Q_targets)
 
         min_next_Q = tf.reduce_min(next_Qs_values, axis=0)
@@ -205,8 +204,8 @@ class SQL(RLAlgorithm):
             for name in self._Qs[0].observation_keys
         }
         Q_actions = self._placeholders['actions']
-        Q_inputs = flatten_input_structure({
-            **Q_observations, 'actions': Q_actions})
+        Q_inputs = {
+            'observations': Q_observations, 'actions': Q_actions}
         Q_values = self._Q_values = tuple(Q(Q_inputs) for Q in self._Qs)
 
         for Q_value in self._Q_values:
@@ -235,14 +234,14 @@ class SQL(RLAlgorithm):
     def _init_svgd_update(self):
         """Create a minimization operation for policy update (SVGD)."""
 
-        policy_inputs = flatten_input_structure({
+        policy_inputs = {
             name: tf.reshape(
                 tf.tile(
                     self._placeholders['observations'][name][:, None, :],
                     (1, self._kernel_n_particles, 1)),
                 (-1, *self._placeholders['observations'][name].shape[1:]))
             for name in self._policy.observation_keys
-        })
+        }
         actions = self._policy.actions(policy_inputs)
         action_shape = actions.shape[1:]
         actions = tf.reshape(
@@ -277,8 +276,8 @@ class SQL(RLAlgorithm):
             for name in self._policy.observation_keys
         }
         Q_actions = tf.reshape(fixed_actions, (-1, *action_shape))
-        Q_inputs = flatten_input_structure({
-            **Q_observations, 'actions': Q_actions})
+        Q_inputs = {
+            'observations': Q_observations, 'actions': Q_actions}
         Q_log_targets = tuple(Q(Q_inputs) for Q in self._Qs)
         min_Q_log_target = tf.reduce_min(Q_log_targets, axis=0)
         svgd_target_values = tf.reshape(
@@ -405,10 +404,10 @@ class SQL(RLAlgorithm):
         diagnostics.update(OrderedDict([
             (f'policy/{key}', value)
             for key, value in
-            self._policy.get_diagnostics(flatten_input_structure({
+            self._policy.get_diagnostics({
                 name: batch['observations'][name]
                 for name in self._policy.observation_keys
-            })).items()
+            }).items()
         ]))
 
         if self._plotter:

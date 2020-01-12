@@ -6,7 +6,6 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from flatten_dict import flatten
 
-from softlearning.models.utils import flatten_input_structure
 from softlearning.utils.gym import is_continuous_space, is_discrete_space
 from .rl_algorithm import RLAlgorithm
 
@@ -115,10 +114,10 @@ class SAC(RLAlgorithm):
         self._init_diagnostics_ops()
 
     def _get_Q_target(self):
-        policy_inputs = flatten_input_structure({
+        policy_inputs = {
             name: self._placeholders['next_observations'][name]
             for name in self._policy.observation_keys
-        })
+        }
         next_actions = self._policy.actions(policy_inputs)
         next_log_pis = self._policy.log_pis(policy_inputs, next_actions)
 
@@ -126,8 +125,10 @@ class SAC(RLAlgorithm):
             name: self._placeholders['next_observations'][name]
             for name in self._Qs[0].observation_keys
         }
-        next_Q_inputs = flatten_input_structure(
-            {**next_Q_observations, 'actions': next_actions})
+        next_Q_inputs = {
+            'observations': next_Q_observations,
+            'actions': next_actions,
+        }
         next_Qs_values = tuple(Q(next_Q_inputs) for Q in self._Q_targets)
 
         min_next_Q = tf.reduce_min(next_Qs_values, axis=0)
@@ -159,8 +160,10 @@ class SAC(RLAlgorithm):
             name: self._placeholders['observations'][name]
             for name in self._Qs[0].observation_keys
         }
-        Q_inputs = flatten_input_structure({
-            **Q_observations, 'actions': self._placeholders['actions']})
+        Q_inputs = {
+            'observations': Q_observations,
+            'actions': self._placeholders['actions'],
+        }
         Q_values = self._Q_values = tuple(Q(Q_inputs) for Q in self._Qs)
 
         Q_losses = self._Q_losses = tuple(
@@ -192,10 +195,10 @@ class SAC(RLAlgorithm):
         and Section 5 in [1] for further information of the entropy update.
         """
 
-        policy_inputs = flatten_input_structure({
+        policy_inputs = {
             name: self._placeholders['observations'][name]
             for name in self._policy.observation_keys
-        })
+        }
         actions = self._policy.actions(policy_inputs)
         log_pis = self._policy.log_pis(policy_inputs, actions)
         assert log_pis.shape.as_list() == [None, 1]
@@ -233,8 +236,7 @@ class SAC(RLAlgorithm):
             name: self._placeholders['observations'][name]
             for name in self._Qs[0].observation_keys
         }
-        Q_inputs = flatten_input_structure({
-            **Q_observations, 'actions': actions})
+        Q_inputs = {'observations': Q_observations, 'actions': actions}
         Q_log_targets = tuple(Q(Q_inputs) for Q in self._Qs)
         min_Q_log_target = tf.reduce_min(Q_log_targets, axis=0)
 
@@ -334,10 +336,10 @@ class SAC(RLAlgorithm):
         diagnostics.update(OrderedDict([
             (f'policy/{key}', value)
             for key, value in
-            self._policy.get_diagnostics(flatten_input_structure({
+            self._policy.get_diagnostics({
                 name: batch['observations'][name]
                 for name in self._policy.observation_keys
-            })).items()
+            }).items()
         ]))
 
         if self._plotter:

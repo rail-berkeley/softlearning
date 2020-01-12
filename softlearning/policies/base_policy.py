@@ -99,7 +99,7 @@ class LatentSpacePolicy(BasePolicy):
 
     def log_pis(self, observations, actions):
         assert not self._deterministic, self._deterministic
-        return self.log_pis_model([*observations, actions])
+        return self.log_pis_model((observations, actions))
 
     def actions_np(self, observations):
         if self._deterministic:
@@ -114,11 +114,11 @@ class LatentSpacePolicy(BasePolicy):
             latents = beta * self._smoothing_x
 
             return self.actions_model_for_fixed_latents.predict(
-                [*observations, latents])
+                (observations, latents))
 
     def log_pis_np(self, observations, actions):
         assert not self._deterministic, self._deterministic
-        return self.log_pis_model.predict([*observations, actions])
+        return self.log_pis_model.predict((observations, actions))
 
     def reset(self):
         self._reset_smoothing_x()

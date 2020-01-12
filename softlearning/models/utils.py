@@ -54,6 +54,5 @@ def create_inputs(input_shapes):
     TODO(hartikainen): Need to figure out a better way for handling the dtypes.
     """
     inputs = tree.map_structure_with_path(create_input, input_shapes)
-    inputs_flat = flatten_input_structure(inputs)
 
-    return inputs_flat
+    return inputs
