@@ -111,8 +111,8 @@ class RealNVPPolicyTest(tf.test.TestCase):
         self.assertTrue(isinstance(diagnostics, OrderedDict))
         self.assertEqual(
             tuple(diagnostics.keys()),
-            ('-log-pis-mean',
-             '-log-pis-std',
+            ('entropy-mean',
+             'entropy-std',
              'raw-actions-mean',
              'raw-actions-std',
              'actions-mean',
