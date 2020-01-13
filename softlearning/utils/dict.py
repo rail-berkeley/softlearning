@@ -20,7 +20,7 @@ def flatten(unflattened, parent_key='', separator='.'):
     for k, v in unflattened.items():
         if separator in k:
             raise ValueError(
-                "Found separator ({}) from key ({})".format(separator, k))
+                f"Found separator ({separator}) from key ({k})")
         new_key = parent_key + separator + k if parent_key else k
         if isinstance(v, collections.MutableMapping) and v:
             items.extend(flatten(v, new_key, separator=separator).items())
