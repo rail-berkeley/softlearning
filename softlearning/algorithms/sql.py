@@ -1,9 +1,7 @@
+from copy import copy
 from collections import OrderedDict
 
-import numpy as np
 import tensorflow as tf
-import tensorflow_probability as tfp
-from flatten_dict import flatten
 
 from softlearning.misc.kernel import adaptive_isotropic_gaussian_kernel
 
@@ -89,7 +87,7 @@ class SQL(RLAlgorithm):
         self._policy = policy
 
         self._Qs = Qs
-        self._Q_targets = tuple(tf.keras.models.clone_model(Q) for Q in Qs)
+        self._Q_targets = tuple(copy(Q) for Q in Qs)
 
         self._plotter = plotter
 
@@ -124,7 +122,7 @@ class SQL(RLAlgorithm):
         self._Q_optimizers = tuple(
             tf.optimizers.Adam(
                 learning_rate=self._Q_lr,
-                name='{}_{}_optimizer'.format(Q._name, i)
+                name=f'Q_{i}_optimizer'
             ) for i, Q in enumerate(self._Qs))
 
         self._policy_optimizer = tf.optimizers.Adam(

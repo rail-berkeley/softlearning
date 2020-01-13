@@ -70,16 +70,17 @@ class RealNVPFlow(bijectors.Bijector):
 
             real_nvp_bijector = bijectors.RealNVP(
                 num_masked=input_depth // 2,
+                # num_masked={True: 1.0, False: -1.0}[i % 2 == 0] * 0.5,
                 shift_and_log_scale_fn=feedforward_scale_and_log_diag_fn(
                     hidden_layer_sizes=self._hidden_layer_sizes,
                     activation=tf.nn.relu),
-                name='real_nvp_{}'.format(i))
+                name=f'real_nvp_{i}')
             flow_parts += [real_nvp_bijector]
 
             if i < self._num_coupling_layers - 1:
                 permute_bijector = bijectors.Permute(
                     permutation=list(reversed(range(input_depth))),
-                    name='permute_{}'.format(i))
+                    name=f'permute_{i}')
                 flow_parts += [permute_bijector]
 
         # bijectors.Chain applies the list of bijectors in the

@@ -1,3 +1,4 @@
+from copy import copy
 from collections import OrderedDict
 from numbers import Number
 
@@ -104,7 +105,7 @@ class SAC(RLAlgorithm):
         self._policy = policy
 
         self._Qs = Qs
-        self._Q_targets = tuple(tf.keras.models.clone_model(Q) for Q in Qs)
+        self._Q_targets = tuple(copy(Q) for Q in Qs)
 
         self._plotter = plotter
 
@@ -128,7 +129,7 @@ class SAC(RLAlgorithm):
         self._Q_optimizers = tuple(
             tf.optimizers.Adam(
                 learning_rate=self._Q_lr,
-                name='{}_{}_optimizer'.format(Q._name, i)
+                name=f'Q_{i}_optimizer'
             ) for i, Q in enumerate(self._Qs))
 
         self._log_alpha = tf.Variable(0.0, name='log_alpha', dtype=tf.float32)
