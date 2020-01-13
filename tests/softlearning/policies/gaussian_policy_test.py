@@ -2,6 +2,7 @@ import pickle
 from collections import OrderedDict
 
 import numpy as np
+import pytest
 import tensorflow as tf
 import tree
 
@@ -24,56 +25,30 @@ class GaussianPolicyTest(tf.test.TestCase):
             hidden_layer_sizes=self.hidden_layer_sizes,
             observation_keys=self.env.observation_keys)
 
-    def test_actions_and_log_pis_symbolic(self):
+    def test_actions_and_log_pis(self):
         observation1_np = self.env.reset()
         observation2_np = self.env.step(self.env.action_space.sample())[0]
 
-        observations_np = {}
-        for key in observation1_np.keys():
-            observations_np[key] = np.stack((
+        observations_np = type(observation1_np)((
+            (key, np.stack((
                 observation1_np[key], observation2_np[key]
-            )).astype(np.float32)
+            ), axis=0).astype(np.float32))
+            for key in observation1_np.keys()
+        ))
 
         observations_tf = tree.map_structure(
-            lambda x: tf.constant(x, dtype=tf.float32),
-            observations_np)
+            lambda x: tf.constant(x, dtype=x.dtype), observations_np)
 
-        actions = self.policy.actions(observations_tf)
-        log_pis = self.policy.log_pis(observations_tf, actions)
+        for observations in (observations_np, observations_tf):
+            actions = self.policy.actions(observations)
+            log_pis = self.policy.log_pis(observations, actions)
 
-        self.assertEqual(actions.shape, (2, *self.env.action_space.shape))
-        self.assertEqual(log_pis.shape, (2, 1))
-
-        self.evaluate(tf.compat.v1.global_variables_initializer())
-
-        actions_np = self.evaluate(actions)
-        log_pis_np = self.evaluate(log_pis)
-
-        self.assertEqual(actions_np.shape, (2, *self.env.action_space.shape))
-        self.assertEqual(log_pis_np.shape, (2, 1))
-
-    def test_actions_and_log_pis_numeric(self):
-        observation1_np = self.env.reset()
-        observation2_np = self.env.step(self.env.action_space.sample())[0]
-
-        observations_np = {}
-        for key in observation1_np.keys():
-            observations_np[key] = np.stack((
-                observation1_np[key], observation2_np[key]
-            )).astype(np.float32)
-
-        actions_np = self.policy.actions(observations_np).numpy()
-        log_pis_np = self.policy.log_pis(observations_np, actions_np).numpy()
-
-        self.assertEqual(actions_np.shape, (2, *self.env.action_space.shape))
-        self.assertEqual(log_pis_np.shape, (2, 1))
+            self.assertEqual(actions.shape, (2, *self.env.action_space.shape))
+            self.assertEqual(log_pis.shape, (2, 1))
 
     def test_env_step_with_actions(self):
         observation_np = self.env.reset()
-        observations_np = {
-            key: value[None, :] for key, value in observation_np.items()
-        }
-        action = self.policy.action(observations_np).numpy()
+        action = self.policy.action(observation_np).numpy()
         self.env.step(action)
 
     def test_trainable_variables(self):
@@ -97,11 +72,12 @@ class GaussianPolicyTest(tf.test.TestCase):
         observation1_np = self.env.reset()
         observation2_np = self.env.step(self.env.action_space.sample())[0]
 
-        observations_np = {}
-        for key in observation1_np.keys():
-            observations_np[key] = np.stack((
+        observations_np = type(observation1_np)((
+            (key, np.stack((
                 observation1_np[key], observation2_np[key]
-            )).astype(np.float32)
+            ), axis=0).astype(np.float32))
+            for key in observation1_np.keys()
+        ))
 
         diagnostics = self.policy.get_diagnostics(observations_np)
 
@@ -128,11 +104,12 @@ class GaussianPolicyTest(tf.test.TestCase):
         observation1_np = self.env.reset()
         observation2_np = self.env.step(self.env.action_space.sample())[0]
 
-        observations_np = {}
-        for key in observation1_np.keys():
-            observations_np[key] = np.stack((
+        observations_np = type(observation1_np)((
+            (key, np.stack((
                 observation1_np[key], observation2_np[key]
-            )).astype(np.float32)
+            ), axis=0).astype(np.float32))
+            for key in observation1_np.keys()
+        ))
 
         weights = self.policy.get_weights()
         actions_np = self.policy.actions(observations_np).numpy()
@@ -153,6 +130,7 @@ class GaussianPolicyTest(tf.test.TestCase):
             actions_np.shape,
             deserialized.actions(observations_np).numpy().shape)
 
+    @pytest.mark.skip("Latent smoothing is temporarily disabled.")
     def test_latent_smoothing(self):
         observation_np = self.env.reset()
         smoothed_policy = FeedforwardGaussianPolicy(
@@ -175,10 +153,7 @@ class GaussianPolicyTest(tf.test.TestCase):
 
         smoothing_x_previous = smoothed_policy._smoothing_x
         for i in range(5):
-            observations_np = {
-                key: value[None, :] for key, value in observation_np.items()
-            }
-            action_np = smoothed_policy.action(observations_np).numpy()
+            action_np = smoothed_policy.action(observation_np).numpy()
             observation_np = self.env.step(action_np)[0]
 
             self.assertFalse(np.all(np.equal(

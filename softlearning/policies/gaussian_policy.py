@@ -82,7 +82,7 @@ class GaussianPolicy(LatentSpacePolicy):
             bijector = tfp.bijectors.Affine(
                 shift=shift,
                 scale_diag=tf.exp(log_scale_diag))
-            actions = bijector.forward(latents)
+            actions = bijector(latents)
             return actions
 
         raw_actions = tf.keras.layers.Lambda(
@@ -99,19 +99,19 @@ class GaussianPolicy(LatentSpacePolicy):
             else tfp.bijectors.Identity())
 
         actions = tf.keras.layers.Lambda(
-            lambda raw_actions: squash_bijector.forward(raw_actions)
+            lambda raw_actions: squash_bijector(raw_actions)
         )(raw_actions)
         self.actions_model = tf.keras.Model(self.condition_inputs, actions)
 
         actions_for_fixed_latents = tf.keras.layers.Lambda(
-            lambda raw_actions: squash_bijector.forward(raw_actions)
+            lambda raw_actions: squash_bijector(raw_actions)
         )(raw_actions_for_fixed_latents)
         self.actions_model_for_fixed_latents = tf.keras.Model(
             (self.condition_inputs, self.latents_input),
             actions_for_fixed_latents)
 
         deterministic_actions = tf.keras.layers.Lambda(
-            lambda shift: squash_bijector.forward(shift)
+            lambda shift: squash_bijector(shift)
         )(shift)
 
         self.deterministic_actions_model = tf.keras.Model(
@@ -128,11 +128,7 @@ class GaussianPolicy(LatentSpacePolicy):
                     shift=shift,
                     scale_diag=tf.exp(log_scale_diag)),
             ))
-            distribution = (
-                tfp.distributions.TransformedDistribution(
-                    distribution=base_distribution,
-                    bijector=bijector))
-
+            distribution = bijector(base_distribution)
             log_pis = distribution.log_prob(actions)[:, None]
             return log_pis
 
