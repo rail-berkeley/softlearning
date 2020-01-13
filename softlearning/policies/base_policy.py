@@ -32,9 +32,9 @@ class BasePolicy(Serializable):
     def action(self, input_):
         """Compute an action for a single input, (e.g. observation)."""
         inputs = nest.map_structure(lambda x: x[None, ...], input_)
-        values = self.values(inputs)
-        value = nest.map_structure(lambda x: x[0], values)
-        return value
+        actions = self.actions(inputs)
+        action = nest.map_structure(lambda x: x[0], actions)
+        return action
 
     @abc.abstractmethod
     def log_pis(self, inputs, actions):
@@ -44,9 +44,9 @@ class BasePolicy(Serializable):
     def log_pi(self, *input_):
         """Compute the log probability for a single action."""
         inputs = nest.map_structure(lambda x: x[None, ...], input_)
-        values = self.values(*inputs)
-        value = nest.map_structure(lambda x: x[0], values)
-        return value
+        log_pis = self.values(*inputs)
+        log_pi = nest.map_structure(lambda x: x[0], log_pis)
+        return log_pi
 
     def _filter_observations(self, observations):
         if (isinstance(observations, dict)
