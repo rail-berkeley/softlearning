@@ -49,7 +49,6 @@ lxml==4.4.2
 lz4==3.0.2
 Markdown==3.1.1
 matplotlib==3.1.2
-git+https://github.com/vitchyr/multiworld.git@d76b3dae2e8cbca02924f93d6cc0239c552f6408
 mkl-fft==1.0.15
 mkl-random==1.1.0
 mkl-service==2.3.0
