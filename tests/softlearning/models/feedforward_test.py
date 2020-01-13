@@ -6,60 +6,6 @@ from softlearning.models.feedforward import feedforward_model
 
 class FeedforwardTest(tf.test.TestCase):
 
-    def test_scoping_reuses_variables_on_single_instance(self):
-        output_size = 5
-        x1 = tf.random.uniform((3, 2))
-        x2 = tf.random.uniform((3, 13))
-
-        self.assertFalse(tf.compat.v1.trainable_variables())
-
-        fn = feedforward_model(
-            output_size=output_size,
-            hidden_layer_sizes=(6, 4, 2),
-            name='feedforward_function')
-
-        self.assertEqual(len(tf.compat.v1.trainable_variables()), 0)
-
-        _ = fn([x1, x2])
-        num_trainable_variables_1 = len(tf.compat.v1.trainable_variables())
-
-        self.assertGreater(num_trainable_variables_1, 0)
-
-        _ = fn([x2, x1])
-        num_trainable_variables_2 = len(tf.compat.v1.trainable_variables())
-
-        self.assertEqual(num_trainable_variables_1, num_trainable_variables_2)
-
-    def test_scoping_creates_new_variables_across_instances(self):
-        output_size = 5
-        x = tf.random.uniform((1, 13))
-
-        self.assertFalse(tf.compat.v1.trainable_variables())
-
-        fn1 = feedforward_model(
-            output_size=output_size,
-            hidden_layer_sizes=(6, 4, 2),
-            name='feedforward_function_1')
-        _ = fn1([x])
-
-        num_trainable_variables_1 = len(tf.compat.v1.trainable_variables())
-
-        fn2 = feedforward_model(
-            output_size=output_size,
-            hidden_layer_sizes=(6, 4, 2),
-            name='feedforward_function_2')
-        _ = fn2([x])
-
-        num_trainable_variables_2 = len(tf.compat.v1.trainable_variables())
-
-        self.assertGreater(num_trainable_variables_1, 0)
-        self.assertEqual(
-            num_trainable_variables_1 * 2, num_trainable_variables_2)
-
-        num_trainable_variables_3 = len(tf.compat.v1.trainable_variables())
-        self.assertEqual(
-            num_trainable_variables_2, num_trainable_variables_3)
-
     def test_clone_model(self):
         """Make sure that cloning works and clones can predict."""
         output_size = 5
@@ -70,13 +16,10 @@ class FeedforwardTest(tf.test.TestCase):
             output_size=output_size,
             hidden_layer_sizes=(6, 4, 2),
             name='feedforward_function')
-        result_1 = fn1([x, x])
-
-        tf.compat.v1.keras.backend.get_session().run(
-            tf.compat.v1.global_variables_initializer())
+        result_1 = fn1([x, x]).numpy()
 
         fn2 = tf.keras.models.clone_model(fn1)
-        result_2 = fn2([x, x])
+        result_2 = fn2([x, x]).numpy()
 
         variable_names = [x.name for x in fn1.variables]
         for variable_name, variable_1, variable_2 in zip(
@@ -87,23 +30,19 @@ class FeedforwardTest(tf.test.TestCase):
                 self.assertNotAllClose(variable_1, variable_2)
 
         self.assertEqual(
-            len(set(fn1.trainable_variables)
-                & set(fn2.trainable_variables)),
+            len(set((v1.experimental_ref() for v1 in fn1.trainable_variables))
+                &
+                set((v2.experimental_ref() for v2 in fn2.trainable_variables))),
             0)
 
-        with self.assertRaises(ValueError):
-            # TODO(hartikainen): investigate why this fails
-            result_1_predict = fn1.predict([x_np, x_np])
-            result_1_eval = tf.compat.v1.keras.backend.eval(result_1)
+        result_1_predict = fn1.predict((x_np, x_np))
+        result_2_predict = fn2.predict((x_np, x_np))
 
-            result_2_predict = fn2.predict([x_np, x_np])
-            result_2_eval = tf.compat.v1.keras.backend.eval(result_2)
+        self.assertEqual(fn1.name, fn2.name)
+        self.assertEqual(result_1_predict.shape, result_2_predict.shape)
 
-            self.assertEqual(fn1.name, fn2.name)
-            self.assertEqual(result_1_predict.shape, result_2_predict.shape)
-
-            self.assertAllEqual(result_1_predict, result_1_eval)
-            self.assertAllEqual(result_2_predict, result_2_eval)
+        self.assertAllEqual(result_1_predict, result_1)
+        self.assertAllEqual(result_2_predict, result_2)
 
     def test_without_name(self):
         fn = feedforward_model(
