@@ -51,7 +51,6 @@ Markdown==3.0.1
 matplotlib==3.1.2
 more-itertools==4.3.0
 mujoco-py==2.0.2.8
-git+https://github.com/vitchyr/multiworld.git@d76b3dae2e8cbca02924f93d6cc0239c552f6408
 networkx==2.2
 numpy==1.17.3
 pandas==0.23.4
