@@ -222,6 +222,21 @@ class ExperimentRunner(tune.Trainable):
             sampler=sampler)
         self.algorithm.__setstate__(picklable['algorithm'].__getstate__())
 
+        # We need to run one step on optimizers s.t. the variables get
+        # initialized.
+        for Q_optimizer, Q in zip(self.algorithm._Q_optimizers, Qs):
+            Q_optimizer.apply_gradients([
+                (tf.zeros_like(variable), variable)
+                for variable in Q.trainable_variables
+            ])
+        self.algorithm._alpha_optimizer.apply_gradients([
+            (tf.zeros_like(self.algorithm._alpha), self.algorithm._alpha)
+        ])
+        self.algorithm._policy_optimizer.apply_gradients([
+            (tf.zeros_like(variable), variable)
+            for variable in self.policy.trainable_variables
+        ])
+
         tf_checkpoint = self._get_tf_checkpoint()
         status = tf_checkpoint.restore(tf.compat.v1.train.latest_checkpoint(
             os.path.split(self._tf_checkpoint_prefix(checkpoint_dir))[0]))

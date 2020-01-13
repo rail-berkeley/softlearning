@@ -22,8 +22,17 @@ class BaseValueFunction:
     def trainable_variables(self):
         return self.model.trainable_variables
 
-    def get_weights(self):
-        return self.model.get_weights()
+    def get_weights(self, *args, **kwargs):
+        return self.model.get_weights(*args, **kwargs)
+
+    def set_weights(self, *args, **kwargs):
+        return self.model.set_weights(*args, **kwargs)
+
+    def save_weights(self, *args, **kwargs):
+        self.model.save_weights(*args, **kwargs)
+
+    def load_weights(self, *args, **kwargs):
+        self.model.load_weights(*args, **kwargs)
 
     @abc.abstractmethod
     def values(self, inputs):
