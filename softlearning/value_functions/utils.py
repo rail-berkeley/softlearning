@@ -35,10 +35,7 @@ def get_Q_function_from_variant(variant, env, *args, **kwargs):
         if key in observation_keys
     ))
     action_shape = env.action_shape
-    input_shapes = {
-        'observations': observation_shapes,
-        'actions': action_shape,
-    }
+    input_shapes = (observation_shapes, action_shape)
 
     observation_preprocessors = OrderedDict()
     for name, observation_shape in observation_shapes.items():
@@ -50,10 +47,7 @@ def get_Q_function_from_variant(variant, env, *args, **kwargs):
             env, preprocessor_params)
 
     action_preprocessor = None
-    preprocessors = {
-        'observations': observation_preprocessors,
-        'actions': action_preprocessor,
-    }
+    preprocessors = (observation_preprocessors, action_preprocessor)
 
     Q_function = VALUE_FUNCTIONS[Q_type](
         input_shapes=input_shapes,

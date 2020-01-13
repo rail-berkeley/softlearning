@@ -50,7 +50,7 @@ class SimpleSampler(BaseSampler):
         if self._current_observation is None:
             self._current_observation = self.environment.reset()
 
-        action = self.policy.actions_np(self._policy_input)[0]
+        action = self.policy.action(self._policy_input).numpy()
 
         next_observation, reward, terminal, info = self.environment.step(
             action)

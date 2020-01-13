@@ -146,21 +146,10 @@ class SAC(RLAlgorithm):
         reward_scale = self._reward_scale
         discount = self._discount
 
-        policy_inputs = {
-            name: next_observations[name]
-            for name in self._policy.observation_keys
-        }
-        actions = self._policy.actions(policy_inputs)
-        log_pis = self._policy.log_pis(policy_inputs, actions)
-        next_Q_observations = {
-            name: next_observations[name]
-            for name in self._Qs[0].observation_keys
-        }
-        next_Q_inputs = {
-            'observations': next_Q_observations,
-            'actions': actions
-        }
-        next_Qs_values = tuple(Q(next_Q_inputs) for Q in self._Q_targets)
+        actions = self._policy.actions(next_observations)
+        log_pis = self._policy.log_pis(next_observations, actions)
+        next_Qs_values = tuple(
+            Q.values(next_observations, actions) for Q in self._Q_targets)
         next_Q_values = tf.reduce_min(next_Qs_values, axis=0)
 
         Q_targets = compute_Q_targets(
@@ -196,17 +185,11 @@ class SAC(RLAlgorithm):
         tf.debugging.assert_shapes((
             (Q_targets, ('B', 1)), (rewards, ('B', 1))))
 
-        Q_observations = {
-            name: observations[name]
-            for name in self._Qs[0].observation_keys
-        }
-        Q_inputs = {'observations': Q_observations, 'actions': actions}
-
         Qs_values = []
         Qs_losses = []
         for Q, optimizer in zip(self._Qs, self._Q_optimizers):
             with tf.GradientTape() as tape:
-                Q_values = Q(Q_inputs)
+                Q_values = Q.values(observations, actions)
                 Q_losses = (
                     0.5 * tf.losses.MSE(y_true=Q_targets, y_pred=Q_values))
 
@@ -229,21 +212,12 @@ class SAC(RLAlgorithm):
         and Section 5 in [1] for further information of the entropy update.
         """
 
-        policy_inputs = {
-            name: observations[name]
-            for name in self._policy.observation_keys
-        }
-
         with tf.GradientTape() as tape:
-            actions = self._policy.actions(policy_inputs)
-            log_pis = self._policy.log_pis(policy_inputs, actions)
+            actions = self._policy.actions(observations)
+            log_pis = self._policy.log_pis(observations, actions)
 
-            Q_observations = {
-                name: observations[name]
-                for name in self._Qs[0].observation_keys
-            }
-            Q_inputs = {'observations': Q_observations, 'actions': actions}
-            Qs_log_targets = tuple(Q(Q_inputs) for Q in self._Qs)
+            Qs_log_targets = tuple(
+                Q.values(observations, actions) for Q in self._Qs)
             Q_log_targets = tf.reduce_min(Qs_log_targets, axis=0)
 
             policy_losses = self._alpha * log_pis - Q_log_targets
@@ -267,13 +241,8 @@ class SAC(RLAlgorithm):
         if not isinstance(self._target_entropy, Number):
             return
 
-        policy_inputs = {
-            name: observations[name]
-            for name in self._policy.observation_keys
-        }
-
-        actions = self._policy.actions(policy_inputs)
-        log_pis = self._policy.log_pis(policy_inputs, actions)
+        actions = self._policy.actions(observations)
+        log_pis = self._policy.log_pis(observations, actions)
 
         with tf.GradientTape() as tape:
             alpha_losses = -1.0 * (
@@ -338,12 +307,9 @@ class SAC(RLAlgorithm):
         Also calls the `draw` method of the plotter, if plotter defined.
         """
 
-        policy_diagnostics = self._policy.get_diagnostics({
-            name: batch['observations'][name]
-            for name in self._policy.observation_keys
-        })
         diagnostics = OrderedDict((
-            ('policy', policy_diagnostics),
+            ('policy', self._policy.get_diagnostics(
+                batch['observations'])),
         ))
 
         if self._plotter:

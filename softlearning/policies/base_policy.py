@@ -6,6 +6,8 @@ import numpy as np
 import tree
 from serializable import Serializable
 
+from softlearning.utils.tensorflow import nest
+
 
 class BasePolicy(Serializable):
     def __init__(self, observation_keys):
@@ -24,24 +26,37 @@ class BasePolicy(Serializable):
         """Reset and clean the policy."""
 
     @abc.abstractmethod
-    def actions(self, observations):
-        """Compute (symbolic) actions given observations (observations)"""
+    def actions(self, inputs):
+        """Compute actions for given inputs (e.g. observations)."""
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def log_pis(self, observations, actions):
-        """Compute (symbolic) log probs for given observations and actions."""
-        raise NotImplementedError
+    def action(self, input_):
+        """Compute an action for a single input, (e.g. observation)."""
+        inputs = nest.map_structure(lambda x: x[None, ...], input_)
+        values = self.values(inputs)
+        value = nest.map_structure(lambda x: x[0], values)
+        return value
 
     @abc.abstractmethod
-    def actions_np(self, observations):
-        """Compute (numeric) actions given observations (observations)"""
+    def log_pis(self, inputs, actions):
+        """Compute log probabilities for given actions."""
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def log_pis_np(self, observations, actions):
-        """Compute (numeric) log probs for given observations and actions."""
-        raise NotImplementedError
+    def log_pi(self, *input_):
+        """Compute the log probability for a single action."""
+        inputs = nest.map_structure(lambda x: x[None, ...], input_)
+        values = self.values(*inputs)
+        value = nest.map_structure(lambda x: x[0], values)
+        return value
+
+    def _filter_observations(self, observations):
+        if (isinstance(observations, dict)
+            and self._observation_keys is not None):
+            observations = type((observations))((
+                (key, observations[key])
+                for key in self.observation_keys
+            ))
+        return observations
 
     @contextmanager
     def set_deterministic(self, deterministic=True):
@@ -64,7 +79,7 @@ class BasePolicy(Serializable):
         Returns:
             diagnostics: OrderedDict of diagnostic information.
         """
-        diagnostics = OrderedDict({})
+        diagnostics = OrderedDict()
         return diagnostics
 
     def __getstate__(self):
@@ -94,35 +109,21 @@ class LatentSpacePolicy(BasePolicy):
         self._smoothing_x = np.zeros((1, *self._output_shape))
 
     def actions(self, observations):
+        if 0 < self._smoothing_alpha:
+            raise NotImplementedError(
+                "TODO(hartikainen): Smoothing alpha temporarily dropped on tf2"
+                " migration. Should add it back. See:"
+                " https://github.com/rail-berkeley/softlearning/blob/46374df0294b9b5f6dbe65b9471ec491a82b6944/softlearning/policies/base_policy.py#L80")
+
+        observations = self._filter_observations(observations)
         if self._deterministic:
             return self.deterministic_actions_model(observations)
         return self.actions_model(observations)
 
     def log_pis(self, observations, actions):
+        observations = self._filter_observations(observations)
         assert not self._deterministic, self._deterministic
         return self.log_pis_model((observations, actions))
-
-    def actions_np(self, observations):
-        if self._deterministic:
-            return self.deterministic_actions_model(observations).numpy()
-        elif self._smoothing_alpha == 0:
-            return self.actions_model(observations).numpy()
-        else:
-            alpha, beta = self._smoothing_alpha, self._smoothing_beta
-            raw_latents = self.latents_model(observations).numpy()
-            self._smoothing_x = (
-                alpha * self._smoothing_x + (1.0 - alpha) * raw_latents)
-            latents = beta * self._smoothing_x
-
-            inputs = tree.flatten((observations, latents))
-            # TODO(hartikainen/tf2): This can be removed once we use .numpy()
-            return self.actions_model_for_fixed_latents.predict(inputs)
-
-    def log_pis_np(self, observations, actions):
-        assert not self._deterministic, self._deterministic
-        inputs = tree.flatten((observations, actions))
-        # TODO(hartikainen/tf2): This can be removed once we use .numpy()
-        return self.log_pis_model.predict(inputs)
 
     def reset(self):
         self._reset_smoothing_x()
