@@ -14,7 +14,7 @@ def create_feedforward_Q_function(input_shapes,
                                   **kwargs):
     inputs = create_inputs(input_shapes)
     if preprocessors is None:
-        preprocessors = nest.map_structure(lambda: None, inputs)
+        preprocessors = nest.map_structure(lambda x: None, inputs)
 
     preprocessed_inputs = apply_preprocessors(preprocessors, inputs)
 
