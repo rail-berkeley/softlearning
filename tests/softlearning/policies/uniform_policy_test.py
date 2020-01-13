@@ -51,9 +51,9 @@ class ContinuousUniformPolicyTest(tf.test.TestCase):
                 observation1_np[key], observation2_np[key]
             )).astype(np.float32)
 
-        actions_np = self.policy.actions_np(observations_np)
+        actions_np = self.policy.actions(observations_np).numpy()
         with self.assertRaises(NotImplementedError):
-            log_pis_np = self.policy.log_pis_np(observations_np, actions_np)
+            log_pis_np = self.policy.log_pis(observations_np, actions_np).numpy()
 
         self.assertEqual(actions_np.shape, (2, *self.env.action_shape))
 
@@ -62,7 +62,7 @@ class ContinuousUniformPolicyTest(tf.test.TestCase):
         observations_np = {
             key: value[None, :] for key, value in observation1_np.items()
         }
-        action = self.policy.actions_np(observations_np)[0, ...]
+        action = self.policy.action(observations_np).numpy()
         self.env.step(action)
 
     def test_trainable_variables(self):
@@ -94,8 +94,8 @@ class ContinuousUniformPolicyTest(tf.test.TestCase):
         deserialized = pickle.loads(pickle.dumps(self.policy))
 
         np.testing.assert_equal(
-            self.policy.actions_np(observations_np).shape,
-            deserialized.actions_np(observations_np).shape)
+            self.policy.actions(observations_np).numpy().shape,
+            deserialized.actions(observations_np).numpy().shape)
 
 
 if __name__ == '__main__':

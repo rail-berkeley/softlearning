@@ -136,14 +136,13 @@ class SQL(RLAlgorithm):
 
     @tf.function(experimental_relax_shapes=True)
     def _compute_Q_targets(self, next_observations, actions, rewards, terminals):
-        next_Q_observations = {
-            name: tf.reshape(
-                tf.tile(
-                    next_observations[name][:, tf.newaxis, :],
-                    (1, self._value_n_particles, 1)),
-                (-1, *next_observations[name].shape[1:]))
-            for name in self._Qs[0].observation_keys
-        }
+        expanded_next_observations = type(next_observations)((
+            (key, tf.reshape(
+                tf.tile(value[:, tf.newaxis, :],
+                        (1, self._value_n_particles, 1)),
+                (-1, *value.shape[1:])))
+            for key, value in next_observations.items()
+        ))
 
         action_shape = tf.shape(actions)[1:]
         target_actions = tf.random.uniform(
@@ -156,9 +155,9 @@ class SQL(RLAlgorithm):
         target_actions = tf.reshape(
             target_actions, tf.concat(([-1], action_shape), axis=0))
 
-        next_Q_inputs = {
-            'observations': next_Q_observations, 'actions': target_actions}
-        next_Qs_values = tuple(Q(next_Q_inputs) for Q in self._Q_targets)
+        next_Qs_values = tuple(
+            Q.values(expanded_next_observations, target_actions)
+            for Q in self._Q_targets)
 
         min_next_Q = tf.reduce_min(next_Qs_values, axis=0)
 
@@ -209,13 +208,12 @@ class SQL(RLAlgorithm):
             name: observations[name]
             for name in self._Qs[0].observation_keys
         }
-        Q_inputs = {'observations': Q_observations, 'actions': actions}
 
         Qs_values = []
         Qs_losses = []
         for Q, optimizer in zip(self._Qs, self._Q_optimizers):
             with tf.GradientTape() as tape:
-                Q_values = Q(Q_inputs)
+                Q_values = Q.values(Q_observations, actions)
                 Q_losses = (
                     0.5 * tf.losses.MSE(y_true=Q_targets, y_pred=Q_values))
 
@@ -230,15 +228,15 @@ class SQL(RLAlgorithm):
     def _update_policy(self, observations):
         """Create a minimization operation for policy update (SVGD)."""
 
+        expanded_observations = type(observations)((
+            (key, tf.reshape(
+                tf.tile(observation[:, tf.newaxis, :],
+                        (1, self._kernel_n_particles, 1)),
+                (-1, *observation.shape[1:])))
+            for key, observation in observations.items()
+        ))
         with tf.GradientTape() as tape1:
-            policy_inputs = {
-                name: tf.reshape(
-                    tf.tile(observations[name][:, tf.newaxis, :],
-                            (1, self._kernel_n_particles, 1)),
-                    (-1, *observations[name].shape[1:]))
-                for name in self._policy.observation_keys
-            }
-            actions = self._policy.actions(policy_inputs)
+            actions = self._policy.actions(expanded_observations)
             action_shape = actions.shape[1:]
             actions = tf.reshape(
                 actions, (-1, self._kernel_n_particles, *action_shape))
@@ -274,9 +272,8 @@ class SQL(RLAlgorithm):
         with tf.GradientTape(watch_accessed_variables=False) as tape2:
             tape2.watch(fixed_actions)
             Q_actions = tf.reshape(fixed_actions, (-1, *action_shape))
-            Q_inputs = {
-                'observations': Q_observations, 'actions': Q_actions}
-            Q_log_targets = tuple(Q(Q_inputs) for Q in self._Qs)
+            Q_log_targets = tuple(
+                Q.values(Q_observations, Q_actions) for Q in self._Qs)
             min_Q_log_target = tf.reduce_min(Q_log_targets, axis=0)
             svgd_target_values = tf.reshape(
                 min_Q_log_target, (-1, n_fixed_actions, 1))

@@ -65,8 +65,8 @@ class RealNVPPolicyTest(tf.test.TestCase):
                 observation1_np[key], observation2_np[key]
             )).astype(np.float32)
 
-        actions_np = self.policy.actions_np(observations_np)
-        log_pis_np = self.policy.log_pis_np(observations_np, actions_np)
+        actions_np = self.policy.actions(observations_np).numpy()
+        log_pis_np = self.policy.log_pis(observations_np, actions_np).numpy()
 
         self.assertEqual(actions_np.shape, (2, *self.env.action_shape))
         self.assertEqual(log_pis_np.shape, (2, 1))
@@ -76,7 +76,7 @@ class RealNVPPolicyTest(tf.test.TestCase):
         observations_np = {
             key: value[None, :] for key, value in observation_np.items()
         }
-        action = self.policy.actions_np(observations_np)[0, ...]
+        action = self.policy.action(observations_np).numpy()
         self.env.step(action)
 
     def test_trainable_variables(self):
@@ -134,21 +134,21 @@ class RealNVPPolicyTest(tf.test.TestCase):
             )).astype(np.float32)
 
         weights = self.policy.get_weights()
-        actions_np = self.policy.actions_np(observations_np)
-        log_pis_np = self.policy.log_pis_np(observations_np, actions_np)
+        actions_np = self.policy.actions(observations_np).numpy()
+        log_pis_np = self.policy.log_pis(observations_np, actions_np).numpy()
 
         serialized = pickle.dumps(self.policy)
         deserialized = pickle.loads(serialized)
 
         weights_2 = deserialized.get_weights()
-        log_pis_np_2 = deserialized.log_pis_np(observations_np, actions_np)
+        log_pis_np_2 = deserialized.log_pis(observations_np, actions_np).numpy()
 
         for weight, weight_2 in zip(weights, weights_2):
             np.testing.assert_array_equal(weight, weight_2)
 
         np.testing.assert_array_equal(log_pis_np, log_pis_np_2)
         np.testing.assert_equal(
-            actions_np.shape, deserialized.actions_np(observations_np).shape)
+            actions_np.shape, deserialized.actions(observations_np).numpy().shape)
 
     def test_latent_smoothing(self):
         observation_np = self.env.reset()
@@ -176,7 +176,7 @@ class RealNVPPolicyTest(tf.test.TestCase):
             observations_np = {
                 key: value[None, :] for key, value in observation_np.items()
             }
-            action_np = smoothed_policy.actions_np(observations_np)[0]
+            action_np = smoothed_policy.action(observations_np).numpy()
             observation_np = self.env.step(action_np)[0]
 
             self.assertFalse(np.all(np.equal(
