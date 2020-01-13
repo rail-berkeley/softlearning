@@ -1,7 +1,6 @@
 import tensorflow as tf
 import tensorflow_probability as tfp
 
-from softlearning.utils.keras import PicklableSequential
 from softlearning.utils.tensorflow import cast_and_concat
 
 
@@ -20,7 +19,7 @@ def feedforward_model(hidden_layer_sizes,
                       name='feedforward_model',
                       *args,
                       **kwargs):
-    model = PicklableSequential((
+    model = tf.keras.Sequential((
         tfkl.Lambda(cast_and_concat),
         *[
             tf.keras.layers.Dense(
