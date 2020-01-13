@@ -13,15 +13,15 @@ else:
 
 
 def set_gpu_memory_growth(growth):
-    physical_gpus = tf.config.experimental.list_physical_devices('GPU')
-    logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-    print(f"{len(physical_gpus)} Physical GPUs, "
-          f"{len(logical_gpus)} Logical GPUs.")
-
-    for physical_gpu in physical_gpus:
-        print(f"GPU: {physical_gpu}")
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
         try:
-            tf.config.experimental.set_memory_growth(gpu, growth)
+            # Currently, memory growth needs to be the same across GPUs
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, growth)
+            logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+            print(len(gpus), "Physical GPUs,", len(logical_gpus),
+                  "Logical GPUs")
         except RuntimeError as e:
             # Memory growth must be set before GPUs have been initialized
             print(e)
