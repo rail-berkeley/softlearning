@@ -6,7 +6,7 @@ class GoalSampler(SimpleSampler):
     def _policy_input(self):
         observation = super(GoalSampler, self)._action_input
         goal = {
-            key: self._current_observation[key][None, ...]
+            key: self._current_observation[key]
             for key in self.policy.goal_keys
         }
 

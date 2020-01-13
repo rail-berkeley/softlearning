@@ -21,12 +21,7 @@ class SimpleSampler(BaseSampler):
 
     @property
     def _policy_input(self):
-        observation = {
-            key: self._current_observation[key][None, ...]
-            for key in self.policy.observation_keys
-        }
-
-        return observation
+        return self._current_observation
 
     def _process_sample(self,
                         observation,
