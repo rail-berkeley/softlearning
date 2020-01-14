@@ -4,6 +4,7 @@ from numbers import Number
 
 import numpy as np
 import tensorflow as tf
+import tensorflow_probability as tfp
 
 from softlearning.utils.gym import is_continuous_space, is_discrete_space
 from .rl_algorithm import RLAlgorithm
@@ -71,6 +72,7 @@ class SAC(RLAlgorithm):
             plotter=None,
 
             lr=3e-4,
+            alpha_lr=3e-3,
             reward_scale=1.0,
             target_entropy='auto',
             discount=0.99,
@@ -113,8 +115,8 @@ class SAC(RLAlgorithm):
         self._plotter = plotter
 
         self._policy_lr = lr
-        self._alpha_lr = lr
         self._Q_lr = lr
+        self._alpha_lr = alpha_lr
 
         self._reward_scale = reward_scale
         self._target_entropy = (
@@ -136,7 +138,7 @@ class SAC(RLAlgorithm):
             ) for i, Q in enumerate(self._Qs))
 
         self._log_alpha = tf.Variable(0.0, name='log_alpha', dtype=tf.float32)
-        self._alpha = tf.exp(self._log_alpha)
+        self._alpha = tfp.util.DeferredTensor(self._log_alpha, tf.exp)
         self._alpha_optimizer = tf.optimizers.Adam(
             self._alpha_lr, name='alpha_optimizer')
 
@@ -252,8 +254,12 @@ class SAC(RLAlgorithm):
             alpha_losses = -1.0 * (
                 self._log_alpha
                 * tf.stop_gradient(log_pis + self._target_entropy))
+            # NOTE(hartikainen): It's important that we take the average here,
+            # otherwise we end up effectively having `batch_size` times too
+            # large learning rate.
+            alpha_loss = tf.nn.compute_average_loss(alpha_losses)
 
-        alpha_gradients = tape.gradient(alpha_losses, [self._log_alpha])
+        alpha_gradients = tape.gradient(alpha_loss, [self._log_alpha])
         self._alpha_optimizer.apply_gradients(zip(
             alpha_gradients, [self._log_alpha]))
 
@@ -286,7 +292,7 @@ class SAC(RLAlgorithm):
             ('Q_value-mean', tf.reduce_mean(Qs_values)),
             ('Q_loss-mean', tf.reduce_mean(Qs_losses)),
             ('policy_loss-mean', tf.reduce_mean(policy_losses)),
-            ('alpha', self._alpha),
+            ('alpha', self._alpha._value()),
             ('alpha_loss-mean', tf.reduce_mean(alpha_losses)),
         ))
         return diagnostics
@@ -312,6 +318,7 @@ class SAC(RLAlgorithm):
         """
 
         diagnostics = OrderedDict((
+            ('alpha', self._alpha._value().numpy()),
             ('policy', self._policy.get_diagnostics(
                 batch['observations'])),
         ))
