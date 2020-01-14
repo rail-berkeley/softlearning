@@ -134,8 +134,7 @@ class SAC(RLAlgorithm):
                 name=f'Q_{i}_optimizer'
             ) for i, Q in enumerate(self._Qs))
 
-        self._log_alpha = tf.Variable(0.0, name='log_alpha', dtype=tf.float32)
-        self._alpha = tfp.util.DeferredTensor(self._log_alpha, tf.exp)
+        self._alpha = tf.Variable(1.0, name='alpha', dtype=tf.float32)
         self._alpha_optimizer = tf.optimizers.Adam(
             self._alpha_lr, name='alpha_optimizer')
 
@@ -249,16 +248,15 @@ class SAC(RLAlgorithm):
 
         with tf.GradientTape() as tape:
             alpha_losses = -1.0 * (
-                self._log_alpha
-                * tf.stop_gradient(log_pis + self._target_entropy))
+                self._alpha * tf.stop_gradient(log_pis + self._target_entropy))
             # NOTE(hartikainen): It's important that we take the average here,
             # otherwise we end up effectively having `batch_size` times too
             # large learning rate.
             alpha_loss = tf.nn.compute_average_loss(alpha_losses)
 
-        alpha_gradients = tape.gradient(alpha_loss, [self._log_alpha])
+        alpha_gradients = tape.gradient(alpha_loss, [self._alpha])
         self._alpha_optimizer.apply_gradients(zip(
-            alpha_gradients, [self._log_alpha]))
+            alpha_gradients, [self._alpha]))
 
         return alpha_losses
 
@@ -289,7 +287,7 @@ class SAC(RLAlgorithm):
             ('Q_value-mean', tf.reduce_mean(Qs_values)),
             ('Q_loss-mean', tf.reduce_mean(Qs_losses)),
             ('policy_loss-mean', tf.reduce_mean(policy_losses)),
-            ('alpha', self._alpha._value()),
+            ('alpha', self._alpha),
             ('alpha_loss-mean', tf.reduce_mean(alpha_losses)),
         ))
         return diagnostics
@@ -315,7 +313,7 @@ class SAC(RLAlgorithm):
         """
 
         diagnostics = OrderedDict((
-            ('alpha', self._alpha._value().numpy()),
+            ('alpha', self._alpha.numpy()),
             ('policy', self._policy.get_diagnostics(
                 batch['observations'])),
         ))
@@ -333,7 +331,7 @@ class SAC(RLAlgorithm):
                 f'Q_optimizer_{i}': optimizer
                 for i, optimizer in enumerate(self._Q_optimizers)
             },
-            '_log_alpha': self._log_alpha,
+            '_alpha': self._alpha,
         }
 
         if hasattr(self, '_alpha_optimizer'):
