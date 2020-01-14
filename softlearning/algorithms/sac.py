@@ -148,15 +148,15 @@ class SAC(RLAlgorithm):
         reward_scale = self._reward_scale
         discount = self._discount
 
-        actions = self._policy.actions(next_observations)
-        log_pis = self._policy.log_pis(next_observations, actions)
+        next_actions = self._policy.actions(next_observations)
+        next_log_pis = self._policy.log_pis(next_observations, next_actions)
         next_Qs_values = tuple(
-            Q.values(next_observations, actions) for Q in self._Q_targets)
+            Q.values(next_observations, next_actions) for Q in self._Q_targets)
         next_Q_values = tf.reduce_min(next_Qs_values, axis=0)
 
         Q_targets = compute_Q_targets(
             next_Q_values,
-            log_pis,
+            next_log_pis,
             rewards,
             terminals,
             discount,
