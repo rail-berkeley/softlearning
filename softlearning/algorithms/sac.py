@@ -1,4 +1,4 @@
-from copy import copy
+from copy import deepcopy
 from collections import OrderedDict
 from numbers import Number
 
@@ -107,7 +107,7 @@ class SAC(RLAlgorithm):
         self._policy = policy
 
         self._Qs = Qs
-        self._Q_targets = tuple(copy(Q) for Q in Qs)
+        self._Q_targets = tuple(deepcopy(Q) for Q in Qs)
 
         self._plotter = plotter
 
