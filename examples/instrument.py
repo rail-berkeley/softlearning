@@ -75,8 +75,11 @@ def add_command_line_args_to_variant_spec(variant_spec, command_line_args):
 
 def generate_experiment_kwargs(variant_spec, command_line_args):
     # TODO(hartikainen): Allow local dir to be modified through cli args
+    local_dir = '~/ray_results'
+    if command_line_args.mode == 'debug':
+        local_dir = os.path.join(local_dir, 'debug')
     local_dir = os.path.join(
-        '~/ray_results',
+        local_dir,
         command_line_args.universe,
         command_line_args.domain,
         command_line_args.task)
