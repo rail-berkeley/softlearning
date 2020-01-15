@@ -34,11 +34,6 @@ def compute_Q_targets(next_Q_values,
     return Q_targets
 
 
-@tf.function(experimental_relax_shapes=True)
-def _compute_Q_values(Q):
-    pass
-
-
 def heuristic_target_entropy(action_space):
     if is_continuous_space(action_space):
         heuristic_target_entropy = -np.prod(action_space.shape)
@@ -132,13 +127,13 @@ class SAC(RLAlgorithm):
                 name=f'Q_{i}_optimizer'
             ) for i, Q in enumerate(self._Qs))
 
-        self._alpha = tf.Variable(1.0, name='alpha', dtype=tf.float32)
-        self._alpha_optimizer = tf.optimizers.Adam(
-            self._alpha_lr, name='alpha_optimizer')
-
         self._policy_optimizer = tf.optimizers.Adam(
             learning_rate=self._policy_lr,
             name="policy_optimizer")
+
+        self._alpha = tf.Variable(1.0, name='alpha', dtype=tf.float32)
+        self._alpha_optimizer = tf.optimizers.Adam(
+            self._alpha_lr, name='alpha_optimizer')
 
     @tf.function(experimental_relax_shapes=True)
     def _compute_Q_targets(self, next_observations, rewards, terminals):
@@ -170,7 +165,7 @@ class SAC(RLAlgorithm):
                        next_observations,
                        rewards,
                        terminals):
-        """Create minimization operation for critic Q-function.
+        """Update the Q-function.
 
         Creates a `tf.optimizer.minimize` operation for updating
         critic Q-function with gradient descent, and appends it to
@@ -202,7 +197,7 @@ class SAC(RLAlgorithm):
 
     @tf.function(experimental_relax_shapes=True)
     def _update_actor(self, observations):
-        """Create minimization operations for policy and entropy.
+        """Update the policy.
 
         Creates a `tf.optimizer.minimize` operations for updating
         policy and entropy with gradient descent, and adds them to
@@ -258,9 +253,6 @@ class SAC(RLAlgorithm):
 
         return alpha_losses
 
-    def _init_training(self):
-        self._update_target(tau=tf.constant(1.0))
-
     @tf.function(experimental_relax_shapes=True)
     def _update_target(self, tau):
         for Q, Q_target in zip(self._Qs, self._Q_targets):
@@ -271,6 +263,7 @@ class SAC(RLAlgorithm):
 
     @tf.function(experimental_relax_shapes=True)
     def _do_updates(self, batch):
+        """Runs the update operations for policy, Q, and alpha."""
         Qs_values, Qs_losses = self._update_critic(
             batch['observations'],
             batch['actions'],
@@ -291,7 +284,6 @@ class SAC(RLAlgorithm):
         return diagnostics
 
     def _do_training(self, iteration, batch):
-        """Runs the operations for updating training and target ops."""
         training_diagnostics = self._do_updates(batch)
 
         if iteration % self._target_update_interval == 0:
@@ -300,12 +292,15 @@ class SAC(RLAlgorithm):
 
         return training_diagnostics
 
+    def _init_training(self):
+        self._update_target(tau=tf.constant(1.0))
+
     def get_diagnostics(self,
                         iteration,
                         batch,
                         training_paths,
                         evaluation_paths):
-        """Return diagnostic information as ordered dictionary.
+        """Return diagnostic information as an ordered dictionary.
 
         Also calls the `draw` method of the plotter, if plotter defined.
         """
