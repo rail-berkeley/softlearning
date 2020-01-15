@@ -61,7 +61,7 @@ class BaseValueFunction:
         return diagnostics
 
     def __getstate__(self):
-        state = self.__dict__
+        state = self.__dict__.copy()
         model = state.pop('model')
         state.update({
             'model_config': model.get_config(),
