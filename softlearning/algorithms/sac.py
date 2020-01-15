@@ -78,7 +78,6 @@ class SAC(RLAlgorithm):
             discount=0.99,
             tau=5e-3,
             target_update_interval=1,
-            action_prior='uniform',
 
             save_full_state=False,
             **kwargs,
@@ -127,7 +126,6 @@ class SAC(RLAlgorithm):
         self._discount = discount
         self._tau = tau
         self._target_update_interval = target_update_interval
-        self._action_prior = action_prior
 
         self._save_full_state = save_full_state
 
