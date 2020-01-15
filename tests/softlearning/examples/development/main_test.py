@@ -14,7 +14,6 @@ CONFIG = {
     },
     'algorithm_params': {
         'kwargs': {
-            'action_prior': 'uniform',
             'discount': 0.99,
             'epoch_length': 20,
             'eval_deterministic': True,
