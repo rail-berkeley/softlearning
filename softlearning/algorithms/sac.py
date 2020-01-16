@@ -17,13 +17,13 @@ def td_targets(rewards, discounts, next_values):
 
 @tf.function(experimental_relax_shapes=True)
 def compute_Q_targets(next_Q_values,
-                      log_pis,
+                      next_log_pis,
                       rewards,
                       terminals,
                       discount,
                       entropy_scale,
                       reward_scale):
-    next_values = next_Q_values - entropy_scale * log_pis
+    next_values = next_Q_values - entropy_scale * next_log_pis
     terminals = tf.cast(terminals, next_values.dtype)
 
     Q_targets = td_targets(
