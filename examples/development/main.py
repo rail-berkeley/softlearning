@@ -24,6 +24,11 @@ tf.compat.v1.disable_eager_execution()
 
 class ExperimentRunner(tune.Trainable):
     def _setup(self, variant):
+        # Set the current working directory such that the local mode
+        # logs into the correct place. This would not be needed on
+        # local/cluster mode.
+        os.chdir(self.logdir)
+
         set_seed(variant['run_params']['seed'])
 
         self._variant = variant
