@@ -39,7 +39,6 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'n_initial_exploration_steps': int(1e3),
 
             'discount': 0.99,
-            'tau': 5e-3,
             'reward_scale': 1.0,
         },
     },
