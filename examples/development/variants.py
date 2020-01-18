@@ -34,6 +34,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_update_interval': 1,
             'tau': 5e-3,
             'target_entropy': 'auto',
+            'alpha_lr': 3e-4,
             'n_initial_exploration_steps': int(1e3),
 
             'discount': 0.99,

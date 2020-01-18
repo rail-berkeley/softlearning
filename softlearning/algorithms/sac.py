@@ -67,7 +67,7 @@ class SAC(RLAlgorithm):
             plotter=None,
 
             lr=3e-4,
-            alpha_lr=3e-3,
+            alpha_lr=3e-4,
             reward_scale=1.0,
             target_entropy='auto',
             discount=0.99,
