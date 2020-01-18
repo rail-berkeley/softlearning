@@ -66,7 +66,8 @@ class SAC(RLAlgorithm):
             pool,
             plotter=None,
 
-            lr=3e-4,
+            policy_lr=3e-4,
+            Q_lr=3e-4,
             alpha_lr=3e-4,
             reward_scale=1.0,
             target_entropy='auto',
@@ -108,8 +109,8 @@ class SAC(RLAlgorithm):
         self._pool = pool
         self._plotter = plotter
 
-        self._policy_lr = lr
-        self._Q_lr = lr
+        self._policy_lr = policy_lr
+        self._Q_lr = Q_lr
         self._alpha_lr = alpha_lr
 
         self._reward_scale = reward_scale
@@ -312,8 +313,7 @@ class SAC(RLAlgorithm):
 
         diagnostics = OrderedDict((
             ('alpha', self._alpha._value().numpy()),
-            ('policy', self._policy.get_diagnostics(
-                batch['observations'])),
+            ('policy', self._policy.get_diagnostics(batch['observations'])),
         ))
 
         if self._plotter:
