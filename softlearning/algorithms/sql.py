@@ -91,8 +91,8 @@ class SQL(RLAlgorithm):
 
         self._plotter = plotter
 
-        self._Q_lr = Q_lr
         self._policy_lr = policy_lr
+        self._Q_lr = Q_lr
         self._discount = discount
         self._tau = tau
         self._reward_scale = reward_scale
