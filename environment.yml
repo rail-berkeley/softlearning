@@ -6,6 +6,6 @@ dependencies:
 - python>=3.7,<3.8
 - pip>=19.3
 - conda>=4.7
-- pyopengl-accelerate==3.1.3b1
+- pyopengl-accelerate==3.1.4
 - pip:
     - -r ./requirements.txt
