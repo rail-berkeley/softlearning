@@ -94,7 +94,7 @@ def simulate_policy(checkpoint_path,
                     render_kwargs,
                     video_save_path=None,
                     evaluation_environment_params=None):
-    checkpoint_path = checkpoint_path.rstrip('/')
+    checkpoint_path = os.path.abspath(checkpoint_path.rstrip('/'))
     picklable, variant, progress, metadata = load_checkpoint(checkpoint_path)
     policy, environment = load_policy_and_environment(picklable, variant)
     render_kwargs = {**DEFAULT_RENDER_KWARGS, **render_kwargs}
