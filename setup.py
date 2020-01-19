@@ -35,7 +35,7 @@ setup(
             'softlearning=softlearning.scripts.console_scripts:main',
         )
     },
-    requires=(
+    install_requires=(
         'Click==7.0',
         'dm-control==0.0.288483845',
         'flatten-dict==0.2.0',
@@ -43,15 +43,14 @@ setup(
         'gtimer==1.0.0b5',
         'gym==0.15.4',
         'mujoco-py==2.0.2.9',
-        'numpy==1.18.1',
+        'numpy==1.17.5',
         'pandas==0.25.3',
         'psutil==5.6.7',
         'ray[tune,rllib,debug]==0.8.0',
-        'robosuite==0.1.0',
         'scikit-image==0.16.2',
         'scikit-video==1.1.11',
         'scipy==1.4.1',
-        'git+https://github.com/hartikainen/serializable.git@76516385a3a716ed4a2a9ad877e2d5cbcf18d4e6',
+        'serializable @ git+https://github.com/hartikainen/serializable.git@76516385a3a716ed4a2a9ad877e2d5cbcf18d4e6',
         'tensorflow==2.1.0',
         'tensorflow-probability==0.9.0',
     ),
