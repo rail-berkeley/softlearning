@@ -16,8 +16,7 @@ from softlearning.samplers.utils import get_sampler_from_variant
 from softlearning.value_functions.utils import get_Q_function_from_variant
 
 from softlearning.utils.misc import set_seed
-from softlearning.utils.tensorflow import (
-    set_gpu_memory_growth)
+from softlearning.utils.tensorflow import set_gpu_memory_growth
 from examples.instrument import run_example_local
 
 

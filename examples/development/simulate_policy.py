@@ -12,6 +12,7 @@ from softlearning.environments.utils import (
     get_environment_from_params, get_environment)
 from softlearning.policies.utils import get_policy_from_variant
 from softlearning.samplers import rollouts
+from softlearning.utils.tensorflow import set_gpu_memory_growth
 from softlearning.utils.video import save_video
 
 
@@ -46,8 +47,7 @@ def parse_args():
     return args
 
 
-def load_checkpoint(checkpoint_path, session=None):
-    session = session or tf.keras.backend.get_session()
+def load_checkpoint(checkpoint_path):
     checkpoint_path = checkpoint_path.rstrip('/')
     trial_path = os.path.dirname(checkpoint_path)
 
@@ -62,10 +62,9 @@ def load_checkpoint(checkpoint_path, session=None):
     else:
         metadata = None
 
-    with session.as_default():
-        pickle_path = os.path.join(checkpoint_path, 'checkpoint.pkl')
-        with open(pickle_path, 'rb') as f:
-            picklable = pickle.load(f)
+    pickle_path = os.path.join(checkpoint_path, 'checkpoint.pkl')
+    with open(pickle_path, 'rb') as f:
+        picklable = pickle.load(f)
 
     progress_path = os.path.join(trial_path, 'progress.csv')
     progress = pd.read_csv(progress_path)
@@ -117,9 +116,6 @@ def simulate_policy(checkpoint_path,
 
 
 if __name__ == '__main__':
-    gpu_options = tf.GPUOptions(allow_growth=True)
-    session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-    tf.keras.backend.set_session(session)
-
+    set_gpu_memory_growth(True)
     args = parse_args()
     simulate_policy(**vars(args))
