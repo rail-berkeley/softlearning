@@ -1,6 +1,7 @@
 absl-py==0.9.0
 asn1crypto==1.3.0
 astor==0.8.1
+atari-py==0.2.6  # TODO(hartikainen): This is weirdly required but not installed by gym
 attrs==19.3.0
 boto3==1.11.5
 botocore==1.14.5
@@ -57,7 +58,7 @@ monotonic==1.5
 more-itertools==8.1.0
 mujoco-py==2.0.2.9
 networkx==2.4
-numpy==1.18.1
+numpy==1.17.5
 oauthlib==3.1.0
 opencv-python==4.1.2.30
 opencv-python-headless==4.1.2.30
@@ -90,11 +91,10 @@ PyWavelets==1.1.1
 PyYAML==5.3
 ray==0.8.0
 redis==3.3.11
-requests==2.20.1
+requests==2.22.0
 requests-oauthlib==1.3.0
 robosuite==0.1.0
 rsa==4.0
-ruamel-yaml==0.15.87
 s3transfer==0.3.1
 scikit-image==0.16.2
 scikit-video==1.1.11
@@ -104,7 +104,7 @@ setproctitle==1.1.10
 setuptools==44.0.0.post20200106
 six==1.13.0
 smmap2==2.0.5
-softlearning==0.0.1
+-e .
 tabulate==0.8.6
 tensorboard==2.1.0
 tensorflow==2.1.0
