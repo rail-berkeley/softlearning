@@ -42,6 +42,7 @@ idna==2.7
 imageio==2.6.1
 importlib-metadata==1.4.0
 jmespath==0.9.4
+ipdb==0.12.3
 jsonschema==3.2.0
 Keras-Applications==1.0.8
 Keras-Preprocessing==1.1.0
