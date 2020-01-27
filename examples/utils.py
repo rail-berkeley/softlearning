@@ -209,6 +209,11 @@ def get_parser(allow_policy_list=False):
     parser.add_argument(
         '--mode', type=str, default='local')
     parser.add_argument(
+        '--run-eagerly',
+        type=lambda x: bool(strtobool(x)),
+        help=("Whether to run tensorflow in eager mode."))
+
+    parser.add_argument(
         '--confirm-remote',
         type=lambda x: bool(strtobool(x)),
         nargs='?',

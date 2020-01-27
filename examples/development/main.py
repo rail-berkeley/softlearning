@@ -31,6 +31,11 @@ class ExperimentRunner(tune.Trainable):
 
         set_seed(variant['run_params']['seed'])
 
+        if variant['run_params'].get('run_eagerly', False):
+            tf.config.experimental_run_functions_eagerly(True)
+
+        self._variant = variant
+
         self._variant = variant
         set_gpu_memory_growth(True)
 
