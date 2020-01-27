@@ -95,12 +95,6 @@ class SimpleSampler(BaseSampler):
 
         return next_observation, reward, terminal, info
 
-    def random_batch(self, batch_size=None, **kwargs):
-        batch_size = batch_size or self._batch_size
-        # observation_keys = getattr(self.env, 'observation_keys', None)
-
-        return self.pool.random_batch(batch_size, **kwargs)
-
     def get_diagnostics(self):
         diagnostics = super(SimpleSampler, self).get_diagnostics()
         diagnostics.update({

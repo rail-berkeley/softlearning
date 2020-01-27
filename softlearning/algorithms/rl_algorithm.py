@@ -34,6 +34,8 @@ class RLAlgorithm(Checkpointable):
             n_epochs=1000,
             train_every_n_steps=1,
             n_train_repeat=1,
+            min_pool_size=1,
+            batch_size=1,
             max_train_repeat_per_timestep=5,
             n_initial_exploration_steps=0,
             initial_exploration_policy=None,
@@ -61,6 +63,8 @@ class RLAlgorithm(Checkpointable):
 
         self._n_epochs = n_epochs
         self._n_train_repeat = n_train_repeat
+        self._min_pool_size = min_pool_size
+        self._batch_size = batch_size
         self._max_train_repeat_per_timestep = max(
             max_train_repeat_per_timestep, n_train_repeat)
         self._train_every_n_steps = train_every_n_steps
@@ -120,8 +124,9 @@ class RLAlgorithm(Checkpointable):
         """Hook called at the end of each epoch."""
         pass
 
-    def _training_batch(self, batch_size=None):
-        return self.sampler.random_batch(batch_size)
+    def _training_batch(self, batch_size=None, **kwargs):
+        batch_size = batch_size or self._batch_size
+        return self._pool.random_batch(batch_size, **kwargs)
 
     def _evaluation_batch(self, *args, **kwargs):
         return self._training_batch(*args, **kwargs)
@@ -314,7 +319,7 @@ class RLAlgorithm(Checkpointable):
 
     @property
     def ready_to_train(self):
-        return self.sampler.batch_ready()
+        return self._min_pool_size <= self._pool.size
 
     def _do_sampling(self, timestep):
         self.sampler.sample()

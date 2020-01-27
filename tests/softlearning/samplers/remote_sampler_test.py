@@ -15,10 +15,7 @@ class RemoteSamplerTest(unittest.TestCase):
         self.policy = get_policy_from_params(
             {'type': 'UniformPolicy'}, env=self.env)
         self.pool = SimpleReplayPool(max_size=100, environment=self.env)
-        self.remote_sampler = RemoteSampler(
-            max_path_length=10,
-            min_pool_size=10,
-            batch_size=10)
+        self.remote_sampler = RemoteSampler(max_path_length=10)
 
     def test_initialization(self):
         self.assertEqual(self.pool.size, 0)
