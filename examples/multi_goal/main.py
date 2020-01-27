@@ -27,8 +27,7 @@ def run_experiment(variant, reporter):
         environment=training_environment,
         max_size=1e6)
 
-    sampler = SimpleSampler(
-        max_path_length=30, min_pool_size=100, batch_size=64)
+    sampler = SimpleSampler(max_path_length=30)
 
     Qs = get_Q_function_from_variant(variant, training_environment)
     policy = get_policy_from_variant(variant, training_environment)
@@ -50,7 +49,9 @@ def run_experiment(variant, reporter):
         Qs=Qs,
         pool=pool,
         sampler=sampler,
-        plotter=plotter
+        min_pool_size=100,
+        batch_size=46,
+        plotter=plotter,
     )
 
     initialize_tf_variables(algorithm._session, only_uninitialized=True)

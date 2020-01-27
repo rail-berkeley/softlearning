@@ -439,6 +439,8 @@ def get_algorithm_params(universe, domain, task):
             'n_initial_exploration_steps': tune.sample_from(
                 get_initial_exploration_steps),
             'epoch_length': epoch_length,
+            'min_pool_size': get_max_path_length(universe, domain, task),
+            'batch_size': 256,
         }
     }
 
@@ -506,8 +508,6 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
             'type': 'SimpleSampler',
             'kwargs': {
                 'max_path_length': get_max_path_length(universe, domain, task),
-                'min_pool_size': get_max_path_length(universe, domain, task),
-                'batch_size': 256,
             }
         },
         'run_params': {

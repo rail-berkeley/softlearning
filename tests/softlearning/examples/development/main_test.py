@@ -24,6 +24,8 @@ CONFIG = {
             'n_epochs': 301,
             'n_initial_exploration_steps': 10,
             'n_train_repeat': 1,
+            'batch_size': 256,
+            'min_pool_size': 15,
             'reward_scale': 1.0,
             'save_full_state': False,
             'target_entropy': 'auto',
@@ -70,9 +72,7 @@ CONFIG = {
     },
     'sampler_params': {
         'kwargs': {
-            'batch_size': 256,
             'max_path_length': 10,
-            'min_pool_size': 15
         },
         'type': 'SimpleSampler'
     },
