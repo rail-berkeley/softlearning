@@ -58,7 +58,7 @@ class BaseSampler(object):
     def __getstate__(self):
         state = {
             key: value for key, value in self.__dict__.items()
-            if key not in ('env', 'policy', 'pool')
+            if key not in ('env', 'policy', 'pool', '_last_n_paths')
         }
 
         return state
@@ -69,3 +69,5 @@ class BaseSampler(object):
         self.env = None
         self.policy = None
         self.pool = None
+        # TODO(hartikainen): Maybe try restoring these from the pool?
+        self._last_n_paths = deque(maxlen=self._store_last_n_paths)
