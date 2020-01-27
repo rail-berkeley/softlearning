@@ -68,6 +68,14 @@ def add_command_line_args_to_variant_spec(variant_spec, command_line_args):
         ),
     })
 
+    if (command_line_args.mode == 'debug'
+        and ('run_eagerly' not in command_line_args
+             or command_line_args.run_eagerly is None)):
+        variant_spec['run_params']['run_eagerly'] = True
+    elif 'run_eagerly' in command_line_args:
+        variant_spec['run_params']['run_eagerly'] = (
+            command_line_args.run_eagerly)
+
     variant_spec['restore'] = command_line_args.restore
 
     return variant_spec
@@ -262,8 +270,6 @@ def run_example_debug(example_module_name, example_argv):
             continue
         else:
             debug_example_argv.append(option)
-
-    tf.config.experimental_run_functions_eagerly(True)
 
     run_example_local(example_module_name, debug_example_argv, local_mode=True)
 
