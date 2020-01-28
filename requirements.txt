@@ -92,7 +92,7 @@ setproctitle==1.1.10
 six==1.11.0
 smmap2==2.0.5
 tensorboard==1.15.0
-tensorflow==1.15.0
+tensorflow==1.15.2
 tensorflow-probability==0.8.0
 termcolor==1.1.0
 toolz==0.9.0
