@@ -101,7 +101,7 @@ scikit-video==1.1.11
 scipy==1.4.1
 git+https://github.com/hartikainen/serializable.git@76516385a3a716ed4a2a9ad877e2d5cbcf18d4e6
 setproctitle==1.1.10
-setuptools==44.0.0.post20200106
+setuptools==45.1.0
 six==1.13.0
 smmap2==2.0.5
 -e .
