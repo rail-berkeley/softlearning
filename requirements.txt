@@ -12,8 +12,6 @@ chardet==3.0.4
 Click==7.0
 cloudpickle==1.2.2
 colorama==0.4.3
-conda==4.8.1
-conda-package-handling==1.6.0
 cryptography==2.8
 cycler==0.10.0
 Cython==0.29.14
