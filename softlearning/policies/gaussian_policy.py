@@ -129,7 +129,7 @@ class GaussianPolicy(LatentSpacePolicy):
                     scale_diag=tf.exp(log_scale_diag)),
             ))
             distribution = bijector(base_distribution)
-            log_pis = distribution.log_prob(actions)[:, None]
+            log_pis = distribution.log_prob(actions)[..., tf.newaxis]
             return log_pis
 
         self.actions_input = tf.keras.layers.Input(
