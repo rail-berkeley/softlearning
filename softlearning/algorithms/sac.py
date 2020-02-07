@@ -144,7 +144,7 @@ class SAC(RLAlgorithm):
         discount = self._discount
 
         next_actions = self._policy.actions(next_observations)
-        next_log_pis = self._policy.log_pis(next_observations, next_actions)
+        next_log_pis = self._policy.log_probs(next_observations, next_actions)
         next_Qs_values = tuple(
             Q.values(next_observations, next_actions) for Q in self._Q_targets)
         next_Q_values = tf.reduce_min(next_Qs_values, axis=0)
@@ -211,7 +211,7 @@ class SAC(RLAlgorithm):
 
         with tf.GradientTape() as tape:
             actions = self._policy.actions(observations)
-            log_pis = self._policy.log_pis(observations, actions)
+            log_pis = self._policy.log_probs(observations, actions)
 
             Qs_log_targets = tuple(
                 Q.values(observations, actions) for Q in self._Qs)
@@ -239,7 +239,7 @@ class SAC(RLAlgorithm):
             return
 
         actions = self._policy.actions(observations)
-        log_pis = self._policy.log_pis(observations, actions)
+        log_pis = self._policy.log_probs(observations, actions)
 
         with tf.GradientTape() as tape:
             alpha_losses = -1.0 * (
@@ -310,7 +310,7 @@ class SAC(RLAlgorithm):
 
         diagnostics = OrderedDict((
             ('alpha', self._alpha._value().numpy()),
-            ('policy', self._policy.get_diagnostics(batch['observations'])),
+            ('policy', self._policy.get_diagnostics_np(batch['observations'])),
         ))
 
         if self._plotter:

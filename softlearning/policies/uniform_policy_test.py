@@ -3,6 +3,7 @@ import pickle
 
 import numpy as np
 import tensorflow as tf
+import tensorflow_probability as tfp
 import tree
 
 from softlearning.policies.uniform_policy import ContinuousUniformPolicy
@@ -13,11 +14,15 @@ class ContinuousUniformPolicyTest(tf.test.TestCase):
     def setUp(self):
         self.env = get_environment('gym', 'Swimmer', 'v3', {})
         self.policy = ContinuousUniformPolicy(
+            action_range=(
+                self.env.action_space.low,
+                self.env.action_space.high,
+            ),
             input_shapes=self.env.observation_shape,
             output_shape=self.env.action_shape,
             observation_keys=self.env.observation_keys)
 
-    def test_actions_and_log_pis(self):
+    def test_actions_and_log_probs(self):
         observation1_np = self.env.reset()
         observation2_np = self.env.step(self.env.action_space.sample())[0]
 
@@ -33,8 +38,14 @@ class ContinuousUniformPolicyTest(tf.test.TestCase):
 
         for observations in (observations_np, observations_tf):
             actions = self.policy.actions(observations)
-            with self.assertRaises(NotImplementedError):
-                log_pis = self.policy.log_pis(observations, actions)
+            log_pis = self.policy.log_probs(observations, actions)
+
+            self.assertAllEqual(
+                log_pis,
+                tfp.distributions.Uniform(
+                    low=self.env.action_space.low,
+                    high=self.env.action_space.high
+                ).log_prob(actions))
 
             self.assertEqual(actions.shape, (2, *self.env.action_shape))
 

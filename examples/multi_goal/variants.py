@@ -11,7 +11,6 @@ ALGORITHM_PARAMS_BASE = {
             'mode': 'human',
         },
         'eval_n_episodes': 10,
-        'eval_deterministic': True,
 
         'discount': 0.99,
         'reward_scale': 1.0,

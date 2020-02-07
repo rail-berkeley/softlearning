@@ -16,7 +16,6 @@ CONFIG = {
         'kwargs': {
             'discount': 0.99,
             'epoch_length': 20,
-            'eval_deterministic': True,
             'eval_n_episodes': 1,
             'eval_render_kwargs': {},
             'lr': 0.0003,

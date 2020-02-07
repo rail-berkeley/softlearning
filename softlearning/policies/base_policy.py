@@ -1,18 +1,38 @@
 import abc
-from contextlib import contextmanager
 from collections import OrderedDict
 
 import numpy as np
 import tree
+import tensorflow as tf
+import tensorflow_probability as tfp
+
 from serializable import Serializable
 
-from softlearning.utils.tensorflow import nest
+from softlearning.models.utils import create_inputs
+from softlearning.utils.tensorflow import cast_and_concat, apply_preprocessors
 
 
-class BasePolicy(Serializable):
-    def __init__(self, observation_keys):
+class BasePolicy:
+    def __init__(self,
+                 input_shapes,
+                 output_shape,
+                 observation_keys,
+                 preprocessors=None,
+                 name='policy'):
+        self._input_shapes = input_shapes
+        self._output_shape = output_shape
         self._observation_keys = observation_keys
-        self._deterministic = False
+        self._inputs = create_inputs(input_shapes)
+        self._preprocessors = preprocessors
+        self._name = name
+
+    @property
+    def preprocessors(self):
+        return self._preprocessors
+
+    @property
+    def inputs(self):
+        return self._inputs
 
     @property
     def observation_keys(self):
@@ -25,6 +45,28 @@ class BasePolicy(Serializable):
     def reset(self):
         """Reset and clean the policy."""
 
+    def get_weights(self):
+        return []
+
+    def set_weights(self, *args, **kwargs):
+        return []
+
+    @property
+    def trainable_variables(self):
+        return self.trainable_weights
+
+    @property
+    def non_trainable_variables(self):
+        return self.non_trainable_weights
+
+    @property
+    def trainable_weights(self):
+        return []
+
+    @property
+    def non_trainable_weights(self):
+        return []
+
     @abc.abstractmethod
     def actions(self, inputs):
         """Compute actions for given inputs (e.g. observations)."""
@@ -32,22 +74,49 @@ class BasePolicy(Serializable):
 
     def action(self, input_):
         """Compute an action for a single input, (e.g. observation)."""
-        inputs = nest.map_structure(lambda x: x[None, ...], input_)
+        inputs = tree.map_structure(lambda x: x[None, ...], input_)
         actions = self.actions(inputs)
-        action = nest.map_structure(lambda x: x[0], actions)
+        action = tree.map_structure(lambda x: x[0], actions)
         return action
 
     @abc.abstractmethod
-    def log_pis(self, inputs, actions):
+    def log_probs(self, inputs, actions):
         """Compute log probabilities for given actions."""
         raise NotImplementedError
 
-    def log_pi(self, *input_):
+    def log_prob(self, *input_):
         """Compute the log probability for a single action."""
-        inputs = nest.map_structure(lambda x: x[None, ...], input_)
-        log_pis = self.values(*inputs)
-        log_pi = nest.map_structure(lambda x: x[0], log_pis)
-        return log_pi
+        inputs = tree.map_structure(lambda x: x[None, ...], input_)
+        log_probs = self.values(*inputs)
+        log_prob = tree.map_structure(lambda x: x[0], log_probs)
+        return log_prob
+
+    @abc.abstractmethod
+    def probs(self, inputs, actions):
+        """Compute probabilities for given actions."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def prob(self, *input_):
+        """Compute the probability for a single action."""
+        inputs = tree.map_structure(lambda x: x[None, ...], input_)
+        probs = self.values(*inputs)
+        prob = tree.map_structure(lambda x: x[0], probs)
+        return prob
+
+    def _preprocess_inputs(self, inputs):
+        if self.preprocessors is None:
+            preprocessors = tree.map_structure(lambda x: None, inputs)
+        else:
+            preprocessors = self.preprocessors
+
+        preprocessed_inputs = apply_preprocessors(preprocessors, inputs)
+
+        preprocessed_inputs = tf.keras.layers.Lambda(
+            cast_and_concat
+        )(preprocessed_inputs)
+
+        return preprocessed_inputs
 
     def _filter_observations(self, observations):
         if (isinstance(observations, dict)
@@ -58,20 +127,7 @@ class BasePolicy(Serializable):
             ))
         return observations
 
-    @contextmanager
-    def set_deterministic(self, deterministic=True):
-        """Context manager for changing the determinism of the policy.
-        Args:
-            set_deterministic (`bool`): Value to set the self._is_deterministic
-                to during the context. The value will be reset back to the
-                previous value when the context exits.
-        """
-        was_deterministic = self._deterministic
-        self._deterministic = deterministic
-        yield
-        self._deterministic = was_deterministic
-
-    def get_diagnostics(self, conditions):
+    def get_diagnostics(self, inputs):
         """Return diagnostic information of the policy.
 
         Arguments:
@@ -81,6 +137,11 @@ class BasePolicy(Serializable):
         """
         diagnostics = OrderedDict()
         return diagnostics
+
+    def get_diagnostics_np(self, *args, **kwargs):
+        diagnostics = self.get_diagnostics(*args, **kwargs)
+        diagnostics_np = tree.map_structure(lambda x: x.numpy(), diagnostics)
+        return diagnostics_np
 
     def __getstate__(self):
         state = Serializable.__getstate__(self)
@@ -93,11 +154,37 @@ class BasePolicy(Serializable):
         self.set_weights(state['pickled_weights'])
 
 
-class LatentSpacePolicy(BasePolicy):
+class ContinuousPolicy(BasePolicy):
+    def __init__(self,
+                 action_range,
+                 *args,
+                 squash=True,
+                 **kwargs):
+        assert (np.all(action_range == np.array([[-1], [1]]))), (
+            "The action space should be scaled to (-1, 1)."
+            " TODO(hartikainen): We should support non-scaled actions spaces.")
+        self._action_range = action_range
+        self._squash = squash
+        self._action_post_processor = {
+            True: tfp.bijectors.Tanh(),
+            False: tfp.bijectors.Identity(),
+        }[squash]
+
+        return super(ContinuousPolicy, self).__init__(*args, **kwargs)
+
+
+class LatentSpacePolicy(ContinuousPolicy):
     def __init__(self, *args, smoothing_coefficient=None, **kwargs):
         super(LatentSpacePolicy, self).__init__(*args, **kwargs)
 
         assert smoothing_coefficient is None or 0 <= smoothing_coefficient <= 1
+
+        if smoothing_coefficient is not None and 0 < smoothing_coefficient:
+            raise NotImplementedError(
+                "TODO(hartikainen): Latent smoothing temporarily dropped on tf2"
+                " migration. Should add it back. See:"
+                " https://github.com/rail-berkeley/softlearning/blob/46374df0294b9b5f6dbe65b9471ec491a82b6944/softlearning/policies/base_policy.py#L80")
+
         self._smoothing_alpha = smoothing_coefficient or 0
         self._smoothing_beta = (
             np.sqrt(1.0 - np.power(self._smoothing_alpha, 2.0))
@@ -108,22 +195,18 @@ class LatentSpacePolicy(BasePolicy):
     def _reset_smoothing_x(self):
         self._smoothing_x = np.zeros((1, *self._output_shape))
 
+    @tf.function(experimental_relax_shapes=True)
     def actions(self, observations):
-        if 0 < self._smoothing_alpha:
-            raise NotImplementedError(
-                "TODO(hartikainen): Smoothing alpha temporarily dropped on tf2"
-                " migration. Should add it back. See:"
-                " https://github.com/rail-berkeley/softlearning/blob/46374df0294b9b5f6dbe65b9471ec491a82b6944/softlearning/policies/base_policy.py#L80")
-
         observations = self._filter_observations(observations)
-        if self._deterministic:
-            return self.deterministic_actions_model(observations)
-        return self.actions_model(observations)
 
-    def log_pis(self, observations, actions):
-        observations = self._filter_observations(observations)
-        assert not self._deterministic, self._deterministic
-        return self.log_pis_model((observations, actions))
+        shifts, scales = self.shift_and_scale_model(observations)
+        batch_shape = tf.shape(tree.flatten(observations)[0])[:-1]
+        actions = self.action_distribution.sample(
+            batch_shape,
+            bijector_kwargs={'scale': {'scale': scales},
+                             'shift': {'shift': shifts}})
+
+        return actions
 
     def reset(self):
         self._reset_smoothing_x()

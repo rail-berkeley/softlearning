@@ -42,7 +42,6 @@ class RLAlgorithm(Checkpointable):
             initial_exploration_policy=None,
             epoch_length=1000,
             eval_n_episodes=10,
-            eval_deterministic=True,
             eval_render_kwargs=None,
             video_save_frequency=0,
     ):
@@ -56,8 +55,6 @@ class RLAlgorithm(Checkpointable):
                 take using actions drawn from a separate exploration policy.
             epoch_length (`int`): Epoch length.
             eval_n_episodes (`int`): Number of rollouts to evaluate.
-            eval_deterministic (`int`): Whether or not to run the policy in
-                deterministic mode when evaluating policy.
             eval_render_kwargs (`None`, `dict`): Arguments to be passed for
                 rendering evaluation rollouts. `None` to disable rendering.
         """
@@ -76,7 +73,6 @@ class RLAlgorithm(Checkpointable):
         self._initial_exploration_policy = initial_exploration_policy
 
         self._eval_n_episodes = eval_n_episodes
-        self._eval_deterministic = eval_deterministic
         self._video_save_frequency = video_save_frequency
 
         self._eval_render_kwargs = eval_render_kwargs or {}
@@ -264,13 +260,12 @@ class RLAlgorithm(Checkpointable):
     def _evaluation_paths(self, policy, evaluation_env):
         if self._eval_n_episodes < 1: return ()
 
-        with policy.set_deterministic(self._eval_deterministic):
-            paths = rollouts(
-                self._eval_n_episodes,
-                evaluation_env,
-                policy,
-                self.sampler._max_path_length,
-                render_kwargs=self._eval_render_kwargs)
+        paths = rollouts(
+            self._eval_n_episodes,
+            evaluation_env,
+            policy,
+            self.sampler._max_path_length,
+            render_kwargs=self._eval_render_kwargs)
 
         should_save_video = (
             self._video_save_frequency > 0

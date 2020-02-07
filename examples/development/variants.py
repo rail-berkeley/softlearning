@@ -21,7 +21,6 @@ ALGORITHM_PARAMS_BASE = {
         'n_train_repeat': 1,
         'eval_render_kwargs': {},
         'eval_n_episodes': 1,
-        'eval_deterministic': True,
     }
 }
 

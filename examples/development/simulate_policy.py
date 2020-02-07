@@ -1,5 +1,4 @@
 import argparse
-from distutils.util import strtobool
 import json
 import os
 from pathlib import Path
@@ -33,12 +32,6 @@ def parse_args():
     parser.add_argument('--video-save-path',
                         type=Path,
                         default=None)
-    parser.add_argument('--deterministic', '-d',
-                        type=lambda x: bool(strtobool(x)),
-                        nargs='?',
-                        const=True,
-                        default=True,
-                        help="Evaluate policy deterministically.")
 
     args = parser.parse_args()
 
@@ -85,7 +78,6 @@ def load_policy_and_environment(picklable, variant):
 
 
 def simulate_policy(checkpoint_path,
-                    deterministic,
                     num_rollouts,
                     max_path_length,
                     render_kwargs,
@@ -96,12 +88,11 @@ def simulate_policy(checkpoint_path,
     policy, environment = load_policy_and_environment(picklable, variant)
     render_kwargs = {**DEFAULT_RENDER_KWARGS, **render_kwargs}
 
-    with policy.set_deterministic(deterministic):
-        paths = rollouts(num_rollouts,
-                         environment,
-                         policy,
-                         path_length=max_path_length,
-                         render_kwargs=render_kwargs)
+    paths = rollouts(num_rollouts,
+                     environment,
+                     policy,
+                     path_length=max_path_length,
+                     render_kwargs=render_kwargs)
 
     if video_save_path and render_kwargs.get('mode') == 'rgb_array':
         fps = 1 // getattr(environment, 'dt', 1/30)

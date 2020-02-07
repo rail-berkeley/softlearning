@@ -8,189 +8,114 @@ import tensorflow_probability as tfp
 import tree
 
 from softlearning.models.feedforward import feedforward_model
-from softlearning.models.utils import create_inputs
-from softlearning.utils.tensorflow import apply_preprocessors, cast_and_concat
+from softlearning.distributions.bijectors import (
+    ConditionalShift, ConditionalScale)
 
 from .base_policy import LatentSpacePolicy
 
 
 class GaussianPolicy(LatentSpacePolicy):
-    def __init__(self,
-                 input_shapes,
-                 output_shape,
-                 action_range,
-                 *args,
-                 squash=True,
-                 preprocessors=None,
-                 name=None,
-                 **kwargs):
-
-        assert (np.all(action_range == np.array([[-1], [1]]))), (
-            "The action space should be scaled to (-1, 1)."
-            " TODO(hartikainen): We should support non-scaled actions spaces.")
-
-        self._Serializable__initialize(locals())
-
-        self._action_range = action_range
-        self._input_shapes = input_shapes
-        self._output_shape = output_shape
-        self._squash = squash
-        self._name = name
-
+    def __init__(self, *args, **kwargs):
         super(GaussianPolicy, self).__init__(*args, **kwargs)
 
-        inputs = create_inputs(input_shapes)
-        if preprocessors is None:
-            preprocessors = tree.map_structure(lambda _: None, inputs)
-
-        preprocessed_inputs = apply_preprocessors(preprocessors, inputs)
-
-        conditions = tf.keras.layers.Lambda(
-            cast_and_concat
-        )(preprocessed_inputs)
-
-        self.condition_inputs = inputs
-
-        shift_and_log_scale_diag = self._shift_and_log_scale_diag_net(
-            output_size=np.prod(output_shape) * 2,
-        )(conditions)
-
-        shift, log_scale_diag = tf.keras.layers.Lambda(
-            lambda shift_and_log_scale_diag: tf.split(
-                shift_and_log_scale_diag,
-                num_or_size_splits=2,
-                axis=-1)
-        )(shift_and_log_scale_diag)
-
-        batch_size = tf.keras.layers.Lambda(
-            lambda x: tf.shape(input=x)[0])(conditions)
+        self.shift_and_scale_model = self._shift_and_log_scale_diag_net(
+            inputs=self.inputs,
+            output_size=np.prod(self._output_shape) * 2)
 
         base_distribution = tfp.distributions.MultivariateNormalDiag(
-            loc=tf.zeros(output_shape),
-            scale_diag=tf.ones(output_shape))
+            loc=tf.zeros(self._output_shape),
+            scale_diag=tf.ones(self._output_shape))
 
-        latents = tf.keras.layers.Lambda(
-            lambda batch_size: base_distribution.sample(batch_size)
-        )(batch_size)
+        raw_action_distribution = tfp.bijectors.Chain((
+            ConditionalShift(name='shift'),
+            ConditionalScale(name='scale'),
+        ))(base_distribution)
 
-        self.latents_model = tf.keras.Model(self.condition_inputs, latents)
-        self.latents_input = tf.keras.layers.Input(
-            shape=output_shape, name='latents')
+        self.base_distribution = base_distribution
+        self.raw_action_distribution = raw_action_distribution
+        self.action_distribution = self._action_post_processor(
+            raw_action_distribution)
 
-        def raw_actions_fn(inputs):
-            shift, log_scale_diag, latents = inputs
-            bijector = tfp.bijectors.Affine(
-                shift=shift,
-                scale_diag=tf.exp(log_scale_diag))
-            actions = bijector(latents)
-            return actions
+    @tf.function(experimental_relax_shapes=True)
+    def actions(self, observations):
+        observations = self._filter_observations(observations)
 
-        raw_actions = tf.keras.layers.Lambda(
-            raw_actions_fn
-        )((shift, log_scale_diag, latents))
+        shifts, scales = self.shift_and_scale_model(observations)
+        batch_shape = tf.shape(tree.flatten(observations)[0])[:-1]
+        actions = self.action_distribution.sample(
+            batch_shape,
+            bijector_kwargs={'scale': {'scale': scales},
+                             'shift': {'shift': shifts}})
 
-        raw_actions_for_fixed_latents = tf.keras.layers.Lambda(
-            raw_actions_fn
-        )((shift, log_scale_diag, self.latents_input))
+        return actions
 
-        squash_bijector = (
-            tfp.bijectors.Tanh()
-            if self._squash
-            else tfp.bijectors.Identity())
+    @tf.function(experimental_relax_shapes=True)
+    def log_probs(self, observations, actions):
+        observations = self._filter_observations(observations)
 
-        actions = tf.keras.layers.Lambda(
-            lambda raw_actions: squash_bijector(raw_actions)
-        )(raw_actions)
-        self.actions_model = tf.keras.Model(self.condition_inputs, actions)
+        shifts, scales = self.shift_and_scale_model(observations)
+        log_probs = self.action_distribution.log_prob(
+            actions,
+            bijector_kwargs={'scale': {'scale': scales},
+                             'shift': {'shift': shifts}}
+        )[..., tf.newaxis]
 
-        actions_for_fixed_latents = tf.keras.layers.Lambda(
-            lambda raw_actions: squash_bijector(raw_actions)
-        )(raw_actions_for_fixed_latents)
-        self.actions_model_for_fixed_latents = tf.keras.Model(
-            (self.condition_inputs, self.latents_input),
-            actions_for_fixed_latents)
+        return log_probs
 
-        deterministic_actions = tf.keras.layers.Lambda(
-            lambda shift: squash_bijector(shift)
-        )(shift)
+    @tf.function(experimental_relax_shapes=True)
+    def probs(self, observations, actions):
+        observations = self._filter_observations(observations)
+        shifts, scales = self.shift_and_scale_model(observations)
+        probs = self.action_distribution.prob(
+            actions,
+            bijector_kwargs={'scale': {'scale': scales},
+                             'shift': {'shift': shifts}}
+        )[..., tf.newaxis]
 
-        self.deterministic_actions_model = tf.keras.Model(
-            self.condition_inputs, deterministic_actions)
+        return probs
 
-        def log_pis_fn(inputs):
-            shift, log_scale_diag, actions = inputs
-            base_distribution = tfp.distributions.MultivariateNormalDiag(
-                loc=tf.zeros(output_shape),
-                scale_diag=tf.ones(output_shape))
-            bijector = tfp.bijectors.Chain((
-                squash_bijector,
-                tfp.bijectors.Affine(
-                    shift=shift,
-                    scale_diag=tf.exp(log_scale_diag)),
-            ))
-            distribution = bijector(base_distribution)
-            log_pis = distribution.log_prob(actions)[..., tf.newaxis]
-            return log_pis
-
-        self.actions_input = tf.keras.layers.Input(
-            shape=output_shape, name='actions')
-
-        log_pis = tf.keras.layers.Lambda(
-            log_pis_fn)([shift, log_scale_diag, actions])
-
-        log_pis_for_action_input = tf.keras.layers.Lambda(
-            log_pis_fn)([shift, log_scale_diag, self.actions_input])
-
-        self.log_pis_model = tf.keras.Model(
-            (self.condition_inputs, self.actions_input),
-            log_pis_for_action_input)
-
-        self.diagnostics_model = tf.keras.Model(
-            self.condition_inputs,
-            (shift, log_scale_diag, log_pis, raw_actions, actions))
-
-    def _shift_and_log_scale_diag_net(self, input_shapes, output_size):
+    def _shift_and_log_scale_diag_net(self, inputs, output_size):
         raise NotImplementedError
 
     def get_weights(self):
-        return self.actions_model.get_weights()
+        return self.shift_and_scale_model.get_weights()
 
     def set_weights(self, *args, **kwargs):
-        return self.actions_model.set_weights(*args, **kwargs)
+        return self.shift_and_scale_model.set_weights(*args, **kwargs)
 
     @property
-    def trainable_variables(self):
-        return self.actions_model.trainable_variables
+    def trainable_weights(self):
+        return self.shift_and_scale_model.trainable_weights
 
+    @property
+    def non_trainable_weights(self):
+        return self.shift_and_scale_model.non_trainable_weights
+
+    @tf.function(experimental_relax_shapes=True)
     def get_diagnostics(self, inputs):
         """Return diagnostic information of the policy.
 
         Returns the mean, min, max, and standard deviation of means and
         covariances.
         """
-        (shifts_np,
-         log_scale_diags_np,
-         log_pis_np,
-         raw_actions_np,
-         actions_np) = self.diagnostics_model(inputs)
+        shifts, scales = self.shift_and_scale_model(inputs)
+        actions = self.actions(inputs)
+        log_pis = self.log_probs(inputs, actions)
 
         return OrderedDict((
-            ('shifts-mean', np.mean(shifts_np)),
-            ('shifts-std', np.std(shifts_np)),
+            ('shifts-mean', tf.reduce_mean(shifts)),
+            ('shifts-std', tf.math.reduce_std(shifts)),
 
-            ('log_scale_diags-mean', np.mean(log_scale_diags_np)),
-            ('log_scale_diags-std', np.std(log_scale_diags_np)),
+            ('scales-mean', tf.reduce_mean(scales)),
+            ('scales-std', tf.math.reduce_std(scales)),
 
-            ('entropy-mean', np.mean(-log_pis_np)),
-            ('entropy-std', np.std(-log_pis_np)),
+            ('entropy-mean', tf.reduce_mean(-log_pis)),
+            ('entropy-std', tf.math.reduce_std(-log_pis)),
 
-            ('raw-actions-mean', np.mean(raw_actions_np)),
-            ('raw-actions-std', np.std(raw_actions_np)),
-
-            ('actions-mean', np.mean(actions_np)),
-            ('actions-std', np.std(actions_np)),
-            ('actions-min', np.min(actions_np)),
-            ('actions-max', np.max(actions_np)),
+            ('actions-mean', tf.reduce_mean(actions)),
+            ('actions-std', tf.math.reduce_std(actions)),
+            ('actions-min', tf.reduce_min(actions)),
+            ('actions-max', tf.reduce_max(actions)),
         ))
 
 
@@ -205,14 +130,30 @@ class FeedforwardGaussianPolicy(GaussianPolicy):
         self._activation = activation
         self._output_activation = output_activation
 
-        self._Serializable__initialize(locals())
         super(FeedforwardGaussianPolicy, self).__init__(*args, **kwargs)
 
-    def _shift_and_log_scale_diag_net(self, output_size):
-        shift_and_log_scale_diag_net = feedforward_model(
+    def _shift_and_log_scale_diag_net(self, inputs, output_size):
+        preprocessed_inputs = self._preprocess_inputs(inputs)
+        shift_and_log_scale_diag = feedforward_model(
             hidden_layer_sizes=self._hidden_layer_sizes,
             output_size=output_size,
             activation=self._activation,
-            output_activation=self._output_activation)
+            output_activation=self._output_activation
+        )(preprocessed_inputs)
 
-        return shift_and_log_scale_diag_net
+        def split_shift_and_log_scale_diag_fn(inputs):
+            shift_and_log_scale_diag = inputs
+            shift, log_scale_diag = tf.split(
+                shift_and_log_scale_diag,
+                num_or_size_splits=2,
+                axis=-1)
+            scale_diag = tf.exp(log_scale_diag)
+            return [shift, scale_diag]
+
+        shift, scale = tf.keras.layers.Lambda(
+            split_shift_and_log_scale_diag_fn
+        )(shift_and_log_scale_diag)
+        shift_and_scale_diag_model = tf.keras.Model(
+            inputs, (shift, scale))
+
+        return shift_and_scale_diag_model
