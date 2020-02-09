@@ -11,15 +11,15 @@ class BaseValueFunction:
         self.model = model
 
     @property
+    def name(self):
+        return self._name
+
+    @property
     def observation_keys(self):
         return self._observation_keys
 
     def reset(self):
         """Reset and clean the value function."""
-
-    @property
-    def trainable_variables(self):
-        return self.model.trainable_variables
 
     def get_weights(self, *args, **kwargs):
         return self.model.get_weights(*args, **kwargs)
@@ -32,6 +32,42 @@ class BaseValueFunction:
 
     def load_weights(self, *args, **kwargs):
         self.model.load_weights(*args, **kwargs)
+
+    @property
+    def weights(self):
+        """Returns the list of all policy variables/weights.
+
+        Returns:
+          A list of variables.
+        """
+        return self.trainable_weights + self.non_trainable_weights
+
+    @property
+    def trainable_weights(self):
+        return self.model.trainable_weights
+
+    @property
+    def non_trainable_weights(self):
+        return self.model.non_trainable_weights
+
+    @property
+    def variables(self):
+        """Returns the list of all policy variables/weights.
+
+        Alias of `self.weights`.
+
+        Returns:
+          A list of variables.
+        """
+        return self.weights
+
+    @property
+    def trainable_variables(self):
+        return self.trainable_weights
+
+    @property
+    def non_trainable_variables(self):
+        return self.non_trainable_weights
 
     @abc.abstractmethod
     def values(self, inputs):
