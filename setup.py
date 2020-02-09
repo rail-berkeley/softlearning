@@ -50,7 +50,6 @@ setup(
         'scikit-image==0.16.2',
         'scikit-video==1.1.11',
         'scipy==1.4.1',
-        'serializable @ git+https://github.com/hartikainen/serializable.git@76516385a3a716ed4a2a9ad877e2d5cbcf18d4e6',
         'tensorflow',
         'tensorflow-probability',
     ),
