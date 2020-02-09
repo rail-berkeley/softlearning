@@ -6,8 +6,10 @@ import pytest
 import tensorflow as tf
 import tree
 
+from softlearning import policies
 from softlearning.environments.utils import get_environment
 from softlearning.policies.gaussian_policy import FeedforwardGaussianPolicy
+from softlearning.samplers import utils as sampler_utils
 
 
 class GaussianPolicyTest(tf.test.TestCase):
@@ -91,34 +93,40 @@ class GaussianPolicyTest(tf.test.TestCase):
             self.assertTrue(np.isscalar(value))
 
     def test_serialize_deserialize(self):
-        observation1_np = self.env.reset()
-        observation2_np = self.env.step(self.env.action_space.sample())[0]
+        policy_1 = FeedforwardGaussianPolicy(
+            input_shapes=self.env.observation_shape,
+            output_shape=self.env.action_space.shape,
+            action_range=(
+                self.env.action_space.low,
+                self.env.action_space.high,
+            ),
+            hidden_layer_sizes=self.hidden_layer_sizes,
+            observation_keys=self.env.observation_keys)
 
-        observations_np = type(observation1_np)((
-            (key, np.stack((
-                observation1_np[key], observation2_np[key]
-            ), axis=0).astype(np.float32))
-            for key in observation1_np.keys()
-        ))
+        path = sampler_utils.rollout(
+            self.env,
+            policy_1,
+            path_length=10,
+            break_on_terminal=False)
+        observations = path['observations']
 
-        weights = self.policy.get_weights()
-        actions_np = self.policy.actions(observations_np).numpy()
-        log_pis_np = self.policy.log_probs(observations_np, actions_np).numpy()
+        weights_1 = policy_1.get_weights()
+        actions_1 = policy_1.actions(observations)
+        log_pis_1 = policy_1.log_probs(observations, actions_1)
 
-        serialized = pickle.dumps(self.policy)
-        deserialized = pickle.loads(serialized)
+        config = policies.serialize(policy_1)
+        policy_2 = policies.deserialize(config)
+        policy_2.set_weights(policy_1.get_weights())
 
-        weights_2 = deserialized.get_weights()
-        log_pis_np_2 = deserialized.log_probs(
-            observations_np, actions_np).numpy()
+        weights_2 = policy_2.get_weights()
+        log_pis_2 = policy_2.log_probs(observations, actions_1)
 
-        for weight, weight_2 in zip(weights, weights_2):
-            np.testing.assert_array_equal(weight, weight_2)
+        for weight_1, weight_2 in zip(weights_1, weights_2):
+            np.testing.assert_array_equal(weight_1, weight_2)
 
-        np.testing.assert_array_equal(log_pis_np, log_pis_np_2)
+        np.testing.assert_array_equal(log_pis_1, log_pis_2)
         np.testing.assert_equal(
-            actions_np.shape,
-            deserialized.actions(observations_np).numpy().shape)
+            actions_1.shape, policy_2.actions(observations).shape)
 
     @pytest.mark.skip("Latent smoothing is temporarily disabled.")
     def test_latent_smoothing(self):

@@ -1,13 +1,14 @@
 from collections import OrderedDict
-import pickle
 
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 import tree
 
+from softlearning import policies
 from softlearning.policies.uniform_policy import ContinuousUniformPolicy
 from softlearning.environments.utils import get_environment
+from softlearning.samplers import utils as sampler_utils
 
 
 class ContinuousUniformPolicyTest(tf.test.TestCase):
@@ -73,21 +74,35 @@ class ContinuousUniformPolicyTest(tf.test.TestCase):
         self.assertFalse(diagnostics)
 
     def test_serialize_deserialize(self):
-        observation1_np = self.env.reset()
-        observation2_np = self.env.step(self.env.action_space.sample())[0]
+        policy_1 = ContinuousUniformPolicy(
+            action_range=(
+                self.env.action_space.low,
+                self.env.action_space.high,
+            ),
+            input_shapes=self.env.observation_shape,
+            output_shape=self.env.action_shape,
+            observation_keys=self.env.observation_keys)
 
-        observations_np = type(observation1_np)((
-            (key, np.stack((
-                observation1_np[key], observation2_np[key]
-            ), axis=0).astype(np.float32))
-            for key in observation1_np.keys()
-        ))
+        self.assertFalse(policy_1.trainable_weights)
 
-        deserialized = pickle.loads(pickle.dumps(self.policy))
+        config = policies.serialize(policy_1)
+        policy_2 = policies.deserialize(config)
 
+        self.assertEqual(policy_2._action_range, policy_1._action_range)
+        self.assertEqual(policy_2._input_shapes, policy_1._input_shapes)
+        self.assertEqual(policy_2._output_shape, policy_1._output_shape)
+        self.assertEqual(
+            policy_2._observation_keys, policy_1._observation_keys)
+
+        path = sampler_utils.rollout(
+            self.env,
+            policy_2,
+            path_length=10,
+            break_on_terminal=False)
+        observations = path['observations']
         np.testing.assert_equal(
-            self.policy.actions(observations_np).numpy().shape,
-            deserialized.actions(observations_np).numpy().shape)
+            policy_1.actions(observations).numpy().shape,
+            policy_2.actions(observations).numpy().shape)
 
 
 if __name__ == '__main__':
