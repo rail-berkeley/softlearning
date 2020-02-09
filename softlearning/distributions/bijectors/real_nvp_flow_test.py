@@ -6,7 +6,7 @@ import tensorflow as tf
 from tensorflow_probability import bijectors
 from tensorflow.python.framework import test_util  # pylint: disable=g-direct-tensorflow-import,g-import-not-at-top
 
-from softlearning.distributions.real_nvp_flow import RealNVPFlow
+from softlearning.distributions.bijectors.real_nvp_flow import RealNVPFlow
 
 
 @pytest.mark.skip(reason="tf2 broke these tests.")

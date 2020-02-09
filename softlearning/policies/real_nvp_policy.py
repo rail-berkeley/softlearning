@@ -6,7 +6,8 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 import tree
 
-from softlearning.distributions.real_nvp_flow import RealNVPFlow
+from softlearning.distributions.bijectors.real_nvp_flow import RealNVPFlow
+
 from .base_policy import LatentSpacePolicy
 
 

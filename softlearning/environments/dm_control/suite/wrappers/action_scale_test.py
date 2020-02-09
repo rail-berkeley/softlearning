@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from dm_control import suite
 
-from action_scale import Wrapper as ActionScaleWrapper
+from .action_scale import Wrapper as ActionScaleWrapper
 
 
 def test_scale_action():
