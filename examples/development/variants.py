@@ -489,11 +489,11 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
             },
         },
         'Q_params': {
-            'type': 'double_feedforward_Q_function',
-            'kwargs': {
+            'class_name': 'double_feedforward_Q_function',
+            'config': {
                 'hidden_layer_sizes': (M, M),
                 'observation_keys': None,
-                'observation_preprocessors_params': {}
+                'preprocessors': None,
             },
         },
         'algorithm_params': algorithm_params,
@@ -539,8 +539,8 @@ def get_variant_spec_image(universe,
 
     if is_image_env(universe, domain, task, variant_spec):
         preprocessor_params = {
-            'type': 'convnet_preprocessor',
-            'kwargs': {
+            'class_name': 'convnet_preprocessor',
+            'config': {
                 'conv_filters': (64, ) * 3,
                 'conv_kernel_sizes': (3, ) * 3,
                 'conv_strides': (2, ) * 3,
@@ -554,7 +554,7 @@ def get_variant_spec_image(universe,
             'pixels': deepcopy(preprocessor_params)
         }
 
-        variant_spec['Q_params']['kwargs']['hidden_layer_sizes'] = (
+        variant_spec['Q_params']['config']['hidden_layer_sizes'] = (
             tune.sample_from(lambda spec: (deepcopy(
                 spec.get('config', spec)
                 ['policy_params']
@@ -562,15 +562,15 @@ def get_variant_spec_image(universe,
                 ['hidden_layer_sizes']
             )))
         )
-        variant_spec['Q_params']['kwargs'][
-            'observation_preprocessors_params'] = (
-                tune.sample_from(lambda spec: (deepcopy(
+        variant_spec['Q_params']['config']['preprocessors'] = tune.sample_from(
+            lambda spec: (
+                deepcopy(
                     spec.get('config', spec)
                     ['policy_params']
-                    ['kwargs']
-                    ['observation_preprocessors_params']
-                )))
-            )
+                    ['config']
+                    ['preprocessors']),
+                None,  # Action preprocessor is None
+            ))
 
     return variant_spec
 

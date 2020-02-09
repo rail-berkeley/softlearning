@@ -11,9 +11,9 @@ from ray import tune
 from softlearning.environments.utils import get_environment_from_params
 from softlearning.algorithms.utils import get_algorithm_from_variant
 from softlearning import policies
+from softlearning import value_functions
 from softlearning.replay_pools.utils import get_replay_pool_from_variant
 from softlearning.samplers.utils import get_sampler_from_variant
-from softlearning.value_functions.utils import get_Q_function_from_variant
 
 from softlearning.utils.misc import set_seed
 from softlearning.utils.tensorflow import set_gpu_memory_growth
@@ -55,8 +55,14 @@ class ExperimentRunner(tune.Trainable):
         replay_pool = self.replay_pool = (
             get_replay_pool_from_variant(variant, training_environment))
         sampler = self.sampler = get_sampler_from_variant(variant)
-        Qs = self.Qs = get_Q_function_from_variant(
-            variant, training_environment)
+
+        variant['Q_params']['config'].update({
+            'input_shapes': (
+                training_environment.observation_shape,
+                training_environment.action_shape,
+            )
+        })
+        Qs = self.Qs = value_functions.get(variant['Q_params'])
 
         variant['exploration_policy_params']['config'].update({
             'action_range': (training_environment.action_space.low,
