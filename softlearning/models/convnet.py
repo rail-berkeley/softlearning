@@ -1,13 +1,10 @@
 import tensorflow as tf
 import tensorflow_probability as tfp
+import tensorflow_addons as tfa
 from tensorflow.keras import layers
+import tree
 
 from softlearning.utils.keras import PicklableSequential
-from softlearning.models.normalization import (
-    LayerNormalization,
-    GroupNormalization,
-    InstanceNormalization)
-import tree
 
 
 tfk = tf.keras
@@ -31,9 +28,9 @@ def convnet_model(
         **kwargs):
     normalization_layer = {
         'batch': layers.BatchNormalization,
-        'layer': LayerNormalization,
-        'group': GroupNormalization,
-        'instance': InstanceNormalization,
+        'layer': layers.LayerNormalization,
+        'group': tfa.layers.normalizations.GroupNormalization,
+        'instance': tfa.layers.normalizations.InstanceNormalization,
         None: None,
     }[normalization_type]
 
