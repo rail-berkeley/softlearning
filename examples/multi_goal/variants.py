@@ -50,8 +50,8 @@ def get_variant_spec(args):
     variant_spec = {
         'layer_size': layer_size,
         'policy_params': {
-            'type': 'GaussianPolicy',
-            'kwargs': {
+            'class_name': 'FeedforwardGaussianPolicy',
+            'config': {
                 'hidden_layer_sizes': (layer_size, layer_size),
                 'squash': True,
             },
@@ -61,8 +61,8 @@ def get_variant_spec(args):
             ALGORITHM_PARAMS_ADDITIONAL.get(algorithm, {})
         ),
         'Q_params': {
-            'type': 'double_feedforward_Q_function',
-            'kwargs': {
+            'class_name': 'double_feedforward_Q_function',
+            'config': {
                 'hidden_layer_sizes': (layer_size, layer_size),
             },
         },

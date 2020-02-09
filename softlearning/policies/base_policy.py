@@ -2,11 +2,9 @@ import abc
 from collections import OrderedDict
 
 import numpy as np
-import tree
 import tensorflow as tf
 import tensorflow_probability as tfp
-
-from serializable import Serializable
+import tree
 
 from softlearning.models.utils import create_inputs
 from softlearning.utils.tensorflow import cast_and_concat, apply_preprocessors
@@ -25,6 +23,10 @@ class BasePolicy:
         self._inputs = create_inputs(input_shapes)
         self._preprocessors = preprocessors
         self._name = name
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def preprocessors(self):
@@ -143,15 +145,16 @@ class BasePolicy:
         diagnostics_np = tree.map_structure(lambda x: x.numpy(), diagnostics)
         return diagnostics_np
 
-    def __getstate__(self):
-        state = Serializable.__getstate__(self)
-        state['pickled_weights'] = self.get_weights()
-
-        return state
-
-    def __setstate__(self, state):
-        Serializable.__setstate__(self, state)
-        self.set_weights(state['pickled_weights'])
+    def get_config(self):
+        config = {
+            'input_shapes': self._input_shapes,
+            'output_shape': self._output_shape,
+            'observation_keys': self._observation_keys,
+            # 'preprocessors': preprocessors.serialize(self._preprocessors),
+            'preprocessors': self._preprocessors,
+            'name': self._name,
+        }
+        return config
 
 
 class ContinuousPolicy(BasePolicy):
@@ -172,6 +175,15 @@ class ContinuousPolicy(BasePolicy):
 
         return super(ContinuousPolicy, self).__init__(*args, **kwargs)
 
+    def get_config(self):
+        base_config = super(ContinuousPolicy, self).get_config()
+        config = {
+            **base_config,
+            'action_range': self._action_range,
+            'squash': self._squash,
+        }
+        return config
+
 
 class LatentSpacePolicy(ContinuousPolicy):
     def __init__(self, *args, smoothing_coefficient=None, **kwargs):
@@ -185,6 +197,7 @@ class LatentSpacePolicy(ContinuousPolicy):
                 " migration. Should add it back. See:"
                 " https://github.com/rail-berkeley/softlearning/blob/46374df0294b9b5f6dbe65b9471ec491a82b6944/softlearning/policies/base_policy.py#L80")
 
+        self._smoothing_coefficient = smoothing_coefficient
         self._smoothing_alpha = smoothing_coefficient or 0
         self._smoothing_beta = (
             np.sqrt(1.0 - np.power(self._smoothing_alpha, 2.0))
@@ -210,3 +223,11 @@ class LatentSpacePolicy(ContinuousPolicy):
 
     def reset(self):
         self._reset_smoothing_x()
+
+    def get_config(self):
+        base_config = super(LatentSpacePolicy, self).get_config()
+        config = {
+            **base_config,
+            'smoothing_coefficient': self._smoothing_coefficient,
+        }
+        return config

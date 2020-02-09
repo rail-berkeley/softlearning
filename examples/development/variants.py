@@ -72,12 +72,12 @@ ALGORITHM_PARAMS_ADDITIONAL = {
 
 
 GAUSSIAN_POLICY_PARAMS_BASE = {
-    'type': 'GaussianPolicy',
-    'kwargs': {
+    'class_name': 'FeedforwardGaussianPolicy',
+    'config': {
         'hidden_layer_sizes': (M, M),
         'squash': True,
         'observation_keys': None,
-        'observation_preprocessors_params': {}
+        'preprocessors': None,
     }
 }
 
@@ -433,7 +433,7 @@ def get_algorithm_params(universe, domain, task):
     n_epochs = total_timesteps / epoch_length
     assert n_epochs == int(n_epochs)
     algorithm_params = {
-        'kwargs': {
+        'config': {
             'n_epochs': int(n_epochs),
             'n_initial_exploration_steps': tune.sample_from(
                 get_initial_exploration_steps),
@@ -478,12 +478,12 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
         },
         'policy_params': tune.sample_from(get_policy_params),
         'exploration_policy_params': {
-            'type': 'UniformPolicy',
-            'kwargs': {
+            'class_name': 'ContinuousUniformPolicy',
+            'config': {
                 'observation_keys': tune.sample_from(lambda spec: (
                     spec.get('config', spec)
                     ['policy_params']
-                    ['kwargs']
+                    ['config']
                     .get('observation_keys')
                 ))
             },
@@ -549,17 +549,16 @@ def get_variant_spec_image(universe,
             },
         }
 
-        variant_spec['policy_params']['kwargs']['hidden_layer_sizes'] = (M, M)
-        variant_spec['policy_params']['kwargs'][
-            'observation_preprocessors_params'] = {
-                'pixels': deepcopy(preprocessor_params)
-            }
+        variant_spec['policy_params']['config']['hidden_layer_sizes'] = (M, M)
+        variant_spec['policy_params']['config']['preprocessors'] = {
+            'pixels': deepcopy(preprocessor_params)
+        }
 
         variant_spec['Q_params']['kwargs']['hidden_layer_sizes'] = (
             tune.sample_from(lambda spec: (deepcopy(
                 spec.get('config', spec)
                 ['policy_params']
-                ['kwargs']
+                ['config']
                 ['hidden_layer_sizes']
             )))
         )

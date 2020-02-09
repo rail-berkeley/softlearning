@@ -157,3 +157,13 @@ class FeedforwardGaussianPolicy(GaussianPolicy):
             inputs, (shift, scale))
 
         return shift_and_scale_diag_model
+
+    def get_config(self):
+        base_config = super(FeedforwardGaussianPolicy, self).get_config()
+        config = {
+            **base_config,
+            'hidden_layer_sizes': self._hidden_layer_sizes,
+            'activation': self._activation,
+            'output_activation': self._output_activation,
+        }
+        return config

@@ -6,7 +6,7 @@ from softlearning.algorithms.utils import get_algorithm_from_variant
 from softlearning.environments.utils import get_environment
 from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.samplers import SimpleSampler
-from softlearning.policies.utils import get_policy_from_variant
+from softlearning import policies
 from softlearning.replay_pools import SimpleReplayPool
 from softlearning.value_functions.utils import get_Q_function_from_variant
 from examples.instrument import run_example_local
@@ -29,7 +29,13 @@ def run_experiment(variant, reporter):
     sampler = SimpleSampler(max_path_length=30)
 
     Qs = get_Q_function_from_variant(variant, training_environment)
-    policy = get_policy_from_variant(variant, training_environment)
+    variant['policy_params']['config'].update({
+        'action_range': (training_environment.action_space.low,
+                         training_environment.action_space.high),
+        'input_shapes': training_environment.observation_shape,
+        'output_shape': training_environment.action_shape,
+    })
+    policy = policies.get(variant['policy_params'])
     plotter = QFPolicyPlotter(
         Q=Qs[0],
         policy=policy,
