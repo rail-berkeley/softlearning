@@ -54,12 +54,13 @@ class BasePolicy:
         return []
 
     @property
-    def trainable_variables(self):
-        return self.trainable_weights
+    def weights(self):
+        """Returns the list of all policy variables/weights.
 
-    @property
-    def non_trainable_variables(self):
-        return self.non_trainable_weights
+        Returns:
+          A list of variables.
+        """
+        return self.trainable_weights + self.non_trainable_weights
 
     @property
     def trainable_weights(self):
@@ -68,6 +69,25 @@ class BasePolicy:
     @property
     def non_trainable_weights(self):
         return []
+
+    @property
+    def variables(self):
+        """Returns the list of all policy variables/weights.
+
+        Alias of `self.weights`.
+
+        Returns:
+          A list of variables.
+        """
+        return self.weights
+
+    @property
+    def trainable_variables(self):
+        return self.trainable_weights
+
+    @property
+    def non_trainable_variables(self):
+        return self.non_trainable_weights
 
     @abc.abstractmethod
     def actions(self, inputs):
