@@ -121,7 +121,7 @@ class BasePolicy:
     def _filter_observations(self, observations):
         if (isinstance(observations, dict)
             and self._observation_keys is not None):
-            observations = type((observations))((
+            observations = type(observations)((
                 (key, observations[key])
                 for key in self.observation_keys
             ))

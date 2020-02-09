@@ -2,8 +2,7 @@ import abc
 from collections import OrderedDict
 
 import tensorflow as tf
-
-from softlearning.utils.tensorflow import nest
+import tree
 
 
 class BaseValueFunction:
@@ -41,15 +40,15 @@ class BaseValueFunction:
 
     def value(self, input_):
         """Compute a value for a single input, (e.g. observation)."""
-        inputs = nest.map_structure(lambda x: x[None, ...], input_)
+        inputs = tree.map_structure(lambda x: x[None, ...], input_)
         values = self.values(inputs)
-        value = nest.map_structure(lambda x: x[0], values)
+        value = tree.map_structure(lambda x: x[0], values)
         return value
 
     def _filter_observations(self, observations):
         if (isinstance(observations, dict)
             and self._observation_keys is not None):
-            observations = type((observations))((
+            observations = type(observations)((
                 (key, observations[key])
                 for key in self.observation_keys
             ))

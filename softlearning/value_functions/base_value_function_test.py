@@ -3,12 +3,10 @@ from collections import OrderedDict
 
 import numpy as np
 import tensorflow as tf
+import tree
 
-from softlearning.value_functions.vanilla import (
-    create_feedforward_Q_function,
-)
+from softlearning.value_functions.vanilla import create_feedforward_Q_function
 from softlearning.environments.utils import get_environment
-from softlearning.utils.tensorflow import nest
 
 
 class ValueFunctionTest(tf.test.TestCase):
@@ -44,9 +42,9 @@ class ValueFunctionTest(tf.test.TestCase):
             action1_np, action2_np
         ), axis=0).astype(np.float32)
 
-        observations_tf = nest.map_structure(
+        observations_tf = tree.map_structure(
             lambda x: tf.constant(x, dtype=x.dtype), observations_np)
-        actions_tf = nest.map_structure(
+        actions_tf = tree.map_structure(
             lambda x: tf.constant(x, dtype=x.dtype), actions_np)
 
         for observations, actions in (
