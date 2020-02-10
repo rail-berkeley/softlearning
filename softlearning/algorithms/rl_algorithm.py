@@ -165,8 +165,6 @@ class RLAlgorithm(Checkpointable):
             self._initial_exploration_hook(
                 training_environment, self._initial_exploration_policy, pool)
 
-        self.sampler.initialize(self._training_environment, self._policy, pool)
-
         gt.reset_root()
         gt.rename_root('RLAlgorithm')
         gt.set_def_unique(False)
