@@ -58,7 +58,6 @@ def rollout(environment,
         policy=policy,
         pool=pool,
         max_path_length=path_length)
-    sampler.initialize(environment, policy, pool)
 
     render_mode = (render_kwargs or {}).get('mode', None)
     if render_mode == 'rgb_array':

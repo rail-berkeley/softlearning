@@ -172,6 +172,7 @@ class RLAlgorithm(Checkpointable):
         self.sampler.initialize(env, initial_exploration_policy, pool)
         while pool.size < self._n_initial_exploration_steps:
             self.sampler.sample()
+        self.sampler.initialize(self._training_environment, self._policy, pool)
 
     def _training_before_hook(self):
         """Method called before the actual training loops."""
@@ -237,8 +238,6 @@ class RLAlgorithm(Checkpointable):
 
             self._initial_exploration_hook(
                 training_environment, self._initial_exploration_policy, pool)
-
-        self.sampler.initialize(training_environment, policy, pool)
 
         gt.reset_root()
         gt.rename_root('RLAlgorithm')

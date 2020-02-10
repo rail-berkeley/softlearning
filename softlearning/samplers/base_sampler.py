@@ -5,14 +5,20 @@ from itertools import islice
 class BaseSampler(object):
     def __init__(self,
                  max_path_length,
+                 environment=None,
+                 policy=None,
+                 pool=None,
                  store_last_n_paths=10):
         self._max_path_length = max_path_length
         self._store_last_n_paths = store_last_n_paths
         self._last_n_paths = deque(maxlen=store_last_n_paths)
 
-        self.environment = None
-        self.policy = None
-        self.pool = None
+        self.environment = environment
+        self.policy = policy
+        self.pool = pool
+        self.environment = environment
+        self.policy = policy
+        self.pool = pool
 
     def initialize(self, environment, policy, pool):
         self.environment = environment
