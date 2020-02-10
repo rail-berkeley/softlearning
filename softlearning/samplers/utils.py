@@ -3,33 +3,7 @@ from collections import defaultdict
 import numpy as np
 
 from softlearning import replay_pools
-from . import (
-    dummy_sampler,
-    remote_sampler,
-    base_sampler,
-    simple_sampler,
-    goal_sampler)
-
-
-def get_sampler_from_variant(variant, *args, **kwargs):
-    SAMPLERS = {
-        'DummySampler': dummy_sampler.DummySampler,
-        'RemoteSampler': remote_sampler.RemoteSampler,
-        'Sampler': base_sampler.BaseSampler,
-        'SimpleSampler': simple_sampler.SimpleSampler,
-        'GoalSampler': goal_sampler.GoalSampler,
-    }
-
-    sampler_params = variant['sampler_params']
-    sampler_type = sampler_params['type']
-
-    sampler_args = sampler_params.get('args', ())
-    sampler_kwargs = sampler_params.get('kwargs', {}).copy()
-
-    sampler = SAMPLERS[sampler_type](
-        *sampler_args, *args, **sampler_kwargs, **kwargs)
-
-    return sampler
+from . import simple_sampler
 
 
 DEFAULT_PIXEL_RENDER_KWARGS = {
@@ -49,7 +23,6 @@ def rollout(environment,
             policy,
             path_length,
             sampler_class=simple_sampler.SimpleSampler,
-            callback=None,
             render_kwargs=None,
             break_on_terminal=True):
     pool = replay_pools.SimpleReplayPool(environment, max_size=path_length)
@@ -81,9 +54,6 @@ def rollout(environment,
         observation, reward, terminal, info = sampler.sample()
         for key, value in info.items():
             infos[key].append(value)
-
-        if callback is not None:
-            callback(observation)
 
         if render_kwargs:
             image = environment.render(**render_kwargs)

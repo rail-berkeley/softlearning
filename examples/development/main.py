@@ -13,7 +13,7 @@ from softlearning import algorithms
 from softlearning import policies
 from softlearning import value_functions
 from softlearning.replay_pools.utils import get_replay_pool_from_variant
-from softlearning.samplers.utils import get_sampler_from_variant
+from softlearning import samplers
 
 from softlearning.utils.misc import set_seed
 from softlearning.utils.tensorflow import set_gpu_memory_growth
@@ -54,7 +54,6 @@ class ExperimentRunner(tune.Trainable):
 
         replay_pool = self.replay_pool = (
             get_replay_pool_from_variant(variant, training_environment))
-        sampler = self.sampler = get_sampler_from_variant(variant)
 
         variant['Q_params']['config'].update({
             'input_shapes': (
@@ -81,10 +80,18 @@ class ExperimentRunner(tune.Trainable):
         })
         policy = self.policy = policies.get(variant['policy_params'])
 
+        variant['sampler_params']['config'].update({
+            'environment': training_environment,
+            'policy': policy,
+            'pool': replay_pool,
+        })
+        sampler = self.sampler = samplers.get(variant['sampler_params'])
+
         variant['algorithm_params']['config'].update({
             'training_environment': training_environment,
             'evaluation_environment': evaluation_environment,
             'policy': policy,
+            'initial_exploration_policy': initial_exploration_policy,
             'Qs': Qs,
             'pool': replay_pool,
             'sampler': sampler

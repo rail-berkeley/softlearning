@@ -504,8 +504,8 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
             },
         },
         'sampler_params': {
-            'type': 'SimpleSampler',
-            'kwargs': {
+            'class_name': 'SimpleSampler',
+            'config': {
                 'max_path_length': get_max_path_length(universe, domain, task),
             }
         },
