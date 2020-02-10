@@ -88,6 +88,7 @@ class SQL(RLAlgorithm):
 
         self._Qs = Qs
         self._Q_targets = tuple(copy(Q) for Q in Qs)
+        self._update_target(tau=tf.constant(1.0))
 
         self._plotter = plotter
 
@@ -321,9 +322,6 @@ class SQL(RLAlgorithm):
             loss_gradients, self._policy.trainable_variables))
 
         return surrogate_loss
-
-    def _init_training(self):
-        self._update_target(tau=tf.constant(1.0))
 
     @tf.function(experimental_relax_shapes=True)
     def _update_target(self, tau):

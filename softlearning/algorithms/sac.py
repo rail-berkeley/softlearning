@@ -103,6 +103,7 @@ class SAC(RLAlgorithm):
 
         self._Qs = Qs
         self._Q_targets = tuple(deepcopy(Q) for Q in Qs)
+        self._update_target(tau=tf.constant(1.0))
 
         self._plotter = plotter
 
@@ -294,9 +295,6 @@ class SAC(RLAlgorithm):
             self._update_target(tau=tf.constant(self._tau))
 
         return training_diagnostics
-
-    def _init_training(self):
-        self._update_target(tau=tf.constant(1.0))
 
     def get_diagnostics(self,
                         iteration,
