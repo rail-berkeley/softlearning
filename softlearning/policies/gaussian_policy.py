@@ -40,8 +40,11 @@ class GaussianPolicy(LatentSpacePolicy):
     def actions(self, observations):
         observations = self._filter_observations(observations)
 
+        first_observation = tree.flatten(observations)[0]
+        first_input_rank = tf.size(tree.flatten(self._input_shapes)[0])
+        batch_shape = tf.shape(first_observation)[:-first_input_rank]
+
         shifts, scales = self.shift_and_scale_model(observations)
-        batch_shape = tf.shape(tree.flatten(observations)[0])[:-1]
         actions = self.action_distribution.sample(
             batch_shape,
             bijector_kwargs={'scale': {'scale': scales},
