@@ -14,7 +14,7 @@ class BasePolicy:
     def __init__(self,
                  input_shapes,
                  output_shape,
-                 observation_keys,
+                 observation_keys=None,
                  preprocessors=None,
                  name='policy'):
         self._input_shapes = input_shapes
