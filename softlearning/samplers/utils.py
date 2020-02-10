@@ -45,17 +45,20 @@ DEFAULT_HUMAN_RENDER_KWARGS = {
 }
 
 
-def rollout(env,
+def rollout(environment,
             policy,
             path_length,
             sampler_class=simple_sampler.SimpleSampler,
             callback=None,
             render_kwargs=None,
             break_on_terminal=True):
-    pool = replay_pools.SimpleReplayPool(env, max_size=path_length)
-    sampler = sampler_class(max_path_length=path_length)
-
-    sampler.initialize(env, policy, pool)
+    pool = replay_pools.SimpleReplayPool(environment, max_size=path_length)
+    sampler = sampler_class(
+        environment=environment,
+        policy=policy,
+        pool=pool,
+        max_path_length=path_length)
+    sampler.initialize(environment, policy, pool)
 
     render_mode = (render_kwargs or {}).get('mode', None)
     if render_mode == 'rgb_array':
@@ -84,7 +87,7 @@ def rollout(env,
             callback(observation)
 
         if render_kwargs:
-            image = env.render(**render_kwargs)
+            image = environment.render(**render_kwargs)
             images.append(image)
 
         if terminal:

@@ -10,12 +10,12 @@ class BaseSampler(object):
         self._store_last_n_paths = store_last_n_paths
         self._last_n_paths = deque(maxlen=store_last_n_paths)
 
-        self.env = None
+        self.environment = None
         self.policy = None
         self.pool = None
 
-    def initialize(self, env, policy, pool):
-        self.env = env
+    def initialize(self, environment, policy, pool):
+        self.environment = environment
         self.policy = policy
         self.pool = pool
 
@@ -37,7 +37,7 @@ class BaseSampler(object):
         raise NotImplementedError
 
     def terminate(self):
-        self.env.close()
+        self.environment.close()
 
     def get_diagnostics(self):
         diagnostics = OrderedDict({'pool-size': self.pool.size})
@@ -46,7 +46,7 @@ class BaseSampler(object):
     def __getstate__(self):
         state = {
             key: value for key, value in self.__dict__.items()
-            if key not in ('env', 'policy', 'pool', '_last_n_paths')
+            if key not in ('environment', 'policy', 'pool', '_last_n_paths')
         }
 
         return state
@@ -54,7 +54,7 @@ class BaseSampler(object):
     def __setstate__(self, state):
         self.__dict__.update(state)
 
-        self.env = None
+        self.environment = None
         self.policy = None
         self.pool = None
         # TODO(hartikainen): Maybe try restoring these from the pool?

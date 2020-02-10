@@ -42,7 +42,7 @@ class RemoteSamplerTest(unittest.TestCase):
         deserialized.initialize(self.env, self.policy, self.pool)
 
         self.assertTrue(isinstance(
-            deserialized.env, type(self.remote_sampler.env)))
+            deserialized.environment, type(self.remote_sampler.environment)))
         self.assertEqual(
             self.remote_sampler._n_episodes, deserialized._n_episodes)
         self.assertEqual(

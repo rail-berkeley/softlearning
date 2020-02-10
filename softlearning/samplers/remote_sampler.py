@@ -37,9 +37,9 @@ class RemoteSampler(BaseSampler):
         initialized = ray.get(self._remote_environment.initialized.remote())
         assert initialized, initialized
 
-    def initialize(self, env, policy, pool):
-        super(RemoteSampler, self).initialize(env, policy, pool)
-        self._create_remote_environment(env, policy)
+    def initialize(self, environment, policy, pool):
+        super(RemoteSampler, self).initialize(environment, policy, pool)
+        self._create_remote_environment(environment, policy)
 
     def wait_for_path(self, timeout=1):
         if self._remote_path is None:

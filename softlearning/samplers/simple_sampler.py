@@ -48,11 +48,12 @@ class SimpleSampler(BaseSampler):
 
     def sample(self):
         if self._current_observation is None:
-            self._current_observation = self.env.reset()
+            self._current_observation = self.environment.reset()
 
         action = self.policy.actions_np(self._policy_input)[0]
 
-        next_observation, reward, terminal, info = self.env.step(action)
+        next_observation, reward, terminal, info = self.environment.step(
+            action)
         self._path_length += 1
         self._path_return += reward
         self._total_samples += 1
