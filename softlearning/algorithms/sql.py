@@ -38,7 +38,6 @@ class SQL(RLAlgorithm):
             evaluation_environment,
             policy,
             Qs,
-            pool,
             plotter=None,
 
             policy_lr=3e-4,
@@ -65,7 +64,6 @@ class SQL(RLAlgorithm):
             Qs: Q-function approximators. The min of these
                 approximators will be used. Usage of at least two Q-functions
                 improves performance by reducing overestimation bias.
-            pool (`PoolBase`): Replay pool to add gathered samples to.
             plotter (`QFPolicyPlotter`): Plotter instance to be used for
                 visualizing Q-function during training.
             Q_lr (`float`): Learning rate used for the Q-function approximator.
@@ -99,7 +97,6 @@ class SQL(RLAlgorithm):
         self._Qs = Qs
         self._Q_targets = tuple(tf.keras.models.clone_model(Q) for Q in Qs)
 
-        self._pool = pool
         self._plotter = plotter
 
         self._Q_lr = Q_lr
