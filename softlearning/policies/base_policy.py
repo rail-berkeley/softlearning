@@ -40,10 +40,6 @@ class BasePolicy:
     def observation_keys(self):
         return self._observation_keys
 
-    @property
-    def input_names(self):
-        return self.actions_model.input_names
-
     def reset(self):
         """Reset and clean the policy."""
 
@@ -52,6 +48,12 @@ class BasePolicy:
 
     def set_weights(self, *args, **kwargs):
         return []
+
+    def save_weights(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def load_weights(self, *args, **kwargs):
+        raise NotImplementedError
 
     @property
     def weights(self):

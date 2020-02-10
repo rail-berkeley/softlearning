@@ -80,8 +80,14 @@ class GaussianPolicy(LatentSpacePolicy):
     def _shift_and_log_scale_diag_net(self, inputs, output_size):
         raise NotImplementedError
 
-    def get_weights(self):
-        return self.shift_and_scale_model.get_weights()
+    def save_weights(self, *args, **kwargs):
+        return self.shift_and_scale_model.save_weights(*args, **kwargs)
+
+    def load_weights(self, *args, **kwargs):
+        return self.shift_and_scale_model.load_weights(*args, **kwargs)
+
+    def get_weights(self, *args, **kwargs):
+        return self.shift_and_scale_model.get_weights(*args, **kwargs)
 
     def set_weights(self, *args, **kwargs):
         return self.shift_and_scale_model.set_weights(*args, **kwargs)
