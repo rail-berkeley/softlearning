@@ -16,9 +16,6 @@ class BaseSampler(object):
         self.environment = environment
         self.policy = policy
         self.pool = pool
-        self.environment = environment
-        self.policy = policy
-        self.pool = pool
 
     def initialize(self, environment, policy, pool):
         self.environment = environment
