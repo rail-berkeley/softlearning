@@ -1,9 +1,9 @@
 from softlearning.utils.dict import deep_update
 
 ALGORITHM_PARAMS_BASE = {
-    'type': 'SAC',
+    'class_name': 'SAC',
 
-    'kwargs': {
+    'config': {
         'epoch_length': 100,
         'n_epochs': 1000,
         'n_train_repeat': 1,
@@ -22,8 +22,8 @@ ALGORITHM_PARAMS_BASE = {
 
 ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
-        'type': 'SAC',
-        'kwargs': {
+        'class_name': 'SAC',
+        'config': {
             'lr': 3e-4,
             'reward_scale': 0.1,
             'target_entropy': 'auto',
@@ -31,8 +31,8 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         }
     },
     'SQL': {
-        'type': 'SQL',
-        'kwargs': {
+        'class_name': 'SQL',
+        'config': {
             'policy_lr': 3e-4,
             'reward_scale': 0.1,
             'value_n_particles': 16,

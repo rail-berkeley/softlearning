@@ -15,7 +15,7 @@ NUM_COUPLING_LAYERS = 2
 
 
 ALGORITHM_PARAMS_BASE = {
-    'kwargs': {
+    'config': {
         'epoch_length': 1000,
         'train_every_n_steps': 1,
         'n_train_repeat': 1,
@@ -27,8 +27,8 @@ ALGORITHM_PARAMS_BASE = {
 
 ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
-        'type': 'SAC',
-        'kwargs': {
+        'class_name': 'SAC',
+        'config': {
             'policy_lr': 3e-4,
             'Q_lr': 3e-4,
             'alpha_lr': 3e-4,
@@ -42,8 +42,8 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         },
     },
     'SQL': {
-        'type': 'SQL',
-        'kwargs': {
+        'class_name': 'SQL',
+        'config': {
             'policy_lr': 3e-4,
             'target_update_interval': 1,
             'n_initial_exploration_steps': int(1e3),
@@ -401,7 +401,7 @@ def get_checkpoint_frequency(spec):
     checkpoint_frequency = (
         config
         ['algorithm_params']
-        ['kwargs']
+        ['config']
         ['n_epochs']
     ) // num_checkpoints
 

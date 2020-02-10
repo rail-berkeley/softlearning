@@ -9,7 +9,7 @@ import ray
 from ray import tune
 
 from softlearning.environments.utils import get_environment_from_params
-from softlearning.algorithms.utils import get_algorithm_from_variant
+from softlearning import algorithms
 from softlearning import policies
 from softlearning import value_functions
 from softlearning.replay_pools.utils import get_replay_pool_from_variant
@@ -81,15 +81,15 @@ class ExperimentRunner(tune.Trainable):
         })
         policy = self.policy = policies.get(variant['policy_params'])
 
-        self.algorithm = get_algorithm_from_variant(
-            variant=self._variant,
-            training_environment=training_environment,
-            evaluation_environment=evaluation_environment,
-            policy=policy,
-            initial_exploration_policy=initial_exploration_policy,
-            Qs=Qs,
-            pool=replay_pool,
-            sampler=sampler)
+        variant['algorithm_params']['config'].update({
+            'training_environment': training_environment,
+            'evaluation_environment': evaluation_environment,
+            'policy': policy,
+            'Qs': Qs,
+            'pool': replay_pool,
+            'sampler': sampler
+        })
+        self.algorithm = algorithms.get(variant['algorithm_params'])
 
         self._built = True
 

@@ -2,7 +2,7 @@ import sys
 
 import numpy as np
 
-from softlearning.algorithms.utils import get_algorithm_from_variant
+from softlearning import algorithms
 from softlearning.environments.utils import get_environment
 from softlearning.misc.plotter import QFPolicyPlotter
 from softlearning.samplers import SimpleSampler
@@ -54,18 +54,18 @@ def run_experiment(variant, reporter):
         default_action=(np.nan, np.nan),
         n_samples=100)
 
-    algorithm = get_algorithm_from_variant(
-        variant=variant,
-        training_environment=training_environment,
-        evaluation_environment=evaluation_environment,
-        policy=policy,
-        Qs=Qs,
-        pool=pool,
-        sampler=sampler,
-        min_pool_size=100,
-        batch_size=46,
-        plotter=plotter,
-    )
+    variant['algorithm_params']['config'].update({
+        'training_environment': training_environment,
+        'evaluation_environment': evaluation_environment,
+        'policy': policy,
+        'Qs': Qs,
+        'pool': pool,
+        'sampler': sampler,
+        'min_pool_size': 100,
+        'batch_size': 64,
+        'plotter': plotter,
+    })
+    algorithm = algorithms.get(variant['algorithm_params'])
 
     for train_result in algorithm.train():
         reporter(**train_result)

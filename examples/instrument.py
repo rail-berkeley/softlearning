@@ -114,7 +114,7 @@ def generate_experiment_kwargs(variant_spec, command_line_args):
 
     if command_line_args.video_save_frequency is not None:
         assert 'algorithm_params' in variant_spec
-        variant_spec['algorithm_params']['kwargs']['video_save_frequency'] = (
+        variant_spec['algorithm_params']['config']['video_save_frequency'] = (
             command_line_args.video_save_frequency)
 
     def create_trial_name_creator(trial_name_template=None):
