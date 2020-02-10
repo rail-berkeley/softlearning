@@ -498,8 +498,8 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
         },
         'algorithm_params': algorithm_params,
         'replay_pool_params': {
-            'type': 'SimpleReplayPool',
-            'kwargs': {
+            'class_name': 'SimpleReplayPool',
+            'config': {
                 'max_size': int(1e6),
             },
         },

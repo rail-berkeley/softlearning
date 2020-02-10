@@ -12,7 +12,7 @@ from softlearning.environments.utils import get_environment_from_params
 from softlearning import algorithms
 from softlearning import policies
 from softlearning import value_functions
-from softlearning.replay_pools.utils import get_replay_pool_from_variant
+from softlearning import replay_pools
 from softlearning import samplers
 
 from softlearning.utils.misc import set_seed
@@ -52,14 +52,10 @@ class ExperimentRunner(tune.Trainable):
             if 'evaluation' in environment_params
             else training_environment)
 
-        replay_pool = self.replay_pool = (
-            get_replay_pool_from_variant(variant, training_environment))
-
         variant['Q_params']['config'].update({
             'input_shapes': (
                 training_environment.observation_shape,
-                training_environment.action_shape,
-            )
+                training_environment.action_shape),
         })
         Qs = self.Qs = value_functions.get(variant['Q_params'])
 
@@ -79,6 +75,12 @@ class ExperimentRunner(tune.Trainable):
             'output_shape': training_environment.action_shape,
         })
         policy = self.policy = policies.get(variant['policy_params'])
+
+        variant['replay_pool_params']['config'].update({
+            'environment': training_environment,
+        })
+        replay_pool = self.replay_pool = replay_pools.get(
+            variant['replay_pool_params'])
 
         variant['sampler_params']['config'].update({
             'environment': training_environment,
