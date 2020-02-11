@@ -8,10 +8,10 @@ import os
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.training import training_util
 
 from softlearning.samplers import rollouts
 from softlearning.utils.video import save_video
+from softlearning.policies import utils as policy_utils
 
 
 if LooseVersion(tf.__version__) > LooseVersion("2.00"):
@@ -38,12 +38,11 @@ class RLAlgorithm(Checkpointable):
             min_pool_size=1,
             batch_size=1,
             max_train_repeat_per_timestep=5,
-            n_initial_exploration_steps=0,
-            initial_exploration_policy=None,
             epoch_length=1000,
             eval_n_episodes=10,
             eval_render_kwargs=None,
             video_save_frequency=0,
+            num_warmup_samples=0,
     ):
         """
         Args:
@@ -51,12 +50,12 @@ class RLAlgorithm(Checkpointable):
             n_epochs (`int`): Number of epochs to run the training for.
             n_train_repeat (`int`): Number of times to repeat the training
                 for single time step.
-            n_initial_exploration_steps: Number of steps in the beginning to
-                take using actions drawn from a separate exploration policy.
             epoch_length (`int`): Epoch length.
             eval_n_episodes (`int`): Number of rollouts to evaluate.
             eval_render_kwargs (`None`, `dict`): Arguments to be passed for
                 rendering evaluation rollouts. `None` to disable rendering.
+            num_warmup_samples ('int'): Number of random samples to warmup the
+                replay pool with.
         """
         self.sampler = sampler
         self.pool = pool
@@ -69,11 +68,10 @@ class RLAlgorithm(Checkpointable):
             max_train_repeat_per_timestep, n_train_repeat)
         self._train_every_n_steps = train_every_n_steps
         self._epoch_length = epoch_length
-        self._n_initial_exploration_steps = n_initial_exploration_steps
-        self._initial_exploration_policy = initial_exploration_policy
 
         self._eval_n_episodes = eval_n_episodes
         self._video_save_frequency = video_save_frequency
+        self._num_warmup_samples = num_warmup_samples
 
         self._eval_render_kwargs = eval_render_kwargs or {}
 
@@ -87,22 +85,23 @@ class RLAlgorithm(Checkpointable):
         self._timestep = 0
         self._num_train_steps = 0
 
-    def _initial_exploration_hook(self, env, initial_exploration_policy, pool):
-        if self._n_initial_exploration_steps < 1: return
+    def _do_warmup_samples(self):
+        num_warmup_samples = self._num_warmup_samples - self.pool.size
+        if num_warmup_samples < 1:
+            return
 
-        if not initial_exploration_policy:
-            raise ValueError(
-                "Initial exploration policy must be provided when"
-                " n_initial_exploration_steps > 0.")
+        uniform_policy = policy_utils.get_uniform_policy(
+            self.sampler.environment)
 
-        self.sampler.initialize(env, initial_exploration_policy, pool)
-        while pool.size < self._n_initial_exploration_steps:
+        old_policy = self.sampler.policy
+        self.sampler.policy = uniform_policy
+        while self.pool.size < num_warmup_samples:
             self.sampler.sample()
-        self.sampler.initialize(self._training_environment, self._policy, pool)
+        self.sampler.policy = old_policy
 
     def _training_before_hook(self):
         """Method called before the actual training loops."""
-        pass
+        self._do_warmup_samples()
 
     def _training_after_hook(self):
         """Method called after the actual training loops."""
@@ -150,20 +149,11 @@ class RLAlgorithm(Checkpointable):
         Args:
             env (`SoftlearningEnv`): Environment used for training.
             policy (`Policy`): Policy used for training
-            initial_exploration_policy ('Policy'): Policy used for exploration
-                If None, then all exploration is done using policy
             pool (`PoolBase`): Sample pool to add samples to
         """
         training_environment = self._training_environment
         evaluation_environment = self._evaluation_environment
         policy = self._policy
-        pool = self.pool
-
-        if not self._training_started:
-            self._init_training()
-
-            self._initial_exploration_hook(
-                training_environment, self._initial_exploration_policy, pool)
 
         gt.reset_root()
         gt.rename_root('RLAlgorithm')

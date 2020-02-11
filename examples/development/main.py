@@ -59,15 +59,6 @@ class ExperimentRunner(tune.Trainable):
         })
         Qs = self.Qs = value_functions.get(variant['Q_params'])
 
-        variant['exploration_policy_params']['config'].update({
-            'action_range': (training_environment.action_space.low,
-                             training_environment.action_space.high),
-            'input_shapes': training_environment.observation_shape,
-            'output_shape': training_environment.action_shape,
-        })
-        initial_exploration_policy = self.initial_exploration_policy = (
-            policies.get(variant['exploration_policy_params']))
-
         variant['policy_params']['config'].update({
             'action_range': (training_environment.action_space.low,
                              training_environment.action_space.high),
@@ -93,7 +84,6 @@ class ExperimentRunner(tune.Trainable):
             'training_environment': training_environment,
             'evaluation_environment': evaluation_environment,
             'policy': policy,
-            'initial_exploration_policy': initial_exploration_policy,
             'Qs': Qs,
             'pool': replay_pool,
             'sampler': sampler

@@ -21,6 +21,12 @@ ALGORITHM_PARAMS_BASE = {
         'n_train_repeat': 1,
         'eval_render_kwargs': {},
         'eval_n_episodes': 1,
+        'num_warmup_samples': tune.sample_from(lambda spec: (
+            10 * (spec.get('config', spec)
+                  ['sampler_params']
+                  ['config']
+                  ['max_path_length'])
+        )),
     }
 }
 
@@ -35,7 +41,6 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_update_interval': 1,
             'tau': 5e-3,
             'target_entropy': 'auto',
-            'n_initial_exploration_steps': int(1e3),
 
             'discount': 0.99,
             'reward_scale': 1.0,
@@ -46,7 +51,6 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         'config': {
             'policy_lr': 3e-4,
             'target_update_interval': 1,
-            'n_initial_exploration_steps': int(1e3),
             'discount': 0.99,
             'tau': 5e-3,
             'reward_scale': tune.sample_from(lambda spec: (
@@ -382,19 +386,6 @@ def get_max_path_length(universe, domain, task):
     return level_result
 
 
-def get_initial_exploration_steps(spec):
-    config = spec.get('config', spec)
-    num_exploration_episodes = 10
-    initial_exploration_steps = num_exploration_episodes * (
-        config
-        ['sampler_params']
-        ['kwargs']
-        ['max_path_length']
-    )
-
-    return initial_exploration_steps
-
-
 def get_checkpoint_frequency(spec):
     num_checkpoints = 10
     config = spec.get('config', spec)
@@ -435,8 +426,6 @@ def get_algorithm_params(universe, domain, task):
     algorithm_params = {
         'config': {
             'n_epochs': int(n_epochs),
-            'n_initial_exploration_steps': tune.sample_from(
-                get_initial_exploration_steps),
             'epoch_length': epoch_length,
             'min_pool_size': get_max_path_length(universe, domain, task),
             'batch_size': 256,
@@ -476,7 +465,16 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
                 ['training']
             )),
         },
-        'policy_params': tune.sample_from(get_policy_params),
+        # 'policy_params': tune.sample_from(get_policy_params),
+        'policy_params': {
+            'class_name': 'FeedforwardGaussianPolicy',
+            'config': {
+                'hidden_layer_sizes': (M, M),
+                'squash': True,
+                'observation_keys': None,
+                'preprocessors': None,
+            },
+        },
         'exploration_policy_params': {
             'class_name': 'ContinuousUniformPolicy',
             'config': {

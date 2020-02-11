@@ -81,8 +81,6 @@ class SAC(RLAlgorithm):
         Args:
             env (`SoftlearningEnv`): Environment used for training.
             policy: A policy function approximator.
-            initial_exploration_policy: ('Policy'): A policy that we use
-                for initial exploration which is not trained by the algorithm.
             Qs: Q-function approximators. The min of these
                 approximators will be used. Usage of at least two Q-functions
                 improves performance by reducing overestimation bias.
