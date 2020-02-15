@@ -21,7 +21,15 @@ class BasePolicy:
         self._output_shape = output_shape
         self._observation_keys = observation_keys
         self._inputs = create_inputs(input_shapes)
+
+        # TODO(hartikainen/tf2-support-v1): Make sure to finish this.
+        assert preprocessors is None
+
+        if preprocessors is None:
+            preprocessors = tree.map_structure(lambda x: None, input_shapes)
+
         self._preprocessors = preprocessors
+
         self._name = name
 
     @property
