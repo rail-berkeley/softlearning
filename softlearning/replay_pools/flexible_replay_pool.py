@@ -214,16 +214,8 @@ class FlexibleReplayPool(ReplayPool):
             forward_diffs = np.diff(
                 sequence['episode_index_forwards'].astype(np.int64), axis=0)
             forward_diffs = np.concatenate(([[-1]], forward_diffs))
-            # concatenate [-1] to avoid having to special-case the
-            # no-episode-change case.
             episode_change_indices = np.flatnonzero(1 != forward_diffs)
-            # if 0 < episode_change_indices.size:
-            #     first_episode_change_index = episode_change_indices[-1]
             last_episode_change_index = episode_change_indices[-1]
-
-            # if self.data['episode_index_forwards'][index] == 0:
-            #     breakpoint()
-            #     pass
 
             def maybe_cut_and_pad_sequence(sequence):
                 sequence[:last_episode_change_index-sequence_length] = 0.0
