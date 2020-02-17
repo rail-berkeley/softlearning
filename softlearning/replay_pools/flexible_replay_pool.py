@@ -142,6 +142,10 @@ class FlexibleReplayPool(ReplayPool):
         return self.batch_by_indices(
             random_indices, field_name_filter=field_name_filter, **kwargs)
 
+    def random_sequence_batch(self, batch_size, **kwargs):
+        random_indices = self.random_indices(batch_size)
+        return self.sequence_batch_by_indices(random_indices, **kwargs)
+
     def last_n_batch(self, last_n, field_name_filter=None, **kwargs):
         last_n_indices = np.arange(
             self._pointer - min(self.size, int(last_n)), self._pointer,
@@ -150,6 +154,14 @@ class FlexibleReplayPool(ReplayPool):
 
         return self.batch_by_indices(
             last_n_indices, field_name_filter=field_name_filter, **kwargs)
+
+    def last_n_sequence_batch(self, last_n, **kwargs):
+        last_n_indices = np.arange(
+            self._pointer - min(self.size, int(last_n)), self._pointer,
+            dtype=int
+        ) % self._max_size
+
+        return self.sequence_batch_by_indices(last_n_indices, **kwargs)
 
     def filter_fields(self, field_names, field_name_filter):
         if isinstance(field_name_filter, str):
@@ -183,6 +195,55 @@ class FlexibleReplayPool(ReplayPool):
         batch = tree.map_structure(lambda field: field[indices], self.data)
 
         return batch
+
+    def sequence_batch_by_indices(self,
+                                  indices,
+                                  sequence_length,
+                                  field_name_filter=None):
+        if np.any(indices % self._max_size > self.size):
+            raise ValueError(
+                "Tried to retrieve batch with indices greater than current"
+                " size")
+        if indices.size < 1:
+            return self.batch_by_indices(indices)
+
+        all_sequences = tree.map_structure(lambda f: [], self.fields)
+        for index in indices:
+            sequence = self.batch_by_indices(
+                np.arange(index - sequence_length + 1, index + 1))
+            forward_diffs = np.diff(
+                sequence['episode_index_forwards'].astype(np.int64), axis=0)
+            forward_diffs = np.concatenate(([[-1]], forward_diffs))
+            # concatenate [-1] to avoid having to special-case the
+            # no-episode-change case.
+            episode_change_indices = np.flatnonzero(1 != forward_diffs)
+            # if 0 < episode_change_indices.size:
+            #     first_episode_change_index = episode_change_indices[-1]
+            last_episode_change_index = episode_change_indices[-1]
+
+            # if self.data['episode_index_forwards'][index] == 0:
+            #     breakpoint()
+            #     pass
+
+            def maybe_cut_and_pad_sequence(sequence):
+                result = np.concatenate((
+                    np.zeros_like(
+                        sequence[:last_episode_change_index-sequence_length]),
+                    sequence[last_episode_change_index-sequence_length:],
+                ), axis=0)
+                return result
+
+            sequence = tree.map_structure(maybe_cut_and_pad_sequence, sequence)
+            tree.map_structure_up_to(
+                self.fields,
+                lambda old, new: old.append(new),
+                all_sequences,
+                sequence)
+
+        sequence_batch = tree.map_structure_up_to(
+            self.fields, np.stack, all_sequences)
+
+        return sequence_batch
 
     def save_latest_experience(self, pickle_path):
         latest_samples = self.last_n_batch(self._samples_since_save)
