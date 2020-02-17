@@ -8,8 +8,8 @@ class FeedforwardTest(tf.test.TestCase):
 
     def test_scoping_reuses_variables_on_single_instance(self):
         output_size = 5
-        x1 = tf.random_uniform((3, 2))
-        x2 = tf.random_uniform((3, 13))
+        x1 = tf.random.uniform((3, 2))
+        x2 = tf.random.uniform((3, 13))
 
         self.assertFalse(tf.compat.v1.trainable_variables())
 
@@ -32,7 +32,7 @@ class FeedforwardTest(tf.test.TestCase):
 
     def test_scoping_creates_new_variables_across_instances(self):
         output_size = 5
-        x = tf.random_uniform((1, 13))
+        x = tf.random.uniform((1, 13))
 
         self.assertFalse(tf.compat.v1.trainable_variables())
 
