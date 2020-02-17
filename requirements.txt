@@ -18,6 +18,7 @@ Cython==0.29.1
 dask==1.0.0
 decorator==4.3.0
 deepdiff==4.0.9
+dm-tree!=0.1.2
 docutils==0.14
 git+https://github.com/deepmind/dm_control.git@dce5ff23f48c53c5016d087c2bfc8fd65ac88a49
 enum34==1.1.6
