@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from collections import OrderedDict
 
 import numpy as np
+import tree
 from serializable import Serializable
 
 
@@ -113,12 +114,15 @@ class LatentSpacePolicy(BasePolicy):
                 alpha * self._smoothing_x + (1.0 - alpha) * raw_latents)
             latents = beta * self._smoothing_x
 
-            return self.actions_model_for_fixed_latents.predict(
-                (observations, latents))
+            inputs = tree.flatten((observations, latents))
+            # TODO(hartikainen/tf2): This can be removed once we use .numpy()
+            return self.actions_model_for_fixed_latents.predict(inputs)
 
     def log_pis_np(self, observations, actions):
         assert not self._deterministic, self._deterministic
-        return self.log_pis_model.predict((observations, actions))
+        inputs = tree.flatten((observations, actions))
+        # TODO(hartikainen/tf2): This can be removed once we use .numpy()
+        return self.log_pis_model.predict(inputs)
 
     def reset(self):
         self._reset_smoothing_x()
