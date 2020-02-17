@@ -41,7 +41,7 @@ class GaussianPolicy(LatentSpacePolicy):
 
         inputs = create_inputs(input_shapes)
         if preprocessors is None:
-            preprocessors = tree.map_structure(lambda: None, inputs)
+            preprocessors = tree.map_structure(lambda _: None, inputs)
 
         preprocessed_inputs = apply_preprocessors(preprocessors, inputs)
 
