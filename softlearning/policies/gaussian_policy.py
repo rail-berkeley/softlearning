@@ -8,7 +8,7 @@ import tensorflow_probability as tfp
 
 from softlearning.models.feedforward import feedforward_model
 from softlearning.models.utils import flatten_input_structure, create_inputs
-from softlearning.utils.tensorflow import nest
+import tree
 
 from .base_policy import LatentSpacePolicy
 
@@ -54,9 +54,9 @@ class GaussianPolicy(LatentSpacePolicy):
         ]
 
         def cast_and_concat(x):
-            x = nest.map_structure(
+            x = tree.map_structure(
                 lambda element: tf.cast(element, tf.float32), x)
-            x = nest.flatten(x)
+            x = tree.flatten(x)
             x = tf.concat(x, axis=-1)
             return x
 

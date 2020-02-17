@@ -23,7 +23,7 @@ def get_inputs_for_nested_shapes(input_shapes, name=None):
 
 
 def flatten_input_structure(inputs):
-    inputs_flat = nest.flatten(inputs)
+    inputs_flat = tree.flatten(inputs)
     return inputs_flat
 
 

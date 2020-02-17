@@ -1,8 +1,4 @@
-from distutils.version import LooseVersion
-
 import tensorflow as tf
-
-import tree as nest
 
 
 def initialize_tf_variables(session, only_uninitialized=True):

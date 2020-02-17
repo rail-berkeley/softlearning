@@ -3,7 +3,7 @@ import tensorflow_probability as tfp
 from tensorflow.python.keras.engine import training_utils
 
 from softlearning.utils.keras import PicklableSequential
-from softlearning.utils.tensorflow import nest
+import tree
 
 
 tfk = tf.keras
@@ -22,9 +22,9 @@ def feedforward_model(hidden_layer_sizes,
                       *args,
                       **kwargs):
     def cast_and_concat(x):
-        x = nest.map_structure(
+        x = tree.map_structure(
             lambda element: tf.cast(element, tf.float32), x)
-        x = nest.flatten(x)
+        x = tree.flatten(x)
         x = tf.concat(x, axis=-1)
         return x
 
