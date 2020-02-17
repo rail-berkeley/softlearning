@@ -207,29 +207,23 @@ class FlexibleReplayPool(ReplayPool):
         if indices.size < 1:
             return self.batch_by_indices(indices)
 
-        all_sequences = tree.map_structure(lambda f: [], self.fields)
-        for index in indices:
-            sequence = self.batch_by_indices(
-                np.arange(index - sequence_length + 1, index + 1))
+        sequence_indices = (
+            indices[:, None] - np.arange(sequence_length)[::-1][None])
+        sequence_batch = self.batch_by_indices(sequence_indices)
+
+        for i, index in enumerate(indices):
             forward_diffs = np.diff(
-                sequence['episode_index_forwards'].astype(np.int64), axis=0)
+                sequence_batch['episode_index_forwards'][i].astype(np.int64),
+                axis=0)
             forward_diffs = np.concatenate(([[-1]], forward_diffs))
             episode_change_indices = np.flatnonzero(1 != forward_diffs)
             last_episode_change_index = episode_change_indices[-1]
 
             def maybe_cut_and_pad_sequence(sequence):
-                sequence[:last_episode_change_index-sequence_length] = 0.0
+                sequence[i][:last_episode_change_index-sequence_length] = 0.0
                 return sequence
 
-            sequence = tree.map_structure(maybe_cut_and_pad_sequence, sequence)
-            tree.map_structure_up_to(
-                self.fields,
-                lambda old, new: old.append(new),
-                all_sequences,
-                sequence)
-
-        sequence_batch = tree.map_structure_up_to(
-            self.fields, np.stack, all_sequences)
+            tree.map_structure(maybe_cut_and_pad_sequence, sequence_batch)
 
         return sequence_batch
 
