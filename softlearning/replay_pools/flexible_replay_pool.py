@@ -226,12 +226,8 @@ class FlexibleReplayPool(ReplayPool):
             #     pass
 
             def maybe_cut_and_pad_sequence(sequence):
-                result = np.concatenate((
-                    np.zeros_like(
-                        sequence[:last_episode_change_index-sequence_length]),
-                    sequence[last_episode_change_index-sequence_length:],
-                ), axis=0)
-                return result
+                sequence[:last_episode_change_index-sequence_length] = 0.0
+                return sequence
 
             sequence = tree.map_structure(maybe_cut_and_pad_sequence, sequence)
             tree.map_structure_up_to(
