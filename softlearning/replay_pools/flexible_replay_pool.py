@@ -192,8 +192,8 @@ class FlexibleReplayPool(ReplayPool):
         if field_name_filter is not None:
             raise NotImplementedError("TODO(hartikainen)")
 
-        batch = tree.map_structure(lambda field: field[indices], self.data)
-
+        batch = tree.map_structure(
+            lambda field: field[indices % self._max_size], self.data)
         return batch
 
     def sequence_batch_by_indices(self,
