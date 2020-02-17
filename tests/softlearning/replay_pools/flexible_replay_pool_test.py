@@ -528,6 +528,76 @@ class FlexibleReplayPoolTest(unittest.TestCase):
             np.testing.assert_array_equal(np.flip(samples[key]), values)
             self.assertEqual(values.shape, (self.pool._max_size, 1))
 
+    def test_sequence_overlaps_two_episodes(self):
+        sequence_length = self.pool._max_size
+        path_lengths = [
+            self.pool._max_size // 2 - 5,
+            (self.pool._max_size // 2) - 3,
+            8,
+        ]
+
+        samples = {
+            'field1': np.arange(self.pool._max_size)[:, None],
+            'field2': -np.arange(self.pool._max_size)[::-1, None] * 2,
+        }
+        for path_end, path_length in zip(
+                np.cumsum(path_lengths), path_lengths):
+            self.pool.add_path(tree.map_structure(
+                lambda s: s[path_end - path_length:path_end],
+                samples))
+
+        batch_indices = np.array([0, *np.cumsum(path_lengths), -2, -1])
+        batch = self.pool.sequence_batch_by_indices(
+            batch_indices, sequence_length=sequence_length)
+
+        for key, values in batch.items():
+            self.assertEqual(
+                values.shape, (batch_indices.size, sequence_length, 1))
+
+        self.assertTrue(all(index_field in batch.keys()
+                            for index_field in INDEX_FIELDS))
+
+        for i, (episode_start_index, episode_length) in enumerate(zip(
+                (0, *np.cumsum(path_lengths)[:-1]), path_lengths)):
+            np.testing.assert_equal(batch['field1'][i][:-1], 0)
+            np.testing.assert_equal(
+                batch['field1'][i][-1],
+                samples['field1'][episode_start_index])
+            np.testing.assert_equal(batch['field2'][i][:-1], 0)
+            np.testing.assert_equal(
+                batch['field2'][i][-1],
+                samples['field2'][episode_start_index])
+
+            np.testing.assert_equal(batch['episode_index_forwards'][i], 0)
+            np.testing.assert_equal(
+                batch['episode_index_backwards'][i][:-1], 0)
+            np.testing.assert_equal(
+                batch['episode_index_backwards'][i][-1], episode_length - 1)
+
+        np.testing.assert_equal(
+            batch['field1'][-2][:- path_lengths[-1] + 1], 0)
+        np.testing.assert_equal(
+            batch['field1'][-2][- path_lengths[-1] + 1:],
+            samples['field1'][-path_lengths[-1]:-1])
+
+        np.testing.assert_equal(
+            batch['field2'][-2][:- path_lengths[-1] + 1], 0)
+        np.testing.assert_equal(
+            batch['field2'][-2][- path_lengths[-1] + 1:],
+            samples['field2'][-path_lengths[-1]:-1])
+
+        np.testing.assert_equal(
+            batch['field1'][-1][:- path_lengths[-1]], 0)
+        np.testing.assert_equal(
+            batch['field1'][-1][- path_lengths[-1]:],
+            samples['field1'][-path_lengths[-1]:])
+
+        np.testing.assert_equal(
+            batch['field2'][-1][:- path_lengths[-1]], 0)
+        np.testing.assert_equal(
+            batch['field2'][-1][- path_lengths[-1]:],
+            samples['field2'][-path_lengths[-1]:])
+
     def test_sequence_batch_by_indices(self):
         sequence_length = 2
 
