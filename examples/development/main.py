@@ -123,10 +123,9 @@ class ExperimentRunner(tune.Trainable):
             raise TypeError(self.Qs)
 
         for i, Q in enumerate(Qs):
-            checkpoint_path = os.path.join(
-                checkpoint_dir,
-                f'Qs_{i}')
-            Q.save_weights(checkpoint_path)
+            checkpoint_path = os.path.join(checkpoint_dir, f'Qs_{i}')
+            # TODO(hartikainen/tf2): This should probably use tf2 format
+            Q.save_weights(checkpoint_path, save_format='h5')
 
     def _restore_value_functions(self, checkpoint_dir):
         if isinstance(self.Qs, tf.keras.Model):
@@ -137,9 +136,7 @@ class ExperimentRunner(tune.Trainable):
             raise TypeError(self.Qs)
 
         for i, Q in enumerate(Qs):
-            checkpoint_path = os.path.join(
-                checkpoint_dir,
-                f'Qs_{i}')
+            checkpoint_path = os.path.join(checkpoint_dir, f'Qs_{i}')
             Q.load_weights(checkpoint_path)
 
     def _save(self, checkpoint_dir):

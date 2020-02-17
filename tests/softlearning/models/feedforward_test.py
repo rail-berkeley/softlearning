@@ -72,7 +72,8 @@ class FeedforwardTest(tf.test.TestCase):
             name='feedforward_function')
         result_1 = fn1([x, x])
 
-        tf.keras.backend.get_session().run(tf.global_variables_initializer())
+        tf.compat.v1.keras.backend.get_session().run(
+            tf.compat.v1.global_variables_initializer())
 
         fn2 = tf.keras.models.clone_model(fn1)
         result_2 = fn2([x, x])
@@ -93,10 +94,10 @@ class FeedforwardTest(tf.test.TestCase):
         with self.assertRaises(ValueError):
             # TODO(hartikainen): investigate why this fails
             result_1_predict = fn1.predict([x_np, x_np])
-            result_1_eval = tf.keras.backend.eval(result_1)
+            result_1_eval = tf.compat.v1.keras.backend.eval(result_1)
 
             result_2_predict = fn2.predict([x_np, x_np])
-            result_2_eval = tf.keras.backend.eval(result_2)
+            result_2_eval = tf.compat.v1.keras.backend.eval(result_2)
 
             self.assertEqual(fn1.name, fn2.name)
             self.assertEqual(result_1_predict.shape, result_2_predict.shape)

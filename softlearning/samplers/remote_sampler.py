@@ -104,7 +104,7 @@ class _RemoteEnv(object):
         gpu_options = tf.GPUOptions(allow_growth=True)
         self._session = tf.Session(
             config=tf.ConfigProto(gpu_options=gpu_options))
-        tf.keras.backend.set_session(self._session)
+        tf.compat.v1.keras.backend.set_session(self._session)
 
         self._env = pickle.loads(env_pkl)
         self._policy = pickle.loads(policy_pkl)

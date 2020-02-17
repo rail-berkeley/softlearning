@@ -81,7 +81,7 @@ class RLAlgorithm(Checkpointable):
                 "RlAlgorithm cannot render and save videos at the same time")
             self._eval_render_kwargs['mode'] = render_mode
 
-        self._session = session or tf.keras.backend.get_session()
+        self._session = session or tf.compat.v1.keras.backend.get_session()
 
         self._epoch = 0
         self._timestep = 0

@@ -118,7 +118,7 @@ class GroupNormalization(tf.keras.layers.Layer):
 
     def call(self, inputs):
 
-        input_shape = tf.keras.backend.int_shape(inputs)
+        input_shape = tf.compat.v1.keras.backend.int_shape(inputs)
         tensor_input_shape = tf.shape(inputs)
 
         reshaped_inputs, group_shape = self._reshape_into_groups(
@@ -173,7 +173,7 @@ class GroupNormalization(tf.keras.layers.Layer):
 
     def _apply_normalization(self, reshaped_inputs, input_shape):
 
-        group_shape = tf.keras.backend.int_shape(reshaped_inputs)
+        group_shape = tf.compat.v1.keras.backend.int_shape(reshaped_inputs)
         group_reduction_axes = list(range(len(group_shape)))
         # Remember the ordering of the tensor is [batch, group , steps]. Jump
         # the first 2 to calculate the variance and the mean

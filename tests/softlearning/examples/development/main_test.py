@@ -88,7 +88,7 @@ class TestExperimentRunner(tf.test.TestCase):
 
     def test_checkpoint_dict(self):
         tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
+        tf.compat.v1.keras.backend.clear_session()
         self.assertFalse(tf.compat.v1.trainable_variables())
 
         config = copy.deepcopy(CONFIG)
@@ -173,7 +173,7 @@ class TestExperimentRunner(tf.test.TestCase):
         checkpoint = experiment_runner.save()
 
         tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
+        tf.compat.v1.keras.backend.clear_session()
         self.assertFalse(tf.compat.v1.trainable_variables())
 
         experiment_runner_2 = ExperimentRunner(config=config)
@@ -275,7 +275,7 @@ class TestExperimentRunner(tf.test.TestCase):
 
     def test_checkpoint_pool_reconstruction(self):
         tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
+        tf.compat.v1.keras.backend.clear_session()
         self.assertFalse(tf.compat.v1.trainable_variables())
 
         config = copy.deepcopy(CONFIG)
@@ -302,7 +302,7 @@ class TestExperimentRunner(tf.test.TestCase):
             checkpoints.append(experiment_runner.save())
 
         tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
+        tf.compat.v1.keras.backend.clear_session()
         self.assertFalse(tf.compat.v1.trainable_variables())
 
         experiment_runner_2 = ExperimentRunner(config=config)
@@ -328,7 +328,7 @@ class TestExperimentRunner(tf.test.TestCase):
 
     def test_training_env_evaluation_env(self):
         tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
+        tf.compat.v1.keras.backend.clear_session()
         self.assertFalse(tf.compat.v1.trainable_variables())
 
         config = copy.deepcopy(CONFIG)
@@ -357,7 +357,7 @@ class TestExperimentRunner(tf.test.TestCase):
 
     def test_uses_training_env_as_evaluation_env(self):
         tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
+        tf.compat.v1.keras.backend.clear_session()
         self.assertFalse(tf.compat.v1.trainable_variables())
 
         config = copy.deepcopy(CONFIG)
