@@ -3,6 +3,7 @@ import pickle
 
 import numpy as np
 import tensorflow as tf
+import tree
 
 from softlearning.policies.uniform_policy import ContinuousUniformPolicy
 from softlearning.environments.utils import get_environment
@@ -26,8 +27,9 @@ class ContinuousUniformPolicyTest(tf.test.TestCase):
                 observation1_np[key], observation2_np[key]
             )).astype(np.float32)
 
-        observations_tf = [tf.constant(x, dtype=tf.float32)
-                           for x in observations_np]
+        observations_tf = tree.map_structure(
+            lambda x: tf.constant(x, dtype=tf.float32),
+            observations_np)
 
         actions = self.policy.actions(observations_tf)
         with self.assertRaises(NotImplementedError):

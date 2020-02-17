@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 import numpy as np
 import tensorflow as tf
+import tree
 
 from softlearning.policies.gaussian_policy import FeedforwardGaussianPolicy
 from softlearning.environments.utils import get_environment
@@ -33,8 +34,9 @@ class GaussianPolicyTest(tf.test.TestCase):
                 observation1_np[key], observation2_np[key]
             )).astype(np.float32)
 
-        observations_tf = [tf.constant(x, dtype=tf.float32)
-                           for x in observations_np]
+        observations_tf = tree.map_structure(
+            lambda x: tf.constant(x, dtype=tf.float32),
+            observations_np)
 
         actions = self.policy.actions(observations_tf)
         log_pis = self.policy.log_pis(observations_tf, actions)
