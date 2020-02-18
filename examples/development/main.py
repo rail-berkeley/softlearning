@@ -5,6 +5,7 @@ import pickle
 import sys
 
 import tensorflow as tf
+import ray
 from ray import tune
 
 from softlearning.environments.utils import get_environment_from_params
@@ -27,7 +28,8 @@ class ExperimentRunner(tune.Trainable):
         # Set the current working directory such that the local mode
         # logs into the correct place. This would not be needed on
         # local/cluster mode.
-        os.chdir(self.logdir)
+        if ray.worker._mode() == ray.worker.LOCAL_MODE:
+            os.chdir(os.getcwd())
 
         set_seed(variant['run_params']['seed'])
 
