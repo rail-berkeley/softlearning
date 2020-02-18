@@ -6,7 +6,7 @@ import tensorflow as tf
 class PicklableKerasModel:
     def __init__(self, *args, **kwargs):
         assert isinstance(self, tf.keras.Model)
-        return(PicklableKerasModel, self).__init__(*args, **kwargs)
+        return super(PicklableKerasModel, self).__init__(*args, **kwargs)
 
     def __getstate__(self):
         with tempfile.NamedTemporaryFile(suffix='.hdf5', delete=True) as fd:
