@@ -48,7 +48,7 @@ def install_mujoco(platform, version, mujoco_path):
 
     mujoco_zip_url = f"https://www.roboti.us/download/{mujoco_zip_name}"
 
-    if subprocess.call(["which", "-v", "wget"]) == 0:
+    if subprocess.call(["which", "wget"]) == 0:
         subprocess.check_call([
             "wget",
             "--progress=bar:force",
@@ -57,7 +57,7 @@ def install_mujoco(platform, version, mujoco_path):
             "--directory-prefix",
             mujoco_path,
             mujoco_zip_url])
-    elif subprocess.call(["which", "-v", "curl"]) == 0:
+    elif subprocess.call(["which", "curl"]) == 0:
         subprocess.check_call([
             "curl",
             "--location",
