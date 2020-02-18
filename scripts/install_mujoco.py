@@ -57,7 +57,7 @@ def install_mujoco(platform, version, mujoco_path):
             "--directory-prefix",
             mujoco_path,
             mujoco_zip_url])
-    elif subprocess.call(["which", "curl"]) == 0:
+    elif subprocess.call(["command", "-v", "curl"]) == 0:
         subprocess.check_call([
             "curl",
             "--location",
