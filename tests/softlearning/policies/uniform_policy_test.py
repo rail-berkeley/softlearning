@@ -3,8 +3,8 @@ import pickle
 
 import numpy as np
 import tensorflow as tf
+import tree
 
-from softlearning.models.utils import flatten_input_structure
 from softlearning.policies.uniform_policy import ContinuousUniformPolicy
 from softlearning.environments.utils import get_environment
 
@@ -27,9 +27,9 @@ class ContinuousUniformPolicyTest(tf.test.TestCase):
                 observation1_np[key], observation2_np[key]
             )).astype(np.float32)
 
-        observations_np = flatten_input_structure(observations_np)
-        observations_tf = [tf.constant(x, dtype=tf.float32)
-                           for x in observations_np]
+        observations_tf = tree.map_structure(
+            lambda x: tf.constant(x, dtype=tf.float32),
+            observations_np)
 
         actions = self.policy.actions(observations_tf)
         with self.assertRaises(NotImplementedError):
@@ -52,7 +52,6 @@ class ContinuousUniformPolicyTest(tf.test.TestCase):
             observations_np[key] = np.stack((
                 observation1_np[key], observation2_np[key]
             )).astype(np.float32)
-        observations_np = flatten_input_structure(observations_np)
 
         actions_np = self.policy.actions_np(observations_np)
         with self.assertRaises(NotImplementedError):
@@ -62,9 +61,9 @@ class ContinuousUniformPolicyTest(tf.test.TestCase):
 
     def test_env_step_with_actions(self):
         observation1_np = self.env.reset()
-        observations_np = flatten_input_structure({
+        observations_np = {
             key: value[None, :] for key, value in observation1_np.items()
-        })
+        }
         action = self.policy.actions_np(observations_np)[0, ...]
         self.env.step(action)
 
@@ -79,7 +78,6 @@ class ContinuousUniformPolicyTest(tf.test.TestCase):
             observations_np[key] = np.stack((
                 observation1_np[key], observation2_np[key]
             )).astype(np.float32)
-        observations_np = flatten_input_structure(observations_np)
 
         diagnostics = self.policy.get_diagnostics(observations_np)
         self.assertTrue(isinstance(diagnostics, OrderedDict))
@@ -94,7 +92,6 @@ class ContinuousUniformPolicyTest(tf.test.TestCase):
             observations_np[key] = np.stack((
                 observation1_np[key], observation2_np[key]
             )).astype(np.float32)
-        observations_np = flatten_input_structure(observations_np)
 
         deserialized = pickle.loads(pickle.dumps(self.policy))
 

@@ -1,4 +1,3 @@
-from softlearning.models.utils import flatten_input_structure
 from .simple_sampler import SimpleSampler
 
 
@@ -6,10 +5,10 @@ class GoalSampler(SimpleSampler):
     @property
     def _policy_input(self):
         observation = super(GoalSampler, self)._action_input
-        goal = flatten_input_structure({
+        goal = {
             key: self._current_observation[key][None, ...]
             for key in self.policy.goal_keys
-        })
+        }
 
         return (observation, goal)
 

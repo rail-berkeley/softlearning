@@ -16,8 +16,8 @@ def create_pool(env, max_size=100, **kwargs):
         environment=env, max_size=max_size, **kwargs)
 
 
-HER_STRATEGY_TYPES = ['random', 'final', 'episode', 'future']
-HER_RESAMPLING_PROBABILITIES = [0, 0.3, 0.5, 0.8, 1.0]
+HER_STRATEGY_TYPES = ('random', 'final', 'episode', 'future')
+HER_RESAMPLING_PROBABILITIES = (0, 0.3, 0.5, 0.8, 1.0)
 REWARD_FUNCTIONS = ()
 TERMINAL_FUNCTIONS = ()
 
@@ -60,7 +60,7 @@ class RandomStrategyValidator(StrategyValidator):
 
 class FinalStrategyValidator(StrategyValidator):
     def verify_batch(self, batch):
-        if np.sum(batch['resampled']) > 0:
+        if 0 < np.sum(batch['resampled']):
             where_resampled = np.flatnonzero(batch['resampled'])
             np.testing.assert_equal(
                 batch['resampled_distances'][where_resampled],
@@ -70,7 +70,7 @@ class FinalStrategyValidator(StrategyValidator):
 
 class EpisodeStrategyValidator(StrategyValidator):
     def verify_batch(self, batch):
-        if np.sum(batch['resampled']) > 0:
+        if 0 < np.sum(batch['resampled']):
             where_resampled = np.flatnonzero(batch['resampled'])
 
             gt_first_index = (
@@ -87,7 +87,7 @@ class EpisodeStrategyValidator(StrategyValidator):
 
 class FutureStrategyValidator(StrategyValidator):
     def verify_batch(self, batch):
-        if np.sum(batch['resampled']) > 0:
+        if 0 < np.sum(batch['resampled']):
             where_resampled = np.flatnonzero(batch['resampled'])
             assert np.all(batch['resampled_distances'][where_resampled] >= 0)
             assert np.all(

@@ -6,8 +6,8 @@ import pickle
 
 import numpy as np
 import tensorflow as tf
+import tree
 
-from flatten_dict import flatten, unflatten
 from .replay_pool import ReplayPool
 
 
@@ -25,11 +25,13 @@ INDEX_FIELDS = {
         name='episode_index_forwards',
         dtype='uint64',
         shape=(1, ),
+        default_value=0,
     ),
     'episode_index_backwards': Field(
         name='episode_index_backwards',
         dtype='uint64',
         shape=(1, ),
+        default_value=0,
     ),
 }
 
@@ -41,10 +43,8 @@ class FlexibleReplayPool(ReplayPool):
         max_size = int(max_size)
         self._max_size = max_size
 
-        self.data = {}
         self.fields = {**fields, **INDEX_FIELDS}
-        self.fields_flat = flatten(self.fields)
-        self._initialize_data()
+        self.data = tree.map_structure(self._initialize_field, self.fields)
 
         self._pointer = 0
         self._size = 0
@@ -61,12 +61,6 @@ class FlexibleReplayPool(ReplayPool):
 
         return field_values
 
-    def _initialize_data(self):
-        """Initialize data for the pool."""
-        fields = flatten(self.fields)
-        for field_name, field_attrs in fields.items():
-            self.data[field_name] = self._initialize_field(field_attrs)
-
     def _advance(self, count=1):
         """Handles bookkeeping after adding samples to the pool.
 
@@ -79,12 +73,12 @@ class FlexibleReplayPool(ReplayPool):
         self._pointer = (self._pointer + count) % self._max_size
         self._size = min(self._size + count, self._max_size)
 
-        if self.data[('episode_index_forwards', )][self._pointer] != 0:
+        if self.data['episode_index_forwards'][self._pointer] != 0:
             episode_tail_length = int(self.data[
-                ('episode_index_backwards', )
+                'episode_index_backwards'
             ][self._pointer, 0] + 1)
             self.data[
-                ('episode_index_forwards', )
+                'episode_index_forwards'
             ][np.arange(
                 self._pointer, self._pointer + episode_tail_length
             ) % self._max_size] = np.arange(episode_tail_length)[..., None]
@@ -92,46 +86,49 @@ class FlexibleReplayPool(ReplayPool):
         self._samples_since_save += count
 
     def add_sample(self, sample):
-        sample_flat = flatten(sample)
-        samples_flat = type(sample)([
-            (field_name_flat, np.array(sample_flat[field_name_flat])[None, ...])
-            for field_name_flat in sample_flat.keys()
-        ])
-        samples = unflatten(samples_flat)
-
+        samples = tree.map_structure(lambda x: x[..., np.newaxis], sample)
         self.add_samples(samples)
 
     def add_samples(self, samples):
-        samples = flatten(samples)
+        num_samples = tree.flatten(samples)[0].shape[0]
 
-        field_names = tuple(samples.keys())
-        num_samples = samples[field_names[0]].shape[0]
+        assert (('episode_index_forwards' in samples.keys())
+                is ('episode_index_backwards' in samples.keys()))
+        if 'episode_index_forwards' not in samples.keys():
+            samples['episode_index_forwards'] = np.full(
+                (num_samples, *self.fields['episode_index_forwards'].shape),
+                self.fields['episode_index_forwards'].default_value,
+                dtype=self.fields['episode_index_forwards'].dtype)
+            samples['episode_index_backwards'] = np.full(
+                (num_samples, *self.fields['episode_index_backwards'].shape),
+                self.fields['episode_index_backwards'].default_value,
+                dtype=self.fields['episode_index_backwards'].dtype)
 
         index = np.arange(
             self._pointer, self._pointer + num_samples) % self._max_size
 
-        for field_name, values in samples.items():
-            default_value = self.fields_flat[field_name].default_value
-            values = samples.get(field_name, default_value)
-            assert values.shape[0] == num_samples
-            self.data[field_name][index] = values
+        def add_sample(path, data, new_values, field):
+            assert new_values.shape[0] == num_samples, (
+                new_values.shape, num_samples)
+            data[index] = new_values
+
+        tree.map_structure_with_path(
+            add_sample, self.data, samples, self.fields)
 
         self._advance(num_samples)
 
     def add_path(self, path):
         path = path.copy()
-
-        path_flat = flatten(path)
-        path_length = path_flat[next(iter(path_flat.keys()))].shape[0]
+        path_length = tree.flatten(path)[0].shape[0]
         path.update({
             'episode_index_forwards': np.arange(
                 path_length,
                 dtype=self.fields['episode_index_forwards'].dtype
-            )[..., None],
+            )[..., np.newaxis],
             'episode_index_backwards': np.arange(
                 path_length,
                 dtype=self.fields['episode_index_backwards'].dtype
-            )[::-1, None],
+            )[::-1, np.newaxis],
         })
 
         return self.add_samples(path)
@@ -145,6 +142,10 @@ class FlexibleReplayPool(ReplayPool):
         return self.batch_by_indices(
             random_indices, field_name_filter=field_name_filter, **kwargs)
 
+    def random_sequence_batch(self, batch_size, **kwargs):
+        random_indices = self.random_indices(batch_size)
+        return self.sequence_batch_by_indices(random_indices, **kwargs)
+
     def last_n_batch(self, last_n, field_name_filter=None, **kwargs):
         last_n_indices = np.arange(
             self._pointer - min(self.size, int(last_n)), self._pointer,
@@ -153,6 +154,14 @@ class FlexibleReplayPool(ReplayPool):
 
         return self.batch_by_indices(
             last_n_indices, field_name_filter=field_name_filter, **kwargs)
+
+    def last_n_sequence_batch(self, last_n, **kwargs):
+        last_n_indices = np.arange(
+            self._pointer - min(self.size, int(last_n)), self._pointer,
+            dtype=int
+        ) % self._max_size
+
+        return self.sequence_batch_by_indices(last_n_indices, **kwargs)
 
     def filter_fields(self, field_names, field_name_filter):
         if isinstance(field_name_filter, str):
@@ -180,18 +189,48 @@ class FlexibleReplayPool(ReplayPool):
                 "Tried to retrieve batch with indices greater than current"
                 " size")
 
-        field_names_flat = self.fields_flat.keys()
         if field_name_filter is not None:
-            field_names_flat = self.filter_fields(
-                field_names_flat, field_name_filter)
+            raise NotImplementedError("TODO(hartikainen)")
 
-        batch_flat = {
-            field_name: self.data[field_name][indices]
-            for field_name in field_names_flat
-        }
-
-        batch = unflatten(batch_flat)
+        batch = tree.map_structure(
+            lambda field: field[indices % self._max_size], self.data)
         return batch
+
+    def sequence_batch_by_indices(self,
+                                  indices,
+                                  sequence_length,
+                                  field_name_filter=None):
+        if np.any(indices % self._max_size > self.size):
+            raise ValueError(
+                "Tried to retrieve batch with indices greater than current"
+                " size")
+        if indices.size < 1:
+            return self.batch_by_indices(indices)
+
+        sequence_indices = (
+            indices[:, None] - np.arange(sequence_length)[::-1][None])
+        sequence_batch = self.batch_by_indices(sequence_indices)
+
+        forward_diffs = np.diff(
+            sequence_batch['episode_index_forwards'].astype(np.int64), axis=1)
+        forward_diffs = np.pad(
+            forward_diffs, ([0, 0], [1, 0], [0, 0]),
+            mode='constant',
+            constant_values=-1)
+        cut_and_pad_sample_indices = np.squeeze(
+            forward_diffs.shape[1]
+            - np.argmax(forward_diffs[:, ::-1, :] < 0, axis=1)
+            - 1)
+
+        def cut_and_pad_sequence_batch(sequence_batch):
+            for sample_index, sequence_index in enumerate(
+                    cut_and_pad_sample_indices):
+                sequence_batch[sample_index, :sequence_index, ...] = 0.0
+            return sequence_batch
+
+        tree.map_structure(cut_and_pad_sequence_batch, sequence_batch)
+
+        return sequence_batch
 
     def save_latest_experience(self, pickle_path):
         latest_samples = self.last_n_batch(self._samples_since_save)
@@ -205,33 +244,12 @@ class FlexibleReplayPool(ReplayPool):
         with gzip.open(experience_path, 'rb') as f:
             latest_samples = pickle.load(f)
 
-        latest_samples_flat = flatten(latest_samples)
+        num_samples = tree.flatten(latest_samples)[0].shape[0]
 
-        key = list(latest_samples_flat.keys())[0]
-        num_samples = latest_samples_flat[key].shape[0]
-        for data in latest_samples_flat.values():
+        def assert_shape(data):
             assert data.shape[0] == num_samples, data.shape
+
+        tree.map_structure(assert_shape, latest_samples)
 
         self.add_samples(latest_samples)
         self._samples_since_save = 0
-
-    # def __getstate__(self):
-    #     state = self.__dict__.copy()
-    #     state['fields'] = {
-    #         field_name: self.data[field_name][:self.size]
-    #         for field_name in self.field_names
-    #     }
-
-    #     return state
-
-    # def __setstate__(self, state):
-    #     if state['_size'] < state['_max_size']:
-    #         pad_size = state['_max_size'] - state['_size']
-    #         for field_name in state['data'].keys():
-    #             field_shape = state['fields'][field_name]['shape']
-    #             state['fields'][field_name] = np.concatenate((
-    #                 state['fields'][field_name],
-    #                 np.zeros((pad_size, *field_shape))
-    #             ), axis=0)
-
-    #     self.__dict__ = state

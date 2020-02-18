@@ -5,21 +5,23 @@ from itertools import islice
 class BaseSampler(object):
     def __init__(self,
                  max_path_length,
-                 min_pool_size,
-                 batch_size,
+                 environment=None,
+                 policy=None,
+                 pool=None,
                  store_last_n_paths=10):
         self._max_path_length = max_path_length
-        self._min_pool_size = min_pool_size
-        self._batch_size = batch_size
         self._store_last_n_paths = store_last_n_paths
         self._last_n_paths = deque(maxlen=store_last_n_paths)
 
-        self.env = None
-        self.policy = None
-        self.pool = None
+        self.environment = environment
+        self.policy = policy
+        self.pool = pool
+        self.environment = environment
+        self.policy = policy
+        self.pool = pool
 
-    def initialize(self, env, policy, pool):
-        self.env = env
+    def initialize(self, environment, policy, pool):
+        self.environment = environment
         self.policy = policy
         self.pool = pool
 
@@ -40,16 +42,8 @@ class BaseSampler(object):
     def sample(self):
         raise NotImplementedError
 
-    def batch_ready(self):
-        enough_samples = self.pool.size >= self._min_pool_size
-        return enough_samples
-
-    def random_batch(self, batch_size=None, **kwargs):
-        batch_size = batch_size or self._batch_size
-        return self.pool.random_batch(batch_size, **kwargs)
-
     def terminate(self):
-        self.env.close()
+        self.environment.close()
 
     def get_diagnostics(self):
         diagnostics = OrderedDict({'pool-size': self.pool.size})
@@ -58,7 +52,7 @@ class BaseSampler(object):
     def __getstate__(self):
         state = {
             key: value for key, value in self.__dict__.items()
-            if key not in ('env', 'policy', 'pool')
+            if key not in ('environment', 'policy', 'pool', '_last_n_paths')
         }
 
         return state
@@ -66,6 +60,8 @@ class BaseSampler(object):
     def __setstate__(self, state):
         self.__dict__.update(state)
 
-        self.env = None
+        self.environment = None
         self.policy = None
         self.pool = None
+        # TODO(hartikainen): Maybe try restoring these from the pool?
+        self._last_n_paths = deque(maxlen=self._store_last_n_paths)

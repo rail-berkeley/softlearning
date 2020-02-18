@@ -73,8 +73,11 @@ def add_command_line_args_to_variant_spec(variant_spec, command_line_args):
 
 def generate_experiment_kwargs(variant_spec, command_line_args):
     # TODO(hartikainen): Allow local dir to be modified through cli args
+    local_dir = '~/ray_results'
+    if command_line_args.mode == 'debug':
+        local_dir = os.path.join(local_dir, 'debug')
     local_dir = os.path.join(
-        '~/ray_results',
+        local_dir,
         command_line_args.universe,
         command_line_args.domain,
         command_line_args.task)
@@ -234,14 +237,16 @@ def run_example_local(example_module_name, example_argv, local_mode=False):
 
 
 def run_example_debug(example_module_name, example_argv):
-    """The debug mode limits tune trial runs to enable use of debugger.
+    """The debug mode sets runs up in order to enable use of debugger.
 
-    The debug mode should allow easy switch between parallelized and
+    The debug mode should allow easy switch from parallelized to
     non-parallelized runs such that the debugger can be reasonably used when
-    running the code. In practice, this allocates all the cpus available in ray
-    such that only a single trial can run at once.
+    running the code. In practice, we default to running tensorflow in eager
+    mode (i.e. `tf.config.experimental_run_functions_eagerly(True)`) and
+    set initialize ray with `local_mode=True`.
 
-    TODO(hartikainen): This should allocate a custom "debug_resource" instead
+    TODO(hartikainen): This probably doesn't need to allocate any resources
+    anymore. If it does, it should allocate a custom "debug_resource" instead
     of all cpus once ray local mode supports custom resources.
     """
 

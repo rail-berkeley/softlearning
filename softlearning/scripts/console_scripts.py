@@ -58,6 +58,7 @@ def cli():
 @click.argument('example_argv', nargs=-1, type=click.UNPROCESSED)
 def run_example_dry_cmd(example_module_name, example_argv):
     """Print the variant spec and related information of an example."""
+    example_argv = (*example_argv, '--mode=dry')
     return run_example_dry(example_module_name, example_argv)
 
 
@@ -68,6 +69,7 @@ def run_example_dry_cmd(example_module_name, example_argv):
 @click.argument('example_argv', nargs=-1, type=click.UNPROCESSED)
 def run_example_local_cmd(example_module_name, example_argv):
     """Run example locally, potentially parallelizing across cpus/gpus."""
+    example_argv = (*example_argv, '--mode=local')
     return run_example_local(example_module_name, example_argv)
 
 
@@ -78,6 +80,7 @@ def run_example_local_cmd(example_module_name, example_argv):
 @click.argument('example_argv', nargs=-1, type=click.UNPROCESSED)
 def run_example_debug_cmd(example_module_name, example_argv):
     """The debug mode limits tune trial runs to enable use of debugger."""
+    example_argv = (*example_argv, '--mode=debug')
     return run_example_debug(example_module_name, example_argv)
 
 
@@ -152,7 +155,7 @@ def launch_example_cluster_cmd(*args, **kwargs):
         'ignore_unknown_options': True
     })
 @add_options(launch_example_cluster_cmd.params)
-def launch_example_gce_cmd(*args, **kwargs):
+def launch_example_gce_cmd(*args, example_argv=(), **kwargs):
     """Forwards call to `launch_example_cluster` after adding gce defaults.
 
     This optionally sets the ray autoscaler configuration file to the default
@@ -161,7 +164,8 @@ def launch_example_gce_cmd(*args, **kwargs):
 
     See `launch_example_cluster` for further details.
     """
-    return launch_example_gce(*args, **kwargs)
+    example_argv = (*example_argv, '--mode=gce')
+    return launch_example_gce(*args, example_argv=example_argv, **kwargs)
 
 
 @cli.command(
@@ -171,7 +175,7 @@ def launch_example_gce_cmd(*args, **kwargs):
         'ignore_unknown_options': True
     })
 @add_options(launch_example_cluster_cmd.params)
-def launch_example_ec2_cmd(*args, **kwargs):
+def launch_example_ec2_cmd(*args, example_argv=(), **kwargs):
     """Forwards call to `launch_example_cluster` after adding ec2 defaults.
 
     This optionally sets the ray autoscaler configuration file to the default
@@ -180,7 +184,8 @@ def launch_example_ec2_cmd(*args, **kwargs):
 
     See `launch_example_cluster` for further details.
     """
-    return launch_example_ec2(*args, **kwargs)
+    example_argv = (*example_argv, '--mode=gce')
+    return launch_example_ec2(*args, example_argv=example_argv, **kwargs)
 
 
 cli.add_command(run_example_local_cmd)

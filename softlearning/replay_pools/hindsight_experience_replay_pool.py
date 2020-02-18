@@ -1,7 +1,7 @@
 import numpy as np
+import tree
 
 from .goal_replay_pool import GoalReplayPool
-from flatten_dict import flatten, unflatten
 
 
 def random_int_with_variable_range(mins, maxs):
@@ -96,19 +96,21 @@ def REPLACE_FULL_OBSERVATION(original_batch,
                              resampled_batch,
                              where_resampled,
                              environment):
-    batch_flat = flatten(original_batch)
-    resampled_batch_flat = flatten(resampled_batch)
-    goal_keys = [
-        key for key in batch_flat.keys()
-        if key[0] == 'goals'
-    ]
-    for key in goal_keys:
-        assert (batch_flat[key][where_resampled].shape
-                == resampled_batch_flat[key].shape)
-        batch_flat[key][where_resampled] = (
-            resampled_batch_flat[key])
+    def replace_original_with_resampled(original_goals, resampled_goals):
+        np.testing.assert_equal(
+            original_goals[where_resampled].shape, resampled_goals.shape)
+        new_goals = original_goals.copy()
+        new_goals[where_resampled] = resampled_goals.copy()
+        return new_goals
 
-    return unflatten(batch_flat)
+    new_batch = original_batch.copy()
+    new_goals = tree.map_structure(
+        replace_original_with_resampled,
+        original_batch['goals'],
+        resampled_batch['goals'])
+    new_batch['goals'] = new_goals
+
+    return new_batch
 
 
 class HindsightExperienceReplayPool(ResamplingReplayPool):

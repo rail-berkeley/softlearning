@@ -47,7 +47,7 @@ def parse_args():
 
 
 def load_checkpoint(checkpoint_path, session=None):
-    session = session or tf.keras.backend.get_session()
+    session = session or tf.compat.v1.keras.backend.get_session()
     checkpoint_path = checkpoint_path.rstrip('/')
     trial_path = os.path.dirname(checkpoint_path)
 
@@ -94,7 +94,7 @@ def simulate_policy(checkpoint_path,
                     render_kwargs,
                     video_save_path=None,
                     evaluation_environment_params=None):
-    checkpoint_path = checkpoint_path.rstrip('/')
+    checkpoint_path = os.path.abspath(checkpoint_path.rstrip('/'))
     picklable, variant, progress, metadata = load_checkpoint(checkpoint_path)
     policy, environment = load_policy_and_environment(picklable, variant)
     render_kwargs = {**DEFAULT_RENDER_KWARGS, **render_kwargs}
@@ -117,9 +117,10 @@ def simulate_policy(checkpoint_path,
 
 
 if __name__ == '__main__':
-    gpu_options = tf.GPUOptions(allow_growth=True)
-    session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-    tf.keras.backend.set_session(session)
+    gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
+    session = tf.compat.v1.Session(
+        config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
+    tf.compat.v1.keras.backend.set_session(session)
 
     args = parse_args()
     simulate_policy(**vars(args))

@@ -1,12 +1,5 @@
-from distutils.version import LooseVersion
-
 import tensorflow as tf
-
-
-if LooseVersion(tf.__version__) > LooseVersion("2.00"):
-    from tensorflow import nest
-else:
-    from tensorflow.contrib.framework import nest
+import tree
 
 
 def initialize_tf_variables(session, only_uninitialized=True):
@@ -28,3 +21,23 @@ def initialize_tf_variables(session, only_uninitialized=True):
         ]
 
     session.run(tf.compat.v1.variables_initializer(variables))
+
+
+def apply_preprocessors(preprocessors, inputs):
+    tree.assert_same_structure(inputs, preprocessors)
+    preprocessed_inputs = tree.map_structure(
+        lambda preprocessor, input_: (
+            preprocessor(input_) if preprocessor is not None else input_),
+        preprocessors,
+        inputs,
+    )
+
+    return preprocessed_inputs
+
+
+def cast_and_concat(x):
+    x = tree.map_structure(
+        lambda element: tf.cast(element, tf.float32), x)
+    x = tree.flatten(x)
+    x = tf.concat(x, axis=-1)
+    return x

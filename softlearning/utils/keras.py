@@ -3,7 +3,11 @@ import tempfile
 import tensorflow as tf
 
 
-class PicklableKerasModel(object):
+class PicklableKerasModel:
+    def __init__(self, *args, **kwargs):
+        assert isinstance(self, tf.keras.Model)
+        return super(PicklableKerasModel, self).__init__(*args, **kwargs)
+
     def __getstate__(self):
         with tempfile.NamedTemporaryFile(suffix='.hdf5', delete=True) as fd:
             tf.keras.models.save_model(self, fd.name, overwrite=True)

@@ -1,6 +1,5 @@
 import tensorflow as tf
-
-from softlearning.utils.tensorflow import nest
+import tree
 
 
 def get_inputs_for_nested_shapes(input_shapes, name=None):
@@ -24,18 +23,20 @@ def get_inputs_for_nested_shapes(input_shapes, name=None):
 
 
 def flatten_input_structure(inputs):
-    inputs_flat = nest.flatten(inputs)
+    inputs_flat = tree.flatten(inputs)
     return inputs_flat
 
 
-def create_input(name, input_shape):
+def create_input(path, input_shape):
+    name = "/".join(str(x) for x in path)
     input_ = tf.keras.layers.Input(
         shape=input_shape,
         name=name,
-        dtype=(tf.uint8 # Image observation
+        dtype=(tf.uint8  # Image observation
                if len(input_shape) == 3 and input_shape[-1] in (1, 3)
-               else tf.float32) # Non-image
+               else tf.float32),  # Non-image
     )
+
     return input_
 
 
@@ -52,7 +53,6 @@ def create_inputs(input_shapes):
 
     TODO(hartikainen): Need to figure out a better way for handling the dtypes.
     """
-    inputs = nest.map_structure_with_paths(create_input, input_shapes)
-    inputs_flat = flatten_input_structure(inputs)
+    inputs = tree.map_structure_with_path(create_input, input_shapes)
 
-    return inputs_flat
+    return inputs

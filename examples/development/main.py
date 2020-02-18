@@ -5,6 +5,7 @@ import pickle
 import sys
 
 import tensorflow as tf
+import ray
 from ray import tune
 
 from softlearning.environments.utils import get_environment_from_params
@@ -24,6 +25,12 @@ tf.compat.v1.disable_eager_execution()
 
 class ExperimentRunner(tune.Trainable):
     def _setup(self, variant):
+        # Set the current working directory such that the local mode
+        # logs into the correct place. This would not be needed on
+        # local/cluster mode.
+        if ray.worker._mode() == ray.worker.LOCAL_MODE:
+            os.chdir(os.getcwd())
+
         set_seed(variant['run_params']['seed'])
 
         self._variant = variant
@@ -31,14 +38,14 @@ class ExperimentRunner(tune.Trainable):
         gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
         self._session = tf.compat.v1.Session(
             config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
-        tf.keras.backend.set_session(self._session)
+        tf.compat.v1.keras.backend.set_session(self._session)
 
         self.train_generator = None
         self._built = False
 
     def _stop(self):
         tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
+        tf.compat.v1.keras.backend.clear_session()
 
     def _build(self):
         variant = copy.deepcopy(self._variant)
@@ -99,7 +106,7 @@ class ExperimentRunner(tune.Trainable):
         return os.path.join(checkpoint_dir, 'checkpoint')
 
     def _get_tf_checkpoint(self):
-        tf_checkpoint = tf.train.Checkpoint(**self.algorithm.tf_saveables)
+        tf_checkpoint = tf.compat.v1.train.Checkpoint(**self.algorithm.tf_saveables)
 
         return tf_checkpoint
 
@@ -123,10 +130,9 @@ class ExperimentRunner(tune.Trainable):
             raise TypeError(self.Qs)
 
         for i, Q in enumerate(Qs):
-            checkpoint_path = os.path.join(
-                checkpoint_dir,
-                f'Qs_{i}')
-            Q.save_weights(checkpoint_path)
+            checkpoint_path = os.path.join(checkpoint_dir, f'Qs_{i}')
+            # TODO(hartikainen/tf2): This should probably use tf2 format
+            Q.save_weights(checkpoint_path, save_format='h5')
 
     def _restore_value_functions(self, checkpoint_dir):
         if isinstance(self.Qs, tf.keras.Model):
@@ -137,9 +143,7 @@ class ExperimentRunner(tune.Trainable):
             raise TypeError(self.Qs)
 
         for i, Q in enumerate(Qs):
-            checkpoint_path = os.path.join(
-                checkpoint_dir,
-                f'Qs_{i}')
+            checkpoint_path = os.path.join(checkpoint_dir, f'Qs_{i}')
             Q.load_weights(checkpoint_path)
 
     def _save(self, checkpoint_dir):
@@ -235,7 +239,7 @@ class ExperimentRunner(tune.Trainable):
         self.algorithm.__setstate__(picklable['algorithm'].__getstate__())
 
         tf_checkpoint = self._get_tf_checkpoint()
-        status = tf_checkpoint.restore(tf.train.latest_checkpoint(
+        status = tf_checkpoint.restore(tf.compat.v1.train.latest_checkpoint(
             os.path.split(self._tf_checkpoint_prefix(checkpoint_dir))[0]))
 
         status.assert_consumed().run_restore_ops(self._session)

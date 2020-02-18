@@ -3,7 +3,6 @@ from collections import defaultdict
 import numpy as np
 from flatten_dict import flatten, unflatten
 
-from softlearning.models.utils import flatten_input_structure
 from .base_sampler import BaseSampler
 
 
@@ -22,10 +21,10 @@ class SimpleSampler(BaseSampler):
 
     @property
     def _policy_input(self):
-        observation = flatten_input_structure({
+        observation = {
             key: self._current_observation[key][None, ...]
             for key in self.policy.observation_keys
-        })
+        }
 
         return observation
 
@@ -49,11 +48,12 @@ class SimpleSampler(BaseSampler):
 
     def sample(self):
         if self._current_observation is None:
-            self._current_observation = self.env.reset()
+            self._current_observation = self.environment.reset()
 
         action = self.policy.actions_np(self._policy_input)[0]
 
-        next_observation, reward, terminal, info = self.env.step(action)
+        next_observation, reward, terminal, info = self.environment.step(
+            action)
         self._path_length += 1
         self._path_return += reward
         self._total_samples += 1
@@ -100,12 +100,6 @@ class SimpleSampler(BaseSampler):
             self._current_observation = next_observation
 
         return next_observation, reward, terminal, info
-
-    def random_batch(self, batch_size=None, **kwargs):
-        batch_size = batch_size or self._batch_size
-        # observation_keys = getattr(self.env, 'observation_keys', None)
-
-        return self.pool.random_batch(batch_size, **kwargs)
 
     def get_diagnostics(self):
         diagnostics = super(SimpleSampler, self).get_diagnostics()

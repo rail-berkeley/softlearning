@@ -30,10 +30,13 @@ class RLAlgorithm(Checkpointable):
 
     def __init__(
             self,
+            pool,
             sampler,
             n_epochs=1000,
             train_every_n_steps=1,
             n_train_repeat=1,
+            min_pool_size=1,
+            batch_size=1,
             max_train_repeat_per_timestep=5,
             n_initial_exploration_steps=0,
             initial_exploration_policy=None,
@@ -46,6 +49,7 @@ class RLAlgorithm(Checkpointable):
     ):
         """
         Args:
+            pool (`ReplayPool`): Replay pool to add gathered samples to.
             n_epochs (`int`): Number of epochs to run the training for.
             n_train_repeat (`int`): Number of times to repeat the training
                 for single time step.
@@ -59,9 +63,12 @@ class RLAlgorithm(Checkpointable):
                 rendering evaluation rollouts. `None` to disable rendering.
         """
         self.sampler = sampler
+        self.pool = pool
 
         self._n_epochs = n_epochs
         self._n_train_repeat = n_train_repeat
+        self._min_pool_size = min_pool_size
+        self._batch_size = batch_size
         self._max_train_repeat_per_timestep = max(
             max_train_repeat_per_timestep, n_train_repeat)
         self._train_every_n_steps = train_every_n_steps
@@ -81,7 +88,7 @@ class RLAlgorithm(Checkpointable):
                 "RlAlgorithm cannot render and save videos at the same time")
             self._eval_render_kwargs['mode'] = render_mode
 
-        self._session = session or tf.keras.backend.get_session()
+        self._session = session or tf.compat.v1.keras.backend.get_session()
 
         self._epoch = 0
         self._timestep = 0
@@ -165,6 +172,7 @@ class RLAlgorithm(Checkpointable):
         self.sampler.initialize(env, initial_exploration_policy, pool)
         while pool.size < self._n_initial_exploration_steps:
             self.sampler.sample()
+        self.sampler.initialize(self._training_environment, self._policy, pool)
 
     def _training_before_hook(self):
         """Method called before the actual training loops."""
@@ -190,8 +198,9 @@ class RLAlgorithm(Checkpointable):
         """Hook called at the end of each epoch."""
         pass
 
-    def _training_batch(self, batch_size=None):
-        return self.sampler.random_batch(batch_size)
+    def _training_batch(self, batch_size=None, **kwargs):
+        batch_size = batch_size or self._batch_size
+        return self.pool.random_batch(batch_size, **kwargs)
 
     def _evaluation_batch(self, *args, **kwargs):
         return self._training_batch(*args, **kwargs)
@@ -222,7 +231,7 @@ class RLAlgorithm(Checkpointable):
         training_environment = self._training_environment
         evaluation_environment = self._evaluation_environment
         policy = self._policy
-        pool = self._pool
+        pool = self.pool
 
         if not self._training_started:
             self._init_training()
@@ -230,7 +239,7 @@ class RLAlgorithm(Checkpointable):
             self._initial_exploration_hook(
                 training_environment, self._initial_exploration_policy, pool)
 
-        self.sampler.initialize(training_environment, policy, pool)
+        self.sampler.initialize(self._training_environment, self._policy, pool)
 
         gt.reset_root()
         gt.rename_root('RLAlgorithm')
@@ -394,7 +403,7 @@ class RLAlgorithm(Checkpointable):
 
     @property
     def ready_to_train(self):
-        return self.sampler.batch_ready()
+        return self._min_pool_size <= self.pool.size
 
     def _do_sampling(self, timestep):
         self.sampler.sample()
@@ -419,9 +428,8 @@ class RLAlgorithm(Checkpointable):
     def _do_training(self, iteration, batch):
         raise NotImplementedError
 
-    @abc.abstractmethod
     def _init_training(self):
-        raise NotImplementedError
+        pass
 
     @property
     def tf_saveables(self):

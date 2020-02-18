@@ -24,6 +24,8 @@ CONFIG = {
             'n_epochs': 301,
             'n_initial_exploration_steps': 10,
             'n_train_repeat': 1,
+            'batch_size': 256,
+            'min_pool_size': 15,
             'reward_scale': 1.0,
             'save_full_state': False,
             'target_entropy': 'auto',
@@ -70,9 +72,7 @@ CONFIG = {
     },
     'sampler_params': {
         'kwargs': {
-            'batch_size': 256,
             'max_path_length': 10,
-            'min_pool_size': 15
         },
         'type': 'SimpleSampler'
     },
@@ -88,7 +88,7 @@ class TestExperimentRunner(tf.test.TestCase):
 
     def test_checkpoint_dict(self):
         tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
+        tf.compat.v1.keras.backend.clear_session()
         self.assertFalse(tf.compat.v1.trainable_variables())
 
         config = copy.deepcopy(CONFIG)
@@ -132,8 +132,8 @@ class TestExperimentRunner(tf.test.TestCase):
 
         expected_alpha_value = 5.0
         session.run(
-            tf.assign(experiment_runner.algorithm._log_alpha,
-                      np.log(expected_alpha_value)))
+            tf.compat.v1.assign(experiment_runner.algorithm._log_alpha,
+                                np.log(expected_alpha_value)))
         self.assertEqual(
             session.run(experiment_runner.algorithm._alpha),
             expected_alpha_value)
@@ -155,7 +155,7 @@ class TestExperimentRunner(tf.test.TestCase):
             for _, variables in trainable_variables_1.items()
             for variable in variables
         ) == set(
-            variable for variable in tf.trainable_variables()
+            variable for variable in tf.compat.v1.trainable_variables()
             if 'save_counter' not in variable.name)
 
         optimizer_variables_1 = {
@@ -173,7 +173,7 @@ class TestExperimentRunner(tf.test.TestCase):
         checkpoint = experiment_runner.save()
 
         tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
+        tf.compat.v1.keras.backend.clear_session()
         self.assertFalse(tf.compat.v1.trainable_variables())
 
         experiment_runner_2 = ExperimentRunner(config=config)
@@ -201,7 +201,7 @@ class TestExperimentRunner(tf.test.TestCase):
             for _, variables in trainable_variables_2.items()
             for variable in variables
         ) == set(
-            variable for variable in tf.trainable_variables()
+            variable for variable in tf.compat.v1.trainable_variables()
             if 'save_counter' not in variable.name)
 
         optimizer_variables_2 = {
@@ -275,7 +275,7 @@ class TestExperimentRunner(tf.test.TestCase):
 
     def test_checkpoint_pool_reconstruction(self):
         tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
+        tf.compat.v1.keras.backend.clear_session()
         self.assertFalse(tf.compat.v1.trainable_variables())
 
         config = copy.deepcopy(CONFIG)
@@ -302,7 +302,7 @@ class TestExperimentRunner(tf.test.TestCase):
             checkpoints.append(experiment_runner.save())
 
         tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
+        tf.compat.v1.keras.backend.clear_session()
         self.assertFalse(tf.compat.v1.trainable_variables())
 
         experiment_runner_2 = ExperimentRunner(config=config)
@@ -328,7 +328,7 @@ class TestExperimentRunner(tf.test.TestCase):
 
     def test_training_env_evaluation_env(self):
         tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
+        tf.compat.v1.keras.backend.clear_session()
         self.assertFalse(tf.compat.v1.trainable_variables())
 
         config = copy.deepcopy(CONFIG)
@@ -357,7 +357,7 @@ class TestExperimentRunner(tf.test.TestCase):
 
     def test_uses_training_env_as_evaluation_env(self):
         tf.compat.v1.reset_default_graph()
-        tf.keras.backend.clear_session()
+        tf.compat.v1.keras.backend.clear_session()
         self.assertFalse(tf.compat.v1.trainable_variables())
 
         config = copy.deepcopy(CONFIG)

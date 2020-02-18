@@ -15,10 +15,7 @@ class RemoteSamplerTest(unittest.TestCase):
         self.policy = get_policy_from_params(
             {'type': 'UniformPolicy'}, env=self.env)
         self.pool = SimpleReplayPool(max_size=100, environment=self.env)
-        self.remote_sampler = RemoteSampler(
-            max_path_length=10,
-            min_pool_size=10,
-            batch_size=10)
+        self.remote_sampler = RemoteSampler(max_path_length=10)
 
     def test_initialization(self):
         self.assertEqual(self.pool.size, 0)
@@ -45,7 +42,7 @@ class RemoteSamplerTest(unittest.TestCase):
         deserialized.initialize(self.env, self.policy, self.pool)
 
         self.assertTrue(isinstance(
-            deserialized.env, type(self.remote_sampler.env)))
+            deserialized.environment, type(self.remote_sampler.environment)))
         self.assertEqual(
             self.remote_sampler._n_episodes, deserialized._n_episodes)
         self.assertEqual(

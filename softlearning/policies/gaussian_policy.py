@@ -5,10 +5,11 @@ from collections import OrderedDict
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
+import tree
 
 from softlearning.models.feedforward import feedforward_model
-from softlearning.models.utils import flatten_input_structure, create_inputs
-from softlearning.utils.tensorflow import nest
+from softlearning.models.utils import create_inputs
+from softlearning.utils.tensorflow import apply_preprocessors, cast_and_concat
 
 from .base_policy import LatentSpacePolicy
 
@@ -38,33 +39,17 @@ class GaussianPolicy(LatentSpacePolicy):
 
         super(GaussianPolicy, self).__init__(*args, **kwargs)
 
-        inputs_flat = create_inputs(input_shapes)
-        preprocessors_flat = (
-            flatten_input_structure(preprocessors)
-            if preprocessors is not None
-            else tuple(None for _ in inputs_flat))
+        inputs = create_inputs(input_shapes)
+        if preprocessors is None:
+            preprocessors = tree.map_structure(lambda _: None, inputs)
 
-        assert len(inputs_flat) == len(preprocessors_flat), (
-            inputs_flat, preprocessors_flat)
-
-        preprocessed_inputs = [
-            preprocessor(input_) if preprocessor is not None else input_
-            for preprocessor, input_
-            in zip(preprocessors_flat, inputs_flat)
-        ]
-
-        def cast_and_concat(x):
-            x = nest.map_structure(
-                lambda element: tf.cast(element, tf.float32), x)
-            x = nest.flatten(x)
-            x = tf.concat(x, axis=-1)
-            return x
+        preprocessed_inputs = apply_preprocessors(preprocessors, inputs)
 
         conditions = tf.keras.layers.Lambda(
             cast_and_concat
         )(preprocessed_inputs)
 
-        self.condition_inputs = inputs_flat
+        self.condition_inputs = inputs
 
         shift_and_log_scale_diag = self._shift_and_log_scale_diag_net(
             output_size=np.prod(output_shape) * 2,
@@ -122,7 +107,7 @@ class GaussianPolicy(LatentSpacePolicy):
             lambda raw_actions: squash_bijector.forward(raw_actions)
         )(raw_actions_for_fixed_latents)
         self.actions_model_for_fixed_latents = tf.keras.Model(
-            (*self.condition_inputs, self.latents_input),
+            (self.condition_inputs, self.latents_input),
             actions_for_fixed_latents)
 
         deterministic_actions = tf.keras.layers.Lambda(
@@ -161,7 +146,7 @@ class GaussianPolicy(LatentSpacePolicy):
             log_pis_fn)([shift, log_scale_diag, self.actions_input])
 
         self.log_pis_model = tf.keras.Model(
-            (*self.condition_inputs, self.actions_input),
+            (self.condition_inputs, self.actions_input),
             log_pis_for_action_input)
 
         self.diagnostics_model = tf.keras.Model(
@@ -200,8 +185,8 @@ class GaussianPolicy(LatentSpacePolicy):
             ('log_scale_diags-mean', np.mean(log_scale_diags_np)),
             ('log_scale_diags-std', np.std(log_scale_diags_np)),
 
-            ('-log-pis-mean', np.mean(-log_pis_np)),
-            ('-log-pis-std', np.std(-log_pis_np)),
+            ('entropy-mean', np.mean(-log_pis_np)),
+            ('entropy-std', np.std(-log_pis_np)),
 
             ('raw-actions-mean', np.mean(raw_actions_np)),
             ('raw-actions-std', np.std(raw_actions_np)),
