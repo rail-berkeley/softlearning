@@ -104,7 +104,6 @@ setproctitle==1.1.10
 setuptools==45.1.0
 six==1.13.0
 smmap2==2.0.5
--e .
 tabulate==0.8.6
 tensorboard==2.1.0
 tensorflow==2.1.0
