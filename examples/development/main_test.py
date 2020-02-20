@@ -82,9 +82,6 @@ def assert_weights_not_equal(weights1, weights2):
         assert not np.all(np.equal(weight1, weight2))
 
 
-# tf.config.experimental_run_functions_eagerly(True)
-
-
 class TestExperimentRunner(tf.test.TestCase):
 
     def test_checkpoint_dict(self):
