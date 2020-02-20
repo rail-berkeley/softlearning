@@ -86,7 +86,8 @@ First, find the *absolute* path that the checkpoint is saved to. By default (i.e
 python -m examples.development.simulate_policy \
     ${SAC_CHECKPOINT_DIR} \
     --max-path-length=1000 \
-    --num-rollouts=1
+    --num-rollouts=1 \
+    --render-kwargs='{"mode": "human"}'
 ```
 
 `examples.development.main` contains several different environments and there are more example scripts available in the  `/examples` folder. For more information about the agents and configurations, run the scripts with `--help` flag: `python ./examples/development/main.py --help`
