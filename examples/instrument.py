@@ -278,7 +278,7 @@ def run_example_cluster(example_module_name, example_argv):
     """Run example on cluster mode.
 
     This functions is very similar to the local mode, except that it
-    correctly sets the redis address to make ray/tune work on a cluster.
+    correctly sets the ray address to make ray/tune work on a cluster.
     """
     example_module = importlib.import_module(example_module_name)
 
@@ -288,10 +288,10 @@ def run_example_cluster(example_module_name, example_argv):
 
     experiment_kwargs = generate_experiment_kwargs(variant_spec, example_args)
 
-    redis_address = ray.services.get_node_ip_address() + ':6379'
+    address = ray.services.get_node_ip_address() + ':6379'
 
     ray.init(
-        redis_address=redis_address,
+        address=address,
         num_cpus=example_args.cpus,
         num_gpus=example_args.gpus,
         local_mode=False,

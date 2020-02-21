@@ -93,7 +93,7 @@ def run_example_cluster_cmd(example_module_name, example_argv):
     """Run example on cluster mode.
 
     This functions is very similar to the local mode, except that it
-    correctly sets the redis address to make ray/tune work on a cluster.
+    correctly sets the ray address to make ray/tune work on a cluster.
     """
     run_example_cluster(example_module_name, example_argv)
 
