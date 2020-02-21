@@ -65,3 +65,19 @@ def create_inputs(shapes, dtypes=None):
     inputs = tree.map_structure_with_path(create_input, shapes, dtypes)
 
     return inputs
+
+
+def create_sequence_inputs(shapes, dtypes=None):
+    """Creates `tf.keras.layers.Input`s usable for sequential models like RNN.
+
+    Args:
+        See `create_inputs`.
+
+    Returns:
+        inputs: nested structure, of same shape as input_shapes, containing
+        `tf.keras.layers.Input`s, each with shape (None, ...).
+    """
+    shapes = tree.map_structure(lambda x: tf.TensorShape([None]) + x, shapes)
+    sequence_inputs = create_inputs(shapes, dtypes)
+
+    return sequence_inputs
