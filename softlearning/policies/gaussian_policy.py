@@ -145,7 +145,7 @@ class FeedforwardGaussianPolicy(GaussianPolicy):
         preprocessed_inputs = self._preprocess_inputs(inputs)
         shift_and_log_scale_diag = feedforward_model(
             hidden_layer_sizes=self._hidden_layer_sizes,
-            output_size=output_size,
+            output_shape=[output_size],
             activation=self._activation,
             output_activation=self._output_activation
         )(preprocessed_inputs)

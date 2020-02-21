@@ -8,12 +8,12 @@ class FeedforwardTest(tf.test.TestCase):
 
     def test_clone_model(self):
         """Make sure that cloning works and clones can predict."""
-        output_size = 5
+        output_shape = (5, )
         x_np = np.random.uniform(0, 1, (1, 13)).astype(np.float32)
         x = tf.constant(x_np)
 
         fn1 = feedforward_model(
-            output_size=output_size,
+            output_shape=output_shape,
             hidden_layer_sizes=(6, 4, 2),
             name='feedforward_function')
         result_1 = fn1([x, x]).numpy()
@@ -46,7 +46,7 @@ class FeedforwardTest(tf.test.TestCase):
 
     def test_without_name(self):
         fn = feedforward_model(
-            output_size=1,
+            output_shape=(1, ),
             hidden_layer_sizes=(6, 4, 2))
 
         self.assertEqual(fn.name, 'feedforward_model')

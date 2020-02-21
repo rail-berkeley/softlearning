@@ -33,7 +33,7 @@ class FeedforwardBijectorFunction(tf.Module):
         if not self._built:
             self._shift_and_log_scale_model = feedforward_model(
                 hidden_layer_sizes=self.hidden_layer_sizes,
-                output_size=(1 if self.shift_only else 2) * output_units,
+                output_shape=[(1 if self.shift_only else 2) * output_units],
                 activation=self.activation,
                 output_activation=self.output_activation)
             self._built = True

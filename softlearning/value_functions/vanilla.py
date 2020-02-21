@@ -40,7 +40,7 @@ def feedforward_Q_function(input_shapes,
 
     Q_model_body = feedforward_model(
         *args,
-        output_size=1,
+        output_shape=[1],
         name=name,
         **kwargs
     )

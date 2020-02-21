@@ -132,7 +132,7 @@ class StateActionValueFunction(BaseValueFunction):
 # def feedforward_Q_function(*args, name='feedforward_Q', **kwargs):
 #     model = feedforward_model(
 #         *args,
-#         output_size=1,
+#         output_shape=[1],
 #         name=name,
 #         **kwargs
 #     )
