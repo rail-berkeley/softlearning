@@ -29,6 +29,7 @@ gast==0.2.2
 gitdb2==2.0.6
 GitPython==2.1.11
 glfw==1.9.1
+google-api-python-client==1.7.11
 google-auth==1.10.1
 google-auth-oauthlib==0.4.1
 google-pasta==0.1.8
