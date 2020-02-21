@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 import tree
 
-from softlearning.value_functions.vanilla import create_feedforward_Q_function
+from softlearning.value_functions.vanilla import feedforward_Q_function
 from softlearning.environments.utils import get_environment
 
 
@@ -19,7 +19,7 @@ class ValueFunctionTest(tf.test.TestCase):
         ))
         action_shape = self.env.action_shape
         input_shapes = (observation_shapes, action_shape)
-        self.value_function = create_feedforward_Q_function(
+        self.value_function = feedforward_Q_function(
             input_shapes=input_shapes,
             hidden_layer_sizes=self.hidden_layer_sizes,
         )
