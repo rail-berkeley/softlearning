@@ -22,10 +22,11 @@ DEFAULT_HUMAN_RENDER_KWARGS = {
 def rollout(environment,
             policy,
             path_length,
+            replay_pool_class=replay_pools.SimpleReplayPool,
             sampler_class=simple_sampler.SimpleSampler,
             render_kwargs=None,
             break_on_terminal=True):
-    pool = replay_pools.SimpleReplayPool(environment, max_size=path_length)
+    pool = replay_pool_class(environment, max_size=path_length)
     sampler = sampler_class(
         environment=environment,
         policy=policy,
