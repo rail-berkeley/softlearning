@@ -18,12 +18,12 @@ class UniformPolicyMixin:
 
     @tf.function(experimental_relax_shapes=True)
     def log_probs(self, observations, actions):
-        log_probs = self.distribution.log_prob(actions)
+        log_probs = self.distribution.log_prob(actions)[..., tf.newaxis]
         return log_probs
 
     @tf.function(experimental_relax_shapes=True)
     def probs(self, observations, actions):
-        probs = self.distribution.prob(actions)
+        probs = self.distribution.prob(actions)[..., tf.newaxis]
         return probs
 
 
