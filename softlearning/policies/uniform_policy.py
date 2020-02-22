@@ -21,6 +21,11 @@ class UniformPolicyMixin:
         log_probs = self.distribution.log_prob(actions)
         return log_probs
 
+    @tf.function(experimental_relax_shapes=True)
+    def probs(self, observations, actions):
+        probs = self.distribution.prob(actions)
+        return probs
+
 
 class ContinuousUniformPolicy(UniformPolicyMixin, ContinuousPolicy):
     def __init__(self, *args, **kwargs):
