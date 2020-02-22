@@ -122,7 +122,7 @@ class BasePolicy:
     def log_prob(self, *input_):
         """Compute the log probability for a single action."""
         inputs = tree.map_structure(lambda x: x[None, ...], input_)
-        log_probs = self.values(*inputs)
+        log_probs = self.log_probs(*inputs)
         log_prob = tree.map_structure(lambda x: x[0], log_probs)
         return log_prob
 
@@ -131,11 +131,10 @@ class BasePolicy:
         """Compute probabilities for given actions."""
         raise NotImplementedError
 
-    @abc.abstractmethod
     def prob(self, *input_):
         """Compute the probability for a single action."""
         inputs = tree.map_structure(lambda x: x[None, ...], input_)
-        probs = self.values(*inputs)
+        probs = self.probs(*inputs)
         prob = tree.map_structure(lambda x: x[0], probs)
         return prob
 
