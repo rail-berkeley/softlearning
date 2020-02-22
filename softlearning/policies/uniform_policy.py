@@ -26,4 +26,6 @@ class ContinuousUniformPolicy(UniformPolicyMixin, ContinuousPolicy):
     def __init__(self, *args, **kwargs):
         super(ContinuousUniformPolicy, self).__init__(*args, **kwargs)
         low, high = self._action_range
-        self.distribution = tfp.distributions.Uniform(low=low, high=high)
+        self.distribution = tfp.distributions.Independent(
+            tfp.distributions.Uniform(low=low, high=high),
+            reinterpreted_batch_ndims=1)
