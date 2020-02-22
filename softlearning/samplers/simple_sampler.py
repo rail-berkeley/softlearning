@@ -10,14 +10,21 @@ class SimpleSampler(BaseSampler):
     def __init__(self, **kwargs):
         super(SimpleSampler, self).__init__(**kwargs)
 
-        self._path_length = 0
-        self._path_return = 0
-        self._current_path = defaultdict(list)
         self._last_path_return = 0
         self._max_path_return = -np.inf
         self._n_episodes = 0
-        self._current_observation = None
         self._total_samples = 0
+
+        self.reset()
+
+    def reset(self):
+        if self.policy is not None:
+            self.policy.reset()
+
+        self._current_observation = None
+        self._path_length = 0
+        self._path_return = 0
+        self._current_path = defaultdict(list)
 
     @property
     def _policy_input(self):
@@ -82,15 +89,12 @@ class SimpleSampler(BaseSampler):
             self._max_path_return = max(self._max_path_return,
                                         self._path_return)
             self._last_path_return = self._path_return
-
-            self.policy.reset()
-            self.pool.terminate_episode()
-            self._current_observation = None
-            self._path_length = 0
-            self._path_return = 0
-            self._current_path = defaultdict(list)
-
             self._n_episodes += 1
+
+            self.pool.terminate_episode()
+
+            self.reset()
+
         else:
             self._current_observation = next_observation
 

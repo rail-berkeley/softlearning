@@ -22,6 +22,9 @@ class BaseSampler(object):
         self.policy = policy
         self.pool = pool
 
+    def reset(self):
+        pass
+
     def set_policy(self, policy):
         self.policy = policy
 
