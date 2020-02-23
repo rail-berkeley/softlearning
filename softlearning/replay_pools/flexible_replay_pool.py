@@ -183,8 +183,11 @@ class FlexibleReplayPool(ReplayPool):
 
         return filtered_field_names
 
-    def batch_by_indices(self, indices, field_name_filter=None):
-        if np.any(indices % self._max_size > self.size):
+    def batch_by_indices(self,
+                         indices,
+                         field_name_filter=None,
+                         validate_index=True):
+        if validate_index and np.any(self.size < indices % self._max_size):
             raise ValueError(
                 "Tried to retrieve batch with indices greater than current"
                 " size")
@@ -200,7 +203,7 @@ class FlexibleReplayPool(ReplayPool):
                                   indices,
                                   sequence_length,
                                   field_name_filter=None):
-        if np.any(indices % self._max_size > self.size):
+        if np.any(self.size < indices % self._max_size):
             raise ValueError(
                 "Tried to retrieve batch with indices greater than current"
                 " size")
@@ -209,7 +212,8 @@ class FlexibleReplayPool(ReplayPool):
 
         sequence_indices = (
             indices[:, None] - np.arange(sequence_length)[::-1][None])
-        sequence_batch = self.batch_by_indices(sequence_indices)
+        sequence_batch = self.batch_by_indices(
+            sequence_indices, validate_index=False)
 
         forward_diffs = np.diff(
             sequence_batch['episode_index_forwards'].astype(np.int64), axis=1)
