@@ -40,8 +40,8 @@ class SimpleSampler(BaseSampler):
         processed_observation = {
             'observations': observation,
             'actions': action,
-            'rewards': [reward],
-            'terminals': [terminal],
+            'rewards': np.atleast_1d(reward),
+            'terminals': np.atleast_1d(terminal),
             'next_observations': next_observation,
             'infos': info,
         }
