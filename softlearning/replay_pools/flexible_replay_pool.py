@@ -215,6 +215,13 @@ class FlexibleReplayPool(ReplayPool):
         sequence_batch = self.batch_by_indices(
             sequence_indices, validate_index=False)
 
+        if 'mask' in sequence_batch:
+            raise ValueError(
+                "sequence_batch_by_indices adds a field 'mask' into the batch."
+                " There already exists a 'mask' field in the batch. Please"
+                " remove it before using sequence_batch. TODO(hartikainen):"
+                " Allow mask name to be configured.")
+
         forward_diffs = np.diff(
             sequence_batch['episode_index_forwards'].astype(np.int64), axis=1)
         forward_diffs = np.pad(
@@ -226,13 +233,11 @@ class FlexibleReplayPool(ReplayPool):
             - np.argmax(forward_diffs[:, ::-1, :] < 0, axis=1)
             - 1)
 
-        def cut_and_pad_sequence_batch(sequence_batch):
-            for sample_index, sequence_index in enumerate(
-                    cut_and_pad_sample_indices):
-                sequence_batch[sample_index, :sequence_index, ...] = 0.0
-            return sequence_batch
-
-        tree.map_structure(cut_and_pad_sequence_batch, sequence_batch)
+        sequence_batch['mask'] = np.where(
+            cut_and_pad_sample_indices[..., None]
+            < np.cumsum(np.ones_like(forward_diffs), axis=1)[..., 0],
+            False,
+            True)
 
         return sequence_batch
 
