@@ -690,6 +690,21 @@ class FlexibleReplayPoolTest(unittest.TestCase):
                 ~mask[episode_start_indices_batch, :-1, None]
                 * values[episode_start_indices_batch][:, :-1, :], 0)
 
+    def test_sequence_batch_sample_from_beginning_of_non_full_pool(self):
+        sequence_length = 10
+        samples = {
+            'field1': np.arange(self.pool._max_size - sequence_length)[:, None],
+            'field2': -np.arange(self.pool._max_size - sequence_length)[:, None] * 2,
+        }
+        self.pool.add_path(samples)
+        sample_index = sequence_length // 2
+        batch = self.pool.sequence_batch_by_indices(
+            np.array([sample_index]), sequence_length=sequence_length)
+        np.testing.assert_equal(
+            batch['mask'][0],
+            np.array([True] * (sequence_length - sample_index - 1)
+                     + [False] * (sample_index + 1)))
+
     def test_batch_by_indices_with_filter(self):
         with self.assertRaises(ValueError):
             self.pool.batch_by_indices(np.array([-1, 2, 4]))
