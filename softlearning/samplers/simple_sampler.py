@@ -15,16 +15,16 @@ class SimpleSampler(BaseSampler):
         self._n_episodes = 0
         self._total_samples = 0
 
-        self.reset()
+        self._is_first_step = True
 
     def reset(self):
         if self.policy is not None:
             self.policy.reset()
 
-        self._current_observation = None
         self._path_length = 0
         self._path_return = 0
         self._current_path = defaultdict(list)
+        self._current_observation = self.environment.reset()
 
     @property
     def _policy_input(self):
@@ -49,8 +49,8 @@ class SimpleSampler(BaseSampler):
         return processed_observation
 
     def sample(self):
-        if self._current_observation is None:
-            self._current_observation = self.environment.reset()
+        if self._is_first_step:
+            self.reset()
 
         action = self.policy.action(self._policy_input).numpy()
 
@@ -93,10 +93,12 @@ class SimpleSampler(BaseSampler):
 
             self.pool.terminate_episode()
 
-            self.reset()
+            self._is_first_step = True
+            # Reset it done in the beginning of next episode, see above.
 
         else:
             self._current_observation = next_observation
+            self._is_first_step = False
 
         return next_observation, reward, terminal, info
 
