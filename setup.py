@@ -46,7 +46,7 @@ setup(
         'numpy==1.17.5',
         'pandas==0.25.3',
         'psutil==5.6.7',
-        'ray[tune,rllib,debug]==0.8.0',
+        'ray==0.8.2',
         'scikit-image==0.16.2',
         'scikit-video==1.1.11',
         'scipy==1.4.1',
