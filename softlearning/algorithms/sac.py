@@ -137,7 +137,11 @@ class SAC(RLAlgorithm):
             self._alpha_lr, name='alpha_optimizer')
 
     @tf.function(experimental_relax_shapes=True)
-    def _compute_Q_targets(self, next_observations, rewards, terminals):
+    def _compute_Q_targets(self, batch):
+        next_observations = batch['next_observations']
+        rewards = batch['rewards']
+        terminals = batch['terminals']
+
         entropy_scale = self._alpha
         reward_scale = self._reward_scale
         discount = self._discount
@@ -160,12 +164,7 @@ class SAC(RLAlgorithm):
         return tf.stop_gradient(Q_targets)
 
     @tf.function(experimental_relax_shapes=True)
-    def _update_critic(self,
-                       observations,
-                       actions,
-                       next_observations,
-                       rewards,
-                       terminals):
+    def _update_critic(self, batch):
         """Update the Q-function.
 
         Creates a `tf.optimizer.minimize` operation for updating
@@ -175,8 +174,11 @@ class SAC(RLAlgorithm):
         See Equations (5, 6) in [1], for further information of the
         Q-function update rule.
         """
-        Q_targets = self._compute_Q_targets(
-            next_observations, rewards, terminals)
+        Q_targets = self._compute_Q_targets(batch)
+
+        observations = batch['observations']
+        actions = batch['actions']
+        rewards = batch['rewards']
 
         tf.debugging.assert_shapes((
             (Q_targets, ('B', 1)), (rewards, ('B', 1))))
@@ -197,7 +199,7 @@ class SAC(RLAlgorithm):
         return Qs_values, Qs_losses
 
     @tf.function(experimental_relax_shapes=True)
-    def _update_actor(self, observations):
+    def _update_actor(self, batch):
         """Update the policy.
 
         Creates a `tf.optimizer.minimize` operations for updating
@@ -207,6 +209,7 @@ class SAC(RLAlgorithm):
         See Section 4.2 in [1], for further information of the policy update,
         and Section 5 in [1] for further information of the entropy update.
         """
+        observations = batch['observations']
 
         with tf.GradientTape() as tape:
             actions = self._policy.actions(observations)
@@ -233,9 +236,11 @@ class SAC(RLAlgorithm):
         return policy_losses
 
     @tf.function(experimental_relax_shapes=True)
-    def _update_alpha(self, observations):
+    def _update_alpha(self, batch):
         if not isinstance(self._target_entropy, Number):
             return
+
+        observations = batch['observations']
 
         actions = self._policy.actions(observations)
         log_pis = self._policy.log_probs(observations, actions)
@@ -266,15 +271,9 @@ class SAC(RLAlgorithm):
     @tf.function(experimental_relax_shapes=True)
     def _do_updates(self, batch):
         """Runs the update operations for policy, Q, and alpha."""
-        Qs_values, Qs_losses = self._update_critic(
-            batch['observations'],
-            batch['actions'],
-            batch['next_observations'],
-            batch['rewards'],
-            batch['terminals'])
-
-        policy_losses = self._update_actor(batch['observations'])
-        alpha_losses = self._update_alpha(batch['observations'])
+        Qs_values, Qs_losses = self._update_critic(batch)
+        policy_losses = self._update_actor(batch)
+        alpha_losses = self._update_alpha(batch)
 
         diagnostics = OrderedDict((
             ('Q_value-mean', tf.reduce_mean(Qs_values)),
