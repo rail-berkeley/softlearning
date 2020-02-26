@@ -114,18 +114,18 @@ class BaseValueFunction:
 
 
 class StateValueFunction(BaseValueFunction):
-    def values(self, observations):
+    def values(self, observations, *args, **kwargs):
         """Compute values given observations."""
         observations = self._filter_observations(observations)
-        values = self.model(observations)
+        values = self.model((observations, args, kwargs))
         return values
 
 
 class StateActionValueFunction(BaseValueFunction):
-    def values(self, observations, actions):
+    def values(self, observations, actions, *args, **kwargs):
         """Compute values given observations."""
         observations = self._filter_observations(observations)
-        values = self.model((observations, actions))
+        values = self.model((observations, actions, args, kwargs))
         return values
 
 
