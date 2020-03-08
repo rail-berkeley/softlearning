@@ -8,6 +8,7 @@ import os
 
 import numpy as np
 import tensorflow as tf
+import tree
 
 from softlearning.samplers import rollouts
 from softlearning.utils.video import save_video
@@ -165,6 +166,8 @@ class RLAlgorithm(Checkpointable):
             self._epoch_before_hook()
             gt.stamp('epoch_before_hook')
 
+            update_diagnostics = []
+
             start_samples = self.sampler._total_samples
             for i in count():
                 samples_now = self.sampler._total_samples
@@ -181,11 +184,16 @@ class RLAlgorithm(Checkpointable):
                 gt.stamp('sample')
 
                 if self.ready_to_train:
-                    self._do_training_repeats(timestep=self._total_timestep)
+                    update_diagnostics.append(self._do_training_repeats(
+                        timestep=self._total_timestep))
+
                 gt.stamp('train')
 
                 self._timestep_after_hook()
                 gt.stamp('timestep_after_hook')
+
+            update_diagnostics = tree.map_structure(
+                lambda *d: np.mean(d), *update_diagnostics)
 
             training_paths = self.sampler.get_last_n_paths(
                 math.ceil(self._epoch_length / self.sampler._max_path_length))
@@ -220,9 +228,12 @@ class RLAlgorithm(Checkpointable):
                 for key, times in gt.get_times().stamps.itrs.items()
             }
 
+            # TODO(hartikainen/tf2): Fix the naming of training/update
+            # diagnostics/metric
             diagnostics.update((
                 ('evaluation', evaluation_metrics),
                 ('training', training_metrics),
+                ('update', update_diagnostics),
                 ('times', time_diagnostics),
                 ('sampler', sampler_diagnostics),
                 ('epoch', self._epoch),
@@ -319,13 +330,18 @@ class RLAlgorithm(Checkpointable):
             > self._max_train_repeat_per_timestep * self._timestep)
         if trained_enough: return
 
-        for i in range(self._n_train_repeat):
-            self._do_training(
-                iteration=timestep,
-                batch=self._training_batch())
+        diagnostics = [
+            self._do_training(iteration=timestep, batch=self._training_batch())
+            for i in range(self._n_train_repeat)
+        ]
+
+        diagnostics = tree.map_structure(
+            lambda *d: tf.reduce_mean(d).numpy(), *diagnostics)
 
         self._num_train_steps += self._n_train_repeat
         self._train_steps_this_epoch += self._n_train_repeat
+
+        return diagnostics
 
     @abc.abstractmethod
     def _do_training(self, iteration, batch):
