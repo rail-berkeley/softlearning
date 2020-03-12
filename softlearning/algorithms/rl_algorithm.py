@@ -203,11 +203,17 @@ class RLAlgorithm(Checkpointable):
             gt.stamp('evaluation_paths')
 
             training_metrics = self._evaluate_rollouts(
-                training_paths, training_environment)
+                training_paths,
+                training_environment,
+                self._total_timestep,
+                evaluation_type='train')
             gt.stamp('training_metrics')
             if evaluation_paths:
                 evaluation_metrics = self._evaluate_rollouts(
-                    evaluation_paths, evaluation_environment)
+                    evaluation_paths,
+                    evaluation_environment,
+                    self._total_timestep,
+                    evaluation_type='evaluation')
                 gt.stamp('evaluation_metrics')
             else:
                 evaluation_metrics = {}
@@ -282,7 +288,11 @@ class RLAlgorithm(Checkpointable):
 
         return paths
 
-    def _evaluate_rollouts(self, episodes, env):
+    def _evaluate_rollouts(self,
+                           episodes,
+                           environment,
+                           timestep,
+                           evaluation_type=None):
         """Compute evaluation metrics for the given rollouts."""
 
         episodes_rewards = [episode['rewards'] for episode in episodes]
@@ -302,8 +312,9 @@ class RLAlgorithm(Checkpointable):
             ('episode-length-std', np.std(episodes_length)),
         ))
 
-        env_infos = env.get_path_infos(episodes)
-        diagnostics['env_infos'] = env_infos
+        environment_infos = environment.get_path_infos(
+            episodes, timestep, evaluation_type=evaluation_type)
+        diagnostics['environment_infos'] = environment_infos
 
         return diagnostics
 
