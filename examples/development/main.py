@@ -157,7 +157,6 @@ class ExperimentRunner(tune.Trainable):
 
     def _save_value_functions(self, checkpoint_dir):
         tree.map_structure_with_path(
-            # TODO(hartikainen/tf2): This should probably use tf2 format
             lambda path, Q: Q.save_weights(
                 os.path.join(
                     checkpoint_dir, '-'.join(('Q', *[str(x) for x in path]))),
@@ -166,7 +165,6 @@ class ExperimentRunner(tune.Trainable):
 
     def _restore_value_functions(self, checkpoint_dir):
         tree.map_structure_with_path(
-            # TODO(hartikainen/tf2): This should probably use tf2 format
             lambda path, Q: Q.load_weights(
                 os.path.join(
                     checkpoint_dir, '-'.join(('Q', *[str(x) for x in path])))),

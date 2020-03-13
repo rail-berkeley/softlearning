@@ -31,7 +31,6 @@ class BasePolicy:
         self._observation_keys = observation_keys
         self._inputs = create_inputs(input_shapes)
 
-        # TODO(hartikainen/tf2-support-v1): Make sure to finish this.
         if preprocessors is None:
             preprocessors = tree.map_structure(lambda x: None, input_shapes)
 
