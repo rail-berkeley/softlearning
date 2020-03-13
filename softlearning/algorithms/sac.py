@@ -131,8 +131,10 @@ class SAC(RLAlgorithm):
             learning_rate=self._policy_lr,
             name="policy_optimizer")
 
-        self._log_alpha = tf.Variable(0.0, name='log_alpha', dtype=tf.float32)
-        self._alpha = tfp.util.DeferredTensor(self._log_alpha, tf.exp)
+        self._alpha = tfp.util.TransformedVariable(
+            tf.exp(0.0), tfp.bijectors.Exp(), name='alpha')
+        self._log_alpha = self._alpha.pretransformed_input
+
         self._alpha_optimizer = tf.optimizers.Adam(
             self._alpha_lr, name='alpha_optimizer')
 
