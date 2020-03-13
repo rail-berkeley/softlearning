@@ -52,7 +52,15 @@ class BaseSampler(object):
     def __getstate__(self):
         state = {
             key: value for key, value in self.__dict__.items()
-            if key not in ('environment', 'policy', 'pool', '_last_n_paths')
+            if key not in (
+                    'environment',
+                    'policy',
+                    'pool',
+                    '_last_n_paths',
+                    '_current_observation',
+                    '_current_path',
+                    '_is_first_step',
+            )
         }
 
         return state
