@@ -30,11 +30,11 @@ def feedforward_Q_function(input_shapes,
                            **kwargs):
     inputs = create_inputs(input_shapes)
 
-    # TODO(hartikainen/tf2-support-v1): Make sure to finish this.
-    assert preprocessors is None
-
     if preprocessors is None:
         preprocessors = tree.map_structure(lambda _: None, inputs)
+
+    preprocessors = tree.map_structure_up_to(
+        inputs, preprocessors_lib.deserialize, preprocessors)
 
     preprocessed_inputs = apply_preprocessors(preprocessors, inputs)
 

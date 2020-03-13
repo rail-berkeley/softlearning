@@ -337,7 +337,8 @@ def deserialize_softlearning_object(identifier,
         else:
             obj = module_objects.get(object_name)
             if obj is None:
-                raise ValueError(f"Unknown {printable_module_name}: {object_name}")
+                raise ValueError(
+                    f"Unknown {printable_module_name}: {object_name}")
         # Classes passed by name are instantiated with no args, functions are
         # returned as-is.
         if inspect.isclass(obj):
@@ -348,4 +349,4 @@ def deserialize_softlearning_object(identifier,
         return identifier
     else:
         raise ValueError("Could not interpret serialized"
-                         " {printable_module_name}: {identifier}")
+                         f" {printable_module_name}: {identifier}")

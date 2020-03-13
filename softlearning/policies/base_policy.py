@@ -8,6 +8,7 @@ import tree
 
 from softlearning.models.utils import create_inputs
 from softlearning.utils.tensorflow import cast_and_concat, apply_preprocessors
+from softlearning import preprocessors as preprocessors_lib
 
 
 class BasePolicy:
@@ -26,10 +27,8 @@ class BasePolicy:
         if preprocessors is None:
             preprocessors = tree.map_structure(lambda x: None, input_shapes)
 
-        def assert_is_none(x):
-            assert x is None, x
-
-        tree.map_structure(assert_is_none, preprocessors)
+        preprocessors = tree.map_structure_up_to(
+            input_shapes, preprocessors_lib.deserialize, preprocessors)
 
         self._preprocessors = preprocessors
 
