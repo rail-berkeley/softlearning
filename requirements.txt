@@ -16,7 +16,7 @@ cryptography==2.8
 cycler==0.10.0
 Cython==0.29.14
 decorator==4.4.1
-dm-control==0.0.288483845
+dm-control==0.0.300771433
 dm-env==1.2
 dm-tree==0.1.1
 docutils==0.15.2
