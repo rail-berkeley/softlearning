@@ -1,5 +1,6 @@
 import abc
 from collections import OrderedDict
+import json
 
 import numpy as np
 import tensorflow as tf
@@ -9,6 +10,13 @@ import tree
 from softlearning.models.utils import create_inputs
 from softlearning.utils.tensorflow import cast_and_concat, apply_preprocessors
 from softlearning import preprocessors as preprocessors_lib
+
+# pylint: disable=g-import-not-at-top
+try:
+    import yaml
+except ImportError:
+    yaml = None
+# pylint: enable=g-import-not-at-top
 
 
 class BasePolicy:
@@ -186,6 +194,32 @@ class BasePolicy:
             'name': self._name,
         }
         return config
+
+    def _updated_config(self):
+        config = self.get_config()
+        model_config = {
+            'class_name': self.__class__.__name__,
+            'config': config,
+        }
+        return model_config
+
+    def to_yaml(self, **kwargs):
+        if yaml is None:
+            raise ImportError(
+                "Requires yaml module installed (`pip install pyyaml`).")
+
+        yaml.dump(self._updated_config(), **kwargs)
+
+    def to_json(self, **kwargs):
+        model_config = self._updated_config()
+        return json.dumps(model_config, **kwargs)
+
+    def save(self, filepath, overwrite=True):
+        assert overwrite
+        config_yaml = self.to_yaml()
+        with open(f"{filepath}-config.json", 'w') as f:
+            json.dump(config_yaml, f)
+        self.save_weights(filepath)
 
 
 class ContinuousPolicy(BasePolicy):
