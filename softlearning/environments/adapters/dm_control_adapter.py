@@ -6,7 +6,7 @@ import copy
 import numpy as np
 from dm_control import suite
 from dm_env import specs
-from dm_control.suite import wrappers
+from dm_control.suite.wrappers import pixels, action_scale
 from gym import spaces
 
 from .softlearning_env import SoftlearningEnv
@@ -108,12 +108,12 @@ class DmControlAdapter(SoftlearningEnv):
         if normalize:
             if (np.any(env.action_spec().minimum != -1)
                 or np.any(env.action_spec().maximum != 1)):
-                env = wrappers.action_scale.Wrapper(env, minimum=-1.0, maximum=1.0)
+                env = action_scale.Wrapper(env, minimum=-1.0, maximum=1.0)
             np.testing.assert_equal(env.action_spec().minimum, -1)
             np.testing.assert_equal(env.action_spec().maximum, 1)
 
         if pixel_wrapper_kwargs is not None:
-            env = wrappers.pixels.Wrapper(env, **pixel_wrapper_kwargs)
+            env = pixels.Wrapper(env, **pixel_wrapper_kwargs)
 
         self._env = env
 
