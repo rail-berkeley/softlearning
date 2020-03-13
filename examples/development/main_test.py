@@ -38,16 +38,10 @@ CONFIG = {
         },
     },
     'environment_params': {
-        'evaluation': {
-            'domain': 'Pendulum',
-            'kwargs': {},
-            'task': 'v0',
-            'universe': 'gym',
-        },
         'training': {
-            'domain': 'Pendulum',
+            'domain': 'Swimmer',
             'kwargs': {},
-            'task': 'v0',
+            'task': 'v3',
             'universe': 'gym',
         },
     },
