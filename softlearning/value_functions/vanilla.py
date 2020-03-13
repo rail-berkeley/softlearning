@@ -5,6 +5,7 @@ from softlearning.models.feedforward import feedforward_model
 from softlearning.models.utils import create_inputs
 from softlearning.utils.tensorflow import apply_preprocessors
 from softlearning import preprocessors as preprocessors_lib
+from softlearning.utils.tensorflow import cast_and_concat
 
 from .base_value_function import StateActionValueFunction
 
@@ -38,6 +39,10 @@ def feedforward_Q_function(input_shapes,
 
     preprocessed_inputs = apply_preprocessors(preprocessors, inputs)
 
+    # NOTE(hartikainen): `feedforward_model` would do the `cast_and_concat`
+    # step for us, but tf2.2 broke the sequential multi-input handling: See:
+    # https://github.com/tensorflow/tensorflow/issues/37061.
+    out = tf.keras.layers.Lambda(cast_and_concat)(preprocessed_inputs)
     Q_model_body = feedforward_model(
         *args,
         output_shape=[1],
@@ -45,7 +50,7 @@ def feedforward_Q_function(input_shapes,
         **kwargs
     )
 
-    Q_model = tf.keras.Model(inputs, Q_model_body(preprocessed_inputs))
+    Q_model = tf.keras.Model(inputs, Q_model_body(out))
 
     Q_function = StateActionValueFunction(
         model=Q_model, observation_keys=observation_keys)
