@@ -50,7 +50,8 @@ setup(
         'scikit-video>=1.1.11',
         'scipy>=1.4.1',
         'tensorflow',
-        'tensorflow-probability',
+        # 'tensorflow-probability',
+        'tfp-nightly',
     ),
     zip_safe=True,
     license='MIT'
