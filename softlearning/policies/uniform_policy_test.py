@@ -43,10 +43,13 @@ class ContinuousUniformPolicyTest(tf.test.TestCase):
 
             self.assertAllEqual(
                 log_pis,
-                tfp.distributions.Uniform(
-                    low=self.env.action_space.low,
-                    high=self.env.action_space.high
-                ).log_prob(actions))
+                tfp.distributions.Independent(
+                    tfp.distributions.Uniform(
+                        low=self.env.action_space.low,
+                        high=self.env.action_space.high,
+                    ),
+                    reinterpreted_batch_ndims=1,
+                ).log_prob(actions)[..., None])
 
             self.assertEqual(actions.shape, (2, *self.env.action_shape))
 
