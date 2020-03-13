@@ -323,11 +323,9 @@ ENVIRONMENT_PARAMS_PER_UNIVERSE_DOMAIN_TASK = {
                 'pixel_wrapper_kwargs': {
                     'pixels_only': True,
                     'render_kwargs': {
-                        'pixels': {
-                            'width': 84,
-                            'height': 84,
-                            'camera_id': 0,
-                        },
+                        'width': 84,
+                        'height': 84,
+                        'camera_id': 0,
                     },
                 },
             },
@@ -337,11 +335,9 @@ ENVIRONMENT_PARAMS_PER_UNIVERSE_DOMAIN_TASK = {
                 'pixel_wrapper_kwargs': {
                     'pixels_only': True,
                     'render_kwargs': {
-                        'pixels': {
-                            'width': 84,
-                            'height': 84,
-                            'camera_id': 0,
-                        },
+                        'width': 84,
+                        'height': 84,
+                        'camera_id': 0,
                     },
                 },
             },
@@ -351,11 +347,9 @@ ENVIRONMENT_PARAMS_PER_UNIVERSE_DOMAIN_TASK = {
                 'pixel_wrapper_kwargs': {
                     'pixels_only': True,
                     'render_kwargs': {
-                        'pixels': {
-                            'width': 84,
-                            'height': 84,
-                            'camera_id': 0,
-                        },
+                        'width': 84,
+                        'height': 84,
+                        'camera_id': 0,
                     },
                 },
             },
