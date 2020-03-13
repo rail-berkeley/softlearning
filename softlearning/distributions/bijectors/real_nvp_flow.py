@@ -40,7 +40,7 @@ class FeedforwardBijectorFunction(tf.Module):
 
         # condition_kwargs is a dict, but feedforward_model implicitly flattens
         # these values. Effectively the same as
-        # self._shift_and_log_scale_model(tf.nest.flatten((x, condition_kwargs)))
+        # self._shift_and_log_scale_model(tree.flatten((x, condition_kwargs)))
         shift_and_log_scale = self._shift_and_log_scale_model(
             (x, condition_kwargs))
 

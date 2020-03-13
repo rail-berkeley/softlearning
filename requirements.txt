@@ -22,7 +22,6 @@ dm-tree==0.1.1
 docutils==0.15.2
 fasteners==0.15
 filelock==3.0.12
-flatten-dict==0.2.0
 funcsigs==1.0.2
 future==0.18.2
 gast==0.2.2

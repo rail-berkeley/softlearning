@@ -38,7 +38,6 @@ setup(
     install_requires=(
         'Click==7.0',
         'dm-control==0.0.288483845',
-        'flatten-dict==0.2.0',
         'GitPython==3.1.0',
         'gtimer==1.0.0b5',
         'gym==0.15.4',

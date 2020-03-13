@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 import numpy as np
-from flatten_dict import flatten, unflatten
+import tree
 
 from .base_sampler import BaseSampler
 
@@ -23,7 +23,7 @@ class SimpleSampler(BaseSampler):
 
         self._path_length = 0
         self._path_return = 0
-        self._current_path = defaultdict(list)
+        self._current_path = []
         self._current_observation = self.environment.reset()
 
     @property
@@ -69,14 +69,11 @@ class SimpleSampler(BaseSampler):
             info=info,
         )
 
-        for key, value in flatten(processed_sample).items():
-            self._current_path[key].append(value)
+        self._current_path.append(processed_sample)
 
         if terminal or self._path_length >= self._max_path_length:
-            last_path = unflatten({
-                field_name: np.array(values)
-                for field_name, values in self._current_path.items()
-            })
+            last_path = tree.map_structure(
+                lambda *x: np.stack(x, axis=0), *self._current_path)
 
             self.pool.add_path({
                 key: value
@@ -94,7 +91,7 @@ class SimpleSampler(BaseSampler):
             self.pool.terminate_episode()
 
             self._is_first_step = True
-            # Reset it done in the beginning of next episode, see above.
+            # Reset is done in the beginning of next episode, see above.
 
         else:
             self._current_observation = next_observation
