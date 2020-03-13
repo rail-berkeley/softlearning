@@ -7,61 +7,73 @@ from examples.development.main import ExperimentRunner
 
 CONFIG = {
     'Q_params': {
-        'kwargs': {
+        'class_name': 'double_feedforward_Q_function',
+        'config': {
             'hidden_layer_sizes': (10, 10),
+            'observation_keys': None,
+            'preprocessors': None,
         },
-        'type': 'double_feedforward_Q_function'
     },
     'algorithm_params': {
-        'kwargs': {
+        'class_name': 'SAC',
+        'config': {
+            'Q_lr': 0.0003,
+            'alpha_lr': 0.0003,
+            'batch_size': 256,
             'discount': 0.99,
             'epoch_length': 20,
             'eval_n_episodes': 1,
             'eval_render_kwargs': {},
-            'lr': 0.0003,
-            'n_epochs': 301,
-            'n_initial_exploration_steps': 10,
-            'n_train_repeat': 1,
-            'batch_size': 256,
             'min_pool_size': 15,
+            'n_epochs': 301,
+            'n_train_repeat': 1,
+            'num_warmup_samples': 10,
+            'policy_lr': 0.0003,
             'reward_scale': 1.0,
-            'save_full_state': False,
             'target_entropy': 'auto',
             'target_update_interval': 1,
             'tau': 0.005,
-            'train_every_n_steps': 1
+            'train_every_n_steps': 1,
+            'video_save_frequency': 0,
         },
-        'type': 'SAC'
     },
     'environment_params': {
-        'training': {
-            'universe': 'gym',
-            'domain': 'Swimmer',
-            'task': 'v3',
+        'evaluation': {
+            'domain': 'Pendulum',
             'kwargs': {},
+            'task': 'v0',
+            'universe': 'gym',
         },
-    },
-    'git_sha':
-    'fb03db4b0ffafc61d8ea6d550e7fdebeecb34d15 '
-    'refactor/pick-utils-changes',
-    'mode':
-    'local',
-    'policy_params': {
-        'kwargs': {
-            'hidden_layer_sizes': (10, 10),
-            'squash': True
+        'training': {
+            'domain': 'Pendulum',
+            'kwargs': {},
+            'task': 'v0',
+            'universe': 'gym',
         },
-        'type': 'GaussianPolicy'
     },
     'exploration_policy_params': {
-        'kwargs': {},
-        'type': 'UniformPolicy'
+        'class_name': 'UniformPolicy',
+        'config': {
+            'observation_keys': None,
+        },
+    },
+    'git_sha': ('fb03db4b0ffafc61d8ea6d550e7fdebeecb34d15 '
+                'refactor/pick-utils-changes'),
+    'mode': 'local',
+    'policy_params': {
+        'class_name': 'FeedforwardGaussianPolicy',
+        'config': {
+            'hidden_layer_sizes': (10, 10),
+            'observation_keys': None,
+            'preprocessors': None,
+            'squash': True,
+        },
     },
     'replay_pool_params': {
-        'kwargs': {
+        'class_name': 'SimpleReplayPool',
+        'config': {
             'max_size': 1000
         },
-        'type': 'SimpleReplayPool'
     },
     'run_params': {
         'checkpoint_at_end': True,
@@ -69,10 +81,10 @@ CONFIG = {
         'seed': 5666
     },
     'sampler_params': {
-        'kwargs': {
+        'class_name': 'SimpleSampler',
+        'config': {
             'max_path_length': 10,
         },
-        'type': 'SimpleSampler'
     },
 }
 
