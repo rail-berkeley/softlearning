@@ -19,7 +19,7 @@ CONFIG = {
         'config': {
             'Q_lr': 0.0003,
             'alpha_lr': 0.0003,
-            'batch_size': 256,
+            'batch_size': 4,
             'discount': 0.99,
             'epoch_length': 20,
             'eval_n_episodes': 1,
