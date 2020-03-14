@@ -272,22 +272,6 @@ class LatentSpacePolicy(ContinuousPolicy):
     def _reset_smoothing_x(self):
         self._smoothing_x = np.zeros((1, *self._output_shape))
 
-    @tf.function(experimental_relax_shapes=True)
-    def actions(self, observations):
-        observations = self._filter_observations(observations)
-
-        first_observation = tree.flatten(observations)[0]
-        first_input_rank = tf.size(tree.flatten(self._input_shapes)[0])
-        batch_shape = tf.shape(first_observation)[:-first_input_rank]
-
-        shifts, scales = self.shift_and_scale_model(observations)
-        actions = self.action_distribution.sample(
-            batch_shape,
-            bijector_kwargs={'scale': {'scale': scales},
-                             'shift': {'shift': shifts}})
-
-        return actions
-
     def reset(self):
         self._reset_smoothing_x()
 
