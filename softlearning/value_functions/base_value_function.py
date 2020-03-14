@@ -6,9 +6,10 @@ import tree
 
 
 class BaseValueFunction:
-    def __init__(self, model, observation_keys):
+    def __init__(self, model, observation_keys, name='value_function'):
         self._observation_keys = observation_keys
         self.model = model
+        self._name = name
 
     @property
     def name(self):

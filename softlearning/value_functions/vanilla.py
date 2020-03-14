@@ -50,9 +50,9 @@ def feedforward_Q_function(input_shapes,
         **kwargs
     )
 
-    Q_model = tf.keras.Model(inputs, Q_model_body(out))
+    Q_model = tf.keras.Model(inputs, Q_model_body(out), name=name)
 
     Q_function = StateActionValueFunction(
-        model=Q_model, observation_keys=observation_keys)
+        model=Q_model, observation_keys=observation_keys, name=name)
 
     return Q_function
