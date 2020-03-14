@@ -42,6 +42,7 @@ class GaussianPolicy(LatentSpacePolicy):
 
         # TODO(hartikainen): This should have `@tf.function` decorator
         around it, but is currently disabled due to erroneous behavior with it.
+        # See: https://github.com/tensorflow/probability/issues/840
         """
         observations = self._filter_observations(observations)
 
@@ -63,6 +64,7 @@ class GaussianPolicy(LatentSpacePolicy):
 
         # TODO(hartikainen): This should have `@tf.function` decorator
         around it, but is currently disabled due to erroneous behavior with it.
+        # See: https://github.com/tensorflow/probability/issues/840
         """
         observations = self._filter_observations(observations)
 
@@ -81,6 +83,7 @@ class GaussianPolicy(LatentSpacePolicy):
 
         # TODO(hartikainen): This should have `@tf.function` decorator
         around it, but is currently disabled due to erroneous behavior with it.
+        # See: https://github.com/tensorflow/probability/issues/840
         """
         observations = self._filter_observations(observations)
         shifts, scales = self.shift_and_scale_model(observations)
