@@ -36,8 +36,13 @@ class GaussianPolicy(LatentSpacePolicy):
         self.action_distribution = self._action_post_processor(
             raw_action_distribution)
 
-    @tf.function(experimental_relax_shapes=True)
+    # @tf.function(experimental_relax_shapes=True)
     def actions(self, observations):
+        """Compute actions for given observations.
+
+        # TODO(hartikainen): This should have `@tf.function` decorator
+        around it, but is currently disabled due to erroneous behavior with it.
+        """
         observations = self._filter_observations(observations)
 
         first_observation = tree.flatten(observations)[0]
@@ -52,8 +57,13 @@ class GaussianPolicy(LatentSpacePolicy):
 
         return actions
 
-    @tf.function(experimental_relax_shapes=True)
+    # @tf.function(experimental_relax_shapes=True)
     def log_probs(self, observations, actions):
+        """Compute log probabilities of `actions` given observations.
+
+        # TODO(hartikainen): This should have `@tf.function` decorator
+        around it, but is currently disabled due to erroneous behavior with it.
+        """
         observations = self._filter_observations(observations)
 
         shifts, scales = self.shift_and_scale_model(observations)
@@ -65,8 +75,13 @@ class GaussianPolicy(LatentSpacePolicy):
 
         return log_probs
 
-    @tf.function(experimental_relax_shapes=True)
+    # @tf.function(experimental_relax_shapes=True)
     def probs(self, observations, actions):
+        """Compute probabilities of `actions` given observations.
+
+        # TODO(hartikainen): This should have `@tf.function` decorator
+        around it, but is currently disabled due to erroneous behavior with it.
+        """
         observations = self._filter_observations(observations)
         shifts, scales = self.shift_and_scale_model(observations)
         probs = self.action_distribution.prob(
@@ -100,7 +115,7 @@ class GaussianPolicy(LatentSpacePolicy):
     def non_trainable_weights(self):
         return self.shift_and_scale_model.non_trainable_weights
 
-    @tf.function(experimental_relax_shapes=True)
+    # @tf.function(experimental_relax_shapes=True)
     def get_diagnostics(self, inputs):
         """Return diagnostic information of the policy.
 
