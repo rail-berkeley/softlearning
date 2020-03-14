@@ -212,7 +212,7 @@ class ExperimentRunner(tune.Trainable):
         )
 
         self.algorithm._alpha_optimizer.apply_gradients([(
-            tf.zeros_like(self.algorithm._log_alpha), self.algorithm._log_alpha
+            tf.zeros_like(self.algorithm._alpha), self.algorithm._alpha
         )])
         self.algorithm._policy_optimizer.apply_gradients([
             (tf.zeros_like(variable), variable)
