@@ -238,7 +238,7 @@ class SAC(RLAlgorithm):
     @tf.function(experimental_relax_shapes=True)
     def _update_alpha(self, batch):
         if not isinstance(self._target_entropy, Number):
-            return
+            return 0.0
 
         observations = batch['observations']
 
