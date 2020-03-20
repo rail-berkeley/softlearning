@@ -187,7 +187,7 @@ class FlexibleReplayPool(ReplayPool):
                          indices,
                          field_name_filter=None,
                          validate_index=True):
-        if validate_index and np.any(self.size < indices % self._max_size):
+        if validate_index and np.any(self.size <= indices % self._max_size):
             raise ValueError(
                 "Tried to retrieve batch with indices greater than current"
                 " size")
@@ -203,7 +203,7 @@ class FlexibleReplayPool(ReplayPool):
                                   indices,
                                   sequence_length,
                                   field_name_filter=None):
-        if np.any(self.size < indices % self._max_size):
+        if np.any(self.size <= indices % self._max_size):
             raise ValueError(
                 "Tried to retrieve batch with indices greater than current"
                 " size")
