@@ -26,8 +26,6 @@ from ray.autoscaler.commands import exec_cluster
 from softlearning.utils.times import datetimestamp
 from softlearning.utils.misc import PROJECT_PATH
 
-import tensorflow as tf
-
 
 AUTOSCALER_DEFAULT_CONFIG_FILE_GCE = os.path.join(
     PROJECT_PATH, 'config', 'ray-autoscaler-gce.yaml')
@@ -260,14 +258,17 @@ def run_example_debug(example_module_name, example_argv):
     of all cpus once ray local mode supports custom resources.
     """
 
-    debug_example_argv = []
+    debug_example_argv = ['--with-server=False', '--max-failure=0']
     for option in example_argv:
         if '--trial-cpus' in option:
             available_cpus = multiprocessing.cpu_count()
             debug_example_argv.append(f'--trial-cpus={available_cpus}')
+        elif '--with-server' in option:
+            print(f"Ignoring {option} due to debug mode.")
+        elif '--max-failures' in option:
+            print(f"Ignoring {option} due to debug mode.")
         elif '--upload-dir' in option:
             print(f"Ignoring {option} due to debug mode.")
-            continue
         else:
             debug_example_argv.append(option)
 
