@@ -18,7 +18,7 @@ class GaussianPolicy(LatentSpacePolicy):
     def __init__(self, *args, **kwargs):
         super(GaussianPolicy, self).__init__(*args, **kwargs)
 
-        self.shift_and_scale_model = self._shift_and_log_scale_diag_net(
+        self.shift_and_scale_model = self._shift_and_scale_diag_net(
             inputs=self.inputs,
             output_size=np.prod(self._output_shape) * 2)
 
@@ -95,7 +95,7 @@ class GaussianPolicy(LatentSpacePolicy):
 
         return probs
 
-    def _shift_and_log_scale_diag_net(self, inputs, output_size):
+    def _shift_and_scale_diag_net(self, inputs, output_size):
         raise NotImplementedError
 
     def save_weights(self, *args, **kwargs):
@@ -159,29 +159,20 @@ class FeedforwardGaussianPolicy(GaussianPolicy):
 
         super(FeedforwardGaussianPolicy, self).__init__(*args, **kwargs)
 
-    def _shift_and_log_scale_diag_net(self, inputs, output_size):
+    def _shift_and_scale_diag_net(self, inputs, output_size):
         preprocessed_inputs = self._preprocess_inputs(inputs)
-        shift_and_log_scale_diag = feedforward_model(
+        shift_and_scale_diag = feedforward_model(
             hidden_layer_sizes=self._hidden_layer_sizes,
-            output_shape=[output_size],
+            output_shape=(output_size, ),
             activation=self._activation,
             output_activation=self._output_activation
         )(preprocessed_inputs)
 
-        def split_shift_and_log_scale_diag_fn(inputs):
-            shift_and_log_scale_diag = inputs
-            shift, log_scale_diag = tf.split(
-                shift_and_log_scale_diag,
-                num_or_size_splits=2,
-                axis=-1)
-            scale_diag = tf.exp(log_scale_diag)
-            return [shift, scale_diag]
-
         shift, scale = tf.keras.layers.Lambda(
-            split_shift_and_log_scale_diag_fn
-        )(shift_and_log_scale_diag)
-        shift_and_scale_diag_model = tf.keras.Model(
-            inputs, (shift, scale))
+            lambda x: tf.split(x, num_or_size_splits=2, axis=-1)
+        )(shift_and_scale_diag)
+        scale = tf.keras.layers.Lambda(lambda x: tf.math.softplus(x))(scale)
+        shift_and_scale_diag_model = tf.keras.Model(inputs, (shift, scale))
 
         return shift_and_scale_diag_model
 
