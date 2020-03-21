@@ -146,8 +146,8 @@ class SAC(RLAlgorithm):
         reward_scale = self._reward_scale
         discount = self._discount
 
-        next_actions = self._policy.actions(next_observations)
-        next_log_pis = self._policy.log_probs(next_observations, next_actions)
+        next_actions, next_log_pis = self._policy.actions_and_log_probs(
+            next_observations)
         next_Qs_values = tuple(
             Q.values(next_observations, next_actions) for Q in self._Q_targets)
         next_Q_values = tf.reduce_min(next_Qs_values, axis=0)
@@ -212,8 +212,7 @@ class SAC(RLAlgorithm):
         observations = batch['observations']
 
         with tf.GradientTape() as tape:
-            actions = self._policy.actions(observations)
-            log_pis = self._policy.log_probs(observations, actions)
+            actions, log_pis = self._policy.actions_and_log_probs(observations)
 
             Qs_log_targets = tuple(
                 Q.values(observations, actions) for Q in self._Qs)
@@ -242,8 +241,7 @@ class SAC(RLAlgorithm):
 
         observations = batch['observations']
 
-        actions = self._policy.actions(observations)
-        log_pis = self._policy.log_probs(observations, actions)
+        actions, log_pis = self._policy.actions_and_log_probs(observations)
 
         with tf.GradientTape() as tape:
             alpha_losses = -1.0 * (

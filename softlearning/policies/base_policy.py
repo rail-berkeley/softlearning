@@ -132,6 +132,12 @@ class BasePolicy:
         log_prob = tree.map_structure(lambda x: x[0], log_probs)
         return log_prob
 
+    def actions_and_log_probs(self, *args, **kwargs):
+        """Compute actions for given inputs (e.g. observations)."""
+        actions = self.actions(*args, **kwargs)
+        log_probs = self.log_probs(*args, **kwargs, actions=actions)
+        return actions, log_probs
+
     @abc.abstractmethod
     def probs(self, inputs, actions):
         """Compute probabilities for given actions."""

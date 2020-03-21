@@ -36,14 +36,9 @@ class GaussianPolicy(LatentSpacePolicy):
         self.action_distribution = self._action_post_processor(
             raw_action_distribution)
 
-    # @tf.function(experimental_relax_shapes=True)
+    @tf.function(experimental_relax_shapes=True)
     def actions(self, observations):
-        """Compute actions for given observations.
-
-        # TODO(hartikainen): This should have `@tf.function` decorator
-        around it, but is currently disabled due to erroneous behavior with it.
-        # See: https://github.com/tensorflow/probability/issues/840
-        """
+        """Compute actions for given observations."""
         observations = self._filter_observations(observations)
 
         first_observation = tree.flatten(observations)[0]
@@ -58,14 +53,9 @@ class GaussianPolicy(LatentSpacePolicy):
 
         return actions
 
-    # @tf.function(experimental_relax_shapes=True)
+    @tf.function(experimental_relax_shapes=True)
     def log_probs(self, observations, actions):
-        """Compute log probabilities of `actions` given observations.
-
-        # TODO(hartikainen): This should have `@tf.function` decorator
-        around it, but is currently disabled due to erroneous behavior with it.
-        # See: https://github.com/tensorflow/probability/issues/840
-        """
+        """Compute log probabilities of `actions` given observations."""
         observations = self._filter_observations(observations)
 
         shifts, scales = self.shift_and_scale_model(observations)
@@ -77,14 +67,9 @@ class GaussianPolicy(LatentSpacePolicy):
 
         return log_probs
 
-    # @tf.function(experimental_relax_shapes=True)
+    @tf.function(experimental_relax_shapes=True)
     def probs(self, observations, actions):
-        """Compute probabilities of `actions` given observations.
-
-        # TODO(hartikainen): This should have `@tf.function` decorator
-        around it, but is currently disabled due to erroneous behavior with it.
-        # See: https://github.com/tensorflow/probability/issues/840
-        """
+        """Compute probabilities of `actions` given observations."""
         observations = self._filter_observations(observations)
         shifts, scales = self.shift_and_scale_model(observations)
         probs = self.action_distribution.prob(
@@ -94,6 +79,68 @@ class GaussianPolicy(LatentSpacePolicy):
         )[..., tf.newaxis]
 
         return probs
+
+    @tf.function(experimental_relax_shapes=True)
+    def actions_and_log_probs(self, observations):
+        """Compute actions and log probabilities together.
+
+        We need this functions to avoid numerical issues coming out of the
+        squashing bijector (`tfp.bijectors.Tanh`). Ideally this would be
+        avoided by using caching of the bijector and then computing actions
+        and log probs separately, but that's currently not possible due to the
+        issue in the graph mode (i.e. within `tf.function`) bijector caching.
+        This method could be removed once the caching works. For more, see:
+        https://github.com/tensorflow/probability/issues/840
+        """
+        observations = self._filter_observations(observations)
+
+        first_observation = tree.flatten(observations)[0]
+        first_input_rank = tf.size(tree.flatten(self._input_shapes)[0])
+        batch_shape = tf.shape(first_observation)[:-first_input_rank]
+
+        shifts, scales = self.shift_and_scale_model(observations)
+        actions = self.action_distribution.sample(
+            batch_shape,
+            bijector_kwargs={'scale': {'scale': scales},
+                             'shift': {'shift': shifts}})
+        log_probs = self.action_distribution.log_prob(
+            actions,
+            bijector_kwargs={'scale': {'scale': scales},
+                             'shift': {'shift': shifts}}
+        )[..., tf.newaxis]
+
+        return actions, log_probs
+
+    @tf.function(experimental_relax_shapes=True)
+    def actions_and_probs(self, observations):
+        """Compute actions and probabilities together.
+
+        We need this functions to avoid numerical issues coming out of the
+        squashing bijector (`tfp.bijectors.Tanh`). Ideally this would be
+        avoided by using caching of the bijector and then computing actions
+        and probs separately, but that's currently not possible due to the
+        issue in the graph mode (i.e. within `tf.function`) bijector caching.
+        This method could be removed once the caching works. For more, see:
+        https://github.com/tensorflow/probability/issues/840
+        """
+        observations = self._filter_observations(observations)
+
+        first_observation = tree.flatten(observations)[0]
+        first_input_rank = tf.size(tree.flatten(self._input_shapes)[0])
+        batch_shape = tf.shape(first_observation)[:-first_input_rank]
+
+        shifts, scales = self.shift_and_scale_model(observations)
+        actions = self.action_distribution.sample(
+            batch_shape,
+            bijector_kwargs={'scale': {'scale': scales},
+                             'shift': {'shift': shifts}})
+        probs = self.action_distribution.prob(
+            actions,
+            bijector_kwargs={'scale': {'scale': scales},
+                             'shift': {'shift': shifts}}
+        )[..., tf.newaxis]
+
+        return actions, probs
 
     def _shift_and_scale_diag_net(self, inputs, output_size):
         raise NotImplementedError
@@ -118,7 +165,7 @@ class GaussianPolicy(LatentSpacePolicy):
     def non_trainable_weights(self):
         return self.shift_and_scale_model.non_trainable_weights
 
-    # @tf.function(experimental_relax_shapes=True)
+    @tf.function(experimental_relax_shapes=True)
     def get_diagnostics(self, inputs):
         """Return diagnostic information of the policy.
 
