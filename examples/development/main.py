@@ -226,18 +226,7 @@ class ExperimentRunner(tune.Trainable):
         status.assert_consumed().run_restore_ops()
 
     def _save(self, checkpoint_dir):
-        """Implements the checkpoint logic.
-
-        TODO(hartikainen): This implementation is currently very hacky. Things
-        that need to be fixed:
-          - Figure out how serialize/save tf.keras.Model subclassing. The
-            current implementation just dumps the weights in a pickle, which
-            is not optimal.
-          - Try to unify all the saving and loading into easily
-            extendable/maintainable interfaces. Currently we use
-            `tf.train.Checkpoint` and `pickle.dump` in very unorganized way
-            which makes things not so usable.
-        """
+        """Implements the checkpoint save logic."""
         self._save_replay_pool(checkpoint_dir)
         self._save_sampler(checkpoint_dir)
         self._save_value_functions(checkpoint_dir)
@@ -247,6 +236,7 @@ class ExperimentRunner(tune.Trainable):
         return os.path.join(checkpoint_dir, '')
 
     def _restore(self, checkpoint_dir):
+        """Implements the checkpoint restore logic."""
         assert isinstance(checkpoint_dir, str), checkpoint_dir
         checkpoint_dir = checkpoint_dir.rstrip('/')
 
@@ -260,9 +250,8 @@ class ExperimentRunner(tune.Trainable):
 
         self._built = True
 
-        # # TODO(hartikainen): target Qs should either be checkpointed or pickled.
-        # for Q, Q_target in zip(self.algorithm._Qs, self.algorithm._Q_targets):
-        #     Q_target.set_weights(Q.get_weights())
+        for Q, Q_target in zip(self.algorithm._Qs, self.algorithm._Q_targets):
+            Q_target.set_weights(Q.get_weights())
 
 
 def main(argv=None):
