@@ -173,8 +173,7 @@ class GaussianPolicy(LatentSpacePolicy):
         covariances.
         """
         shifts, scales = self.shift_and_scale_model(inputs)
-        actions = self.actions(inputs)
-        log_pis = self.log_probs(inputs, actions)
+        actions, log_pis = self.actions_and_log_probs(inputs)
 
         return OrderedDict((
             ('shifts-mean', tf.reduce_mean(shifts)),
