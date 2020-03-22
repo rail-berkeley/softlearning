@@ -113,10 +113,11 @@ class BasePolicy:
         """Compute actions for given inputs (e.g. observations)."""
         raise NotImplementedError
 
-    def action(self, input_):
+    def action(self, *args, **kwargs):
         """Compute an action for a single input, (e.g. observation)."""
-        inputs = tree.map_structure(lambda x: x[None, ...], input_)
-        actions = self.actions(inputs)
+        args_, kwargs_ = tree.map_structure(
+            lambda x: x[None, ...], (args, kwargs))
+        actions = self.actions(*args_, **kwargs_)
         action = tree.map_structure(lambda x: x[0], actions)
         return action
 
@@ -125,10 +126,11 @@ class BasePolicy:
         """Compute log probabilities for given actions."""
         raise NotImplementedError
 
-    def log_prob(self, *input_):
+    def log_prob(self, *args, **kwargs):
         """Compute the log probability for a single action."""
-        inputs = tree.map_structure(lambda x: x[None, ...], input_)
-        log_probs = self.log_probs(*inputs)
+        args_, kwargs_ = tree.map_structure(
+            lambda x: x[None, ...], (args, kwargs))
+        log_probs = self.log_probs(*args_, **kwargs_)
         log_prob = tree.map_structure(lambda x: x[0], log_probs)
         return log_prob
 
@@ -143,10 +145,11 @@ class BasePolicy:
         """Compute probabilities for given actions."""
         raise NotImplementedError
 
-    def prob(self, *input_):
+    def prob(self, *args, **kwargs):
         """Compute the probability for a single action."""
-        inputs = tree.map_structure(lambda x: x[None, ...], input_)
-        probs = self.probs(*inputs)
+        args_, kwargs_ = tree.map_structure(
+            lambda x: x[None, ...], (args, kwargs))
+        probs = self.probs(*args_, **kwargs_)
         prob = tree.map_structure(lambda x: x[0], probs)
         return prob
 

@@ -75,10 +75,11 @@ class BaseValueFunction:
         """Compute values for given inputs, (e.g. observations)."""
         raise NotImplementedError
 
-    def value(self, input_):
+    def value(self, *args, **kwargs):
         """Compute a value for a single input, (e.g. observation)."""
-        inputs = tree.map_structure(lambda x: x[None, ...], input_)
-        values = self.values(inputs)
+        args_, kwargs_ = tree.map_structure(
+            lambda x: x[None, ...], (args, kwargs))
+        values = self.values(*args_, **kwargs_)
         value = tree.map_structure(lambda x: x[0], values)
         return value
 
