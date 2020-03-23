@@ -5,15 +5,21 @@ import pytest
 from softlearning.environments.utils import get_environment
 from softlearning.samplers.remote_sampler import RemoteSampler
 from softlearning.replay_pools.simple_replay_pool import SimpleReplayPool
-from softlearning.policies.utils import get_policy_from_params
+from softlearning import policies
 
 
 @pytest.mark.skip(reason="RemoteSampler is currently broken.")
 class RemoteSamplerTest(unittest.TestCase):
     def setUp(self):
         self.env = get_environment('gym', 'Swimmer', 'v3', {})
-        self.policy = get_policy_from_params(
-            {'type': 'UniformPolicy'}, env=self.env)
+        self.policy = policies.ContinuousUniformPolicy(
+            action_range=(
+                self.env.action_space.low,
+                self.env.action_space.high,
+            ),
+            input_shapes=self.env.observation_shape,
+            output_shape=self.env.action_shape,
+            observation_keys=self.env.observation_keys)
         self.pool = SimpleReplayPool(max_size=100, environment=self.env)
         self.remote_sampler = RemoteSampler(max_path_length=10)
 

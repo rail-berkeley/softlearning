@@ -59,7 +59,7 @@ class QFPolicyPlotter:
             observations = np.tile(
                 obs[None].astype(np.float32), (actions.shape[0], 1))
 
-            Q_np = self._Q.predict((observations, actions))
+            Q_np = self._Q.values(observations, actions).numpy()
             Q_np = np.reshape(Q_np, xgrid.shape)
 
             cs = ax.contour(xgrid, ygrid, Q_np, 20)
@@ -70,7 +70,7 @@ class QFPolicyPlotter:
     def _plot_action_samples(self):
         for ax, obs in zip(self._ax_lst, self._obs_lst):
             observations = np.ones((self._n_samples, 1)) * obs[None, :]
-            actions = self._policy.actions_np([observations])
+            actions = self._policy.actions(observations).numpy()
 
             x, y = actions[:, 0], actions[:, 1]
             self._line_objects += ax.plot(x, y, 'b*')

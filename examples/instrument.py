@@ -66,6 +66,14 @@ def add_command_line_args_to_variant_spec(variant_spec, command_line_args):
         ),
     })
 
+    if (command_line_args.mode == 'debug'
+        and ('run_eagerly' not in command_line_args
+             or command_line_args.run_eagerly is None)):
+        variant_spec['run_params']['run_eagerly'] = True
+    elif 'run_eagerly' in command_line_args:
+        variant_spec['run_params']['run_eagerly'] = (
+            command_line_args.run_eagerly)
+
     variant_spec['restore'] = command_line_args.restore
 
     return variant_spec
@@ -104,7 +112,7 @@ def generate_experiment_kwargs(variant_spec, command_line_args):
 
     if command_line_args.video_save_frequency is not None:
         assert 'algorithm_params' in variant_spec
-        variant_spec['algorithm_params']['kwargs']['video_save_frequency'] = (
+        variant_spec['algorithm_params']['config']['video_save_frequency'] = (
             command_line_args.video_save_frequency)
 
     def create_trial_name_creator(trial_name_template=None):
@@ -114,7 +122,7 @@ def generate_experiment_kwargs(variant_spec, command_line_args):
         def trial_name_creator(trial):
             return trial_name_template.format(trial=trial)
 
-        return tune.function(trial_name_creator)
+        return trial_name_creator
 
     experiment_kwargs = {
         'name': experiment_id,
@@ -250,14 +258,17 @@ def run_example_debug(example_module_name, example_argv):
     of all cpus once ray local mode supports custom resources.
     """
 
-    debug_example_argv = []
+    debug_example_argv = ['--with-server=False', '--max-failure=0']
     for option in example_argv:
         if '--trial-cpus' in option:
             available_cpus = multiprocessing.cpu_count()
             debug_example_argv.append(f'--trial-cpus={available_cpus}')
+        elif '--with-server' in option:
+            print(f"Ignoring {option} due to debug mode.")
+        elif '--max-failures' in option:
+            print(f"Ignoring {option} due to debug mode.")
         elif '--upload-dir' in option:
             print(f"Ignoring {option} due to debug mode.")
-            continue
         else:
             debug_example_argv.append(option)
 
@@ -268,7 +279,7 @@ def run_example_cluster(example_module_name, example_argv):
     """Run example on cluster mode.
 
     This functions is very similar to the local mode, except that it
-    correctly sets the redis address to make ray/tune work on a cluster.
+    correctly sets the ray address to make ray/tune work on a cluster.
     """
     example_module = importlib.import_module(example_module_name)
 
@@ -278,10 +289,10 @@ def run_example_cluster(example_module_name, example_argv):
 
     experiment_kwargs = generate_experiment_kwargs(variant_spec, example_args)
 
-    redis_address = ray.services.get_node_ip_address() + ':6379'
+    address = ray.services.get_node_ip_address() + ':6379'
 
     ray.init(
-        redis_address=redis_address,
+        address=address,
         num_cpus=example_args.cpus,
         num_gpus=example_args.gpus,
         local_mode=False,

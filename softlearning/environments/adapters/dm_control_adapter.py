@@ -6,11 +6,10 @@ import copy
 import numpy as np
 from dm_control import suite
 from dm_env import specs
-from dm_control.suite.wrappers import pixels
+from dm_control.suite.wrappers import pixels, action_scale
 from gym import spaces
 
 from .softlearning_env import SoftlearningEnv
-from softlearning.environments.dm_control.suite.wrappers import action_scale
 
 
 DM_CONTROL_ENVIRONMENTS = {}

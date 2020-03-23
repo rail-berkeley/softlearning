@@ -27,20 +27,27 @@ def flatten_input_structure(inputs):
     return inputs_flat
 
 
-def create_input(path, input_shape):
+def create_input(path, shape, dtype=None):
     name = "/".join(str(x) for x in path)
+
+    if dtype is None:
+        # TODO(hartikainen): This is not a very robust way to handle the
+        # dtypes. Need to figure out something better.
+        # Try to infer dtype manually
+        dtype = (tf.uint8  # Image observation
+                 if len(shape) == 3 and shape[-1] in (1, 3)
+                 else tf.float32)  # Non-image
+
     input_ = tf.keras.layers.Input(
-        shape=input_shape,
+        shape=shape,
         name=name,
-        dtype=(tf.uint8  # Image observation
-               if len(input_shape) == 3 and input_shape[-1] in (1, 3)
-               else tf.float32),  # Non-image
+        dtype=dtype
     )
 
     return input_
 
 
-def create_inputs(input_shapes):
+def create_inputs(shapes, dtypes=None):
     """Creates `tf.keras.layers.Input`s based on input shapes.
 
     Args:
@@ -53,6 +60,24 @@ def create_inputs(input_shapes):
 
     TODO(hartikainen): Need to figure out a better way for handling the dtypes.
     """
-    inputs = tree.map_structure_with_path(create_input, input_shapes)
+    if dtypes is None:
+        dtypes = tree.map_structure(lambda _: None, shapes)
+    inputs = tree.map_structure_with_path(create_input, shapes, dtypes)
 
     return inputs
+
+
+def create_sequence_inputs(shapes, dtypes=None):
+    """Creates `tf.keras.layers.Input`s usable for sequential models like RNN.
+
+    Args:
+        See `create_inputs`.
+
+    Returns:
+        inputs: nested structure, of same shape as input_shapes, containing
+        `tf.keras.layers.Input`s, each with shape (None, ...).
+    """
+    shapes = tree.map_structure(lambda x: tf.TensorShape([None]) + x, shapes)
+    sequence_inputs = create_inputs(shapes, dtypes)
+
+    return sequence_inputs

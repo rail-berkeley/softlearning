@@ -71,17 +71,6 @@ GENERAL_ENVIRONMENT_SPECS = (
     },
 )
 
-MULTIWORLD_ENVIRONMENT_SPECS = (
-    {
-        'id': 'Point2DEnv-Default-v0',
-        'entry_point': 'multiworld.envs.pygame.point2d:Point2DEnv'
-    },
-    {
-        'id': 'Point2DEnv-Wall-v0',
-        'entry_point': 'multiworld.envs.pygame.point2d:Point2DWallEnv'
-    },
-)
-
 MUJOCO_ENVIRONMENTS = tuple(
     environment_spec['id']
     for environment_spec in MUJOCO_ENVIRONMENT_SPECS)
@@ -92,14 +81,9 @@ GENERAL_ENVIRONMENTS = tuple(
     for environment_spec in GENERAL_ENVIRONMENT_SPECS)
 
 
-MULTIWORLD_ENVIRONMENTS = tuple(
-    environment_spec['id']
-    for environment_spec in MULTIWORLD_ENVIRONMENT_SPECS)
-
 GYM_ENVIRONMENTS = (
     *MUJOCO_ENVIRONMENTS,
     *GENERAL_ENVIRONMENTS,
-    *MULTIWORLD_ENVIRONMENTS,
 )
 
 
@@ -127,25 +111,11 @@ def register_general_environments():
     return gym_ids
 
 
-def register_multiworld_environments():
-    """Register custom environments from multiworld package."""
-    for multiworld_environment in MULTIWORLD_ENVIRONMENT_SPECS:
-        gym.register(**multiworld_environment)
-
-    gym_ids = tuple(
-        environment_spec['id']
-        for environment_spec in  MULTIWORLD_ENVIRONMENT_SPECS)
-
-    return gym_ids
-
-
 def register_environments():
     registered_mujoco_environments = register_mujoco_environments()
     registered_general_environments = register_general_environments()
-    registered_multiworld_environments = register_multiworld_environments()
 
     return (
         *registered_mujoco_environments,
         *registered_general_environments,
-        *registered_multiworld_environments,
     )

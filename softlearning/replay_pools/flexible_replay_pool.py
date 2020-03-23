@@ -183,8 +183,11 @@ class FlexibleReplayPool(ReplayPool):
 
         return filtered_field_names
 
-    def batch_by_indices(self, indices, field_name_filter=None):
-        if np.any(indices % self._max_size > self.size):
+    def batch_by_indices(self,
+                         indices,
+                         field_name_filter=None,
+                         validate_index=True):
+        if validate_index and np.any(self.size <= indices % self._max_size):
             raise ValueError(
                 "Tried to retrieve batch with indices greater than current"
                 " size")
@@ -200,7 +203,7 @@ class FlexibleReplayPool(ReplayPool):
                                   indices,
                                   sequence_length,
                                   field_name_filter=None):
-        if np.any(indices % self._max_size > self.size):
+        if np.any(self.size <= indices % self._max_size):
             raise ValueError(
                 "Tried to retrieve batch with indices greater than current"
                 " size")
@@ -209,7 +212,15 @@ class FlexibleReplayPool(ReplayPool):
 
         sequence_indices = (
             indices[:, None] - np.arange(sequence_length)[::-1][None])
-        sequence_batch = self.batch_by_indices(sequence_indices)
+        sequence_batch = self.batch_by_indices(
+            sequence_indices, validate_index=False)
+
+        if 'mask' in sequence_batch:
+            raise ValueError(
+                "sequence_batch_by_indices adds a field 'mask' into the batch."
+                " There already exists a 'mask' field in the batch. Please"
+                " remove it before using sequence_batch. TODO(hartikainen):"
+                " Allow mask name to be configured.")
 
         forward_diffs = np.diff(
             sequence_batch['episode_index_forwards'].astype(np.int64), axis=1)
@@ -219,16 +230,14 @@ class FlexibleReplayPool(ReplayPool):
             constant_values=-1)
         cut_and_pad_sample_indices = np.squeeze(
             forward_diffs.shape[1]
-            - np.argmax(forward_diffs[:, ::-1, :] < 0, axis=1)
+            - np.argmax(forward_diffs[:, ::-1, :] < 1, axis=1)
             - 1)
 
-        def cut_and_pad_sequence_batch(sequence_batch):
-            for sample_index, sequence_index in enumerate(
-                    cut_and_pad_sample_indices):
-                sequence_batch[sample_index, :sequence_index, ...] = 0.0
-            return sequence_batch
-
-        tree.map_structure(cut_and_pad_sequence_batch, sequence_batch)
+        sequence_batch['mask'] = np.where(
+            cut_and_pad_sample_indices[..., None]
+            < np.cumsum(np.ones_like(forward_diffs), axis=1)[..., 0],
+            False,
+            True)
 
         return sequence_batch
 

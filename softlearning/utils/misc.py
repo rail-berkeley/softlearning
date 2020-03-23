@@ -14,7 +14,7 @@ def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
     tf.compat.v1.set_random_seed(seed)
-    print("Using seed {}".format(seed))
+    print(f"Using seed {seed}")
 
 
 def get_host_name():

@@ -15,39 +15,42 @@ NUM_COUPLING_LAYERS = 2
 
 
 ALGORITHM_PARAMS_BASE = {
-    'kwargs': {
+    'config': {
         'epoch_length': 1000,
         'train_every_n_steps': 1,
         'n_train_repeat': 1,
         'eval_render_kwargs': {},
         'eval_n_episodes': 1,
-        'eval_deterministic': True,
+        'num_warmup_samples': tune.sample_from(lambda spec: (
+            10 * (spec.get('config', spec)
+                  ['sampler_params']
+                  ['config']
+                  ['max_path_length'])
+        )),
     }
 }
 
 
 ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
-        'type': 'SAC',
-        'kwargs': {
-            'lr': 3e-4,
+        'class_name': 'SAC',
+        'config': {
+            'policy_lr': 3e-4,
+            'Q_lr': 3e-4,
+            'alpha_lr': 3e-4,
             'target_update_interval': 1,
             'tau': 5e-3,
             'target_entropy': 'auto',
-            'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(1e3),
 
             'discount': 0.99,
-            'tau': 5e-3,
             'reward_scale': 1.0,
         },
     },
     'SQL': {
-        'type': 'SQL',
-        'kwargs': {
+        'class_name': 'SQL',
+        'config': {
             'policy_lr': 3e-4,
             'target_update_interval': 1,
-            'n_initial_exploration_steps': int(1e3),
             'discount': 0.99,
             'tau': 5e-3,
             'reward_scale': tune.sample_from(lambda spec: (
@@ -73,12 +76,12 @@ ALGORITHM_PARAMS_ADDITIONAL = {
 
 
 GAUSSIAN_POLICY_PARAMS_BASE = {
-    'type': 'GaussianPolicy',
-    'kwargs': {
+    'class_name': 'FeedforwardGaussianPolicy',
+    'config': {
         'hidden_layer_sizes': (M, M),
         'squash': True,
         'observation_keys': None,
-        'observation_preprocessors_params': {}
+        'preprocessors': None,
     }
 }
 
@@ -320,11 +323,9 @@ ENVIRONMENT_PARAMS_PER_UNIVERSE_DOMAIN_TASK = {
                 'pixel_wrapper_kwargs': {
                     'pixels_only': True,
                     'render_kwargs': {
-                        'pixels': {
-                            'width': 84,
-                            'height': 84,
-                            'camera_id': 0,
-                        },
+                        'width': 84,
+                        'height': 84,
+                        'camera_id': 0,
                     },
                 },
             },
@@ -334,11 +335,9 @@ ENVIRONMENT_PARAMS_PER_UNIVERSE_DOMAIN_TASK = {
                 'pixel_wrapper_kwargs': {
                     'pixels_only': True,
                     'render_kwargs': {
-                        'pixels': {
-                            'width': 84,
-                            'height': 84,
-                            'camera_id': 0,
-                        },
+                        'width': 84,
+                        'height': 84,
+                        'camera_id': 0,
                     },
                 },
             },
@@ -348,11 +347,9 @@ ENVIRONMENT_PARAMS_PER_UNIVERSE_DOMAIN_TASK = {
                 'pixel_wrapper_kwargs': {
                     'pixels_only': True,
                     'render_kwargs': {
-                        'pixels': {
-                            'width': 84,
-                            'height': 84,
-                            'camera_id': 0,
-                        },
+                        'width': 84,
+                        'height': 84,
+                        'camera_id': 0,
                     },
                 },
             },
@@ -383,26 +380,13 @@ def get_max_path_length(universe, domain, task):
     return level_result
 
 
-def get_initial_exploration_steps(spec):
-    config = spec.get('config', spec)
-    num_exploration_episodes = 10
-    initial_exploration_steps = num_exploration_episodes * (
-        config
-        ['sampler_params']
-        ['kwargs']
-        ['max_path_length']
-    )
-
-    return initial_exploration_steps
-
-
 def get_checkpoint_frequency(spec):
     num_checkpoints = 10
     config = spec.get('config', spec)
     checkpoint_frequency = (
         config
         ['algorithm_params']
-        ['kwargs']
+        ['config']
         ['n_epochs']
     ) // num_checkpoints
 
@@ -434,10 +418,8 @@ def get_algorithm_params(universe, domain, task):
     n_epochs = total_timesteps / epoch_length
     assert n_epochs == int(n_epochs)
     algorithm_params = {
-        'kwargs': {
+        'config': {
             'n_epochs': int(n_epochs),
-            'n_initial_exploration_steps': tune.sample_from(
-                get_initial_exploration_steps),
             'epoch_length': epoch_length,
             'min_pool_size': get_max_path_length(universe, domain, task),
             'batch_size': 256,
@@ -477,36 +459,45 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
                 ['training']
             )),
         },
-        'policy_params': tune.sample_from(get_policy_params),
+        # 'policy_params': tune.sample_from(get_policy_params),
+        'policy_params': {
+            'class_name': 'FeedforwardGaussianPolicy',
+            'config': {
+                'hidden_layer_sizes': (M, M),
+                'squash': True,
+                'observation_keys': None,
+                'preprocessors': None,
+            },
+        },
         'exploration_policy_params': {
-            'type': 'UniformPolicy',
-            'kwargs': {
+            'class_name': 'ContinuousUniformPolicy',
+            'config': {
                 'observation_keys': tune.sample_from(lambda spec: (
                     spec.get('config', spec)
                     ['policy_params']
-                    ['kwargs']
+                    ['config']
                     .get('observation_keys')
                 ))
             },
         },
         'Q_params': {
-            'type': 'double_feedforward_Q_function',
-            'kwargs': {
+            'class_name': 'double_feedforward_Q_function',
+            'config': {
                 'hidden_layer_sizes': (M, M),
                 'observation_keys': None,
-                'observation_preprocessors_params': {}
+                'preprocessors': None,
             },
         },
         'algorithm_params': algorithm_params,
         'replay_pool_params': {
-            'type': 'SimpleReplayPool',
-            'kwargs': {
+            'class_name': 'SimpleReplayPool',
+            'config': {
                 'max_size': int(1e6),
             },
         },
         'sampler_params': {
-            'type': 'SimpleSampler',
-            'kwargs': {
+            'class_name': 'SimpleSampler',
+            'config': {
                 'max_path_length': get_max_path_length(universe, domain, task),
             }
         },
@@ -540,8 +531,8 @@ def get_variant_spec_image(universe,
 
     if is_image_env(universe, domain, task, variant_spec):
         preprocessor_params = {
-            'type': 'convnet_preprocessor',
-            'kwargs': {
+            'class_name': 'convnet_preprocessor',
+            'config': {
                 'conv_filters': (64, ) * 3,
                 'conv_kernel_sizes': (3, ) * 3,
                 'conv_strides': (2, ) * 3,
@@ -550,29 +541,28 @@ def get_variant_spec_image(universe,
             },
         }
 
-        variant_spec['policy_params']['kwargs']['hidden_layer_sizes'] = (M, M)
-        variant_spec['policy_params']['kwargs'][
-            'observation_preprocessors_params'] = {
-                'pixels': deepcopy(preprocessor_params)
-            }
+        variant_spec['policy_params']['config']['hidden_layer_sizes'] = (M, M)
+        variant_spec['policy_params']['config']['preprocessors'] = {
+            'pixels': deepcopy(preprocessor_params)
+        }
 
-        variant_spec['Q_params']['kwargs']['hidden_layer_sizes'] = (
+        variant_spec['Q_params']['config']['hidden_layer_sizes'] = (
             tune.sample_from(lambda spec: (deepcopy(
                 spec.get('config', spec)
                 ['policy_params']
-                ['kwargs']
+                ['config']
                 ['hidden_layer_sizes']
             )))
         )
-        variant_spec['Q_params']['kwargs'][
-            'observation_preprocessors_params'] = (
-                tune.sample_from(lambda spec: (deepcopy(
+        variant_spec['Q_params']['config']['preprocessors'] = tune.sample_from(
+            lambda spec: (
+                deepcopy(
                     spec.get('config', spec)
                     ['policy_params']
-                    ['kwargs']
-                    ['observation_preprocessors_params']
-                )))
-            )
+                    ['config']
+                    ['preprocessors']),
+                None,  # Action preprocessor is None
+            ))
 
     return variant_spec
 

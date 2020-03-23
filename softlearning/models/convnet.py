@@ -4,8 +4,6 @@ import tensorflow_addons as tfa
 from tensorflow.keras import layers
 import tree
 
-from softlearning.utils.keras import PicklableSequential
-
 
 tfk = tf.keras
 tfkl = tf.keras.layers
@@ -69,7 +67,7 @@ def convnet_model(
         x = (tf.image.convert_image_dtype(x, tf.float32) - 0.5) * 2.0
         return x
 
-    model = PicklableSequential((
+    model = tf.keras.Sequential((
         tfkl.Lambda(preprocess),
         *[
             conv_block(conv_filter, conv_kernel_size, conv_stride)

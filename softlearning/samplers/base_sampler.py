@@ -16,14 +16,14 @@ class BaseSampler(object):
         self.environment = environment
         self.policy = policy
         self.pool = pool
-        self.environment = environment
-        self.policy = policy
-        self.pool = pool
 
     def initialize(self, environment, policy, pool):
         self.environment = environment
         self.policy = policy
         self.pool = pool
+
+    def reset(self):
+        pass
 
     def set_policy(self, policy):
         self.policy = policy
@@ -52,7 +52,15 @@ class BaseSampler(object):
     def __getstate__(self):
         state = {
             key: value for key, value in self.__dict__.items()
-            if key not in ('environment', 'policy', 'pool', '_last_n_paths')
+            if key not in (
+                    'environment',
+                    'policy',
+                    'pool',
+                    '_last_n_paths',
+                    '_current_observation',
+                    '_current_path',
+                    '_is_first_step',
+            )
         }
 
         return state

@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 import numpy as np
-from flatten_dict import flatten, unflatten
+import tree
 
 from .base_sampler import BaseSampler
 
@@ -10,23 +10,25 @@ class SimpleSampler(BaseSampler):
     def __init__(self, **kwargs):
         super(SimpleSampler, self).__init__(**kwargs)
 
-        self._path_length = 0
-        self._path_return = 0
-        self._current_path = defaultdict(list)
         self._last_path_return = 0
         self._max_path_return = -np.inf
         self._n_episodes = 0
-        self._current_observation = None
         self._total_samples = 0
+
+        self._is_first_step = True
+
+    def reset(self):
+        if self.policy is not None:
+            self.policy.reset()
+
+        self._path_length = 0
+        self._path_return = 0
+        self._current_path = []
+        self._current_observation = self.environment.reset()
 
     @property
     def _policy_input(self):
-        observation = {
-            key: self._current_observation[key][None, ...]
-            for key in self.policy.observation_keys
-        }
-
-        return observation
+        return self._current_observation
 
     def _process_sample(self,
                         observation,
@@ -38,8 +40,8 @@ class SimpleSampler(BaseSampler):
         processed_observation = {
             'observations': observation,
             'actions': action,
-            'rewards': [reward],
-            'terminals': [terminal],
+            'rewards': np.atleast_1d(reward),
+            'terminals': np.atleast_1d(terminal),
             'next_observations': next_observation,
             'infos': info,
         }
@@ -47,10 +49,10 @@ class SimpleSampler(BaseSampler):
         return processed_observation
 
     def sample(self):
-        if self._current_observation is None:
-            self._current_observation = self.environment.reset()
+        if self._is_first_step:
+            self.reset()
 
-        action = self.policy.actions_np(self._policy_input)[0]
+        action = self.policy.action(self._policy_input).numpy()
 
         next_observation, reward, terminal, info = self.environment.step(
             action)
@@ -67,14 +69,11 @@ class SimpleSampler(BaseSampler):
             info=info,
         )
 
-        for key, value in flatten(processed_sample).items():
-            self._current_path[key].append(value)
+        self._current_path.append(processed_sample)
 
         if terminal or self._path_length >= self._max_path_length:
-            last_path = unflatten({
-                field_name: np.array(values)
-                for field_name, values in self._current_path.items()
-            })
+            last_path = tree.map_structure(
+                lambda *x: np.stack(x, axis=0), *self._current_path)
 
             self.pool.add_path({
                 key: value
@@ -87,17 +86,16 @@ class SimpleSampler(BaseSampler):
             self._max_path_return = max(self._max_path_return,
                                         self._path_return)
             self._last_path_return = self._path_return
-
-            self.policy.reset()
-            self.pool.terminate_episode()
-            self._current_observation = None
-            self._path_length = 0
-            self._path_return = 0
-            self._current_path = defaultdict(list)
-
             self._n_episodes += 1
+
+            self.pool.terminate_episode()
+
+            self._is_first_step = True
+            # Reset is done in the beginning of next episode, see above.
+
         else:
             self._current_observation = next_observation
+            self._is_first_step = False
 
         return next_observation, reward, terminal, info
 

@@ -2,25 +2,19 @@ import tensorflow as tf
 import tree
 
 
-def initialize_tf_variables(session, only_uninitialized=True):
-    variables = tf.compat.v1.global_variables() + tf.compat.v1.local_variables()
-
-    def is_initialized(variable):
+def set_gpu_memory_growth(growth):
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
         try:
-            session.run(variable)
-            return True
-        except tf.errors.FailedPreconditionError:
-            return False
-
-        return False
-
-    if only_uninitialized:
-        variables = [
-            variable for variable in variables
-            if not is_initialized(variable)
-        ]
-
-    session.run(tf.compat.v1.variables_initializer(variables))
+            # Currently, memory growth needs to be the same across GPUs
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, growth)
+            logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+            print(len(gpus), "Physical GPUs,", len(logical_gpus),
+                  "Logical GPUs")
+        except RuntimeError as e:
+            # Memory growth must be set before GPUs have been initialized
+            print(e)
 
 
 def apply_preprocessors(preprocessors, inputs):

@@ -5,7 +5,6 @@ import json
 
 from ray.tune import sample_from
 
-import softlearning.algorithms.utils as alg_utils
 import softlearning.environments.utils as env_utils
 from softlearning.utils.times import datetimestamp
 
@@ -13,10 +12,8 @@ from softlearning.utils.times import datetimestamp
 DEFAULT_UNIVERSE = 'gym'
 DEFAULT_DOMAIN = 'Pendulum'
 DEFAULT_TASK = 'v0'
-DEFAULT_ALGORITHM = 'SAC'
 
 AVAILABLE_UNIVERSES = tuple(env_utils.UNIVERSES)
-AVAILABLE_ALGORITHMS = set(alg_utils.ALGORITHM_CLASSES.keys())
 
 
 def add_ray_init_args(parser):
@@ -183,11 +180,7 @@ def get_parser(allow_policy_list=False):
               " constructed) piece by piece so that each"
               " experience is saved only once."))
 
-    parser.add_argument(
-        '--algorithm',
-        type=str,
-        choices=AVAILABLE_ALGORITHMS,
-        default=DEFAULT_ALGORITHM)
+    parser.add_argument('--algorithm', type=str)
     if allow_policy_list:
         parser.add_argument(
             '--policy',
@@ -208,6 +201,11 @@ def get_parser(allow_policy_list=False):
         default=datetimestamp())
     parser.add_argument(
         '--mode', type=str, default='local')
+    parser.add_argument(
+        '--run-eagerly',
+        type=lambda x: bool(strtobool(x)),
+        help=("Whether to run tensorflow in eager mode."))
+
     parser.add_argument(
         '--confirm-remote',
         type=lambda x: bool(strtobool(x)),

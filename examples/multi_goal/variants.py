@@ -1,9 +1,9 @@
 from softlearning.utils.dict import deep_update
 
 ALGORITHM_PARAMS_BASE = {
-    'type': 'SAC',
+    'class_name': 'SAC',
 
-    'kwargs': {
+    'config': {
         'epoch_length': 100,
         'n_epochs': 1000,
         'n_train_repeat': 1,
@@ -11,7 +11,6 @@ ALGORITHM_PARAMS_BASE = {
             'mode': 'human',
         },
         'eval_n_episodes': 10,
-        'eval_deterministic': True,
 
         'discount': 0.99,
         'reward_scale': 1.0,
@@ -23,18 +22,17 @@ ALGORITHM_PARAMS_BASE = {
 
 ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
-        'type': 'SAC',
-        'kwargs': {
+        'class_name': 'SAC',
+        'config': {
             'lr': 3e-4,
             'reward_scale': 0.1,
             'target_entropy': 'auto',
-            'action_prior': 'uniform',
             'initial_exploration_policy': None
         }
     },
     'SQL': {
-        'type': 'SQL',
-        'kwargs': {
+        'class_name': 'SQL',
+        'config': {
             'policy_lr': 3e-4,
             'reward_scale': 0.1,
             'value_n_particles': 16,
@@ -52,8 +50,8 @@ def get_variant_spec(args):
     variant_spec = {
         'layer_size': layer_size,
         'policy_params': {
-            'type': 'GaussianPolicy',
-            'kwargs': {
+            'class_name': 'FeedforwardGaussianPolicy',
+            'config': {
                 'hidden_layer_sizes': (layer_size, layer_size),
                 'squash': True,
             },
@@ -63,8 +61,8 @@ def get_variant_spec(args):
             ALGORITHM_PARAMS_ADDITIONAL.get(algorithm, {})
         ),
         'Q_params': {
-            'type': 'double_feedforward_Q_function',
-            'kwargs': {
+            'class_name': 'double_feedforward_Q_function',
+            'config': {
                 'hidden_layer_sizes': (layer_size, layer_size),
             },
         },

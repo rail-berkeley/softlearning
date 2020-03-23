@@ -8,10 +8,11 @@ import os
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.training import training_util
+import tree
 
 from softlearning.samplers import rollouts
 from softlearning.utils.video import save_video
+from softlearning.policies import utils as policy_utils
 
 
 if LooseVersion(tf.__version__) > LooseVersion("2.00"):
@@ -38,14 +39,11 @@ class RLAlgorithm(Checkpointable):
             min_pool_size=1,
             batch_size=1,
             max_train_repeat_per_timestep=5,
-            n_initial_exploration_steps=0,
-            initial_exploration_policy=None,
             epoch_length=1000,
             eval_n_episodes=10,
-            eval_deterministic=True,
             eval_render_kwargs=None,
             video_save_frequency=0,
-            session=None,
+            num_warmup_samples=0,
     ):
         """
         Args:
@@ -53,14 +51,12 @@ class RLAlgorithm(Checkpointable):
             n_epochs (`int`): Number of epochs to run the training for.
             n_train_repeat (`int`): Number of times to repeat the training
                 for single time step.
-            n_initial_exploration_steps: Number of steps in the beginning to
-                take using actions drawn from a separate exploration policy.
             epoch_length (`int`): Epoch length.
             eval_n_episodes (`int`): Number of rollouts to evaluate.
-            eval_deterministic (`int`): Whether or not to run the policy in
-                deterministic mode when evaluating policy.
             eval_render_kwargs (`None`, `dict`): Arguments to be passed for
                 rendering evaluation rollouts. `None` to disable rendering.
+            num_warmup_samples ('int'): Number of random samples to warmup the
+                replay pool with.
         """
         self.sampler = sampler
         self.pool = pool
@@ -73,12 +69,10 @@ class RLAlgorithm(Checkpointable):
             max_train_repeat_per_timestep, n_train_repeat)
         self._train_every_n_steps = train_every_n_steps
         self._epoch_length = epoch_length
-        self._n_initial_exploration_steps = n_initial_exploration_steps
-        self._initial_exploration_policy = initial_exploration_policy
 
         self._eval_n_episodes = eval_n_episodes
-        self._eval_deterministic = eval_deterministic
         self._video_save_frequency = video_save_frequency
+        self._num_warmup_samples = num_warmup_samples
 
         self._eval_render_kwargs = eval_render_kwargs or {}
 
@@ -88,95 +82,27 @@ class RLAlgorithm(Checkpointable):
                 "RlAlgorithm cannot render and save videos at the same time")
             self._eval_render_kwargs['mode'] = render_mode
 
-        self._session = session or tf.compat.v1.keras.backend.get_session()
-
         self._epoch = 0
         self._timestep = 0
         self._num_train_steps = 0
 
-    def _build(self):
-        self._training_ops = {}
+    def _do_warmup_samples(self):
+        num_warmup_samples = self._num_warmup_samples - self.pool.size
+        if num_warmup_samples < 1:
+            return
 
-        self._init_global_step()
-        self._init_placeholders()
+        uniform_policy = policy_utils.get_uniform_policy(
+            self.sampler.environment)
 
-    def _init_global_step(self):
-        self.global_step = training_util.get_or_create_global_step()
-        self._training_ops.update({
-            'increment_global_step': training_util._increment_global_step(1)
-        })
-
-    def _init_placeholders(self):
-        """Create input placeholders for the SAC algorithm.
-
-        Creates `tf.placeholder`s for:
-            - observation
-            - next observation
-            - action
-            - reward
-            - terminals
-        """
-        self._placeholders = {
-            'observations': {
-                name: tf.compat.v1.placeholder(
-                    dtype=(
-                        np.float32
-                        if np.issubdtype(observation_space.dtype, np.floating)
-                        else observation_space.dtype
-                    ),
-                    shape=(None, *observation_space.shape),
-                    name=name)
-                for name, observation_space
-                in self._training_environment.observation_space.spaces.items()
-            },
-            'next_observations': {
-                name: tf.compat.v1.placeholder(
-                    dtype=(
-                        np.float32
-                        if np.issubdtype(observation_space.dtype, np.floating)
-                        else observation_space.dtype
-                    ),
-                    shape=(None, *observation_space.shape),
-                    name=name)
-                for name, observation_space
-                in self._training_environment.observation_space.spaces.items()
-            },
-            'actions': tf.compat.v1.placeholder(
-                dtype=tf.float32,
-                shape=(None, *self._training_environment.action_shape),
-                name='actions',
-            ),
-            'rewards': tf.compat.v1.placeholder(
-                tf.float32,
-                shape=(None, 1),
-                name='rewards',
-            ),
-            'terminals': tf.compat.v1.placeholder(
-                tf.bool,
-                shape=(None, 1),
-                name='terminals',
-            ),
-            'iteration': tf.compat.v1.placeholder(
-                tf.int64, shape=(), name='iteration',
-            ),
-        }
-
-    def _initial_exploration_hook(self, env, initial_exploration_policy, pool):
-        if self._n_initial_exploration_steps < 1: return
-
-        if not initial_exploration_policy:
-            raise ValueError(
-                "Initial exploration policy must be provided when"
-                " n_initial_exploration_steps > 0.")
-
-        self.sampler.initialize(env, initial_exploration_policy, pool)
-        while pool.size < self._n_initial_exploration_steps:
+        old_policy = self.sampler.policy
+        self.sampler.policy = uniform_policy
+        while self.pool.size < num_warmup_samples:
             self.sampler.sample()
-        self.sampler.initialize(self._training_environment, self._policy, pool)
+        self.sampler.policy = old_policy
 
     def _training_before_hook(self):
         """Method called before the actual training loops."""
-        pass
+        self._do_warmup_samples()
 
     def _training_after_hook(self):
         """Method called after the actual training loops."""
@@ -224,22 +150,11 @@ class RLAlgorithm(Checkpointable):
         Args:
             env (`SoftlearningEnv`): Environment used for training.
             policy (`Policy`): Policy used for training
-            initial_exploration_policy ('Policy'): Policy used for exploration
-                If None, then all exploration is done using policy
             pool (`PoolBase`): Sample pool to add samples to
         """
         training_environment = self._training_environment
         evaluation_environment = self._evaluation_environment
         policy = self._policy
-        pool = self.pool
-
-        if not self._training_started:
-            self._init_training()
-
-            self._initial_exploration_hook(
-                training_environment, self._initial_exploration_policy, pool)
-
-        self.sampler.initialize(self._training_environment, self._policy, pool)
 
         gt.reset_root()
         gt.rename_root('RLAlgorithm')
@@ -250,6 +165,8 @@ class RLAlgorithm(Checkpointable):
         for self._epoch in gt.timed_for(range(self._epoch, self._n_epochs)):
             self._epoch_before_hook()
             gt.stamp('epoch_before_hook')
+
+            update_diagnostics = []
 
             start_samples = self.sampler._total_samples
             for i in count():
@@ -267,11 +184,16 @@ class RLAlgorithm(Checkpointable):
                 gt.stamp('sample')
 
                 if self.ready_to_train:
-                    self._do_training_repeats(timestep=self._total_timestep)
+                    update_diagnostics.append(self._do_training_repeats(
+                        timestep=self._total_timestep))
+
                 gt.stamp('train')
 
                 self._timestep_after_hook()
                 gt.stamp('timestep_after_hook')
+
+            update_diagnostics = tree.map_structure(
+                lambda *d: np.mean(d), *update_diagnostics)
 
             training_paths = self.sampler.get_last_n_paths(
                 math.ceil(self._epoch_length / self.sampler._max_path_length))
@@ -281,11 +203,17 @@ class RLAlgorithm(Checkpointable):
             gt.stamp('evaluation_paths')
 
             training_metrics = self._evaluate_rollouts(
-                training_paths, training_environment)
+                training_paths,
+                training_environment,
+                self._total_timestep,
+                evaluation_type='train')
             gt.stamp('training_metrics')
             if evaluation_paths:
                 evaluation_metrics = self._evaluate_rollouts(
-                    evaluation_paths, evaluation_environment)
+                    evaluation_paths,
+                    evaluation_environment,
+                    self._total_timestep,
+                    evaluation_type='evaluation')
                 gt.stamp('evaluation_metrics')
             else:
                 evaluation_metrics = {}
@@ -301,30 +229,24 @@ class RLAlgorithm(Checkpointable):
                 training_paths=training_paths,
                 evaluation_paths=evaluation_paths)
 
-            time_diagnostics = gt.get_times().stamps.itrs
+            time_diagnostics = {
+                key: times[-1]
+                for key, times in gt.get_times().stamps.itrs.items()
+            }
 
-            diagnostics.update(OrderedDict((
-                *(
-                    (f'evaluation/{key}', evaluation_metrics[key])
-                    for key in sorted(evaluation_metrics.keys())
-                ),
-                *(
-                    (f'training/{key}', training_metrics[key])
-                    for key in sorted(training_metrics.keys())
-                ),
-                *(
-                    (f'times/{key}', time_diagnostics[key][-1])
-                    for key in sorted(time_diagnostics.keys())
-                ),
-                *(
-                    (f'sampler/{key}', sampler_diagnostics[key])
-                    for key in sorted(sampler_diagnostics.keys())
-                ),
+            # TODO(hartikainen/tf2): Fix the naming of training/update
+            # diagnostics/metric
+            diagnostics.update((
+                ('evaluation', evaluation_metrics),
+                ('training', training_metrics),
+                ('update', update_diagnostics),
+                ('times', time_diagnostics),
+                ('sampler', sampler_diagnostics),
                 ('epoch', self._epoch),
                 ('timestep', self._timestep),
-                ('timesteps_total', self._total_timestep),
-                ('train-steps', self._num_train_steps),
-            )))
+                ('total_timestep', self._total_timestep),
+                ('num_train_steps', self._num_train_steps),
+            ))
 
             if self._eval_render_kwargs and hasattr(
                     evaluation_environment, 'render_rollouts'):
@@ -343,13 +265,12 @@ class RLAlgorithm(Checkpointable):
     def _evaluation_paths(self, policy, evaluation_env):
         if self._eval_n_episodes < 1: return ()
 
-        with policy.set_deterministic(self._eval_deterministic):
-            paths = rollouts(
-                self._eval_n_episodes,
-                evaluation_env,
-                policy,
-                self.sampler._max_path_length,
-                render_kwargs=self._eval_render_kwargs)
+        paths = rollouts(
+            self._eval_n_episodes,
+            evaluation_env,
+            policy,
+            self.sampler._max_path_length,
+            render_kwargs=self._eval_render_kwargs)
 
         should_save_video = (
             self._video_save_frequency > 0
@@ -367,7 +288,11 @@ class RLAlgorithm(Checkpointable):
 
         return paths
 
-    def _evaluate_rollouts(self, episodes, env):
+    def _evaluate_rollouts(self,
+                           episodes,
+                           environment,
+                           timestep,
+                           evaluation_type=None):
         """Compute evaluation metrics for the given rollouts."""
 
         episodes_rewards = [episode['rewards'] for episode in episodes]
@@ -387,9 +312,9 @@ class RLAlgorithm(Checkpointable):
             ('episode-length-std', np.std(episodes_length)),
         ))
 
-        env_infos = env.get_path_infos(episodes)
-        for key, value in env_infos.items():
-            diagnostics[f'env_infos/{key}'] = value
+        environment_infos = environment.get_path_infos(
+            episodes, timestep, evaluation_type=evaluation_type)
+        diagnostics['environment_infos'] = environment_infos
 
         return diagnostics
 
@@ -416,13 +341,18 @@ class RLAlgorithm(Checkpointable):
             > self._max_train_repeat_per_timestep * self._timestep)
         if trained_enough: return
 
-        for i in range(self._n_train_repeat):
-            self._do_training(
-                iteration=timestep,
-                batch=self._training_batch())
+        diagnostics = [
+            self._do_training(iteration=timestep, batch=self._training_batch())
+            for i in range(self._n_train_repeat)
+        ]
+
+        diagnostics = tree.map_structure(
+            lambda *d: tf.reduce_mean(d).numpy(), *diagnostics)
 
         self._num_train_steps += self._n_train_repeat
         self._train_steps_this_epoch += self._n_train_repeat
+
+        return diagnostics
 
     @abc.abstractmethod
     def _do_training(self, iteration, batch):
