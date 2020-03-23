@@ -246,10 +246,10 @@ class ExperimentRunner(tune.Trainable):
         self._restore_policy(checkpoint_dir)
         self._restore_algorithm(checkpoint_dir)
 
-        self._built = True
-
         for Q, Q_target in zip(self.algorithm._Qs, self.algorithm._Q_targets):
             Q_target.set_weights(Q.get_weights())
+
+        self._built = True
 
 
 def main(argv=None):
