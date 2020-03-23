@@ -184,14 +184,12 @@ class ExperimentRunner(tune.Trainable):
         tf_checkpoint.save(file_prefix=f"{save_path}/checkpoint")
 
         state = self.algorithm.__getstate__()
-        # with open(f"{save_path}/state.json", 'w') as f:
         with open(os.path.join(save_path, "state.json"), 'w') as f:
             json.dump(state, f)
 
     def _restore_algorithm(self, checkpoint_dir):
         save_path = self._algorithm_save_path(checkpoint_dir)
 
-        # with open(f"{save_path}/state.json", 'r') as f:
         with open(os.path.join(save_path, "state.json"), 'r') as f:
             state = json.load(f)
 
