@@ -50,49 +50,6 @@ class ScaleBijectorTest(test_util.TestCase, parameterized.TestCase):
             [-np.log(2.), -np.log(3.)],
             bijector.inverse_log_det_jacobian(x, scale=scale, event_ndims=0))
 
-    # @parameterized.named_parameters(
-    #     dict(testcase_name='float32', dtype=np.float32),
-    #     dict(testcase_name='float64', dtype=np.float64),
-    # )
-    # def testScalarCongruency(self, dtype):
-    #     scale = dtype(0.42)
-    #     bijector = bijectors.ConditionalScale()
-    #     bijector_test_util.assert_scalar_congruency(
-    #         bijector,
-    #         lower_x=dtype(-2.),
-    #         upper_x=dtype(2.),
-    #         eval_func=self.evaluate)
-
-    # @test_util.jax_disable_variable_test
-    # def testVariableGradients(self):
-    #     scale = tf.Variable(2.)
-    #     b = bijectors.ConditionalScale()
-
-    #     with tf.GradientTape() as tape:
-    #         breakpoint()
-    #         y = b.forward(.1, scale=scale)
-    #     self.assertAllNotNone(tape.gradient(y, b.trainable_variables))
-
-    # def testImmutableScaleAssertion(self):
-    #     with self.assertRaisesOpError('Argument `scale` must be non-zero'):
-    #         b = bijectors.ConditionalScale(validate_args=True)
-    #         _ = self.evaluate(b.forward(1., scale=0.))
-
-    # def testVariableScaleAssertion(self):
-    #     scale = tf.Variable(0.)
-    #     self.evaluate(scale.initializer)
-    #     with self.assertRaisesOpError('Argument `scale` must be non-zero'):
-    #         b = bijectors.ConditionalScale(validate_args=True)
-    #         _ = self.evaluate(b.forward(1., scale=scale))
-
-    # def testModifiedVariableScaleAssertion(self):
-    #     scale = tf.Variable(1.)
-    #     self.evaluate(scale.initializer)
-    #     b = bijectors.ConditionalScale(validate_args=True)
-    #     with self.assertRaisesOpError('Argument `scale` must be non-zero'):
-    #         with tf.control_dependencies([scale.assign(0.)]):
-    #             _ = self.evaluate(b.forward(1., scale=scale))
-
 
 if __name__ == '__main__':
     tf.test.main()
