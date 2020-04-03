@@ -72,11 +72,12 @@ docker-compose \
 1. To train the agent
 ```
 softlearning run_example_local examples.development \
-    --universe=gym \
-    --domain=HalfCheetah \
-    --task=v3 \
-    --exp-name=my-sac-experiment-1 \
-    --checkpoint-frequency=1000  # Save the checkpoint to resume training later
+    --algorithm SAC \
+    --universe gym \
+    --domain HalfCheetah \
+    --task v3 \
+    --exp-name my-sac-experiment-1 \
+    --checkpoint-frequency 1000  # Save the checkpoint to resume training later
 ```
 
 2. To simulate the resulting policy:
@@ -85,32 +86,56 @@ First, find the *absolute* path that the checkpoint is saved to. By default (i.e
 ```
 python -m examples.development.simulate_policy \
     ${SAC_CHECKPOINT_DIR} \
-    --max-path-length=1000 \
-    --num-rollouts=1 \
-    --render-kwargs='{"mode": "human"}'
+    --max-path-length 1000 \
+    --num-rollouts 1 \
+    --render-kwargs '{"mode": "human"}'
 ```
 
 `examples.development.main` contains several different environments and there are more example scripts available in the  `/examples` folder. For more information about the agents and configurations, run the scripts with `--help` flag: `python ./examples/development/main.py --help`
 ```
 optional arguments:
   -h, --help            show this help message and exit
-  --universe {gym}
-  --domain {...}
-  --task {...}
-  --num-samples NUM_SAMPLES
+  --universe {robosuite,dm_control,gym}
+  --domain DOMAIN
+  --task TASK
+  --checkpoint-replay-pool CHECKPOINT_REPLAY_POOL
+                        Whether a checkpoint should also saved the replay
+                        pool. If set, takes precedence over
+                        variant['run_params']['checkpoint_replay_pool']. Note
+                        that the replay pool is saved (and constructed) piece
+                        by piece so that each experience is saved only once.
+  --algorithm ALGORITHM
+  --policy {gaussian}
+  --exp-name EXP_NAME
+  --mode MODE
+  --run-eagerly RUN_EAGERLY
+                        Whether to run tensorflow in eager mode.
+  --confirm-remote [CONFIRM_REMOTE]
+                        Whether or not to query yes/no on remote run.
+  --video-save-frequency VIDEO_SAVE_FREQUENCY
+                        Save frequency for videos.
+  --cpus CPUS           Cpus to allocate to ray process. Passed to `ray.init`.
+  --gpus GPUS           Gpus to allocate to ray process. Passed to `ray.init`.
   --resources RESOURCES
                         Resources to allocate to ray process. Passed to
                         `ray.init`.
-  --cpus CPUS           Cpus to allocate to ray process. Passed to `ray.init`.
-  --gpus GPUS           Gpus to allocate to ray process. Passed to `ray.init`.
-  --trial-resources TRIAL_RESOURCES
+  --include-webui INCLUDE_WEBUI
+                        Boolean flag indicating whether to start theweb UI,
+                        which is a Jupyter notebook. Passed to `ray.init`.
+  --temp-dir TEMP_DIR   If provided, it will specify the root temporary
+                        directory for the Ray process. Passed to `ray.init`.
+  --resources-per-trial RESOURCES_PER_TRIAL
                         Resources to allocate for each trial. Passed to
                         `tune.run`.
   --trial-cpus TRIAL_CPUS
-                        Resources to allocate for each trial. Passed to
+                        CPUs to allocate for each trial. Note: this is only
+                        used for Ray's internal scheduling bookkeeping, and is
+                        not an actual hard limit for CPUs. Passed to
                         `tune.run`.
   --trial-gpus TRIAL_GPUS
-                        Resources to allocate for each trial. Passed to
+                        GPUs to allocate for each trial. Note: this is only
+                        used for Ray's internal scheduling bookkeeping, and is
+                        not an actual hard limit for GPUs. Passed to
                         `tune.run`.
   --trial-extra-cpus TRIAL_EXTRA_CPUS
                         Extra CPUs to reserve in case the trials need to
@@ -118,38 +143,56 @@ optional arguments:
   --trial-extra-gpus TRIAL_EXTRA_GPUS
                         Extra GPUs to reserve in case the trials need to
                         launch additional Ray actors that use GPUs.
-  --checkpoint-frequency CHECKPOINT_FREQUENCY
-                        Save the training checkpoint every this many epochs.
-                        If set, takes precedence over
-                        variant['run_params']['checkpoint_frequency'].
-  --checkpoint-at-end CHECKPOINT_AT_END
-                        Whether a checkpoint should be saved at the end of
-                        training. If set, takes precedence over
-                        variant['run_params']['checkpoint_at_end'].
-  --restore RESTORE     Path to checkpoint. Only makes sense to set if running
-                        1 trial. Defaults to None.
-  --policy {gaussian}
-  --env ENV
-  --exp-name EXP_NAME
-  --log-dir LOG_DIR
+  --num-samples NUM_SAMPLES
+                        Number of times to repeat each trial. Passed to
+                        `tune.run`.
   --upload-dir UPLOAD_DIR
                         Optional URI to sync training results to (e.g.
-                        s3://<bucket> or gs://<bucket>).
-  --confirm-remote [CONFIRM_REMOTE]
-                        Whether or not to query yes/no on remote run.
+                        s3://<bucket> or gs://<bucket>). Passed to `tune.run`.
+  --trial-name-template TRIAL_NAME_TEMPLATE
+                        Optional string template for trial name. For example:
+                        '{trial.trial_id}-seed={trial.config[run_params][seed]
+                        }' Passed to `tune.run`.
+  --checkpoint-frequency CHECKPOINT_FREQUENCY
+                        How many training iterations between checkpoints. A
+                        value of 0 (default) disables checkpointing. If set,
+                        takes precedence over
+                        variant['run_params']['checkpoint_frequency']. Passed
+                        to `tune.run`.
+  --checkpoint-at-end CHECKPOINT_AT_END
+                        Whether to checkpoint at the end of the experiment. If
+                        set, takes precedence over
+                        variant['run_params']['checkpoint_at_end']. Passed to
+                        `tune.run`.
+  --max-failures MAX_FAILURES
+                        Try to recover a trial from its last checkpoint at
+                        least this many times. Only applies if checkpointing
+                        is enabled. Passed to `tune.run`.
+  --restore RESTORE     Path to checkpoint. Only makes sense to set if running
+                        1 trial. Defaults to None. Passed to `tune.run`.
+  --with-server WITH_SERVER
+                        Starts a background Tune server. Needed for using the
+                        Client API. Passed to `tune.run`.
+  --server-port SERVER_PORT
+                        Port number for launching TuneServer. Passed to
+                        `tune.run`.
 ```
 
 ### Resume training from a saved checkpoint
+
+## This feature is currently broken!
+
 In order to resume training from previous checkpoint, run the original example main-script, with an additional `--restore` flag. For example, the previous example can be resumed as follows:
 
 ```
 softlearning run_example_local examples.development \
-    --universe=gym \
-    --domain=HalfCheetah \
-    --task=v3 \
-    --exp-name=my-sac-experiment-1 \
-    --checkpoint-frequency=1000 \
-    --restore=${SAC_CHECKPOINT_PATH}
+    --algorithm SAC \
+    --universe gym \
+    --domain HalfCheetah \
+    --task v3 \
+    --exp-name my-sac-experiment-1 \
+    --checkpoint-frequency 1000 \
+    --restore ${SAC_CHECKPOINT_PATH}
 ```
 
 # References

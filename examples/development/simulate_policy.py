@@ -7,10 +7,11 @@ import pickle
 import pandas as pd
 
 from softlearning.environments.utils import get_environment_from_params
-from softlearning.policies.utils import get_policy_from_variant
+from softlearning import policies
 from softlearning.samplers import rollouts
 from softlearning.utils.tensorflow import set_gpu_memory_growth
 from softlearning.utils.video import save_video
+from .main import ExperimentRunner
 
 
 DEFAULT_RENDER_KWARGS = {
@@ -38,7 +39,7 @@ def parse_args():
     return args
 
 
-def load_checkpoint(checkpoint_path):
+def load_variant_progress_metadata(checkpoint_path):
     checkpoint_path = checkpoint_path.rstrip('/')
     trial_path = os.path.dirname(checkpoint_path)
 
@@ -53,28 +54,39 @@ def load_checkpoint(checkpoint_path):
     else:
         metadata = None
 
-    pickle_path = os.path.join(checkpoint_path, 'checkpoint.pkl')
-    with open(pickle_path, 'rb') as f:
-        picklable = pickle.load(f)
-
     progress_path = os.path.join(trial_path, 'progress.csv')
     progress = pd.read_csv(progress_path)
 
-    return picklable, variant, progress, metadata
+    return variant, progress, metadata
 
 
-def load_policy_and_environment(picklable, variant):
+def load_environment(variant):
     environment_params = (
         variant['environment_params']['training']
         if 'evaluation' in variant['environment_params']
         else variant['environment_params']['training'])
 
     environment = get_environment_from_params(environment_params)
+    return environment
 
-    policy = get_policy_from_variant(variant, environment)
-    policy.set_weights(picklable['policy_weights'])
 
-    return policy, environment
+def load_policy(checkpoint_dir, variant, environment):
+    policy_params = variant['policy_params'].copy()
+    policy_params['config'] = {
+        **policy_params['config'],
+        'action_range': (environment.action_space.low,
+                         environment.action_space.high),
+        'input_shapes': environment.observation_shape,
+        'output_shape': environment.action_shape,
+    }
+
+    policy = policies.get(policy_params)
+
+    policy_save_path = ExperimentRunner._policy_save_path(checkpoint_dir)
+    status = policy.load_weights(policy_save_path)
+    status.assert_consumed().run_restore_ops()
+
+    return policy
 
 
 def simulate_policy(checkpoint_path,
@@ -84,8 +96,10 @@ def simulate_policy(checkpoint_path,
                     video_save_path=None,
                     evaluation_environment_params=None):
     checkpoint_path = os.path.abspath(checkpoint_path.rstrip('/'))
-    picklable, variant, progress, metadata = load_checkpoint(checkpoint_path)
-    policy, environment = load_policy_and_environment(picklable, variant)
+    variant, progress, metadata = load_variant_progress_metadata(
+        checkpoint_path)
+    environment = load_environment(variant)
+    policy = load_policy(checkpoint_path, variant, environment)
     render_kwargs = {**DEFAULT_RENDER_KWARGS, **render_kwargs}
 
     paths = rollouts(num_rollouts,
