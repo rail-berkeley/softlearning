@@ -102,19 +102,24 @@ class ExperimentRunner(tune.Trainable):
 
         return diagnostics
 
-    def _pickle_path(self, checkpoint_dir):
+    @staticmethod
+    def _pickle_path(checkpoint_dir):
         return os.path.join(checkpoint_dir, 'checkpoint.pkl')
 
-    def _algorithm_save_path(self, checkpoint_dir):
+    @staticmethod
+    def _algorithm_save_path(checkpoint_dir):
         return os.path.join(checkpoint_dir, 'algorithm')
 
-    def _replay_pool_save_path(self, checkpoint_dir):
+    @staticmethod
+    def _replay_pool_save_path(checkpoint_dir):
         return os.path.join(checkpoint_dir, 'replay_pool.pkl')
 
-    def _sampler_save_path(self, checkpoint_dir):
+    @staticmethod
+    def _sampler_save_path(checkpoint_dir):
         return os.path.join(checkpoint_dir, 'sampler.pkl')
 
-    def _policy_save_path(self, checkpoint_dir):
+    @staticmethod
+    def _policy_save_path(checkpoint_dir):
         return os.path.join(checkpoint_dir, 'policy')
 
     def _save_replay_pool(self, checkpoint_dir):
