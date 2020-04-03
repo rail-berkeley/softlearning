@@ -13,7 +13,7 @@ def set_seed(seed):
     seed %= 4294967294
     random.seed(seed)
     np.random.seed(seed)
-    tf.compat.v1.set_random_seed(seed)
+    tf.random.set_seed(seed)
     print(f"Using seed {seed}")
 
 
