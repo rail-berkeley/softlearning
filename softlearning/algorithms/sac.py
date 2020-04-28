@@ -189,10 +189,11 @@ class SAC(RLAlgorithm):
         for Q, optimizer in zip(self._Qs, self._Q_optimizers):
             with tf.GradientTape() as tape:
                 Q_values = Q.values(observations, actions)
-                Q_losses = (
-                    0.5 * tf.losses.MSE(y_true=Q_targets, y_pred=Q_values))
+                Q_losses = 0.5 * (
+                    tf.losses.MSE(y_true=Q_targets, y_pred=Q_values))
+                Q_loss = tf.nn.compute_average_loss(Q_losses)
 
-            gradients = tape.gradient(Q_losses, Q.trainable_variables)
+            gradients = tape.gradient(Q_loss, Q.trainable_variables)
             optimizer.apply_gradients(zip(gradients, Q.trainable_variables))
             Qs_losses.append(Q_losses)
             Qs_values.append(Q_values)
@@ -218,8 +219,8 @@ class SAC(RLAlgorithm):
             Qs_log_targets = tuple(
                 Q.values(observations, actions) for Q in self._Qs)
             Q_log_targets = tf.reduce_min(Qs_log_targets, axis=0)
-
             policy_losses = self._alpha * log_pis - Q_log_targets
+            policy_loss = tf.nn.compute_average_loss(policy_losses)
 
         tf.debugging.assert_shapes((
             (actions, ('B', 'nA')),
@@ -228,7 +229,7 @@ class SAC(RLAlgorithm):
         ))
 
         policy_gradients = tape.gradient(
-            policy_losses, self._policy.trainable_variables)
+            policy_loss, self._policy.trainable_variables)
 
         self._policy_optimizer.apply_gradients(zip(
             policy_gradients, self._policy.trainable_variables))
