@@ -7,5 +7,7 @@ dependencies:
 - pip>=20.0
 - conda>=4.7
 - pyopengl-accelerate==3.1.3b1
+# - cudatoolkit==10.1.243
+# - cudnn==7.6.5
 - pip:
     - -r ./requirements.txt
