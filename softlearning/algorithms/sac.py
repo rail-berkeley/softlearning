@@ -131,7 +131,8 @@ class SAC(RLAlgorithm):
             learning_rate=self._policy_lr,
             name="policy_optimizer")
 
-        self._alpha = tf.Variable(tf.exp(0.0), name='alpha')
+        self._log_alpha = tf.Variable(0.0)
+        self._alpha = tfp.util.DeferredTensor(self._log_alpha, tf.exp)
 
         self._alpha_optimizer = tf.optimizers.Adam(
             self._alpha_lr, name='alpha_optimizer')
@@ -251,9 +252,9 @@ class SAC(RLAlgorithm):
             # large learning rate.
             alpha_loss = tf.nn.compute_average_loss(alpha_losses)
 
-        alpha_gradients = tape.gradient(alpha_loss, [self._alpha])
+        alpha_gradients = tape.gradient(alpha_loss, [self._log_alpha])
         self._alpha_optimizer.apply_gradients(zip(
-            alpha_gradients, [self._alpha]))
+            alpha_gradients, [self._log_alpha]))
 
         return alpha_losses
 
