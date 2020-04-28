@@ -278,7 +278,7 @@ class SAC(RLAlgorithm):
             ('Q_value-mean', tf.reduce_mean(Qs_values)),
             ('Q_loss-mean', tf.reduce_mean(Qs_losses)),
             ('policy_loss-mean', tf.reduce_mean(policy_losses)),
-            ('alpha', self._alpha),
+            ('alpha', tf.convert_to_tensor(self._alpha)),
             ('alpha_loss-mean', tf.reduce_mean(alpha_losses)),
         ))
         return diagnostics
