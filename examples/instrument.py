@@ -258,7 +258,7 @@ def run_example_debug(example_module_name, example_argv):
     of all cpus once ray local mode supports custom resources.
     """
 
-    debug_example_argv = ['--with-server=False', '--max-failure=0']
+    debug_example_argv = ['--with-server=False', '--max-failures=0']
     for option in example_argv:
         if '--trial-cpus' in option:
             available_cpus = multiprocessing.cpu_count()
