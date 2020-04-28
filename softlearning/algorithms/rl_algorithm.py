@@ -184,8 +184,10 @@ class RLAlgorithm(Checkpointable):
                 gt.stamp('sample')
 
                 if self.ready_to_train:
-                    update_diagnostics.append(self._do_training_repeats(
-                        timestep=self._total_timestep))
+                    repeat_diagnostics = self._do_training_repeats(
+                        timestep=self._total_timestep)
+                    if repeat_diagnostics is not None:
+                        update_diagnostics.append(repeat_diagnostics)
 
                 gt.stamp('train')
 
