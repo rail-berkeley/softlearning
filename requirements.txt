@@ -24,7 +24,7 @@ fasteners==0.15
 filelock==3.0.12
 funcsigs==1.0.2
 future==0.18.2
-gast==0.2.2
+gast>=0.3.2
 gitdb2==2.0.6
 GitPython==3.1.0
 glfw==1.9.1
@@ -104,10 +104,10 @@ six==1.13.0
 smmap2==2.0.5
 tabulate==0.8.6
 tensorboard==2.2.0
-tensorflow==2.2.0rc2
-tensorflow-addons==0.8.3
-tensorflow-estimator==2.2.0rc0
-tfp-nightly>=0.10.0.dev20200313
+tensorflow==2.2.0rc4
+tensorflow-addons==0.9.1
+tensorflow-estimator==2.2.0
+tensorflow-probability==0.10.0rc1
 termcolor==1.1.0
 tqdm==4.41.1
 urllib3==1.24.3

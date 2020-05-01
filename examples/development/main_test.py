@@ -129,7 +129,7 @@ class TestExperimentRunner(tf.test.TestCase):
         for initial_Q_weights, Q_weights in zip(initial_Qs_weights, Qs_weights):
             assert_weights_not_equal(initial_Q_weights, Q_weights)
 
-        experiment_runner.algorithm._alpha.assign(5.0)
+        experiment_runner.algorithm._log_alpha.assign(tf.math.log(5.0))
         expected_alpha_value = 5.0
         self.assertEqual(
             experiment_runner.algorithm._alpha.numpy(),
