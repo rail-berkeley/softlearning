@@ -39,6 +39,7 @@ setup(
     },
     install_requires=(
         'Click>=7.0',
+        'GitPython==3.1.2',
         'dm-control>=0.0.300771433',
         'gtimer>=1.0.0b5',
         'gym>=0.15.4',
@@ -46,11 +47,11 @@ setup(
         'numpy>=1.17.5',
         'pandas',
         'ray[tune]>=0.8.0',
-        'scikit-image>=0.16.2',
+        'scikit-image>=0.17.2',
         'scikit-video>=1.1.11',
         'scipy>=1.4.1',
-        'tensorflow',
-        'tensorflow-probability>=0.10.0rc0',
+        'tensorflow>=2.2.0',
+        'tensorflow-probability>=0.10.0',
     ),
     zip_safe=True,
     license='MIT'
