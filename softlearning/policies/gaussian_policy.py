@@ -1,6 +1,7 @@
 """GaussianPolicy."""
 
 from collections import OrderedDict
+from contextlib import contextmanager
 
 import numpy as np
 import tensorflow as tf
@@ -16,6 +17,8 @@ from .base_policy import LatentSpacePolicy
 
 class GaussianPolicy(LatentSpacePolicy):
     def __init__(self, *args, **kwargs):
+        self._deterministic = False
+
         super(GaussianPolicy, self).__init__(*args, **kwargs)
 
         self.shift_and_scale_model = self._shift_and_scale_diag_net(
@@ -46,10 +49,14 @@ class GaussianPolicy(LatentSpacePolicy):
         batch_shape = tf.shape(first_observation)[:-first_input_rank]
 
         shifts, scales = self.shift_and_scale_model(observations)
-        actions = self.action_distribution.sample(
-            batch_shape,
-            bijector_kwargs={'scale': {'scale': scales},
-                             'shift': {'shift': shifts}})
+
+        if self._deterministic:
+            actions = self._action_post_processor(shifts)
+        else:
+            actions = self.action_distribution.sample(
+                batch_shape,
+                bijector_kwargs={'scale': {'scale': scales},
+                                 'shift': {'shift': shifts}})
 
         return actions
 
@@ -59,11 +66,16 @@ class GaussianPolicy(LatentSpacePolicy):
         observations = self._filter_observations(observations)
 
         shifts, scales = self.shift_and_scale_model(observations)
-        log_probs = self.action_distribution.log_prob(
-            actions,
-            bijector_kwargs={'scale': {'scale': scales},
-                             'shift': {'shift': shifts}}
-        )[..., tf.newaxis]
+
+        if self._deterministic:
+            log_probs = tf.fill(
+                tf.concat((tf.shape(shifts)[:-1], [1]), axis=0), np.inf)
+        else:
+            log_probs = self.action_distribution.log_prob(
+                actions,
+                bijector_kwargs={'scale': {'scale': scales},
+                                 'shift': {'shift': shifts}}
+            )[..., tf.newaxis]
 
         return log_probs
 
@@ -72,11 +84,16 @@ class GaussianPolicy(LatentSpacePolicy):
         """Compute probabilities of `actions` given observations."""
         observations = self._filter_observations(observations)
         shifts, scales = self.shift_and_scale_model(observations)
-        probs = self.action_distribution.prob(
-            actions,
-            bijector_kwargs={'scale': {'scale': scales},
-                             'shift': {'shift': shifts}}
-        )[..., tf.newaxis]
+
+        if self._deterministic:
+            probs = tf.fill(
+                tf.concat((tf.shape(shifts)[:-1], [1]), axis=0), np.inf)
+        else:
+            probs = self.action_distribution.prob(
+                actions,
+                bijector_kwargs={'scale': {'scale': scales},
+                                 'shift': {'shift': shifts}}
+            )[..., tf.newaxis]
 
         return probs
 
@@ -99,15 +116,21 @@ class GaussianPolicy(LatentSpacePolicy):
         batch_shape = tf.shape(first_observation)[:-first_input_rank]
 
         shifts, scales = self.shift_and_scale_model(observations)
-        actions = self.action_distribution.sample(
-            batch_shape,
-            bijector_kwargs={'scale': {'scale': scales},
-                             'shift': {'shift': shifts}})
-        log_probs = self.action_distribution.log_prob(
-            actions,
-            bijector_kwargs={'scale': {'scale': scales},
-                             'shift': {'shift': shifts}}
-        )[..., tf.newaxis]
+
+        if self._deterministic:
+            actions = self._action_post_processor(shifts)
+            log_probs = tf.fill(
+                tf.concat((tf.shape(shifts)[:-1], [1]), axis=0), np.inf)
+        else:
+            actions = self.action_distribution.sample(
+                batch_shape,
+                bijector_kwargs={'scale': {'scale': scales},
+                                 'shift': {'shift': shifts}})
+            log_probs = self.action_distribution.log_prob(
+                actions,
+                bijector_kwargs={'scale': {'scale': scales},
+                                 'shift': {'shift': shifts}}
+            )[..., tf.newaxis]
 
         return actions, log_probs
 
@@ -130,17 +153,45 @@ class GaussianPolicy(LatentSpacePolicy):
         batch_shape = tf.shape(first_observation)[:-first_input_rank]
 
         shifts, scales = self.shift_and_scale_model(observations)
-        actions = self.action_distribution.sample(
-            batch_shape,
-            bijector_kwargs={'scale': {'scale': scales},
-                             'shift': {'shift': shifts}})
-        probs = self.action_distribution.prob(
-            actions,
-            bijector_kwargs={'scale': {'scale': scales},
-                             'shift': {'shift': shifts}}
-        )[..., tf.newaxis]
+        if self._deterministic:
+            actions = self._action_post_processor(shifts)
+            probs = tf.fill(
+                tf.concat((tf.shape(shifts)[:-1], [1]), axis=0), np.inf)
+        else:
+            actions = self.action_distribution.sample(
+                batch_shape,
+                bijector_kwargs={'scale': {'scale': scales},
+                                 'shift': {'shift': shifts}})
+            probs = self.action_distribution.prob(
+                actions,
+                bijector_kwargs={'scale': {'scale': scales},
+                                 'shift': {'shift': shifts}}
+            )[..., tf.newaxis]
 
         return actions, probs
+
+    @contextmanager
+    def evaluation_mode(self):
+        """Activates the evaluation mode, resulting in deterministic actions.
+
+        Once `self._deterministic is True` GaussianPolicy will return
+        deterministic actions corresponding to the mean of the action
+        distribution. The action log probabilities and probabilities will
+        always evaluate to `np.inf` in this mode.
+
+        TODO(hartikainen): I don't like this way of handling evaluation mode
+        for the policies. We should instead have two separete policies for
+        training and evaluation, and for example instantiate them like follows:
+
+        ```python
+        from softlearning import policies
+        training_policy = policies.GaussianPolicy(...)
+        evaluation_policy = policies.utils.create_evaluation_policy(training_policy)
+        ```
+        """
+        self._deterministic = True
+        yield
+        self._deterministic = False
 
     def _shift_and_scale_diag_net(self, inputs, output_size):
         raise NotImplementedError

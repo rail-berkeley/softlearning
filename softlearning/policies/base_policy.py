@@ -1,5 +1,6 @@
 import abc
 from collections import OrderedDict
+from contextlib import contextmanager
 import json
 
 import numpy as np
@@ -152,6 +153,25 @@ class BasePolicy:
         probs = self.probs(*args_, **kwargs_)
         prob = tree.map_structure(lambda x: x[0], probs)
         return prob
+
+    @contextmanager
+    def evaluation_mode(self):
+        """Sets the policy to function in evaluation mode.
+
+        The behavior depends on the policy class. For example, GaussianPolicy
+        can use the mean of its action distribution as actions.
+
+        TODO(hartikainen): I don't like this way of handling evaluation mode
+        for the policies. We should instead have two separete policies for
+        training and evaluation, and for example instantiate them like follows:
+
+        ```python
+        from softlearning import policies
+        training_policy = policies.GaussianPolicy(...)
+        evaluation_policy = policies.utils.create_evaluation_policy(training_policy)
+        ```
+        """
+        yield
 
     def _preprocess_inputs(self, inputs):
         if self.preprocessors is None:

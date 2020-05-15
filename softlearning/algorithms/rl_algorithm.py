@@ -145,13 +145,7 @@ class RLAlgorithm(Checkpointable):
         return self._train(*args, **kwargs)
 
     def _train(self):
-        """Return a generator that performs RL training.
-
-        Args:
-            env (`SoftlearningEnv`): Environment used for training.
-            policy (`Policy`): Policy used for training
-            pool (`PoolBase`): Sample pool to add samples to
-        """
+        """Return a generator that runs the standard RL loop."""
         training_environment = self._training_environment
         evaluation_environment = self._evaluation_environment
         policy = self._policy
@@ -267,12 +261,16 @@ class RLAlgorithm(Checkpointable):
     def _evaluation_paths(self, policy, evaluation_env):
         if self._eval_n_episodes < 1: return ()
 
-        paths = rollouts(
-            self._eval_n_episodes,
-            evaluation_env,
-            policy,
-            self.sampler._max_path_length,
-            render_kwargs=self._eval_render_kwargs)
+        # TODO(hartikainen): I don't like this way of handling evaluation mode
+        # for the policies. We should instead have two separete policies for
+        # training and evaluation.
+        with policy.evaluation_mode():
+            paths = rollouts(
+                self._eval_n_episodes,
+                evaluation_env,
+                policy,
+                self.sampler._max_path_length,
+                render_kwargs=self._eval_render_kwargs)
 
         should_save_video = (
             self._video_save_frequency > 0
