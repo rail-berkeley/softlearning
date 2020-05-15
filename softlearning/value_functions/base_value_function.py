@@ -116,27 +116,16 @@ class BaseValueFunction:
 
 
 class StateValueFunction(BaseValueFunction):
-    def values(self, observations, *args, **kwargs):
+    def values(self, observations, **kwargs):
         """Compute values given observations."""
         observations = self._filter_observations(observations)
-        values = self.model((observations, args, kwargs))
+        values = self.model(observations, **kwargs)
         return values
 
 
 class StateActionValueFunction(BaseValueFunction):
-    def values(self, observations, actions, *args, **kwargs):
+    def values(self, observations, actions, **kwargs):
         """Compute values given observations."""
         observations = self._filter_observations(observations)
-        values = self.model((observations, actions, args, kwargs))
+        values = self.model((observations, actions), **kwargs)
         return values
-
-
-# def feedforward_Q_function(*args, name='feedforward_Q', **kwargs):
-#     model = feedforward_model(
-#         *args,
-#         output_shape=[1],
-#         name=name,
-#         **kwargs
-#     )
-
-#     return StateActionValueFunction(model=model)
