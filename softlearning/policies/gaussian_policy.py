@@ -268,7 +268,8 @@ class FeedforwardGaussianPolicy(GaussianPolicy):
         shift, scale = tf.keras.layers.Lambda(
             lambda x: tf.split(x, num_or_size_splits=2, axis=-1)
         )(shift_and_scale_diag)
-        scale = tf.keras.layers.Lambda(lambda x: tf.math.softplus(x))(scale)
+        scale = tf.keras.layers.Lambda(
+            lambda x: tf.math.softplus(x) + 1e-5)(scale)
         shift_and_scale_diag_model = tf.keras.Model(inputs, (shift, scale))
 
         return shift_and_scale_diag_model
