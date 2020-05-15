@@ -89,30 +89,30 @@ TOTAL_STEPS_PER_UNIVERSE_DOMAIN_TASK = {
     'gym': {
         DEFAULT_KEY: int(1e4),
         'Swimmer': {
-            DEFAULT_KEY: int(1e5),
-            'v3': int(5e5),
+            DEFAULT_KEY: int(1e3),
+            'v3': int(1e3),
         },
         'Hopper': {
-            DEFAULT_KEY: int(5e6),
-            'v3': int(5e6),
+            DEFAULT_KEY: int(1e6),
+            'v3': int(1e6),
         },
         'HalfCheetah': {
             DEFAULT_KEY: int(3e6),
             'v3': int(3e6),
         },
         'Walker2d': {
-            DEFAULT_KEY: int(5e6),
-            'v3': int(5e6),
+            DEFAULT_KEY: int(3e6),
+            'v3': int(3e6),
         },
         'Ant': {
             DEFAULT_KEY: int(3e6),
             'v3': int(3e6),
         },
         'Humanoid': {
-            DEFAULT_KEY: int(3e6),
-            'Stand-v3': int(1e8),
-            'SimpleStand-v3': int(1e8),
-            'v3': int(1e8),
+            DEFAULT_KEY: int(1e7),
+            'Stand-v3': int(1e7),
+            'SimpleStand-v3': int(1e7),
+            'v3': int(1e7),
         },
         'Pendulum': {
             DEFAULT_KEY: int(1e4),
@@ -120,7 +120,7 @@ TOTAL_STEPS_PER_UNIVERSE_DOMAIN_TASK = {
         },
         'Point2DEnv': {
             DEFAULT_KEY: int(5e4),
-        }
+        },
     },
     'dm_control': {
         # BENCHMARKING
@@ -232,6 +232,13 @@ MAX_PATH_LENGTH_PER_UNIVERSE_DOMAIN_TASK = {
 
 EPOCH_LENGTH_PER_UNIVERSE_DOMAIN_TASK = {
     DEFAULT_KEY: 1000,
+    'gym': {
+        DEFAULT_KEY: 25000,
+        'Pendulum': {
+            DEFAULT_KEY: 1000,
+            'v0': 1000,
+        },
+    },
 }
 
 
