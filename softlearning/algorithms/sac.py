@@ -75,6 +75,7 @@ class SAC(RLAlgorithm):
             target_update_interval=1,
 
             save_full_state=False,
+            Q_targets=None,
             **kwargs,
     ):
         """
@@ -100,8 +101,12 @@ class SAC(RLAlgorithm):
         self._policy = policy
 
         self._Qs = Qs
-        self._Q_targets = tuple(deepcopy(Q) for Q in Qs)
-        self._update_target(tau=tf.constant(1.0))
+
+        if Q_targets is not None:
+            self._Q_targets = Q_targets
+        else:
+            self._Q_targets = tuple(deepcopy(Q) for Q in Qs)
+            self._update_target(tau=tf.constant(1.0))
 
         self._plotter = plotter
 
