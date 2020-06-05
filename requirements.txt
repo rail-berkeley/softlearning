@@ -34,7 +34,7 @@ google-auth-oauthlib==0.4.1
 google-pasta==0.1.8
 grpcio==1.26.0
 gtimer==1.0.0b5
-gym==0.15.4
+gym==0.17.2
 h5py==2.10.0
 idna==2.7
 imageio==2.6.1
@@ -51,7 +51,7 @@ Markdown==3.1.1
 matplotlib==3.1.2
 monotonic==1.5
 more-itertools==8.1.0
-mujoco-py==2.0.2.9
+mujoco-py==2.0.2.10
 networkx==2.4
 numpy==1.17.5
 oauthlib==3.1.0
