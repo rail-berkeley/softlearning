@@ -300,28 +300,6 @@ ENVIRONMENT_PARAMS_PER_UNIVERSE_DOMAIN_TASK = {
                 'observation_keys': ('observation', 'desired_goal'),
             },
         },
-        'Sawyer': {
-            task_name: {
-                'has_renderer': False,
-                'has_offscreen_renderer': False,
-                'use_camera_obs': False,
-                'reward_shaping': tune.grid_search([True, False]),
-            }
-            for task_name in (
-                    'Lift',
-                    'NutAssembly',
-                    'NutAssemblyRound',
-                    'NutAssemblySingle',
-                    'NutAssemblySquare',
-                    'PickPlace',
-                    'PickPlaceBread',
-                    'PickPlaceCan',
-                    'PickPlaceCereal',
-                    'PickPlaceMilk',
-                    'PickPlaceSingle',
-                    'Stack',
-            )
-        },
     },
     'dm_control': {
         'ball_in_cup': {
