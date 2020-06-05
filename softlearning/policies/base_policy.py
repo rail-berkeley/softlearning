@@ -217,7 +217,7 @@ class BasePolicy:
             'input_shapes': self._input_shapes,
             'output_shape': self._output_shape,
             'observation_keys': self._observation_keys,
-            'preprocessors': tree.map(
+            'preprocessors': tree.map_structure(
                 preprocessors_lib.serialize, self._preprocessors),
             'name': self._name,
         }
