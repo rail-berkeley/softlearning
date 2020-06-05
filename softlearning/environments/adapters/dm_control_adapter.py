@@ -74,7 +74,8 @@ class DmControlAdapter(SoftlearningEnv):
                  task,
                  *args,
                  env=None,
-                 normalize=True,
+                 rescale_action_range=(-1.0, 1.0),
+                 rescale_observation_range=None,
                  observation_keys=(),
                  goal_keys=(),
                  unwrap_time_limit=True,
@@ -83,7 +84,13 @@ class DmControlAdapter(SoftlearningEnv):
         assert not args, (
             "Gym environments don't support args. Use kwargs instead.")
 
-        self.normalize = normalize
+        if rescale_observation_range:
+            raise NotImplementedError(
+                "Observation rescaling not implemented for DmControlAdapter.")
+
+        self.rescale_action_range = rescale_action_range
+        self.rescale_observation_range = rescale_observation_range
+
         self.unwrap_time_limit = unwrap_time_limit
 
         super(DmControlAdapter, self).__init__(
@@ -105,10 +112,19 @@ class DmControlAdapter(SoftlearningEnv):
             assert not kwargs
             assert domain is None and task is None, (domain, task)
 
-        if normalize:
-            if (np.any(env.action_spec().minimum != -1)
-                or np.any(env.action_spec().maximum != 1)):
-                env = action_scale.Wrapper(env, minimum=-1.0, maximum=1.0)
+        if rescale_action_range:
+            should_rescale = (
+                np.any(env.action_spec().minimum != rescale_action_range[0])
+                or np.any(env.action_spec().maximum != rescale_action_range[1]))
+            if should_rescale:
+                env = action_scale.Wrapper(
+                    env,
+                    minimum=(
+                        rescale_action_range[0]
+                        * np.ones_like(env.action_spec().minimum)),
+                    maximum=(
+                        rescale_action_range[1]
+                        * np.ones_like(env.action_spec().maximum)))
             np.testing.assert_equal(env.action_spec().minimum, -1)
             np.testing.assert_equal(env.action_spec().maximum, 1)
 
