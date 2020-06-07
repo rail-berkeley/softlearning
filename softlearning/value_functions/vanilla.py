@@ -10,17 +10,22 @@ from softlearning.utils.tensorflow import cast_and_concat
 from .base_value_function import StateActionValueFunction
 
 
-def create_double_value_function(value_fn, *args, **kwargs):
-    # TODO(hartikainen): The double Q-function should support the same
+def create_ensemble_value_function(N, value_fn, *args, **kwargs):
+    # TODO(hartikainen): The ensemble Q-function should support the same
     # interface as the regular ones. Implement the double min-thing
     # as a Keras layer.
-    value_fns = tuple(value_fn(*args, **kwargs) for i in range(2))
+    value_fns = tuple(value_fn(*args, **kwargs) for i in range(N))
     return value_fns
 
 
 def double_feedforward_Q_function(*args, **kwargs):
-    return create_double_value_function(
-        feedforward_Q_function, *args, **kwargs)
+    return create_ensemble_value_function(
+        2, feedforward_Q_function, *args, **kwargs)
+
+
+def ensemble_feedforward_Q_function(N, *args, **kwargs):
+    return create_ensemble_value_function(
+        N, feedforward_Q_function, *args, **kwargs)
 
 
 def feedforward_Q_function(input_shapes,

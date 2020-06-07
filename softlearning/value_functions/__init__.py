@@ -1,5 +1,8 @@
-from .vanilla import feedforward_Q_function  # noqa: unused-import
-from .vanilla import double_feedforward_Q_function  # noqa: unused-import
+from .vanilla import (  # noqa: unused-import
+    feedforward_Q_function,
+    double_feedforward_Q_function,
+    ensemble_feedforward_Q_function,
+)
 
 from softlearning.utils.serialization import (
     serialize_softlearning_object, deserialize_softlearning_object)

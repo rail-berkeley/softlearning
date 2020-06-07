@@ -2,6 +2,7 @@ import unittest
 import pickle
 
 import numpy as np
+from gym import spaces
 
 from .softlearning_env_test import AdapterTestClass
 from softlearning.environments.adapters.gym_adapter import (
@@ -125,6 +126,47 @@ class TestGymAdapter(unittest.TestCase, AdapterTestClass):
         for key, expected_value in env_kwargs.items():
             actual_value = getattr(env.unwrapped, f'_{key}')
             self.assertEqual(actual_value, expected_value)
+
+    def test_rescale_action(self):
+        environment_kwargs = {
+            'domain': 'Pendulum',
+            'task': 'v0',
+        }
+        environment = GymAdapter(**environment_kwargs, rescale_action_range=None)
+        new_low, new_high = -1.0, 1.0
+
+        assert isinstance(environment.action_space, spaces.Box)
+        assert np.any(environment.action_space.low != new_low)
+        assert np.any(environment.action_space.high != new_high)
+
+        rescaled_environment = GymAdapter(
+            **environment_kwargs, rescale_action_range=(new_low, new_high))
+
+        np.testing.assert_allclose(
+            rescaled_environment.action_space.low, new_low)
+        np.testing.assert_allclose(
+            rescaled_environment.action_space.high, new_high)
+
+    def test_rescale_observation(self):
+        environment_kwargs = {
+            'domain': 'MountainCar',
+            'task': 'Continuous-v0',
+        }
+        environment = GymAdapter(**environment_kwargs)
+        new_low, new_high = -1.0, 1.0
+
+        assert isinstance(environment.env.observation_space, spaces.Box)
+        assert np.any(environment.env.observation_space.low != new_low)
+        assert np.any(environment.env.observation_space.high != new_high)
+
+        rescaled_environment = GymAdapter(
+            **environment_kwargs,
+            rescale_observation_range=(new_low, new_high))
+
+        np.testing.assert_allclose(
+            rescaled_environment.env.observation_space.low, new_low)
+        np.testing.assert_allclose(
+            rescaled_environment.env.observation_space.high, new_high)
 
     def test_render_rgb_array(self):
         env = self.create_adapter()

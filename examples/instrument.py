@@ -240,6 +240,7 @@ def run_example_local(example_module_name, example_argv, local_mode=False):
         **experiment_kwargs,
         with_server=example_args.with_server,
         server_port=example_args.server_port,
+        fail_fast=example_args.fail_fast,
         scheduler=None,
         reuse_actors=True)
 
@@ -258,7 +259,11 @@ def run_example_debug(example_module_name, example_argv):
     of all cpus once ray local mode supports custom resources.
     """
 
-    debug_example_argv = ['--with-server=False', '--max-failures=0']
+    debug_example_argv = [
+        '--with-server=False',
+        '--max-failures=0',
+        '--fail-fast=True',
+    ]
     for option in example_argv:
         if '--trial-cpus' in option:
             available_cpus = multiprocessing.cpu_count()
@@ -304,6 +309,7 @@ def run_example_cluster(example_module_name, example_argv):
         **experiment_kwargs,
         with_server=example_args.with_server,
         server_port=example_args.server_port,
+        fail_fast=example_args.fail_fast,
         scheduler=None,
         queue_trials=True,
         reuse_actors=True)

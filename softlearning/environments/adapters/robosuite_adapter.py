@@ -42,14 +42,20 @@ class RobosuiteAdapter(SoftlearningEnv):
                  task,
                  *args,
                  env=None,
-                 normalize=True,
+                 rescale_action_range=(-1.0, 1.0),
+                 rescale_observation_range=None,
                  observation_keys=(),
                  goal_keys=(),
                  **kwargs):
         assert not args, (
             "Robosuite environments don't support args. Use kwargs instead.")
 
-        self.normalize = normalize
+        if rescale_observation_range:
+            raise NotImplementedError(
+                "Observation rescaling not implemented for RobosuiteAdapter.")
+
+        self.rescale_action_range = rescale_action_range
+        self.rescale_observation_range = rescale_observation_range
 
         super(RobosuiteAdapter, self).__init__(
             domain, task, *args, goal_keys=goal_keys, **kwargs)
@@ -74,10 +80,10 @@ class RobosuiteAdapter(SoftlearningEnv):
             set(observation_spec.keys())
         ), (self.observation_keys, observation_spec.keys())
 
-        if normalize:
+        if rescale_action_range:
             np.testing.assert_equal(
                 env.action_spec,
-                (-1.0, 1.0),
+                rescale_action_range,
                 "Ensure spaces are normalized.")
 
         self._env = env

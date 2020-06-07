@@ -2,6 +2,7 @@ import pickle
 import unittest
 
 import numpy as np
+import pytest
 
 from .softlearning_env_test import AdapterTestClass
 from softlearning.environments.adapters.robosuite_adapter import (
@@ -152,6 +153,16 @@ class TestRobosuiteAdapter(unittest.TestCase, AdapterTestClass):
                 use_camera_obs=False)
         with self.assertRaises(AssertionError):
             adapter = RobosuiteAdapter(domain=None, task=None, env=env)
+
+    def test_rescale_observation_raises_exception(self):
+        environment_kwargs = {
+            'domain': 'Sawyer',
+            'task': 'Lift',
+            'rescale_observation_range': (-1.0, 1.0),
+        }
+        with pytest.raises(
+                NotImplementedError, match=r"Observation rescaling .*"):
+            environment = RobosuiteAdapter(**environment_kwargs)
 
 
 if __name__ == '__main__':

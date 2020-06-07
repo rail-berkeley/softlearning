@@ -1,6 +1,10 @@
 import pickle
 import unittest
 
+import numpy as np
+from gym import spaces
+import pytest
+
 from .softlearning_env_test import AdapterTestClass
 from softlearning.environments.adapters.dm_control_adapter import (
     DmControlAdapter)
@@ -71,6 +75,36 @@ class TestDmControlAdapter(unittest.TestCase, AdapterTestClass):
         for key, value in env_kwargs['environment_kwargs'].items():
             self.assertEqual(getattr(env1.unwrapped, f'_{key}'), value)
             self.assertEqual(getattr(env2.unwrapped, f'_{key}'), value)
+
+    def test_rescale_action(self):
+        environment_kwargs = {
+            'domain': 'quadruped',
+            'task': 'run',
+        }
+        environment = DmControlAdapter(**environment_kwargs, rescale_action_range=None)
+        new_low, new_high = -1.0, 1.0
+
+        assert isinstance(environment.action_space, spaces.Box)
+        assert np.any(environment.action_space.low != new_low)
+        assert np.any(environment.action_space.high != new_high)
+
+        rescaled_environment = DmControlAdapter(
+            **environment_kwargs, rescale_action_range=(new_low, new_high))
+
+        np.testing.assert_allclose(
+            rescaled_environment.action_space.low, new_low)
+        np.testing.assert_allclose(
+            rescaled_environment.action_space.high, new_high)
+
+    def test_rescale_observation_raises_exception(self):
+        environment_kwargs = {
+            'domain': 'quadruped',
+            'task': 'run',
+            'rescale_observation_range': (-1.0, 1.0),
+        }
+        with pytest.raises(
+                NotImplementedError, match=r"Observation rescaling .*"):
+            environment = DmControlAdapter(**environment_kwargs)
 
 
 if __name__ == '__main__':

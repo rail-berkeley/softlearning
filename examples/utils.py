@@ -146,6 +146,11 @@ def add_ray_tune_args(parser):
         help=tune_help_string("Starts a background Tune server. Needed for"
                               " using the Client API."))
     parser.add_argument(
+        '--fail-fast',
+        type=lambda x: bool(strtobool(x)),
+        default=False,
+        help=tune_help_string("Finishes as soon as a trial fails if True."))
+    parser.add_argument(
         '--server-port',
         type=int,
         default=4321,
