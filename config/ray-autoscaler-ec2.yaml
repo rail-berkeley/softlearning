@@ -93,8 +93,7 @@ setup_commands:
     - >-
         pip install -U -e ~/softlearning
 
-initialization_commands:
-  - docker-credential-gcr configure-docker
+initialization_commands: []
 
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands: []
