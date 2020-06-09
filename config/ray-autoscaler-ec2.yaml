@@ -111,7 +111,7 @@ head_start_ray_commands:
         --autoscaling-config=~/ray_bootstrap_config.yaml
         --internal-config='{
             "num_heartbeats_timeout":300,
-            "heartbeat_timeout_milliseconds":1000
+            "raylet_heartbeat_timeout_milliseconds":1000
         }'
 
 # Command to start ray on worker nodes. You don't need to change this.
