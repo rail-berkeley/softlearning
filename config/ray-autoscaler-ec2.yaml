@@ -51,7 +51,8 @@ auth:
 # For more documentation on available fields, see:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 head_node:
-    InstanceType: m4.xlarge
+    # TODO: pick suitable instance type (https://aws.amazon.com/ec2/instance-types)
+    InstanceType: c5.2xlarge
     ImageId: <TODO:AMI>
 
     # # You can provision additional disk space with a conf as follows
@@ -67,7 +68,8 @@ head_node:
 # For more documentation on available fields, see:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 worker_nodes:
-    InstanceType: m4.2xlarge
+    # TODO: pick suitable instance type (https://aws.amazon.com/ec2/instance-types)
+    InstanceType: c5.2xlarge
     # InstanceType: t2.micro
     ImageId: <TODO:AMI>
 
@@ -111,7 +113,7 @@ head_start_ray_commands:
         --autoscaling-config=~/ray_bootstrap_config.yaml
         --internal-config='{
             "num_heartbeats_timeout":300,
-            "heartbeat_timeout_milliseconds":1000
+            "raylet_heartbeat_timeout_milliseconds":1000
         }'
 
 # Command to start ray on worker nodes. You don't need to change this.
