@@ -110,6 +110,8 @@ optional arguments:
   --mode MODE
   --run-eagerly RUN_EAGERLY
                         Whether to run tensorflow in eager mode.
+  --local-dir LOCAL_DIR
+                        Destination local folder to save training results.
   --confirm-remote [CONFIRM_REMOTE]
                         Whether or not to query yes/no on remote run.
   --video-save-frequency VIDEO_SAVE_FREQUENCY
