@@ -1,10 +1,9 @@
 # Docker compose file that builds images and runs the containers needed for
-# development. You need to have your MJKEY set in the environment.
+# development.
 #
-# docker-compose \
-#     -f ./docker/docker-compose.dev.yml \
-#     build \
-#         --build-arg MJKEY="$(cat ~/.mujoco/mjkey.txt)"
+# NOTE(hartikainen): This file doesn't currently work since docker-compose
+# doesn't support buildkit secrets.
+
 
 version: "2.4"
 services:
@@ -12,13 +11,6 @@ services:
     image: ${IMAGE_NAME:-softlearning}:${IMAGE_TAG:-latest}-gpu
     container_name: softlearning-dev-gpu
     runtime: nvidia
-    build:
-      context: ../.
-      dockerfile: docker/Dockerfile.softlearning.base.gpu
-      cache_from:
-        - ${IMAGE_NAME:-softlearning}:latest-gpu
-      args:
-        - MJKEY
     init: true
     working_dir: /root/softlearning
     environment:

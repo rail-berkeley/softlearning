@@ -1,9 +1,29 @@
+# syntax = docker/dockerfile:1.0-experimental
+
 # Base softlearning container that contains all softlearning requirements,
 # but not the actual softlearning repo. Could be used for example when developing
 # softlearning, in which case you would mount softlearning repo in to the container
 # as a volume, and thus be able to modify code on the host, yet run things inside
 # the container. You are encouraged to use docker-compose (docker-compose.dev.yml),
 # which should allow you to setup your environment with a single one command.
+#
+# Usage:
+# 1) Build image. Typically `docker-compose` would handle this automatically for us
+# # but due to incompatible secret handling, we have to build the image manually.
+# DOCKER_BUILDKIT=1 \
+#   docker build \
+#   -f ./docker/Dockerfile.softlearning.base.gpu \
+#   -t softlearning:latest-gpu \
+#   --progress=plain \
+#   --secret id=mjkey,src="${HOME}/.mujoco/mjkey.txt" .
+# 2) Run:
+# docker-compose \
+#   -p ${USER} \
+#   -f ./docker/docker-compose.dev.gpu.yml \
+#   up \
+#   -d \
+#   --force-recreate
+
 
 ARG UBUNTU_VERSION=18.04
 ARG ARCH=
@@ -17,8 +37,6 @@ ARG UBUNTU_VERSION
 ARG ARCH
 ARG CUDA
 ARG CUDNN=7.4.1.5-1
-
-ARG MJKEY
 
 SHELL ["/bin/bash", "-c"]
 
@@ -148,14 +166,12 @@ ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/lib/nvidia-000
 COPY ./environment.yml /tmp/environment.yml
 COPY ./requirements.txt /tmp/requirements.txt
 
-# NOTE: Don't separate the Mujoco key echo and remove commands into separate
-# run commands! Otherwise your key will be readable by anyone who has access
-# To the container. We need the key in order to compile mujoco_py.
-RUN echo "${MJKEY}" > ~/.mujoco/mjkey.txt \
-    && sed -i -e 's/^tensorflow==/tensorflow-gpu==/g' /tmp/requirements.txt \
-    && conda env update -f /tmp/environment.yml \
-    && conda clean --all -y \
-    && rm ~/.mujoco/mjkey.txt
+# NOTE: Fetch `mjkey.txt` from secret mount to avoid writing it to the build
+# history. For details, see:
+# https://docs.docker.com/develop/develop-images/build_enhancements/#new-docker-build-secret-information
+RUN --mount=type=secret,id=mjkey,dst=/root/.mujoco/mjkey.txt \
+    conda env update -f /tmp/environment.yml \
+    && conda clean --all -y
 
 RUN echo "conda activate softlearning" >> ~/.bashrc \
     && echo "cd ~/softlearning" >> ~/.bashrc
