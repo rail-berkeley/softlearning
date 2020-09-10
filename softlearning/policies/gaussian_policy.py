@@ -229,9 +229,13 @@ class GaussianPolicy(LatentSpacePolicy):
         return OrderedDict((
             ('shifts-mean', tf.reduce_mean(shifts)),
             ('shifts-std', tf.math.reduce_std(shifts)),
+            ('shifts-max', tf.reduce_max(shifts)),
+            ('shifts-min', tf.reduce_min(shifts)),
 
             ('scales-mean', tf.reduce_mean(scales)),
             ('scales-std', tf.math.reduce_std(scales)),
+            ('scales-max', tf.reduce_max(scales)),
+            ('scales-min', tf.reduce_min(scales)),
 
             ('entropy-mean', tf.reduce_mean(-log_pis)),
             ('entropy-std', tf.math.reduce_std(-log_pis)),
