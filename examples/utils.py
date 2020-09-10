@@ -37,7 +37,7 @@ def add_ray_init_args(parser):
         default=None,
         help=init_help_string("Resources to allocate to ray process."))
     parser.add_argument(
-        '--include-webui',
+        '--include-dashboard',
         type=str,
         default=False,
         help=init_help_string("Boolean flag indicating whether to start the"
