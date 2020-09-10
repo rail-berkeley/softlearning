@@ -30,7 +30,7 @@ class BasePolicy:
         self._input_shapes = input_shapes
         self._output_shape = output_shape
         self._observation_keys = observation_keys
-        self._inputs = create_inputs(input_shapes)
+        self._create_inputs(input_shapes)
 
         if preprocessors is None:
             preprocessors = tree.map_structure(lambda x: None, input_shapes)
@@ -41,6 +41,9 @@ class BasePolicy:
         self._preprocessors = preprocessors
 
         self._name = name
+
+    def _create_inputs(self, input_shapes):
+        self._inputs = create_inputs(input_shapes)
 
     @property
     def name(self):
