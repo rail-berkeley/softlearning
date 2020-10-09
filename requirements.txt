@@ -60,7 +60,7 @@ opt-einsum==3.1.0
 packaging==20.0
 pandas==1.0.3
 pathlib2==2.3.5
-Pillow==7.0.0
+Pillow==7.1.0
 pip==19.3.1
 pluggy==0.13.1
 protobuf==3.13.0
