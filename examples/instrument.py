@@ -232,7 +232,7 @@ def run_example_local(example_module_name, example_argv, local_mode=False):
         resources=example_args.resources or {},
         local_mode=local_mode,
         include_dashboard=example_args.include_dashboard,
-        temp_dir=example_args.temp_dir)
+        _temp_dir=example_args.temp_dir)
 
     tune.run(
         trainable_class,
@@ -301,7 +301,7 @@ def run_example_cluster(example_module_name, example_argv):
         num_gpus=example_args.gpus,
         local_mode=False,
         include_dashboard=example_args.include_dashboard,
-        temp_dir=example_args.temp_dir)
+        _temp_dir=example_args.temp_dir)
 
     tune.run(
         trainable_class,
