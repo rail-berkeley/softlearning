@@ -1,7 +1,6 @@
 absl-py==0.9.0
 asn1crypto==1.3.0
 astor==0.8.1
-atari-py==0.2.6  # TODO(hartikainen): This is weirdly required but not installed by gym
 attrs==19.3.0
 boto3==1.11.5
 botocore==1.14.5
