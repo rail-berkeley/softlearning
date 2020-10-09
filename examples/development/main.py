@@ -23,7 +23,7 @@ from examples.instrument import run_example_local
 
 
 class ExperimentRunner(tune.Trainable):
-    def _setup(self, variant):
+    def setup(self, variant):
         # Set the current working directory such that the local mode
         # logs into the correct place. This would not be needed on
         # local/cluster mode.
@@ -91,7 +91,7 @@ class ExperimentRunner(tune.Trainable):
 
         self._built = True
 
-    def _train(self):
+    def step(self):
         if not self._built:
             self._build()
 
@@ -228,7 +228,7 @@ class ExperimentRunner(tune.Trainable):
             os.path.split(os.path.join(save_path, "checkpoint"))[0]))
         status.assert_consumed().run_restore_ops()
 
-    def _save(self, checkpoint_dir):
+    def save_checkpoint(self, checkpoint_dir):
         """Implements the checkpoint save logic."""
         self._save_replay_pool(checkpoint_dir)
         self._save_sampler(checkpoint_dir)
@@ -238,7 +238,7 @@ class ExperimentRunner(tune.Trainable):
 
         return os.path.join(checkpoint_dir, '')
 
-    def _restore(self, checkpoint_dir):
+    def load_checkpoint(self, checkpoint_dir):
         """Implements the checkpoint restore logic."""
         assert isinstance(checkpoint_dir, str), checkpoint_dir
         checkpoint_dir = checkpoint_dir.rstrip('/')

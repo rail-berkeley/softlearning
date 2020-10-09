@@ -46,7 +46,7 @@ setup(
         'mujoco-py>=2.0.2.10',
         'numpy>=1.17.5',
         'pandas',
-        'ray[tune]>=0.8.7',
+        'ray[tune]>=1.0.0',
         'scikit-image>=0.17.2',
         'scikit-video>=1.1.11',
         'scipy>=1.4.1',

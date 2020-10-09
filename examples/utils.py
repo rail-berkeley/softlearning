@@ -140,12 +140,6 @@ def add_ray_tune_args(parser):
             "Path to checkpoint. Only makes sense to set if running 1 trial."
             " Defaults to None."))
     parser.add_argument(
-        '--with-server',
-        type=lambda x: bool(strtobool(x)),
-        default=True,
-        help=tune_help_string("Starts a background Tune server. Needed for"
-                              " using the Client API."))
-    parser.add_argument(
         '--fail-fast',
         type=lambda x: bool(strtobool(x)),
         default=False,

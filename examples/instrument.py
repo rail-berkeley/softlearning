@@ -232,12 +232,11 @@ def run_example_local(example_module_name, example_argv, local_mode=False):
         resources=example_args.resources or {},
         local_mode=local_mode,
         include_dashboard=example_args.include_dashboard,
-        temp_dir=example_args.temp_dir)
+        _temp_dir=example_args.temp_dir)
 
     tune.run(
         trainable_class,
         **experiment_kwargs,
-        with_server=example_args.with_server,
         server_port=example_args.server_port,
         fail_fast=example_args.fail_fast,
         scheduler=None,
@@ -259,7 +258,6 @@ def run_example_debug(example_module_name, example_argv):
     """
 
     debug_example_argv = [
-        '--with-server=False',
         '--max-failures=0',
         '--fail-fast=True',
     ]
@@ -267,7 +265,7 @@ def run_example_debug(example_module_name, example_argv):
         if '--trial-cpus' in option:
             available_cpus = multiprocessing.cpu_count()
             debug_example_argv.append(f'--trial-cpus={available_cpus}')
-        elif '--with-server' in option:
+        elif '--server-port' in option:
             print(f"Ignoring {option} due to debug mode.")
         elif '--max-failures' in option:
             print(f"Ignoring {option} due to debug mode.")
@@ -301,12 +299,11 @@ def run_example_cluster(example_module_name, example_argv):
         num_gpus=example_args.gpus,
         local_mode=False,
         include_dashboard=example_args.include_dashboard,
-        temp_dir=example_args.temp_dir)
+        _temp_dir=example_args.temp_dir)
 
     tune.run(
         trainable_class,
         **experiment_kwargs,
-        with_server=example_args.with_server,
         server_port=example_args.server_port,
         fail_fast=example_args.fail_fast,
         scheduler=None,
