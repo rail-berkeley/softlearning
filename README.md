@@ -172,9 +172,6 @@ optional arguments:
                         is enabled. Passed to `tune.run`.
   --restore RESTORE     Path to checkpoint. Only makes sense to set if running
                         1 trial. Defaults to None. Passed to `tune.run`.
-  --with-server WITH_SERVER
-                        Starts a background Tune server. Needed for using the
-                        Client API. Passed to `tune.run`.
   --server-port SERVER_PORT
                         Port number for launching TuneServer. Passed to
                         `tune.run`.
