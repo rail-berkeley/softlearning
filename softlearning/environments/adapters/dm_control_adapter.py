@@ -32,9 +32,12 @@ def convert_dm_control_to_gym_space(dm_control_space):
     input types in order to enable recursive calling on each nested item.
     """
     if isinstance(dm_control_space, specs.BoundedArray):
+        shape = dm_control_space.shape
+        low = np.broadcast_to(dm_control_space.minimum, shape)
+        high = np.broadcast_to(dm_control_space.maximum, shape)
         gym_box = spaces.Box(
-            low=dm_control_space.minimum,
-            high=dm_control_space.maximum,
+            low=low,
+            high=high,
             shape=None,
             dtype=dm_control_space.dtype)
         # Note: `gym.Box` doesn't allow both shape and min/max to be defined
