@@ -14,8 +14,11 @@ def get_git_rev(path=PROJECT_PATH, search_parent_directories=True):
     try:
         repo = git.Repo(
             path, search_parent_directories=search_parent_directories)
-        git_rev = repo.active_branch.commit.name_rev
-    except TypeError:
-        git_rev = repo.head.object.name_rev
+        if repo.head.is_detached:
+            git_rev = repo.head.object.name_rev
+        else:
+            git_rev = repo.active_branch.commit.name_rev
+    except git.InvalidGitRepositoryError:
+        git_rev = None
 
     return git_rev
