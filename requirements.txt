@@ -11,7 +11,7 @@ chardet==3.0.4
 Click==7.0
 cloudpickle==1.3.0
 colorama==0.4.3
-cryptography==2.8
+cryptography==3.2.1
 cycler==0.10.0
 Cython==0.29.14
 decorator==4.4.1

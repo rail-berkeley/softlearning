@@ -13,6 +13,7 @@ There are two types of functions in this file:
     arguments and options.
 """
 
+import copy
 import importlib
 import multiprocessing
 import os
@@ -257,24 +258,50 @@ def run_example_debug(example_module_name, example_argv):
     of all cpus once ray local mode supports custom resources.
     """
 
-    debug_example_argv = [
-        '--max-failures=0',
-        '--fail-fast=True',
-    ]
-    for option in example_argv:
-        if '--trial-cpus' in option:
-            available_cpus = multiprocessing.cpu_count()
-            debug_example_argv.append(f'--trial-cpus={available_cpus}')
-        elif '--server-port' in option:
-            print(f"Ignoring {option} due to debug mode.")
-        elif '--max-failures' in option:
-            print(f"Ignoring {option} due to debug mode.")
-        elif '--upload-dir' in option:
-            print(f"Ignoring {option} due to debug mode.")
-        else:
-            debug_example_argv.append(option)
+    example_module = importlib.import_module(example_module_name)
+    example_args = example_module.get_parser().parse_args(example_argv)
 
-    run_example_local(example_module_name, debug_example_argv, local_mode=True)
+    debug_args = copy.copy(example_args)
+
+    if 'trial_cpus' in debug_args:
+        available_cpus = multiprocessing.cpu_count()
+        debug_args.trial_cpus = available_cpus
+
+    if 'server_port' in debug_args:
+        print(f"Ignoring 'server_port' due to debug mode.")
+    debug_args.server_port = None
+
+    if 'max_failures' in debug_args:
+        print(f"Ignoring 'max_failures' due to debug mode.")
+    debug_args.max_failures = 0
+
+    if 'upload_dir' in debug_args:
+        print(f"Ignoring 'upload_dir' due to debug mode.")
+    debug_args.upload_dir = None
+
+    debug_args.fail_fast = True
+
+
+    variant_spec = example_module.get_variant_spec(debug_args)
+    trainable_class = example_module.get_trainable_class(debug_args)
+
+    experiment_kwargs = generate_experiment_kwargs(variant_spec, debug_args)
+
+    ray.init(
+        num_cpus=debug_args.cpus,
+        num_gpus=debug_args.gpus,
+        resources=debug_args.resources or {},
+        local_mode=True,
+        include_dashboard=debug_args.include_dashboard,
+        _temp_dir=debug_args.temp_dir)
+
+    tune.run(
+        trainable_class,
+        **experiment_kwargs,
+        server_port=debug_args.server_port,
+        fail_fast=debug_args.fail_fast,
+        scheduler=None,
+        reuse_actors=True)
 
 
 def run_example_cluster(example_module_name, example_argv):
@@ -376,8 +403,7 @@ def launch_example_gce(*args, config_file, **kwargs):
 
     See `launch_example_cluster` for further details.
     """
-    config_file = (
-        config_file or AUTOSCALER_DEFAULT_CONFIG_FILE_GCE)
+    config_file = config_file or AUTOSCALER_DEFAULT_CONFIG_FILE_GCE
 
     return launch_example_cluster(
         *args,
@@ -394,8 +420,7 @@ def launch_example_ec2(*args, config_file, **kwargs):
 
     See `launch_example_cluster` for further details.
     """
-    config_file = (
-        config_file or AUTOSCALER_DEFAULT_CONFIG_FILE_EC2)
+    config_file = config_file or AUTOSCALER_DEFAULT_CONFIG_FILE_EC2
 
     launch_example_cluster(
         *args,

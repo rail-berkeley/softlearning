@@ -146,8 +146,8 @@ def add_ray_tune_args(parser):
         help=tune_help_string("Finishes as soon as a trial fails if True."))
     parser.add_argument(
         '--server-port',
-        type=int,
-        default=4321,
+        type=lambda value: int(value) if value else None,
+        default=None,
         help=tune_help_string("Port number for launching TuneServer."))
 
     return parser
