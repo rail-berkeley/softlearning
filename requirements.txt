@@ -44,7 +44,7 @@ jsonschema==3.2.0
 Keras-Applications==1.0.8
 Keras-Preprocessing==1.1.2
 kiwisolver==1.1.0
-lxml==4.4.2
+lxml==4.6.2
 lz4==3.0.2
 Markdown==3.1.1
 matplotlib==3.1.2
