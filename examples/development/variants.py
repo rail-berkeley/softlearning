@@ -400,7 +400,7 @@ def get_algorithm_params(universe, domain, task):
     total_timesteps = get_total_timesteps(universe, domain, task)
     epoch_length = get_epoch_length(universe, domain, task)
     n_epochs = total_timesteps / epoch_length
-    assert n_epochs == int(n_epochs)
+    assert n_epochs == int(n_epochs), (n_epochs, total_timesteps, epoch_length)
     algorithm_params = {
         'config': {
             'n_epochs': int(n_epochs),
@@ -476,7 +476,17 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
         'replay_pool_params': {
             'class_name': 'SimpleReplayPool',
             'config': {
-                'max_size': int(1e6),
+                'max_size': tune.sample_from(lambda spec: (
+                    min(int(1e6),
+                        spec.get('config', spec)
+                        ['algorithm_params']
+                        ['config']
+                        ['n_epochs']
+                        * spec.get('config', spec)
+                        ['algorithm_params']
+                        ['config']
+                        ['epoch_length'])
+                )),
             },
         },
         'sampler_params': {
