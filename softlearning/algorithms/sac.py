@@ -224,7 +224,7 @@ class SAC(RLAlgorithm):
 
             Qs_log_targets = tuple(
                 Q.values(observations, actions) for Q in self._Qs)
-            Q_log_targets = tf.reduce_min(Qs_log_targets, axis=0)
+            Q_log_targets = tf.reduce_mean(Qs_log_targets, axis=0)
             policy_losses = entropy_scale * log_pis - Q_log_targets
             policy_loss = tf.nn.compute_average_loss(policy_losses)
 
