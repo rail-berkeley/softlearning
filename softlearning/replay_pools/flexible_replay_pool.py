@@ -236,8 +236,8 @@ class FlexibleReplayPool(ReplayPool):
         sequence_batch['mask'] = np.where(
             cut_and_pad_sample_indices[..., None]
             < np.cumsum(np.ones_like(forward_diffs), axis=1)[..., 0],
-            False,
-            True)
+            True,
+            False)
 
         return sequence_batch
 

@@ -504,7 +504,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
                 samples[key][
                     np.stack((np.arange(-5, -1), np.arange(-4, 0))).T
                 ],
-                ~mask[..., None] * values)
+                mask[..., None] * values)
             self.assertEqual(values.shape, (4, sequence_length, 1))
 
     def test_last_n_batch_with_overflown_pool(self):
@@ -580,54 +580,54 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         for i, (episode_start_index, episode_length) in enumerate(zip(
                 (0, *np.cumsum(path_lengths)[:-1]), path_lengths)):
             np.testing.assert_equal(
-                ~batch['mask'][i][:-1] * batch['field1'][i][:-1], 0)
+                batch['mask'][i][:-1] * batch['field1'][i][:-1], 0)
             np.testing.assert_equal(
-                ~batch['mask'][i][-1] * batch['field1'][i][-1],
+                batch['mask'][i][-1] * batch['field1'][i][-1],
                 samples['field1'][episode_start_index])
             np.testing.assert_equal(
-                ~batch['mask'][i][:-1] * batch['field2'][i][:-1], 0)
+                batch['mask'][i][:-1] * batch['field2'][i][:-1], 0)
             np.testing.assert_equal(
-                ~batch['mask'][i][-1] * batch['field2'][i][-1],
+                batch['mask'][i][-1] * batch['field2'][i][-1],
                 samples['field2'][episode_start_index])
 
             np.testing.assert_equal(
-                ~batch['mask'][i, :, None] * batch['episode_index_forwards'][i], 0)
+                batch['mask'][i, :, None] * batch['episode_index_forwards'][i], 0)
             np.testing.assert_equal(
-                ~batch['mask'][i, :, None][:-1]
+                batch['mask'][i, :, None][:-1]
                 * batch['episode_index_backwards'][i][:-1], 0)
             np.testing.assert_equal(
-                ~batch['mask'][i, :, None][-1]
+                batch['mask'][i, :, None][-1]
                 * batch['episode_index_backwards'][i][-1], episode_length - 1)
 
         np.testing.assert_equal(
-            ~batch['mask'][-2, :- path_lengths[-1] + 1, None]
+            batch['mask'][-2, :- path_lengths[-1] + 1, None]
             * batch['field1'][-2][:- path_lengths[-1] + 1], 0)
         np.testing.assert_equal(
-            ~batch['mask'][-2, - path_lengths[-1] + 1:, None]
+            batch['mask'][-2, - path_lengths[-1] + 1:, None]
             * batch['field1'][-2][- path_lengths[-1] + 1:],
             samples['field1'][-path_lengths[-1]:-1])
 
         np.testing.assert_equal(
-            ~batch['mask'][-2, :- path_lengths[-1] + 1, None]
+            batch['mask'][-2, :- path_lengths[-1] + 1, None]
             * batch['field2'][-2][:- path_lengths[-1] + 1], 0)
         np.testing.assert_equal(
-            ~batch['mask'][-2, - path_lengths[-1] + 1:, None]
+            batch['mask'][-2, - path_lengths[-1] + 1:, None]
             * batch['field2'][-2][- path_lengths[-1] + 1:],
             samples['field2'][-path_lengths[-1]:-1])
 
         np.testing.assert_equal(
-            ~batch['mask'][-1, :- path_lengths[-1], None]
+            batch['mask'][-1, :- path_lengths[-1], None]
             * batch['field1'][-1][:- path_lengths[-1]], 0)
         np.testing.assert_equal(
-            ~batch['mask'][-1, - path_lengths[-1]:, None]
+            batch['mask'][-1, - path_lengths[-1]:, None]
             * batch['field1'][-1][- path_lengths[-1]:],
             samples['field1'][-path_lengths[-1]:])
 
         np.testing.assert_equal(
-            ~batch['mask'][-1, :- path_lengths[-1], None]
+            batch['mask'][-1, :- path_lengths[-1], None]
             * batch['field2'][-1][:- path_lengths[-1]], 0)
         np.testing.assert_equal(
-            ~batch['mask'][-1, - path_lengths[-1]:, None]
+            batch['mask'][-1, - path_lengths[-1]:, None]
             * batch['field2'][-1][- path_lengths[-1]:],
             samples['field2'][-path_lengths[-1]:])
 
@@ -680,14 +680,14 @@ class FlexibleReplayPoolTest(unittest.TestCase):
                 np.flip(samples[key]),
             ), axis=1)
             expected[episode_start_indices_batch, 0, :] = 0
-            np.testing.assert_array_equal(expected, ~mask[..., None] * values)
+            np.testing.assert_array_equal(expected, mask[..., None] * values)
             self.assertEqual(
                 values.shape,
                 (self.pool._max_size, sequence_length, 1))
 
             # Make sure that the values at the start of the episode are zero.
             np.testing.assert_equal(
-                ~mask[episode_start_indices_batch, :-1, None]
+                mask[episode_start_indices_batch, :-1, None]
                 * values[episode_start_indices_batch][:, :-1, :], 0)
 
     def test_sequence_batch_sample_from_beginning_of_non_full_pool(self):
@@ -702,8 +702,8 @@ class FlexibleReplayPoolTest(unittest.TestCase):
             np.array([sample_index]), sequence_length=sequence_length)
         np.testing.assert_equal(
             batch['mask'][0],
-            np.array([True] * (sequence_length - sample_index - 1)
-                     + [False] * (sample_index + 1)))
+            np.array([False] * (sequence_length - sample_index - 1)
+                     + [True] * (sample_index + 1)))
 
     def test_batch_by_indices_with_filter(self):
         with self.assertRaises(ValueError):
