@@ -22,7 +22,7 @@ from pprint import pformat
 
 import ray
 from ray import tune
-from ray.autoscaler.commands import exec_cluster
+from ray.autoscaler._private.commands import exec_cluster
 
 from softlearning.utils.times import datetimestamp
 from softlearning.utils.misc import PROJECT_PATH
