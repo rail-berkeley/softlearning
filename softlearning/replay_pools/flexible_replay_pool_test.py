@@ -580,12 +580,12 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         for i, (episode_start_index, episode_length) in enumerate(zip(
                 (0, *np.cumsum(path_lengths)[:-1]), path_lengths)):
             np.testing.assert_equal(
-                batch['mask'][i][:-1] * batch['field1'][i][:-1], 0)
+                batch['mask'][i][:-1, ..., None] * batch['field1'][i][:-1], 0)
             np.testing.assert_equal(
                 batch['mask'][i][-1] * batch['field1'][i][-1],
                 samples['field1'][episode_start_index])
             np.testing.assert_equal(
-                batch['mask'][i][:-1] * batch['field2'][i][:-1], 0)
+                batch['mask'][i][:-1, ..., None] * batch['field2'][i][:-1], 0)
             np.testing.assert_equal(
                 batch['mask'][i][-1] * batch['field2'][i][-1],
                 samples['field2'][episode_start_index])
