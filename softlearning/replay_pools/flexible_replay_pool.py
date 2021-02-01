@@ -228,10 +228,10 @@ class FlexibleReplayPool(ReplayPool):
             forward_diffs, ([0, 0], [1, 0], [0, 0]),
             mode='constant',
             constant_values=-1)
-        cut_and_pad_sample_indices = np.squeeze(
+        cut_and_pad_sample_indices = (
             forward_diffs.shape[1]
             - np.argmax(forward_diffs[:, ::-1, :] < 1, axis=1)
-            - 1)
+            - 1)[..., 0]
 
         sequence_batch['mask'] = np.where(
             cut_and_pad_sample_indices[..., None]
