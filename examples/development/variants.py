@@ -197,10 +197,10 @@ TOTAL_STEPS_PER_UNIVERSE_DOMAIN_TASK = {
             # 'swimmer15': int(None),
         },
         'walker': {
-            DEFAULT_KEY: int(3e6),
-            # 'stand': int(None),
-            'walk': int(1e7),
-            'run': int(1e7),
+            DEFAULT_KEY: int(1e6),
+            'stand': int(1e6),
+            'walk': int(1e6),
+            'run': int(1e6),
         },
         # EXTRA
         'humanoid_CMU': {
@@ -238,6 +238,9 @@ EPOCH_LENGTH_PER_UNIVERSE_DOMAIN_TASK = {
             DEFAULT_KEY: 1000,
             'v0': 1000,
         },
+    },
+    'dm_control': {
+        DEFAULT_KEY: 25000,
     },
 }
 
