@@ -148,9 +148,9 @@ class SAC(RLAlgorithm):
         rewards = batch['rewards']
         terminals = batch['terminals']
 
-        entropy_scale = self._alpha
-        reward_scale = self._reward_scale
-        discount = self._discount
+        entropy_scale = tf.convert_to_tensor(self._alpha)
+        reward_scale = tf.convert_to_tensor(self._reward_scale)
+        discount = tf.convert_to_tensor(self._discount)
 
         next_actions, next_log_pis = self._policy.actions_and_log_probs(
             next_observations)
@@ -217,14 +217,15 @@ class SAC(RLAlgorithm):
         and Section 5 in [1] for further information of the entropy update.
         """
         observations = batch['observations']
+        entropy_scale = tf.convert_to_tensor(self._alpha)
 
         with tf.GradientTape() as tape:
             actions, log_pis = self._policy.actions_and_log_probs(observations)
 
             Qs_log_targets = tuple(
                 Q.values(observations, actions) for Q in self._Qs)
-            Q_log_targets = tf.reduce_min(Qs_log_targets, axis=0)
-            policy_losses = self._alpha * log_pis - Q_log_targets
+            Q_log_targets = tf.reduce_mean(Qs_log_targets, axis=0)
+            policy_losses = entropy_scale * log_pis - Q_log_targets
             policy_loss = tf.nn.compute_average_loss(policy_losses)
 
         tf.debugging.assert_shapes((

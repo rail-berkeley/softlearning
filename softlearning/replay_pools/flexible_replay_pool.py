@@ -211,7 +211,7 @@ class FlexibleReplayPool(ReplayPool):
             return self.batch_by_indices(indices)
 
         sequence_indices = (
-            indices[:, None] - np.arange(sequence_length)[::-1][None])
+            indices[:, None] + np.arange(sequence_length)[None])
         sequence_batch = self.batch_by_indices(
             sequence_indices, validate_index=False)
 
@@ -222,22 +222,21 @@ class FlexibleReplayPool(ReplayPool):
                 " remove it before using sequence_batch. TODO(hartikainen):"
                 " Allow mask name to be configured.")
 
-        forward_diffs = np.diff(
+        forward_diffs_0 = np.diff(
             sequence_batch['episode_index_forwards'].astype(np.int64), axis=1)
-        forward_diffs = np.pad(
-            forward_diffs, ([0, 0], [1, 0], [0, 0]),
+        forward_diffs_1 = np.pad(
+            forward_diffs_0, ([0, 0], [0, 1], [0, 0]),
             mode='constant',
             constant_values=-1)
-        cut_and_pad_sample_indices = np.squeeze(
-            forward_diffs.shape[1]
-            - np.argmax(forward_diffs[:, ::-1, :] < 1, axis=1)
-            - 1)
+        cut_and_pad_sample_indices = (
+            np.argmax(forward_diffs_1[:, ::1, :] < 1, axis=1)
+            + 1)[..., 0]
 
         sequence_batch['mask'] = np.where(
-            cut_and_pad_sample_indices[..., None]
-            < np.cumsum(np.ones_like(forward_diffs), axis=1)[..., 0],
-            False,
-            True)
+            np.arange(sequence_length)[None, ...]
+            < cut_and_pad_sample_indices[..., None],
+            True,
+            False)
 
         return sequence_batch
 

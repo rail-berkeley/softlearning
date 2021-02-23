@@ -56,7 +56,7 @@ class ExperimentRunner(tune.Trainable):
                 training_environment.observation_shape,
                 training_environment.action_shape),
         })
-        Qs = self.Qs = value_functions.get(variant['Q_params'])
+        Qs = self.Qs = tree.flatten(value_functions.get(variant['Q_params']))
 
         variant['policy_params']['config'].update({
             'action_range': (training_environment.action_space.low,

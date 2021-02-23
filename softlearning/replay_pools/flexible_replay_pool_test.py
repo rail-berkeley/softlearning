@@ -207,7 +207,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         num_samples = self.pool._max_size + 10
         samples = {
             'field1': np.arange(num_samples)[:, None],
-            'field2': -np.arange(num_samples)[:, None] * 2,
+            'field2': -2 * np.arange(num_samples)[:, None],
         }
         self.pool.add_samples(samples)
 
@@ -355,12 +355,12 @@ class FlexibleReplayPoolTest(unittest.TestCase):
             np.arange(self.pool._max_size)[:, None])
         np.testing.assert_array_equal(
             self.pool.data['field2'],
-            -np.arange(self.pool._max_size)[:, None] * 2)
+            -2 * np.arange(self.pool._max_size)[:, None])
 
     def test_add_samples(self):
         samples = {
             'field1': np.arange(self.pool._max_size)[:, None],
-            'field2': -np.arange(self.pool._max_size)[:, None] * 2,
+            'field2': -2 * np.arange(self.pool._max_size)[:, None],
         }
         self.pool.add_samples(samples)
 
@@ -369,7 +369,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
             np.arange(self.pool._max_size)[:, None])
         np.testing.assert_array_equal(
             self.pool.data['field2'],
-            -np.arange(self.pool._max_size)[:, None] * 2)
+            -2 * np.arange(self.pool._max_size)[:, None])
 
     def test_random_indices(self):
         empty_pool_indices = self.pool.random_indices(4)
@@ -378,7 +378,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
 
         samples = {
             'field1': np.arange(self.pool._max_size)[:, None],
-            'field2': -np.arange(self.pool._max_size)[:, None] * 2,
+            'field2': -2 * np.arange(self.pool._max_size)[:, None],
         }
         self.pool.add_samples(samples)
         full_pool_indices = self.pool.random_indices(4)
@@ -393,7 +393,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
 
         samples = {
             'field1': np.arange(self.pool._max_size)[:, None],
-            'field2': -np.arange(self.pool._max_size)[:, None] * 2,
+            'field2': -2 * np.arange(self.pool._max_size)[:, None],
         }
         self.pool.add_samples(samples)
         full_pool_batch = self.pool.random_batch(4)
@@ -421,7 +421,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         for path_length in path_lengths:
             samples = {
                 'field1': np.arange(path_length)[:, None],
-                'field2': -np.arange(path_length)[:, None] * 2,
+                'field2': -2 * np.arange(path_length)[:, None],
             }
             self.pool.add_path(samples)
         full_pool_batch = self.pool.random_sequence_batch(
@@ -450,7 +450,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
 
         samples = {
             'field1': np.arange(self.pool._max_size)[:, None],
-            'field2': -np.arange(self.pool._max_size)[:, None] * 2,
+            'field2': -2 * np.arange(self.pool._max_size)[:, None],
         }
         self.pool.add_samples(samples)
         full_pool_batch = self.pool.last_n_batch(4)
@@ -477,7 +477,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         for path_length in path_lengths:
             samples = {
                 'field1': np.arange(path_length)[:, None],
-                'field2': -np.arange(path_length)[:, None] * 2,
+                'field2': -2 * np.arange(path_length)[:, None],
             }
             self.pool.add_path(samples)
         full_pool_batch = self.pool.last_n_sequence_batch(
@@ -502,15 +502,15 @@ class FlexibleReplayPoolTest(unittest.TestCase):
             if key in ('mask', *INDEX_FIELDS): continue
             np.testing.assert_array_equal(
                 samples[key][
-                    np.stack((np.arange(-5, -1), np.arange(-4, 0))).T
+                    np.stack((np.arange(-4, 0), np.arange(-3, 1))).T
                 ],
-                ~mask[..., None] * values)
+                mask[..., None] * values)
             self.assertEqual(values.shape, (4, sequence_length, 1))
 
     def test_last_n_batch_with_overflown_pool(self):
         samples = {
             'field1': np.arange(self.pool._max_size + 10)[:, None],
-            'field2': -np.arange(self.pool._max_size + 10)[:, None] * 2,
+            'field2': -2 * np.arange(self.pool._max_size + 10)[:, None],
         }
         self.pool.add_samples(samples)
         full_pool_batch = self.pool.last_n_batch(20)
@@ -530,7 +530,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
 
         samples = {
             'field1': np.arange(self.pool._max_size)[:, None],
-            'field2': -np.arange(self.pool._max_size)[:, None] * 2,
+            'field2': -2 * np.arange(self.pool._max_size)[:, None],
         }
         self.pool.add_samples(samples)
 
@@ -545,15 +545,15 @@ class FlexibleReplayPoolTest(unittest.TestCase):
 
     def test_sequence_overlaps_two_episodes(self):
         sequence_length = self.pool._max_size
-        path_lengths = [
+        path_lengths = np.array([
             self.pool._max_size // 2 - 5,
             (self.pool._max_size // 2) - 3,
             8,
-        ]
+        ])
 
         samples = {
             'field1': np.arange(self.pool._max_size)[:, None],
-            'field2': -np.arange(self.pool._max_size)[::-1, None] * 2,
+            'field2': -2 * np.arange(self.pool._max_size)[::-1, None],
         }
         for path_end, path_length in zip(
                 np.cumsum(path_lengths), path_lengths):
@@ -561,75 +561,94 @@ class FlexibleReplayPoolTest(unittest.TestCase):
                 lambda s: s[path_end - path_length:path_end],
                 samples))
 
-        batch_indices = np.array([0, *np.cumsum(path_lengths), -2, -1])
-        batch = self.pool.sequence_batch_by_indices(
-            batch_indices, sequence_length=sequence_length)
+        last_step_indices = np.cumsum(path_lengths) - 1
+        last_step_batch = self.pool.sequence_batch_by_indices(
+            last_step_indices, sequence_length=sequence_length)
 
-        self.assertIn('mask', batch)
-        self.assertTrue(all(index_field in batch.keys()
+        self.assertIn('mask', last_step_batch)
+        self.assertTrue(all(index_field in last_step_batch.keys()
                             for index_field in INDEX_FIELDS))
 
-        for key, values in batch.items():
+        for key, values in last_step_batch.items():
             if key == 'mask':
                 self.assertEqual(
-                    values.shape, (batch_indices.size, sequence_length))
+                    values.shape, (last_step_indices.size, sequence_length))
             else:
                 self.assertEqual(
-                    values.shape, (batch_indices.size, sequence_length, 1))
+                    values.shape, (last_step_indices.size, sequence_length, 1))
 
         for i, (episode_start_index, episode_length) in enumerate(zip(
-                (0, *np.cumsum(path_lengths)[:-1]), path_lengths)):
+                np.cumsum(path_lengths) - 1, path_lengths)):
             np.testing.assert_equal(
-                ~batch['mask'][i][:-1] * batch['field1'][i][:-1], 0)
+                (last_step_batch['mask'][i, 1:, ..., None]
+                 * last_step_batch['field1'][i, 1:]),
+                0)
             np.testing.assert_equal(
-                ~batch['mask'][i][-1] * batch['field1'][i][-1],
+                (last_step_batch['mask'][i][0]
+                 * last_step_batch['field1'][i][0]),
                 samples['field1'][episode_start_index])
             np.testing.assert_equal(
-                ~batch['mask'][i][:-1] * batch['field2'][i][:-1], 0)
+                (last_step_batch['mask'][i, 1:, ..., None]
+                 * last_step_batch['field2'][i, 1:]), 0)
             np.testing.assert_equal(
-                ~batch['mask'][i][-1] * batch['field2'][i][-1],
+                (last_step_batch['mask'][i][0]
+                 * last_step_batch['field2'][i][0]),
                 samples['field2'][episode_start_index])
 
             np.testing.assert_equal(
-                ~batch['mask'][i, :, None] * batch['episode_index_forwards'][i], 0)
+                (last_step_batch['mask'][i, 1:, None]
+                 * last_step_batch['episode_index_forwards'][i, 1:]), 0)
             np.testing.assert_equal(
-                ~batch['mask'][i, :, None][:-1]
-                * batch['episode_index_backwards'][i][:-1], 0)
+                (last_step_batch['mask'][i, 0, None]
+                 * last_step_batch['episode_index_forwards'][i, 0]),
+                episode_length - 1)
             np.testing.assert_equal(
-                ~batch['mask'][i, :, None][-1]
-                * batch['episode_index_backwards'][i][-1], episode_length - 1)
+                (last_step_batch['mask'][i, ..., None]
+                 * last_step_batch['episode_index_backwards'][i]), 0)
 
-        np.testing.assert_equal(
-            ~batch['mask'][-2, :- path_lengths[-1] + 1, None]
-            * batch['field1'][-2][:- path_lengths[-1] + 1], 0)
-        np.testing.assert_equal(
-            ~batch['mask'][-2, - path_lengths[-1] + 1:, None]
-            * batch['field1'][-2][- path_lengths[-1] + 1:],
-            samples['field1'][-path_lengths[-1]:-1])
+        other_step_indices = np.array([0, 1, -2, -1])
+        other_step_batch = self.pool.sequence_batch_by_indices(
+            other_step_indices, sequence_length=sequence_length)
 
-        np.testing.assert_equal(
-            ~batch['mask'][-2, :- path_lengths[-1] + 1, None]
-            * batch['field2'][-2][:- path_lengths[-1] + 1], 0)
-        np.testing.assert_equal(
-            ~batch['mask'][-2, - path_lengths[-1] + 1:, None]
-            * batch['field2'][-2][- path_lengths[-1] + 1:],
-            samples['field2'][-path_lengths[-1]:-1])
+        self.assertIn('mask', other_step_batch)
+        self.assertTrue(all(index_field in other_step_batch.keys()
+                            for index_field in INDEX_FIELDS))
 
-        np.testing.assert_equal(
-            ~batch['mask'][-1, :- path_lengths[-1], None]
-            * batch['field1'][-1][:- path_lengths[-1]], 0)
-        np.testing.assert_equal(
-            ~batch['mask'][-1, - path_lengths[-1]:, None]
-            * batch['field1'][-1][- path_lengths[-1]:],
-            samples['field1'][-path_lengths[-1]:])
+        for key, values in other_step_batch.items():
+            if key == 'mask':
+                self.assertEqual(
+                    values.shape, (other_step_indices.size, sequence_length))
+            else:
+                self.assertEqual(
+                    values.shape, (other_step_indices.size, sequence_length, 1))
 
-        np.testing.assert_equal(
-            ~batch['mask'][-1, :- path_lengths[-1], None]
-            * batch['field2'][-1][:- path_lengths[-1]], 0)
-        np.testing.assert_equal(
-            ~batch['mask'][-1, - path_lengths[-1]:, None]
-            * batch['field2'][-1][- path_lengths[-1]:],
-            samples['field2'][-path_lengths[-1]:])
+        for field_key in samples.keys():
+            np.testing.assert_equal(
+                (other_step_batch['mask'][0, :path_lengths[0], None]
+                * other_step_batch[field_key][0][:path_lengths[0]]),
+                samples[field_key][:path_lengths[0]])
+            np.testing.assert_equal(
+                (other_step_batch['mask'][0, path_lengths[0]:, None]
+                * other_step_batch[field_key][0][path_lengths[0]:]),
+                0)
+
+            np.testing.assert_equal(
+                (other_step_batch['mask'][1, :path_lengths[0] - 1, None]
+                * other_step_batch[field_key][1][:path_lengths[0] - 1]),
+                samples[field_key][1:path_lengths[0]])
+            np.testing.assert_equal(
+                (other_step_batch['mask'][1, path_lengths[0] - 1:, None]
+                * other_step_batch[field_key][1][path_lengths[0] - 1:]),
+                0)
+
+            np.testing.assert_equal(
+                (other_step_batch['mask'][2, :2, None]
+                * other_step_batch[field_key][2][:2]),
+                samples[field_key][-2:])
+            np.testing.assert_equal(
+                (other_step_batch['mask'][2, 2:, None]
+                * other_step_batch[field_key][2][2:]),
+                0)
 
     def test_sequence_batch_by_indices(self):
         sequence_length = 2
@@ -643,7 +662,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
 
         samples = {
             'field1': np.arange(self.pool._max_size)[:, None],
-            'field2': -np.arange(self.pool._max_size)[:, None] * 2,
+            'field2': -2 * np.arange(self.pool._max_size)[:, None],
         }
         for path_end, path_length in zip(
                 np.cumsum(path_lengths), path_lengths):
@@ -666,44 +685,53 @@ class FlexibleReplayPoolTest(unittest.TestCase):
         self.assertTrue(all(index_field in full_pool_batch.keys()
                             for index_field in INDEX_FIELDS))
 
-        episode_start_indices = np.flatnonzero(
-            self.pool.data['episode_index_forwards'] == 0)
-        episode_start_indices_batch = np.flatnonzero(
-            np.isin(batch_indices, episode_start_indices))
+        episode_end_indices = np.flatnonzero(
+            self.pool.data['episode_index_backwards'] == 0)
+        episode_end_indices_batch = np.flatnonzero(
+            np.isin(batch_indices, episode_end_indices))
 
         mask = full_pool_batch['mask']
 
         for key, values in full_pool_batch.items():
             if key in ('mask', *INDEX_FIELDS): continue
             expected = np.stack((
-                np.roll(np.flip(samples[key]), -1),
                 np.flip(samples[key]),
+                np.roll(np.flip(samples[key]), 1),
             ), axis=1)
-            expected[episode_start_indices_batch, 0, :] = 0
-            np.testing.assert_array_equal(expected, ~mask[..., None] * values)
+            expected[episode_end_indices_batch, 1, :] = 0
+            np.testing.assert_array_equal(expected, mask[..., None] * values)
             self.assertEqual(
                 values.shape,
                 (self.pool._max_size, sequence_length, 1))
 
-            # Make sure that the values at the start of the episode are zero.
+            # Make sure that the values at the end of the episode are
+            # equal to the leading values of the next episode.
             np.testing.assert_equal(
-                ~mask[episode_start_indices_batch, :-1, None]
-                * values[episode_start_indices_batch][:, :-1, :], 0)
+                values[episode_end_indices_batch][:, 1:, :],
+                samples[key][(
+                    episode_end_indices
+                    + np.arange(1, sequence_length)
+                ) % 100][::-1, ..., None])
 
-    def test_sequence_batch_sample_from_beginning_of_non_full_pool(self):
+    def test_sequence_batch_sample_from_end_of_full_pool(self):
+        pool_max_size = 10
+        self.pool = create_pool(pool_max_size)
         sequence_length = 10
         samples = {
-            'field1': np.arange(self.pool._max_size - sequence_length)[:, None],
-            'field2': -np.arange(self.pool._max_size - sequence_length)[:, None] * 2,
+            'field1': np.arange(pool_max_size)[:, None],
+            'field2': -2 * np.arange(pool_max_size)[:, None],
         }
         self.pool.add_path(samples)
-        sample_index = sequence_length // 2
+        sample_index = pool_max_size - sequence_length // 2
         batch = self.pool.sequence_batch_by_indices(
             np.array([sample_index]), sequence_length=sequence_length)
+
         np.testing.assert_equal(
             batch['mask'][0],
-            np.array([True] * (sequence_length - sample_index - 1)
-                     + [False] * (sample_index + 1)))
+            np.array(
+                [True] * (pool_max_size - sample_index)
+                + [False] * (sequence_length - pool_max_size + sample_index)
+            ))
 
     def test_batch_by_indices_with_filter(self):
         with self.assertRaises(ValueError):
@@ -711,7 +739,7 @@ class FlexibleReplayPoolTest(unittest.TestCase):
 
         samples = {
             'field1': np.arange(self.pool._max_size)[:, None],
-            'field2': -np.arange(self.pool._max_size)[:, None] * 2,
+            'field2': -2 * np.arange(self.pool._max_size)[:, None],
         }
         self.pool.add_samples(samples)
 

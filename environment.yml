@@ -5,9 +5,8 @@ channels:
 dependencies:
 - python>=3.8,<3.9
 - pip>=20.0
-- conda>=4.7
-- pyopengl-accelerate==3.1.3b1
-# - cudatoolkit==10.1.243
-# - cudnn==7.6.5
+- conda>=4.8
+# - cudatoolkit==11.0.221
+# - nvidia::cudnn==8.0.4
 - pip:
     - -r ./requirements.txt
