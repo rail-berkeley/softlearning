@@ -50,6 +50,14 @@ class ExperimentRunner(tune.Trainable):
             get_environment_from_params(environment_params['evaluation'])
             if 'evaluation' in environment_params
             else training_environment)
+        
+        seed = variant['run_params']['seed']
+        
+        training_environment.seed(seed)
+        
+        # Set a different seed for the evaluation env
+        # to ensure the policy is not just memorizing action sequences for seen initial states
+        evaluation_environment.seed(seed + 10)
 
         variant['Q_params']['config'].update({
             'input_shapes': (
