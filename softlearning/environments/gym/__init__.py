@@ -61,6 +61,16 @@ MUJOCO_ENVIRONMENT_SPECS = (
         'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
                         '.image_pusher_2d:BlindForkReacher2dEnv'),
     },
+    {
+        'id': 'Humanoid-RLLab-v0',
+        'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
+                        '.rllab_humanoid:RLLabHumanoidEnv'),
+    },
+    {
+        'id': 'Swimmer-RLLab-v0',
+        'entry_point': (f'{MUJOCO_ENVIRONMENTS_PATH}'
+                        '.rllab_swimmer:RLLabSwimmerEnv'),
+    },
 )
 
 GENERAL_ENVIRONMENT_SPECS = (
