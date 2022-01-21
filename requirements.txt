@@ -49,7 +49,7 @@ idna==2.10
 imageio==2.9.0
 iniconfig==1.1.1
 ipdb==0.13.4
-ipython==7.19.0
+ipython==7.31.1
 ipython-genutils==0.2.0
 jedi==0.18.0
 joblib==1.0.0
