@@ -134,6 +134,6 @@ typing-extensions==3.7.4.3
 urllib3==1.26.3
 wcwidth==0.2.5
 Werkzeug==1.0.1
-wheel==0.36.2
+wheel==0.38.1
 wrapt==1.12.1
 yarl==1.6.3
