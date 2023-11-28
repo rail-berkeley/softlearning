@@ -17,8 +17,6 @@ click==7.1.2
 cloudpickle==1.6.0
 colorama==0.4.4
 colorful==0.5.4
-conda==4.9.2
-conda-package-handling==1.7.2
 cryptography==3.3.2
 cycler==0.10.0
 Cython==0.29.21
