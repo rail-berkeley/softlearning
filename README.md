@@ -40,32 +40,94 @@ conda remove --name softlearning --all
 ## Docker Installation
 
 ### docker-compose
-To build the image and run the container:
-```
-export MJKEY="$(cat ~/.mujoco/mjkey.txt)" \
-    && docker-compose \
-        -f ./docker/docker-compose.dev.cpu.yml \
-        up \
-        -d \
-        --force-recreate
-```
+
+To build the image:
+
+- CPU:
+
+  ```sh
+  DOCKER_BUILDKIT=1 \
+    docker build \
+    -f ./docker/Dockerfile.softlearning.base.cpu \
+    -t softlearning:latest-cpu \
+    --progress=plain \
+    --secret id=mjkey,src="${HOME}/.mujoco/mjkey.txt" .
+  ```
+
+- GPU:
+
+  ```sh
+  DOCKER_BUILDKIT=1 \
+    docker build \
+    -f ./docker/Dockerfile.softlearning.base.gpu \
+    -t softlearning:latest-gpu \
+    --progress=plain \
+    --secret id=mjkey,src="${HOME}/.mujoco/mjkey.txt" .
+  ```
+
+and run the container:
+
+- CPU:
+
+  ```sh
+  docker-compose \
+    -p ${USER} \
+    -f ./docker/docker-compose.dev.cpu.yml \
+    up \
+    -d \
+    --force-recreate
+  ```
+
+- GPU:
+
+  ```sh
+  docker-compose \
+    -p ${USER} \
+    -f ./docker/docker-compose.dev.gpu.yml \
+    up \
+    -d \
+    --force-recreate
+  ```
 
 You can access the container with the typical Docker [exec](https://docs.docker.com/engine/reference/commandline/exec/)-command, i.e.
 
-```
-docker exec -it softlearning bash
-```
+- CPU:
+
+  ```sh
+  docker exec -it softlearning-dev-cpu bash
+  pip install -e .
+  ```
+
+- GPU:
+
+  ```sh
+  docker exec -it softlearning-dev-gpu bash
+  pip install -e .
+  ```
 
 See examples section for examples of how to train and simulate the agents.
 
 Finally, to clean up the docker setup:
-```
-docker-compose \
-    -f ./docker/docker-compose.dev.cpu.yml \
-    down \
-    --rmi all \
-    --volumes
-```
+
+- CPU:
+
+  ```sh
+  docker-compose \
+      -f ./docker/docker-compose.dev.cpu.yml \
+      down \
+      --rmi all \
+      --volumes
+  ```
+
+- GPU:
+
+  ```sh
+  docker-compose \
+      -f ./docker/docker-compose.dev.gpu.yml \
+      down \
+      --rmi all \
+      --volumes
+  ```
 
 ## Examples
 ### Training and simulating an agent
