@@ -25,18 +25,11 @@
 #   --force-recreate
 
 
-ARG UBUNTU_VERSION=18.04
-ARG ARCH=
-ARG CUDA=10.0
+# ARG UBUNTU_VERSION=20.04
 
-FROM nvidia/cudagl${ARCH:+-$ARCH}:${CUDA}-base-ubuntu${UBUNTU_VERSION} as base
-# ARCH and CUDA are specified again because the FROM directive resets ARGs
-# (but their default value is retained if set previously)
+FROM nvcr.io/nvidia/tensorflow:21.05-tf2-py3
 
-ARG UBUNTU_VERSION
-ARG ARCH
-ARG CUDA
-ARG CUDNN=7.4.1.5-1
+# ARG UBUNTU_VERSION
 
 SHELL ["/bin/bash", "-c"]
 
@@ -69,38 +62,6 @@ RUN apt-get install -y curl grep sed dpkg && \
 RUN conda update -y --name base conda \
     && conda clean --all -y
 
-
-# ========== Tensorflow dependencies ==========
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        build-essential \
-        cuda-command-line-tools-${CUDA/./-} \
-        cuda-cublas-${CUDA/./-} \
-        cuda-cufft-${CUDA/./-} \
-        cuda-curand-${CUDA/./-} \
-        cuda-cusolver-${CUDA/./-} \
-        cuda-cusparse-${CUDA/./-} \
-        curl \
-        libcudnn7=${CUDNN}+cuda${CUDA} \
-        libfreetype6-dev \
-        libhdf5-serial-dev \
-        libzmq3-dev \
-        pkg-config \
-        software-properties-common \
-        zip \
-        unzip \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN [ ${ARCH} = ppc64le ] || (apt-get update && \
-        apt-get install nvinfer-runtime-trt-repo-ubuntu${UBUNTU_VERSION/./}-5.0.2-ga-cuda${CUDA} \
-        && apt-get update \
-        && apt-get install -y --no-install-recommends libnvinfer5=5.0.2-1+cuda${CUDA} \
-        && apt-get clean \
-        && rm -rf /var/lib/apt/lists/*)
-
-# For CUDA profiling, TensorFlow requires CUPTI.
-ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:$LD_LIBRARY_PATH
 
 # ========== Softlearning dependencies ==========
 RUN apt-get update -y \
@@ -163,8 +124,8 @@ ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/lib/nvidia-000
 
 
 # ========== Conda Environment ==========
-COPY ./environment.yml /tmp/environment.yml
-COPY ./requirements.txt /tmp/requirements.txt
+COPY ./environment.yml /tmp/
+COPY ./requirements.txt /tmp/
 
 # NOTE: Fetch `mjkey.txt` from secret mount to avoid writing it to the build
 # history. For details, see:
@@ -172,9 +133,14 @@ COPY ./requirements.txt /tmp/requirements.txt
 RUN --mount=type=secret,id=mjkey,dst=/root/.mujoco/mjkey.txt \
     conda env update -f /tmp/environment.yml \
     && conda clean --all -y
+RUN source activate softlearning \
+    && pip install setuptools==65.5.0 wheel==0.38.0 \
+    && pip install gym==0.18.0
 
 RUN echo "conda activate softlearning" >> ~/.bashrc \
     && echo "cd ~/softlearning" >> ~/.bashrc
+
+RUN git config --global --add safe.directory /root/softlearning
 
 
 # =========== Container Entrypoint =============
