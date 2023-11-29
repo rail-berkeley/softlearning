@@ -17,8 +17,6 @@ click==7.1.2
 cloudpickle==1.6.0
 colorama==0.4.4
 colorful==0.5.4
-conda==4.9.2
-conda-package-handling==1.7.2
 cryptography==3.3.2
 cycler==0.10.0
 Cython==0.29.21
@@ -42,7 +40,6 @@ googleapis-common-protos==1.52.0
 gpustat==0.6.0
 grpcio==1.32.0
 gtimer==1.0.0b5
-gym==0.18.0
 h5py==2.10.0
 hiredis==1.1.0
 idna==2.10
@@ -61,7 +58,7 @@ lxml==4.6.2
 Markdown==3.3.3
 matplotlib==3.3.3
 msgpack==1.0.2
-mujoco-py==2.0.2.13
+mujoco-py==2.0.2.10
 multidict==5.1.0
 networkx==2.5
 numpy==1.19.5

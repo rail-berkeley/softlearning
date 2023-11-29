@@ -29,3 +29,4 @@ services:
       - bash
     stdin_open: true
     tty: true
+    shm_size: '60gb'
