@@ -58,7 +58,7 @@ lxml==4.6.2
 Markdown==3.3.3
 matplotlib==3.3.3
 msgpack==1.0.2
-mujoco-py==2.0.2.13
+mujoco-py==2.0.2.10
 multidict==5.1.0
 networkx==2.5
 numpy==1.19.5
