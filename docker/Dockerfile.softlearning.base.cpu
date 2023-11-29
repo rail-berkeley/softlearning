@@ -140,6 +140,8 @@ RUN source activate softlearning \
 RUN echo "conda activate softlearning" >> ~/.bashrc \
     && echo "cd ~/softlearning" >> ~/.bashrc
 
+RUN git config --global --add safe.directory /root/softlearning
+
 
 # =========== Container Entrypoint =============
 COPY ./docker/entrypoint.sh /entrypoint.sh
