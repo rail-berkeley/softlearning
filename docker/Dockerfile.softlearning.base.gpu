@@ -135,6 +135,9 @@ RUN echo "conda activate softlearning" >> ~/.bashrc \
 
 RUN git config --global --add safe.directory /root/softlearning
 
+RUN ln /usr/local/cuda-11.3/targets/x86_64-linux/lib/libcusolver.so.11 /usr/local/cuda-11.3/targets/x86_64-linux/lib/libcusolver.so.10
+ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/cuda-11.3/targets/x86_64-linux/lib/
+
 
 # =========== Container Entrypoint =============
 COPY ./docker/entrypoint.sh /entrypoint.sh
