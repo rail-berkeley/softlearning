@@ -103,6 +103,7 @@ You can access the container with the typical Docker [exec](https://docs.docker.
   ```sh
   docker exec -it softlearning-dev-gpu bash
   pip install -e .
+  # Make sure to add the `--trial-gpus` flag for the `softlearning` command.
   ```
 
 See examples section for examples of how to train and simulate the agents.
